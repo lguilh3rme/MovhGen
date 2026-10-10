@@ -9438,6 +9438,17 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
+/* ── alinhamento (v92) ── */
+.ec-hd{position:relative;align-items:flex-start!important}
+.ec-info{flex:1;min-width:0}
+.ec-hd .vbtn{position:absolute;top:0;right:0;height:24px!important;padding:0 9px 0 7px!important;font-size:10.5px!important}
+.ec-hd:has(.vbtn) .ec-name-row{padding-right:64px}
+.ec-chips{display:flex;flex-wrap:wrap;align-items:center}
+.cargabox{margin-left:auto!important}
+.cargabox input.cg-k,.cargabox input[id$="-carga"]{width:29px!important}
+.cargabox input[id$="-reps"]{width:23px!important}
+.cargabox{padding-left:5px!important}
+.ec-chip-rlivre{border-style:dashed!important;opacity:.75}
 /* ── compacto: treino cabe na tela (v91) ── */
 .ec{padding:6px 10px!important}
 .ec-hd{gap:8px!important}
@@ -10899,7 +10910,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
       '</span>';
   const chips = [
     ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
-    restExibir ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir)+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir)+'</span>' : '',
+    '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+(restExibir?'':' ec-chip-rlivre')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir||'60s')+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir||'60s')+'</span>',
     mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
   ].filter(Boolean).join('');
