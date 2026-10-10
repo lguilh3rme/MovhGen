@@ -355,6 +355,61 @@ select{cursor:pointer}
 .exi-arr{color:var(--t3);font-size:15px;transition:transform .2s;flex-shrink:0}
 .exi-det{padding:6px 0 2px;border-top:0.5px solid var(--bd2);margin-top:4px}
 .exi-rm{flex-shrink:0}
+/* ── editor no celular (v89) ── */
+@media(max-width:700px){
+  .ch{flex-wrap:wrap;row-gap:2px}
+  .ch .ie.label{flex:1 1 60%;min-width:0;font-size:13px;padding:4px 3px}
+  .ch .ie.sm{order:9;flex:1 1 100%;max-width:none;margin-left:16px;font-size:11px}
+  .exi-top{padding:8px;min-height:46px;gap:8px}
+  .exi-lbl{font-size:13px}
+  .exi-badge{font-size:11px;padding:3px 9px}
+  .exi-top > span[onclick]{gap:2px!important}
+  .exi-top .bic[title^="Mover"]{width:32px!important;height:22px!important;font-size:12px!important;border-radius:8px}
+  .exi-top .exi-rm{width:34px;height:34px}
+  .preview-toggle,.bd-btn{min-width:34px;min-height:34px}
+  .badd{padding:9px 14px;font-size:12px}
+  .pg-head div[style*="margin-top:6px"]{flex-wrap:wrap;gap:4px 8px!important}
+  .pg-head div[style*="margin-top:6px"] > span:first-child{flex:0 0 100%}
+  .pg-head div[style*="margin-top:6px"] > span:not(:first-child){display:none}
+  .pg-head div[style*="margin-top:6px"] > select{flex:1 1 40%;min-width:0;font-size:16px!important;padding:7px 8px!important}
+}
+/* ── navegação e densidade no PC (v89) ── */
+.main{padding:1.1rem 1.4rem}
+.pg-head{margin-bottom:.9rem}
+.pg-title{font-size:19px}
+.card{padding:.85rem 1rem;border-radius:12px;margin-bottom:.6rem}
+.sb{padding:.6rem .5rem 1rem}
+.sb-top{margin-bottom:.6rem;padding-bottom:.5rem}
+.sn{margin-top:.7rem}
+.ni{font-size:12.5px;padding:7px 10px;border-radius:8px;color:#9d9d96;gap:8px}
+.ni:hover{background:#242422;color:#e8e8e4}
+.ni.active{background:var(--P);color:#fff;font-weight:600;box-shadow:0 2px 10px rgba(124,116,220,.35)}
+.ni .ic{font-size:13px;width:16px}
+.ni-add{font-size:10.5px;padding:5px 9px}
+.sb-det{margin:2px 0 6px;border:1px solid #242422;border-radius:8px;background:#161614}
+.sb-det > summary{cursor:pointer;font-size:11px;font-weight:700;color:#9d9d96;padding:7px 10px;list-style:none;user-select:none}
+.sb-det > summary::-webkit-details-marker{display:none}
+.sb-det > summary::before{content:'▸ ';color:var(--P)}
+.sb-det[open] > summary::before{content:'▾ '}
+.sb-det[open] > summary{border-bottom:1px solid #242422}
+.sb-det > *:not(summary){margin-left:6px;margin-right:6px}
+#alunos-filtro-status{width:auto!important;flex:0 0 160px}
+@media(min-width:701px){
+  .exi{padding:3px 6px;gap:3px}
+  .exi-top{padding:3px 6px;gap:8px}
+  .ch{margin-bottom:6px}
+  .pg-head > div:first-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px;width:100%;max-width:1040px}
+  .pg-head > div:first-child > *{grid-column:1/-1}
+  .pg-head > div:first-child > div[style*="margin-top:6px"]{grid-column:auto;margin-top:2px!important;flex-wrap:wrap}
+}
+.sn-row{flex-wrap:wrap;row-gap:0;padding:0 2px}
+.sn-edit{flex:1 1 100%!important;width:100%;color:#8a8a84;font-size:10px;padding:8px 6px 3px}
+.sn-row > input[type=number]{order:2;margin:2px 0 4px 6px}
+.sn-row > .sn-actions{order:3;margin-left:auto;margin-top:0}
+.sn-row > .sn-actions button[title="+ dia"]{margin-top:0!important}
+/* ── painel de alunos (v89) ── */
+.aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
+.aluno-row input[type=date]{font-size:11px!important}
 </style>
 </head>
 <body>
@@ -2988,8 +3043,9 @@ function montarGraficoVolInt(lista, detalhado){
 
 function renderSB(){
   const el=document.getElementById('semanas-nav');
-  let h=montarTimelinePeriodizacao(semanas, null);
+  let h='<details class="sb-det"'+(window._sbPztOpen?' open':'')+' ontoggle="window._sbPztOpen=this.open"><summary>📈 Periodização · ferramentas</summary>'+montarTimelinePeriodizacao(semanas, null);
   h+='<div style="padding:0 4px 8px"><button type="button" onclick="sincronizarExerciciosComBanco()" style="width:100%;font-size:10px;padding:6px;border-radius:6px;border:1px dashed #3A3A38;background:none;color:#B8B0A6;cursor:pointer" title="Preenche vídeos dos exercícios que baterem o nome com o banco (não sobrescreve os que já têm vídeo)">🔄 Sincronizar exercícios com banco</button></div>';
+  h+='</details><div class="sn" style="margin-top:6px">Treino</div>';
   semanas.forEach((s,si)=>{
     h+=`<div class="sn-row">
       <input class="sn-edit" value="${escAttr(s.nome)}" oninput="semanas[${si}].nome=this.value" style="flex:1"/>
@@ -6430,8 +6486,8 @@ function renderPainelAlunos() {
       ? `<button onclick="mbVerProtocolo('${a.id}')" title="Ver / editar protocolo" style="background:var(--cl);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--tx);cursor:pointer">✏️ ${escAttr(proto.nome)}</button>` +
         (proto.data_inicio ? `<span style="color:var(--t3);font-size:10px"> desde ${new Date(proto.data_inicio+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
         (previsaoFim ? `<span style="color:var(--t3);font-size:10px"> · fim ${previsaoFim.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
-        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno">🗂</button>`
-      : `<span style="color:var(--t3);font-style:italic;font-size:10px">sem protocolo</span>`;
+        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno (histórico, duplicar, link)">🗂 Todos os treinos</button>`
+      : `<span style="color:var(--t3);font-style:italic;font-size:10px">sem protocolo</span> <button class="btn bp" style="font-size:10px;padding:2px 9px;margin-left:4px" onclick="mbMontarTreinoPara('${a.id}')" title="Abre o editor com este aluno selecionado">＋ Montar treino</button>`;
 
     // Badges de status
     const statusBadge = lixeira
@@ -6506,7 +6562,7 @@ function renderPainelAlunos() {
     // Rodapé do card (só para alunos fora da lixeira) — ultra-compacto
     const rodape = lixeira ? '' : `
       <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:9px;color:var(--t3);white-space:nowrap">🗓</span>
+        <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">Acesso</span>
         <input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
           style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Início"/>
         <span style="font-size:9px;color:var(--t3)">→</span>
@@ -6514,13 +6570,13 @@ function renderPainelAlunos() {
           style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Fim"/>
         <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbSalvarPeriodo(this.dataset.id)">💾</button>
         <span style="flex:1"></span>
-        ${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese">📋</button>` : ''}
-        ${parq && parq.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px${Object.values(parq.respostas||{}).some(v=>v===true||v==='sim')?';border-color:#e44;color:#c03030':''}" data-id="${a.id}" onclick="mbVerParq(this.dataset.id)" title="Ver PAR-Q">🩺</button>` : ''}
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarParq(this.dataset.id)" title="Solicitar PAR-Q">🔁🩺</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Solicitar anamnese">🔁📋</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
-        ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Solicitar avaliação física/postural">🔁📸</button>
+        ${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese respondida">📋 Anamnese</button>` : ''}
+        ${parq && parq.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px${Object.values(parq.respostas||{}).some(v=>v===true||v==='sim')?';border-color:#e44;color:#c03030':''}" data-id="${a.id}" onclick="mbVerParq(this.dataset.id)" title="Ver PAR-Q respondido">🩺 PAR-Q</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarParq(this.dataset.id)" title="Pedir ao aluno que preencha o PAR-Q">🩺 Pedir PAR-Q</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Pedir ao aluno que preencha a anamnese">📋 Pedir anamnese</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️ Testes${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
+        ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸 Avaliações${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Pedir fotos de avaliação física/postural">📸 Pedir avaliação</button>
         ${solicMudanca ? `<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#FF8A00;color:#fff;border-color:#FF8A00;font-weight:700" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'atendida')" title="Marcar como atendida (já criei/ajustei o novo protocolo)">✅ Atendida</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;background:var(--P);color:#fff;border-color:var(--P);font-weight:700" data-id="${solicMudanca.id}" data-aluno="${a.id}" onclick="mbAtenderECriarProtocolo(this.dataset.id,this.dataset.aluno)" title="Marca como atendida e já abre a tela de criação de protocolo com este aluno selecionado">🗂️ Criar protocolo</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'dispensada')" title="Dispensar solicitação">✖ Dispensar</button>` : ''}
@@ -6602,6 +6658,12 @@ async function mbAtenderSolicitacaoMudanca(solicitacaoId, novoStatus) {
 // Atalho pedido no backlog: em vez de só marcar "Atendida" e o professor ter
 // que navegar manualmente até a criação, isso já marca a solicitação e leva
 // direto pra tela de criação de protocolo com o aluno certo pré-selecionado.
+function mbMontarTreinoPara(alunoId) {
+  nav('config');
+  const sel = document.getElementById('mb-aluno-select');
+  if (sel) { sel.value = alunoId; mbOnAlunoChange(); }
+  notify('Aluno selecionado — monte o treino e salve para ele.');
+}
 async function mbAtenderECriarProtocolo(solicitacaoId, alunoId) {
   await mbAtenderSolicitacaoMudanca(solicitacaoId, 'atendida');
   nav('config');
@@ -9107,7 +9169,11 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .ec-chip-clicavel{cursor:pointer;transition:transform .1s}
 .ec-chip-clicavel:active{transform:scale(.94)}
 .ec-series-count{font-size:10px;font-weight:800;color:var(--Pd);background:var(--Pl);border-radius:99px;padding:2px 7px;flex-shrink:0}
-.ec-chip-progresso{position:relative;background-image:linear-gradient(to right, color-mix(in srgb, var(--P) 45%, transparent) var(--fill, 0%), transparent var(--fill, 0%));transition:background-image .35s ease}
+.ec-chip-progresso{position:relative;cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:background-size .35s ease,transform .1s}
+.ec-chip.ec-chip-progresso{background-image:linear-gradient(color-mix(in srgb, var(--fillc, var(--P)) 42%, transparent),color-mix(in srgb, var(--fillc, var(--P)) 42%, transparent));background-repeat:no-repeat;background-position:left center;background-size:var(--fill, 0%) 100%}
+.ec-chip-progresso:active{transform:scale(.95)}
+.ec-chip-progresso.ec-chip-completo{--fillc:var(--G);color:var(--Gd)}
+[data-theme=dark] .ec-chip-progresso.ec-chip-completo{color:#8EE3BF}
 .ec-chip-progresso.ec-series-pulse{animation:ecSeriesPulse .5s ease}
 .ec-series-pulse{animation:ecSeriesPulse .5s ease}
 @keyframes ecSeriesPulse{0%{transform:scale(1.3);background:var(--G)}100%{transform:scale(1)}}
@@ -9255,6 +9321,42 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
   .cargabox .tempobox-input{width:3.6ch}
   .vbtn{width:38px;height:38px}
 }
+/* ── compacto mobile (v89) ── */
+.bloco{margin-bottom:8px;border-radius:10px;box-shadow:none}
+.bloco:hover{box-shadow:none}
+.bh{padding:6px 10px;gap:7px;min-height:30px}
+.dot{width:8px;height:12px;border-width:2px}
+.bt{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}
+.bm{font-size:10px;padding:1px 7px}
+.bt-arr{font-size:11px}
+.bloco-done-btn{width:20px;height:20px;font-size:10px}
+.exl{padding:0 6px 2px;gap:0}
+.ec{padding:7px 4px;border-radius:0;background:transparent;border:0;border-top:1px solid var(--bd)}
+.exl > .ec:first-child{border-top:0}
+.ec.done{background:var(--Gl);border-radius:8px;border-top-color:transparent}
+.ec-hd{gap:8px}
+.ec-n{font-size:13px;line-height:1.25}
+.ec-chips{gap:5px;margin-top:4px;align-items:center}
+.ec-chip{padding:2px 7px;font-size:10.5px;border-radius:7px;white-space:nowrap}
+.ec-o{margin-top:5px;padding:5px 8px;font-size:11px}
+.vbtn{width:34px;height:34px;border-radius:9px}
+.cargabox{padding:2px 7px;gap:3px}
+.cargabox input{width:3ch;min-width:30px;font-size:16px;padding:0;line-height:1.2}
+.cargabox .u{font-size:10px;font-weight:700;opacity:.7}
+.cargabox .ic{font-size:12px}
+.sessao-progresso{margin-bottom:8px}
+.hoje-banner,.dash-banner,.fase-badge{margin-bottom:.5rem}
+.wrap{padding:2.6rem 12px 1.5rem}
+.ph{margin-bottom:.8rem;padding-bottom:.5rem}
+.badges{margin-bottom:5px}
+.pt{font-size:21px;margin-bottom:2px}
+.semana-strip{margin-top:6px;gap:4px}
+.semana-strip-dia{padding:4px 0;border-radius:8px}
+.preview-aviso{margin:4px 0;padding:5px 9px;font-size:10.5px}
+.dash-badges-row{margin-bottom:.5rem}
+.cargabox input{width:2.6ch;min-width:26px}
+.footer{margin-top:1rem}
+#tDashConteudo .pt{font-size:16px!important;margin-bottom:6px!important}
 .loadingbox{display:flex;align-items:center;justify-content:center;padding:3rem;font-size:13px;color:var(--t2)}
 .dash-banner{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--Gd);background:var(--Gl);padding:5px 11px;border-radius:99px;margin-bottom:.85rem}
 .dash-badges-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:.85rem}
@@ -10382,7 +10484,10 @@ function aParseTempoParaSegundos(txt){
   return null;
 }
 let aAudioCtxDescanso = null;
-let aSeriesFeitas = {}; // eid -> quantas séries já foram contadas via cronômetro de descanso
+let aSeriesFeitas = {}; // eid -> séries contadas (toque no badge de séries); guardado por dia no aparelho
+function aSeriesChaveHoje(){ const h=new Date(); return 'movh-series-'+h.getFullYear()+'-'+(h.getMonth()+1)+'-'+h.getDate(); }
+(function aSeriesCarregar(){ try { const raw = localStorage.getItem(aSeriesChaveHoje()); if (raw) aSeriesFeitas = JSON.parse(raw) || {}; } catch(e){} })();
+function aSeriesSalvar(){ if (window._movhPreview) return; try { localStorage.setItem(aSeriesChaveHoje(), JSON.stringify(aSeriesFeitas)); } catch(e){} }
 function aIniciarDescanso(txtOriginal, nomeExercicio, eid){
   const segundos = aParseTempoParaSegundos(txtOriginal);
   if (!segundos || segundos <= 0) { notify(aLang==='en' ? "Couldn't read this rest time." : 'Não consegui entender esse tempo de descanso.'); return; }
@@ -10397,20 +10502,30 @@ function aIniciarDescanso(txtOriginal, nomeExercicio, eid){
   aDescansoAgendarNotificacao();
   aMontarWidgetDescanso();
 }
-// Cada vez que um descanso termina, conta como uma série feita daquele
-// exercício — dá pro aluno acompanhar o progresso (0/3, 1/3, 2/3...) sem
-// precisar ficar contando de cabeça.
-function aContarSerieConcluida(eid){
-  if (!eid) return;
-  aSeriesFeitas[eid] = (aSeriesFeitas[eid] || 0) + 1;
+// Toque no badge de séries: conta uma série feita (0/3 → 1/3 → 2/3 → 3/3) e
+// preenche o fundo do badge aos poucos. Com tudo feito, o próximo toque zera
+// (serve de "desfazer" se o aluno contou a mais).
+function aSeriesAtualizarUI(eid){
   const badge = document.getElementById(eid + '-series-badge');
-  const contTxt = document.getElementById(eid + '-series-count');
   if (!badge) return;
   const total = parseInt(badge.dataset.total, 10) || 0;
-  const feitas = Math.min(aSeriesFeitas[eid], total || aSeriesFeitas[eid]);
-  if (contTxt) contTxt.textContent = '(' + feitas + '/' + total + ')';
-  if (total) badge.style.setProperty('--fill', Math.min(100, (feitas/total)*100) + '%');
-  badge.classList.add('ec-series-pulse');
+  const feitas = Math.min(aSeriesFeitas[eid] || 0, total || (aSeriesFeitas[eid] || 0));
+  const contTxt = document.getElementById(eid + '-series-count');
+  if (contTxt) contTxt.textContent = (total && feitas >= total ? '✓ ' : '') + feitas + '/' + total;
+  badge.style.setProperty('--fill', (total ? Math.min(100, (feitas/total)*100) : 0) + '%');
+  badge.classList.toggle('ec-chip-completo', !!total && feitas >= total);
+}
+function aContarSerieConcluida(eid){
+  if (!eid) return;
+  const badge = document.getElementById(eid + '-series-badge');
+  const total = badge ? (parseInt(badge.dataset.total, 10) || 0) : 0;
+  const atual = aSeriesFeitas[eid] || 0;
+  aSeriesFeitas[eid] = (total && atual >= total) ? 0 : atual + 1;
+  aSeriesSalvar();
+  aSeriesAtualizarUI(eid);
+  if (!badge) return;
+  if (navigator.vibrate) { try { navigator.vibrate(aSeriesFeitas[eid] ? 15 : [10,40,10]); } catch(e){} }
+  badge.classList.remove('ec-series-pulse'); void badge.offsetWidth; badge.classList.add('ec-series-pulse');
   setTimeout(function(){ badge.classList.remove('ec-series-pulse'); }, 500);
 }
 function aTocarBeepDescanso(){
@@ -10445,7 +10560,6 @@ function aDescansoAgendarNotificacao(){
     }
     if (navigator.vibrate) { try { navigator.vibrate([250,120,250]); } catch(e){} }
     aTocarBeepDescanso();
-    if (aDescansoTimer) aContarSerieConcluida(aDescansoTimer.eid);
     aFecharWidgetDescanso();
   }, Math.max(0, restante));
 }
@@ -10509,6 +10623,12 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   const seriesTotalMatch = seriesExibir ? String(seriesExibir).match(/^(\\d+)/) : null;
   const seriesTotal = seriesTotalMatch ? parseInt(seriesTotalMatch[1], 10) : 0;
   const restExibir = sugVolume && sugVolume.rest ? sugVolume.rest : ex.rest;
+  // texto curto do badge ("4×8"); formatos que não reconhece caem no texto longo
+  const serieRaw = String(sugVolume ? sugVolume.series : (ex.series || '')).trim();
+  const serieCurtoM = serieRaw.match(/^(\\d+)\\s*[x×]\\s*([^\\[\\]]+)$/i);
+  const seriesCurto = serieCurtoM ? (serieCurtoM[1] + '×' + serieCurtoM[2].trim()) : seriesExibir;
+  const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
+  const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
   const baseRefHTML = sugVolume
     ? '<div class="ec-base-ref">' + aT('base_professor') + ': ' + aEsc(aFormatarSeries(ex.series)) + (ex.rest ? ' · ' + aEsc(ex.rest) : '') + '</div>'
     : '';
@@ -10518,17 +10638,17 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">💾</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
-    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'">'+aEsc(aT('carga'))+' 🏋️' +
-        '<input type="number" step="0.5" placeholder="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'">kg' +
+    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="ic">🏋️</span>' +
+        '<input type="number" inputmode="decimal" step="0.5" placeholder="–" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
-        '<input type="number" placeholder="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'">' +
+        '<input type="number" inputmode="numeric" placeholder="–" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">💾</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>';
   const chips = [
-    ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso':'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'">'+(sugVolume?'🧭 ':'📊 ')+aEsc(seriesExibir)+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.75">(0/'+seriesTotal+')</span>':'')+'</span>' : '',
-    restExibir ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir)+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aT('descanso_label')+' '+aEsc(restExibir)+'</span>' : '',
-    mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(aT('sugestao'))+': '+aEsc(sugestao.valor)+'kg</span>' : '',
+    ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'📊 ')+aEsc(seriesCurto)+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
+    restExibir ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir)+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir)+'</span>' : '',
+    mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
   ].filter(Boolean).join('');
   return '<div class="ec" id="'+eid+'">' +
