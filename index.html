@@ -5586,6 +5586,8 @@ function renderDBSplits(){
         <button class="bsm" onclick="loadSplitToEditor(${i})" title="Editar exercícios" style="color:var(--Pd)">⚙️</button>
         <button class="bsm" onclick="openEditSplit(${i})" title="Editar info">✏️</button>
         <button class="bsm" onclick="duplicateSplit(${i})" title="Duplicar">📋</button>
+        <button class="bsm" onclick="mbCopiarLinkTreino('split','${s.id}')" title="Copiar link do treino (abre sem login)">🔗</button>
+        <button class="bsm" onclick="mbRevogarLinkTreino('split','${s.id}')" title="Revogar link">🚫</button>
         <button class="bsm" onclick="deleteSplit(${i})" title="Remover" style="color:#c03030">×</button>
       </div></div>
       <div class="db-sp-body"><div style="margin-bottom:4px">${s.desc}</div><div style="color:var(--t3)">${s.divisao||''}</div>
@@ -7895,9 +7897,52 @@ async function mbGerenciarProtocolos(alunoId) {
         <div style="font-size:12px;font-weight:600;color:var(--tx)">${escAttr(nome)} ${ativoBadge}</div>
         <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · criado ${criado}</div>
       </div>
+      <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
+      <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
       ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px;color:#c03030;border-color:#f0b0b0" onclick="mbDeletarProtocolo('${p.id}','${alunoId}')" title="Excluir protocolo">🗑 Excluir</button>` : ''}
     </div>`;
   }).join('');
+}
+
+function mbTokenAleatorio(){
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  return Array.from(a, b => b.toString(36).padStart(2,'0')).join('').slice(0,24);
+}
+// Link público de treino (futuro aluno, sem login). tipo: 'protocolo' | 'split'.
+// Reaproveita o link se já existir; o conteúdo é lido AO VIVO do banco pela
+// função get_treino_publico, então qualquer alteração salva já reflete no link.
+async function mbCopiarLinkTreino(tipo, id){
+  const appUrl = ((plLand && plLand.appUrl) || '').trim().split('?')[0].split('#')[0].replace(/\/index\.html$/i,'').replace(/\/+$/,'');
+  if (!appUrl) { alert('Preencha a "URL do App do Aluno" (aba Planos) antes de gerar o link.'); return; }
+  const col = tipo === 'split' ? 'split_id' : 'protocolo_id';
+  try {
+    const { data: ex, error: e1 } = await mbClient.from('links_treino').select('token').eq(col, String(id)).limit(1).maybeSingle();
+    if (e1) throw e1;
+    let token = ex && ex.token;
+    if (!token) {
+      token = mbTokenAleatorio();
+      const row = { token, professor_id: mbProfessor.id }; row[col] = String(id);
+      const { error: e2 } = await mbClient.from('links_treino').insert(row);
+      if (e2) throw e2;
+    }
+    const link = appUrl + '/?treino=' + encodeURIComponent(token);
+    // valida que o link realmente abre sem login (RPC pública devolve o treino)
+    try {
+      const chk = await mbClientAvulso.rpc('get_treino_publico', { p_token: token });
+      if (chk.error) { notify('⚠️ Link criado, mas a função pública falhou: ' + chk.error.message + ' — rode o SQL novo (Gerar Protocolo → "Login não funciona?").'); }
+      else if (!chk.data) { notify('⚠️ Link criado, mas o treino não foi encontrado pela função pública (protocolo/split inexistente).'); }
+    } catch(ce) { console.warn('[MOVH] validação do link falhou', ce); }
+    try { await navigator.clipboard.writeText(link); notify('🔗 Link copiado! Envie para o futuro aluno.'); }
+    catch(_) { window.prompt('Copie o link abaixo:', link); }
+  } catch (err) {
+    notify('Erro ao gerar link: ' + (err.message || err) + ' — rode o SQL novo (Gerar Protocolo → "Login não funciona?").');
+  }
+}
+async function mbRevogarLinkTreino(tipo, id){
+  if (!confirm('Revogar o link deste treino? Quem já recebeu deixa de conseguir abrir (você pode gerar outro depois).')) return;
+  const col = tipo === 'split' ? 'split_id' : 'protocolo_id';
+  const { error } = await mbClient.from('links_treino').delete().eq(col, String(id));
+  if (error) notify('Erro ao revogar: ' + error.message); else notify('Link revogado.');
 }
 
 async function mbDeletarProtocolo(protoId, alunoId) {
@@ -8687,6 +8732,12 @@ async function mbSalvarProtocolo() {
   };
 
   try {
+    // guarda os ids ativos (o link público acompanha o protocolo novo)
+    let antigosIds = [];
+    try {
+      const { data: antigos } = await mbClient.from('protocolos').select('id').eq('aluno_id', mbAlunoSelecionadoId).eq('ativo', true);
+      antigosIds = (antigos || []).map(x => String(x.id));
+    } catch(_) {}
     // desativa protocolos antigos desse aluno antes de salvar o novo como ativo
     await mbClient.from('protocolos')
       .update({ ativo: false })
@@ -8701,6 +8752,9 @@ async function mbSalvarProtocolo() {
       ativo: true
     }).select('id, data_inicio').maybeSingle();
     if (error) throw error;
+    if (novoProto && antigosIds.length) {
+      try { await mbClient.from('links_treino').update({ protocolo_id: String(novoProto.id) }).in('protocolo_id', antigosIds); } catch(_) {}
+    }
     if (novoProto) {
       mbProtoCarregadoId = novoProto.id;
       mbProtoDataInicio = novoProto.data_inicio || null;
@@ -9036,6 +9090,10 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--tx);font-size:14
 .dm{width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--bd);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:transform .15s}
 .dm:hover{transform:scale(1.06)}
 .sairbtn{font-size:10px;padding:4px 10px;border-radius:6px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer}
+.regbtn{font-size:11px;font-weight:700;padding:7px 14px;border-radius:99px;border:none;background:var(--P);color:#fff;cursor:pointer;box-shadow:0 2px 10px rgba(124,116,220,.45);animation:regpulse 2.2s ease-in-out infinite}
+@keyframes regpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+.preview-aviso{font-size:11px;color:var(--t2);background:var(--Pl);border-radius:8px;padding:6px 10px;margin:6px 0}
+body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #tBtnColetivas,body.preview-mode .alunolbl,body.preview-mode #banner-renovar,body.preview-mode button[onclick*="aVerificarTreinoConcluido(true)"]{display:none!important}
 .alunolbl{font-size:10px;color:var(--t3);margin-top:10px}
 .semana-strip{display:flex;gap:5px;margin-top:8px}
 .semana-strip-dia{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:9px;border:1px solid var(--bd);background:var(--card);cursor:pointer;font-size:11px;font-weight:700;color:var(--t2);transition:all .15s}
@@ -9301,6 +9359,7 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--tx);font-size:14
 
 <div id="treinoScreen" style="display:none">
   <div class="toprow">
+    <button id="tRegistroBtn" class="regbtn" style="display:none" onclick="aIrParaRegistro()">Fazer o registro</button>
     <button id="banner-renovar" style="display:none" class="banner-renovar" onclick="aAbrirRenovar()" title="Renovar agora">
       <span id="banner-renovar-txt">⚠️ Acesso vence em breve</span>
     </button>
@@ -9683,6 +9742,112 @@ if (!window._movhRelogioClockIniciado) { window._movhRelogioClockIniciado = true
 
 
 let aDiasTesteAtivo = null; // setado por aCheckTeste() quando a URL tem ?teste=N — dias de acesso grátis a conceder no cadastro
+// ── LINK PÚBLICO DE TREINO (?treino=TOKEN): visualização sem login ──
+// Lê o treino ao vivo via RPC get_treino_publico (sempre a versão mais recente
+// salva pelo professor). Não grava nada: escritas são bloqueadas.
+function aPreviewToast(msg){
+  let t = document.getElementById('aPreviewToast');
+  if (!t) {
+    t = document.createElement('div'); t.id = 'aPreviewToast';
+    t.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1A1A18;color:#fff;padding:10px 16px;border-radius:99px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:90%;text-align:center';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg; t.style.display = 'block';
+  clearTimeout(window._aPreviewToastT);
+  window._aPreviewToastT = setTimeout(function(){ t.style.display = 'none'; }, 3200);
+}
+function aPreviewBloqueado(){
+  if (!window._movhPreview) return false;
+  aPreviewToast(aLang === 'en' ? 'Create your account to log your workouts' : 'Crie sua conta para registrar seus treinos');
+  return true;
+}
+function aPreviewSafetyNet(){
+  const orig = aClient.from.bind(aClient);
+  const dead = { data: null, error: { message: 'preview' } };
+  const chain = new Proxy(function(){}, {
+    get: function(_, p){ if (p === 'then') return function(res){ res(dead); }; return function(){ return chain; }; },
+    apply: function(){ return chain; }
+  });
+  aClient.from = function(t){
+    const q = orig(t);
+    ['insert','update','upsert','delete'].forEach(function(m){ q[m] = function(){ return chain; }; });
+    return q;
+  };
+}
+function aIrParaRegistro(){
+  window.location.href = window.location.pathname + '?bemvindo=1';
+}
+function aPreviewErroTela(err){
+  const en = (navigator.language || '').toLowerCase().indexOf('en') === 0;
+  let d = document.getElementById('aPreviewErro');
+  if (!d) {
+    d = document.createElement('div'); d.id = 'aPreviewErro';
+    d.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:var(--bg,#F2F1EE);color:var(--tx,#1A1A18);text-align:center;font-family:inherit';
+    document.body.appendChild(d);
+  }
+  const box = document.createElement('div'); box.style.cssText = 'max-width:380px';
+  const h = document.createElement('div'); h.style.cssText = 'font-size:40px;margin-bottom:8px'; h.textContent = '🔗';
+  const t = document.createElement('div'); t.style.cssText = 'font-size:16px;font-weight:800;margin-bottom:8px';
+  t.textContent = err ? (en ? 'Could not load this workout' : 'Não foi possível carregar este treino') : (en ? 'This workout link is no longer available' : 'Este link de treino não está mais disponível');
+  const m = document.createElement('div'); m.style.cssText = 'font-size:13px;opacity:.75;margin-bottom:16px';
+  m.textContent = err ? (en ? 'Try again in a moment or ask your trainer for a new link.' : 'Tente novamente em instantes ou peça um novo link ao seu professor.') : (en ? 'It was removed or replaced. Ask your trainer for a new link.' : 'Ele foi removido ou substituído. Peça um novo link ao seu professor.');
+  box.appendChild(h); box.appendChild(t); box.appendChild(m);
+  if (err) { const c = document.createElement('div'); c.style.cssText = 'font-size:10px;opacity:.45;margin-bottom:16px;word-break:break-word'; c.textContent = String(err.message || err.code || err); box.appendChild(c); }
+  const b = document.createElement('button'); b.style.cssText = 'padding:10px 18px;border-radius:99px;border:1px solid var(--bd,#DDDBD4);background:var(--card,#fff);color:inherit;font-weight:700;cursor:pointer';
+  b.textContent = en ? 'Go to login' : 'Ir para o login';
+  b.onclick = function(){ window.location.href = window.location.pathname; };
+  box.appendChild(b);
+  d.innerHTML = ''; d.appendChild(box);
+}
+async function aBootPreview(token){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'flex';
+  let res = null, err = null;
+  try {
+    const r = await aClient.rpc('get_treino_publico', { p_token: token });
+    res = r.data; err = r.error;
+  } catch(e) { err = e; }
+  document.getElementById('loadingScreen').style.display = 'none';
+  if (err || !res || !res.conteudo) {
+    console.error('[MOVH] Link de treino inválido ou erro:', err);
+    aPreviewErroTela(err);
+    return;
+  }
+  window._movhPreview = true;
+  aPreviewSafetyNet();
+  const h = new Date();
+  const iso = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
+  aAlunoRow = { id: null, nome: '', email: '', professor_id: res.professor_id || null, mostra_aulas_coletivas: false };
+  aTodosRegistros = []; aTestesFisicos = []; aAvaliacoesFisicas = [];
+  aUltimaCargaPorExercicio = {}; aBaselineCargaPorExercicio = {}; aExerciciosMeta = {}; aExVideoMap = {};
+  (res.exercicios || []).forEach(function(e){ if (e && e.nome && e.url) aExVideoMap[e.nome] = e.url; });
+  const proto = { id: null, aluno_id: null, professor_id: res.professor_id || null, nome: res.nome, conteudo: res.conteudo, data_inicio: iso, ativo: true };
+  aProtocolo = proto;
+  // splits salvos no banco não trazem ids/cores (loadSplit do Gerador gera na hora): normaliza igual
+  (proto.conteudo.semanas || []).forEach(function(sem, si){
+    if (!sem.id) sem.id = 'sp_s' + si;
+    (sem.dias || []).forEach(function(d, di){
+      if (!d.id) d.id = 'sp_s' + si + 'd' + di;
+      (d.blocos || []).forEach(function(b){
+        if (!b.cor) b.cor = b.id === 'con' ? '#D45828' : '#3580D8';
+        if (!b.exercicios) b.exercicios = [];
+        if (b.id === 'con' && !b.metconExs) b.metconExs = [];
+      });
+    });
+  });
+  aRenderProtocolo(proto);
+  document.body.classList.add('preview-mode');
+  const en = aLang === 'en';
+  const btn = document.getElementById('tRegistroBtn');
+  if (btn) { btn.textContent = en ? 'Create account' : 'Fazer o registro'; btn.style.display = 'inline-block'; }
+  const box = document.getElementById('tHeaderRecolhivel');
+  if (box && !document.getElementById('tPreviewAviso')) {
+    const av = document.createElement('div'); av.id = 'tPreviewAviso'; av.className = 'preview-aviso';
+    av.textContent = en ? 'You are viewing a sample workout. Create your account to track your progress.' : 'Você está vendo um treino de exemplo. Crie sua conta para registrar seu progresso.';
+    box.insertBefore(av, box.firstChild);
+  }
+}
+
 function aCheckBemVindo(){
   try {
     const p = new URLSearchParams(window.location.search);
@@ -9803,6 +9968,10 @@ async function aEnsureAlunoRow(user, nomeSugerido, diasTeste){
 }
 
 async function aBoot(sessionParam){
+  if (!sessionParam) {
+    const tkTreino = new URLSearchParams(window.location.search).get('treino');
+    if (tkTreino) { await aBootPreview(tkTreino); return; }
+  }
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';
 
@@ -10486,6 +10655,7 @@ function aBlocoToggleDone(bid){
 }
 
 function aVerificarTreinoConcluido(forcar){
+  if (window._movhPreview) return;
   const dash = document.getElementById('tDashboard');
   if(!dash) return;
   const blocos = [...dash.querySelectorAll('.bloco')];
@@ -10571,6 +10741,7 @@ async function aRegistrarSessaoConcluidaSeNecessario(){
       elOk.classList.add('sc-reg-ok');
     }
   } catch(e) {
+    console.error('[MOVH] Falha ao registrar sessão em rpe_sessoes:', e);
     const elErr = document.getElementById('sc-registro-status');
     if (elErr) {
       elErr.textContent = aLang==='en' ? '⚠️ Couldn\u2019t send progress — check your connection' : '⚠️ Não deu pra enviar o progresso — confira sua conexão';
@@ -10630,6 +10801,7 @@ function aAtualizarBotaoEnviarRPE(){
   if (btn) btn.disabled = !(aRpeSelecionado != null && aDorSelecionada != null);
 }
 async function aSalvarRPE(){
+  if (aPreviewBloqueado()) return;
   if (aRpeSelecionado == null || aDorSelecionada == null || !aAlunoRow) return;
   const btn = document.getElementById('rpe-enviar-btn');
   if (btn) { btn.disabled = true; btn.textContent = aLang==='en' ? 'Sending...' : 'Enviando...'; }
@@ -10712,6 +10884,7 @@ async function aChecarSolicitacaoMudanca(overlay){
   card.appendChild(div);
 }
 async function aSolicitarMudancaTreino(){
+  if (aPreviewBloqueado()) return;
   if(!aAlunoRow || !aProtocolo) return;
   const dias = aDiasNoProtocolo();
   const { error } = await aClient.from('solicitacoes_treino').insert({
@@ -10744,6 +10917,7 @@ function aFecharVideoModal(){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')aFecharVideoModal();});
 
 async function aSalvarCarga(eid, exercicioNome){
+  if (aPreviewBloqueado()) return;
   const carga = document.getElementById(eid+'-carga').value;
   const reps = document.getElementById(eid+'-reps').value;
   if (!carga && !reps) return;
@@ -10764,6 +10938,7 @@ async function aSalvarCarga(eid, exercicioNome){
 }
 
 async function aSalvarTempo(eid, exercicioNome){
+  if (aPreviewBloqueado()) return;
   const tempoEl = document.getElementById(eid+'-tempo');
   const tempo = tempoEl ? tempoEl.value : '';
   if (!tempo) return;
@@ -11509,6 +11684,7 @@ function aFecharEnvioAvaliacao(){
 }
 
 async function aEnviarFotosAvaliacao(){
+  if (aPreviewBloqueado()) return;
   const fFrontal = document.getElementById('av-foto-frontal').files[0];
   const fPosterior = document.getElementById('av-foto-posterior').files[0];
   const fLateralE = document.getElementById('av-foto-lateral-e').files[0];
@@ -11903,6 +12079,7 @@ function aTestesAtualizarCampos(){
   document.getElementById('at-valor').placeholder = info.tipo === 'tempo' ? 'Tempo sustentado (segundos)' : 'Valor (kg)';
 }
 async function aSalvarMeuTeste(){
+  if (aPreviewBloqueado()) return;
   const info = aPadraoInfo(document.getElementById('at-padrao').value);
   if (!info) { alert('Selecione um padrão de movimento.'); return; }
   const exercicio = document.getElementById('at-exercicio').value.trim() || info.exercicio;
@@ -12522,6 +12699,61 @@ function copiarSQLRLS(){
     'CREATE POLICY "professor ve rpe dos proprios alunos"',
     '  ON rpe_sessoes FOR SELECT',
     '  USING (aluno_id IN (SELECT id FROM alunos WHERE professor_id = auth.uid()));',
+    '',
+    '-- RPE_SESSOES: a sessão concluída é gravada na hora com rpe/dor NULOS',
+    '-- (o RPE só chega depois, via UPDATE). Se essas colunas nasceram NOT NULL,',
+    '-- o INSERT do aluno falha em silêncio e o painel fica em "0/x sessões".',
+    'DO $$ BEGIN',
+    '  BEGIN ALTER TABLE rpe_sessoes ALTER COLUMN rpe DROP NOT NULL; EXCEPTION WHEN undefined_column THEN NULL; END;',
+    '  BEGIN ALTER TABLE rpe_sessoes ALTER COLUMN dor DROP NOT NULL; EXCEPTION WHEN undefined_column THEN NULL; END;',
+    'END $$;',
+    '',
+    '-- DIAGNOSTICO (rode separado, só pra conferir): linhas existem?',
+    '-- select count(*), max(criado_em) from rpe_sessoes;',
+    '-- select column_name, is_nullable from information_schema.columns where table_name=\'rpe_sessoes\';',
+    '-- select tablename, policyname, cmd from pg_policies where tablename=\'rpe_sessoes\';',
+    '',
+    '-- LINK PUBLICO DE TREINO (futuro aluno, sem login): tabela + RPC segura',
+    'CREATE TABLE IF NOT EXISTS links_treino (',
+    '  token text PRIMARY KEY,',
+    '  professor_id uuid NOT NULL,',
+    '  protocolo_id text,',
+    '  split_id text,',
+    '  criado_em timestamptz DEFAULT now()',
+    ');',
+    'ALTER TABLE links_treino ENABLE ROW LEVEL SECURITY;',
+    'DROP POLICY IF EXISTS "professor gerencia proprios links de treino" ON links_treino;',
+    'CREATE POLICY "professor gerencia proprios links de treino"',
+    '  ON links_treino FOR ALL',
+    '  USING (professor_id = auth.uid())',
+    '  WITH CHECK (professor_id = auth.uid());',
+    '',
+    'CREATE OR REPLACE FUNCTION get_treino_publico(p_token text)',
+    'RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$',
+    'DECLARE l links_treino%ROWTYPE; r jsonb;',
+    'BEGIN',
+    '  SELECT * INTO l FROM links_treino WHERE token = p_token;',
+    '  IF NOT FOUND THEN RETURN NULL; END IF;',
+    '  IF l.protocolo_id IS NOT NULL THEN',
+    '    SELECT jsonb_build_object(\'nome\', p.nome, \'conteudo\', p.conteudo, \'professor_id\', p.professor_id)',
+    '      INTO r FROM protocolos p WHERE p.id::text = l.protocolo_id;',
+    '  ELSE',
+    '    SELECT jsonb_build_object(\'nome\', s.nome, \'professor_id\', s.professor_id,',
+    '      \'conteudo\', jsonb_build_object(\'nome\', s.nome, \'icone\', to_jsonb(s)->>\'icone\', \'desc\', to_jsonb(s)->>\'descricao\',',
+    '        \'divisao\', to_jsonb(s)->>\'divisao\', \'lang\', \'pt\', \'semanas\', COALESCE(s.conteudo->\'semanas\', \'[]\'::jsonb)))',
+    '      INTO r FROM splits s WHERE s.id::text = l.split_id;',
+    '  END IF;',
+    '  IF r IS NULL THEN RETURN NULL; END IF;',
+    '  r := r || jsonb_build_object(\'exercicios\', COALESCE((',
+    '    SELECT jsonb_agg(jsonb_build_object(\'nome\', e.nome, \'url\', e.url))',
+    '    FROM exercicios e',
+    '    WHERE e.professor_id = (r->>\'professor_id\')::uuid AND e.url IS NOT NULL AND e.url <> \'\'',
+    '  ), \'[]\'::jsonb));',
+    '  RETURN r;',
+    'END $fn$;',
+    'REVOKE ALL ON FUNCTION get_treino_publico(text) FROM public;',
+    'GRANT EXECUTE ON FUNCTION get_treino_publico(text) TO anon, authenticated;',
+    'NOTIFY pgrst, \'reload schema\';',
     '',
     '-- PROFESSORES: qualquer autenticado pode ler (para buscar professor_id)',
     'DROP POLICY IF EXISTS "autenticado le professores" ON professores;',
