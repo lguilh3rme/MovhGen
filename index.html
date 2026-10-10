@@ -10062,6 +10062,18 @@ async function aBootPreview(token){
       });
     });
   });
+  // link público = amostra "sem calendário": se o dia real de hoje não casa com
+  // nenhum dia montado (dias sem "dia real" definido, ou hoje é folga), roda a
+  // sequência da semana montada a partir de hoje (hoje = 1º treino, amanhã = 2º...)
+  // e repete em ciclo, em vez de mostrar dias vazios.
+  (function(){
+    const dow = h.getDay();
+    const hojeCasa = (proto.conteudo.semanas || []).every(function(sem){ return (sem.dias || []).some(function(d){ return aDiaSemanaEfetivo(d) === DIAS_SEMANA_ORDEM[dow]; }); });
+    if (hojeCasa) return;
+    (proto.conteudo.semanas || []).forEach(function(sem){
+      (sem.dias || []).forEach(function(d, di){ d.diaSemana = DIAS_SEMANA_ORDEM[(dow + di) % 7]; });
+    });
+  })();
   aRenderProtocolo(proto);
   document.body.classList.add('preview-mode');
   const en = aLang === 'en';
