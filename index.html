@@ -394,6 +394,14 @@ select{cursor:pointer}
 .sb-det[open] > summary{border-bottom:1px solid #242422}
 .sb-det > *:not(summary){margin-left:6px;margin-right:6px}
 #alunos-filtro-status{width:auto!important;flex:0 0 160px}
+@media(min-width:701px){
+  .exi{padding:3px 6px;gap:3px}
+  .exi-top{padding:3px 6px;gap:8px}
+  .ch{margin-bottom:6px}
+  .pg-head > div:first-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px;width:100%;max-width:1040px}
+  .pg-head > div:first-child > *{grid-column:1/-1}
+  .pg-head > div:first-child > div[style*="margin-top:6px"]{grid-column:auto;margin-top:2px!important;flex-wrap:wrap}
+}
 .sn-row{flex-wrap:wrap;row-gap:0;padding:0 2px}
 .sn-edit{flex:1 1 100%!important;width:100%;color:#8a8a84;font-size:10px;padding:8px 6px 3px}
 .sn-row > input[type=number]{order:2;margin:2px 0 4px 6px}
@@ -9314,14 +9322,22 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
   .vbtn{width:38px;height:38px}
 }
 /* ── compacto mobile (v89) ── */
-.bloco{margin-bottom:10px;border-radius:12px}
-.bh{padding:9px 12px;gap:8px}
-.exl{padding:0 6px 6px;gap:5px}
-.ec{padding:8px 10px;border-radius:10px}
+.bloco{margin-bottom:8px;border-radius:10px;box-shadow:none}
+.bloco:hover{box-shadow:none}
+.bh{padding:6px 10px;gap:7px;min-height:30px}
+.dot{width:8px;height:12px;border-width:2px}
+.bt{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t2)}
+.bm{font-size:10px;padding:1px 7px}
+.bt-arr{font-size:11px}
+.bloco-done-btn{width:20px;height:20px;font-size:10px}
+.exl{padding:0 6px 2px;gap:0}
+.ec{padding:7px 4px;border-radius:0;background:transparent;border:0;border-top:1px solid var(--bd)}
+.exl > .ec:first-child{border-top:0}
+.ec.done{background:var(--Gl);border-radius:8px;border-top-color:transparent}
 .ec-hd{gap:8px}
-.ec-n{font-size:13.5px;line-height:1.25}
-.ec-chips{gap:5px;margin-top:5px;align-items:center}
-.ec-chip{padding:3px 8px;font-size:11px;border-radius:7px;white-space:nowrap}
+.ec-n{font-size:13px;line-height:1.25}
+.ec-chips{gap:5px;margin-top:4px;align-items:center}
+.ec-chip{padding:2px 7px;font-size:10.5px;border-radius:7px;white-space:nowrap}
 .ec-o{margin-top:5px;padding:5px 8px;font-size:11px}
 .vbtn{width:34px;height:34px;border-radius:9px}
 .cargabox{padding:2px 7px;gap:3px}
@@ -9340,6 +9356,7 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dash-badges-row{margin-bottom:.5rem}
 .cargabox input{width:2.6ch;min-width:26px}
 .footer{margin-top:1rem}
+#tDashConteudo .pt{font-size:16px!important;margin-bottom:6px!important}
 .loadingbox{display:flex;align-items:center;justify-content:center;padding:3rem;font-size:13px;color:var(--t2)}
 .dash-banner{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--Gd);background:var(--Gl);padding:5px 11px;border-radius:99px;margin-bottom:.85rem}
 .dash-badges-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:.85rem}
