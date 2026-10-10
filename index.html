@@ -9430,7 +9430,11 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .bloco .bh{background-image:linear-gradient(to right,color-mix(in srgb,var(--G) 18%,transparent) var(--bp,0%),transparent var(--bp,0%))}
 .bp{font-size:10px;font-weight:800;color:var(--t2);background:var(--bg);padding:1px 7px;border-radius:99px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .bloco-concluido .bp{background:var(--Gl);color:var(--Gd)}
-.dica-series{display:flex;align-items:center;gap:8px;margin-top:6px;padding:6px 8px 6px 10px;border-radius:9px;background:var(--Pl);color:var(--Pd);font-size:11px;line-height:1.35}
+.sessao-progresso{flex-wrap:wrap;align-items:center;gap:6px 10px;margin-bottom:6px!important}
+.sessao-progresso.sp-flex{display:flex!important}
+.sessao-progresso .sp-bar-track{flex:1 1 0;min-width:60px;height:6px;background:var(--bd)}
+.sessao-progresso .sp-texto{margin:0!important;white-space:nowrap}
+.dica-series{flex:1 1 100%;margin-top:0!important;display:flex;align-items:center;gap:8px;margin-top:6px;padding:6px 8px 6px 10px;border-radius:9px;background:var(--Pl);color:var(--Pd);font-size:11px;line-height:1.35}
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
@@ -9456,9 +9460,21 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .cargabox{padding:2px 3px 2px 8px!important;background:var(--card)!important;border:1px solid var(--bd)!important;gap:5px!important}
 .cargabox .ic{display:none}
 .cargabox input{font-weight:700;font-size:14px}
-.cargabox .u{display:none}
-.cargabox input{width:34px!important;text-align:center;font-size:13px!important}
-.cargabox .sep{opacity:.5}
+.cargabox{flex:1 1 100%;order:9;padding:4px 4px 4px 12px!important;gap:6px!important}
+.cargabox::before{content:"Carga";font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.55;margin-right:2px}
+.cargabox .u{display:inline;font-size:11px;opacity:.7;font-weight:700;margin-right:2px}
+.cargabox input{width:46px!important;text-align:center;font-size:15px!important;border-bottom:2px solid var(--bd)!important;border-radius:4px}
+.cargabox input:focus{border-bottom-color:var(--P)!important}
+.cargabox .sep{opacity:.5;font-weight:800}
+.cargabox .salvar-mini{margin-left:auto!important}
+.ph{border-bottom:none!important;margin-bottom:4px!important;padding-bottom:0!important}
+#tHeaderToggle{padding:0 0 2px!important;margin-top:5px!important;opacity:.7}
+.preview-aviso{font-size:12px!important;padding:8px 12px!important;line-height:1.35!important}
+.sx-n{font-weight:800;font-size:13px}
+.sx-l{font-style:normal;font-size:9.5px;font-weight:700;opacity:.7;margin:0 2px 0 2px;text-transform:lowercase}
+.sx-ex{opacity:.6}
+.sx-x{font-weight:800;opacity:.55;margin:0 3px}
+.ec-chip-sug{font-weight:700!important}
 .cargabox .salvar-mini{background:var(--P)!important;color:#fff!important;border-radius:99px!important;padding:5px 11px!important;font-size:11px!important;font-weight:700!important;margin-left:4px;letter-spacing:.02em}
 .cargabox.carga-registrada .salvar-mini{background:var(--G)!important}
 .vbtn{width:auto!important;height:32px!important;padding:0 13px 0 10px!important;border-radius:99px!important;background:var(--Pl)!important;color:var(--Pd)!important;border:none!important;font-size:12px!important;font-weight:700;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
@@ -9674,6 +9690,7 @@ function aAtualizarProgressoSessao(){
   const cards = [...cont.querySelectorAll('.ec')];
   const total = cards.length;
   if(!total){ wrap.style.display='none'; return; }
+  wrap.style.display='flex';
   const feitos = cards.filter(c=>c.classList.contains('done')).length;
   let somaFr = 0;
   cards.forEach(function(c){
@@ -9692,7 +9709,7 @@ function aAtualizarProgressoSessao(){
   else if(feitos>0) msg += aLang==='en' ? ' — nice start!' : ' — começou bem!';
   if(texto) texto.textContent = msg;
   wrap.classList.toggle('sp-completo', pct>=100);
-  wrap.style.display = 'block';
+  wrap.style.display = 'flex';
   aAtualizarTodosBlocos();
   aDicaSeriesMontar();
 }
@@ -10722,7 +10739,7 @@ function aDicaSeriesMontar(){
     return;
   }
   if (!d) { d = document.createElement('div'); d.id = 'aDicaSeries'; d.className = 'dica-series'; wrap.appendChild(d); }
-  d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap the <b>sets badge</b> (e.g. 4×8) after each set — it counts and fills up. At the last set the exercise is marked done.' : 'Toque no <b>badge de séries</b> (ex: 4×8) a cada série feita — ele conta e vai enchendo. Na última, o exercício é marcado como feito.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
+  d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap the <b>sets badge</b> (e.g. 4×8) after each set — it counts and fills up. At the last set the exercise is marked done.' : 'Toque no badge <b>séries × reps</b> a cada série feita: ele conta e enche. Na última, o exercício conclui.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
   primeiro.classList.add('ec-dica-pulse');
 }
 function aDicaSeriesFechar(){
@@ -10829,6 +10846,14 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   const serieRaw = String(sugVolume ? sugVolume.series : (ex.series || '')).trim();
   const serieCurtoM = serieRaw.match(/^(\\d+)\\s*[x×]\\s*([^\\[\\]]+)$/i);
   const seriesCurto = serieCurtoM ? (serieCurtoM[1] + '×' + serieCurtoM[2].trim()) : seriesExibir;
+  // badge legível: "4 séries × 8 reps" (número antes do × = séries, depois = reps)
+  let seriesBadgeHTML = aEsc(seriesCurto);
+  if (serieCurtoM) {
+    const repsM = serieCurtoM[2].trim().match(/^([\\d\\-–\\/]+)\\s*(.*)$/);
+    const lblS = aLang==='en' ? 'sets' : 'séries';
+    seriesBadgeHTML = '<b class="sx-n">' + aEsc(serieCurtoM[1]) + '</b><i class="sx-l">' + lblS + '</i><span class="sx-x">×</span>' +
+      (repsM ? '<b class="sx-n">' + aEsc(repsM[1]) + '</b><i class="sx-l">reps</i>' + (repsM[2] ? '<i class="sx-l sx-ex">' + aEsc(repsM[2]) + '</i>' : '') : '<b class="sx-n">' + aEsc(serieCurtoM[2].trim()) + '</b>');
+  }
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
   const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
   const baseRefHTML = sugVolume
@@ -10841,16 +10866,16 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
     : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="ic">🏋️</span>' +
-        '<input type="number" inputmode="decimal" step="0.5" placeholder="kg" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
+        '<input type="number" inputmode="decimal" step="0.5" placeholder="0" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
-        '<input type="number" inputmode="numeric" placeholder="reps" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
+        '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">'+aEsc(aT('salvar'))+'</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>';
   const chips = [
-    ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+aEsc(seriesCurto)+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
+    ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
     restExibir ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir)+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir)+'</span>' : '',
-    mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
+    mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+(aLang==='en'?'Suggested ':'Sugerido ')+'<b>'+aEsc(sugestao.valor)+' kg</b></span>' : '',
     cargaBadge
   ].filter(Boolean).join('');
   return '<div class="ec" id="'+eid+'">' +
