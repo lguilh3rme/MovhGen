@@ -355,6 +355,24 @@ select{cursor:pointer}
 .exi-arr{color:var(--t3);font-size:15px;transition:transform .2s;flex-shrink:0}
 .exi-det{padding:6px 0 2px;border-top:0.5px solid var(--bd2);margin-top:4px}
 .exi-rm{flex-shrink:0}
+/* ── editor no celular (v89) ── */
+@media(max-width:700px){
+  .ch{flex-wrap:wrap;row-gap:2px}
+  .ch .ie.label{flex:1 1 60%;min-width:0;font-size:13px;padding:4px 3px}
+  .ch .ie.sm{order:9;flex:1 1 100%;max-width:none;margin-left:16px;font-size:11px}
+  .exi-top{padding:8px;min-height:46px;gap:8px}
+  .exi-lbl{font-size:13px}
+  .exi-badge{font-size:11px;padding:3px 9px}
+  .exi-top > span[onclick]{gap:2px!important}
+  .exi-top .bic[title^="Mover"]{width:32px!important;height:22px!important;font-size:12px!important;border-radius:8px}
+  .exi-top .exi-rm{width:34px;height:34px}
+  .preview-toggle,.bd-btn{min-width:34px;min-height:34px}
+  .badd{padding:9px 14px;font-size:12px}
+  .pg-head div[style*="margin-top:6px"]{flex-wrap:wrap;gap:4px 8px!important}
+  .pg-head div[style*="margin-top:6px"] > span:first-child{flex:0 0 100%}
+  .pg-head div[style*="margin-top:6px"] > span:not(:first-child){display:none}
+  .pg-head div[style*="margin-top:6px"] > select{flex:1 1 40%;min-width:0;font-size:16px!important;padding:7px 8px!important}
+}
 </style>
 </head>
 <body>
