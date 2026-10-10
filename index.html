@@ -373,6 +373,35 @@ select{cursor:pointer}
   .pg-head div[style*="margin-top:6px"] > span:not(:first-child){display:none}
   .pg-head div[style*="margin-top:6px"] > select{flex:1 1 40%;min-width:0;font-size:16px!important;padding:7px 8px!important}
 }
+/* ── navegação e densidade no PC (v89) ── */
+.main{padding:1.1rem 1.4rem}
+.pg-head{margin-bottom:.9rem}
+.pg-title{font-size:19px}
+.card{padding:.85rem 1rem;border-radius:12px;margin-bottom:.6rem}
+.sb{padding:.6rem .5rem 1rem}
+.sb-top{margin-bottom:.6rem;padding-bottom:.5rem}
+.sn{margin-top:.7rem}
+.ni{font-size:12.5px;padding:7px 10px;border-radius:8px;color:#9d9d96;gap:8px}
+.ni:hover{background:#242422;color:#e8e8e4}
+.ni.active{background:var(--P);color:#fff;font-weight:600;box-shadow:0 2px 10px rgba(124,116,220,.35)}
+.ni .ic{font-size:13px;width:16px}
+.ni-add{font-size:10.5px;padding:5px 9px}
+.sb-det{margin:2px 0 6px;border:1px solid #242422;border-radius:8px;background:#161614}
+.sb-det > summary{cursor:pointer;font-size:11px;font-weight:700;color:#9d9d96;padding:7px 10px;list-style:none;user-select:none}
+.sb-det > summary::-webkit-details-marker{display:none}
+.sb-det > summary::before{content:'▸ ';color:var(--P)}
+.sb-det[open] > summary::before{content:'▾ '}
+.sb-det[open] > summary{border-bottom:1px solid #242422}
+.sb-det > *:not(summary){margin-left:6px;margin-right:6px}
+#alunos-filtro-status{width:auto!important;flex:0 0 160px}
+.sn-row{flex-wrap:wrap;row-gap:0;padding:0 2px}
+.sn-edit{flex:1 1 100%!important;width:100%;color:#8a8a84;font-size:10px;padding:8px 6px 3px}
+.sn-row > input[type=number]{order:2;margin:2px 0 4px 6px}
+.sn-row > .sn-actions{order:3;margin-left:auto;margin-top:0}
+.sn-row > .sn-actions button[title="+ dia"]{margin-top:0!important}
+/* ── painel de alunos (v89) ── */
+.aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
+.aluno-row input[type=date]{font-size:11px!important}
 </style>
 </head>
 <body>
@@ -3006,8 +3035,9 @@ function montarGraficoVolInt(lista, detalhado){
 
 function renderSB(){
   const el=document.getElementById('semanas-nav');
-  let h=montarTimelinePeriodizacao(semanas, null);
+  let h='<details class="sb-det"'+(window._sbPztOpen?' open':'')+' ontoggle="window._sbPztOpen=this.open"><summary>📈 Periodização · ferramentas</summary>'+montarTimelinePeriodizacao(semanas, null);
   h+='<div style="padding:0 4px 8px"><button type="button" onclick="sincronizarExerciciosComBanco()" style="width:100%;font-size:10px;padding:6px;border-radius:6px;border:1px dashed #3A3A38;background:none;color:#B8B0A6;cursor:pointer" title="Preenche vídeos dos exercícios que baterem o nome com o banco (não sobrescreve os que já têm vídeo)">🔄 Sincronizar exercícios com banco</button></div>';
+  h+='</details><div class="sn" style="margin-top:6px">Treino</div>';
   semanas.forEach((s,si)=>{
     h+=`<div class="sn-row">
       <input class="sn-edit" value="${escAttr(s.nome)}" oninput="semanas[${si}].nome=this.value" style="flex:1"/>
@@ -6448,8 +6478,8 @@ function renderPainelAlunos() {
       ? `<button onclick="mbVerProtocolo('${a.id}')" title="Ver / editar protocolo" style="background:var(--cl);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--tx);cursor:pointer">✏️ ${escAttr(proto.nome)}</button>` +
         (proto.data_inicio ? `<span style="color:var(--t3);font-size:10px"> desde ${new Date(proto.data_inicio+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
         (previsaoFim ? `<span style="color:var(--t3);font-size:10px"> · fim ${previsaoFim.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
-        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno">🗂</button>`
-      : `<span style="color:var(--t3);font-style:italic;font-size:10px">sem protocolo</span>`;
+        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno (histórico, duplicar, link)">🗂 Todos os treinos</button>`
+      : `<span style="color:var(--t3);font-style:italic;font-size:10px">sem protocolo</span> <button class="btn bp" style="font-size:10px;padding:2px 9px;margin-left:4px" onclick="mbMontarTreinoPara('${a.id}')" title="Abre o editor com este aluno selecionado">＋ Montar treino</button>`;
 
     // Badges de status
     const statusBadge = lixeira
@@ -6524,7 +6554,7 @@ function renderPainelAlunos() {
     // Rodapé do card (só para alunos fora da lixeira) — ultra-compacto
     const rodape = lixeira ? '' : `
       <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:9px;color:var(--t3);white-space:nowrap">🗓</span>
+        <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">Acesso</span>
         <input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
           style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Início"/>
         <span style="font-size:9px;color:var(--t3)">→</span>
@@ -6532,13 +6562,13 @@ function renderPainelAlunos() {
           style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Fim"/>
         <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbSalvarPeriodo(this.dataset.id)">💾</button>
         <span style="flex:1"></span>
-        ${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese">📋</button>` : ''}
-        ${parq && parq.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px${Object.values(parq.respostas||{}).some(v=>v===true||v==='sim')?';border-color:#e44;color:#c03030':''}" data-id="${a.id}" onclick="mbVerParq(this.dataset.id)" title="Ver PAR-Q">🩺</button>` : ''}
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarParq(this.dataset.id)" title="Solicitar PAR-Q">🔁🩺</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Solicitar anamnese">🔁📋</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
-        ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Solicitar avaliação física/postural">🔁📸</button>
+        ${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese respondida">📋 Anamnese</button>` : ''}
+        ${parq && parq.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px${Object.values(parq.respostas||{}).some(v=>v===true||v==='sim')?';border-color:#e44;color:#c03030':''}" data-id="${a.id}" onclick="mbVerParq(this.dataset.id)" title="Ver PAR-Q respondido">🩺 PAR-Q</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarParq(this.dataset.id)" title="Pedir ao aluno que preencha o PAR-Q">🩺 Pedir PAR-Q</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Pedir ao aluno que preencha a anamnese">📋 Pedir anamnese</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️ Testes${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
+        ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸 Avaliações${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Pedir fotos de avaliação física/postural">📸 Pedir avaliação</button>
         ${solicMudanca ? `<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#FF8A00;color:#fff;border-color:#FF8A00;font-weight:700" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'atendida')" title="Marcar como atendida (já criei/ajustei o novo protocolo)">✅ Atendida</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;background:var(--P);color:#fff;border-color:var(--P);font-weight:700" data-id="${solicMudanca.id}" data-aluno="${a.id}" onclick="mbAtenderECriarProtocolo(this.dataset.id,this.dataset.aluno)" title="Marca como atendida e já abre a tela de criação de protocolo com este aluno selecionado">🗂️ Criar protocolo</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'dispensada')" title="Dispensar solicitação">✖ Dispensar</button>` : ''}
@@ -6620,6 +6650,12 @@ async function mbAtenderSolicitacaoMudanca(solicitacaoId, novoStatus) {
 // Atalho pedido no backlog: em vez de só marcar "Atendida" e o professor ter
 // que navegar manualmente até a criação, isso já marca a solicitação e leva
 // direto pra tela de criação de protocolo com o aluno certo pré-selecionado.
+function mbMontarTreinoPara(alunoId) {
+  nav('config');
+  const sel = document.getElementById('mb-aluno-select');
+  if (sel) { sel.value = alunoId; mbOnAlunoChange(); }
+  notify('Aluno selecionado — monte o treino e salve para ele.');
+}
 async function mbAtenderECriarProtocolo(solicitacaoId, alunoId) {
   await mbAtenderSolicitacaoMudanca(solicitacaoId, 'atendida');
   nav('config');
