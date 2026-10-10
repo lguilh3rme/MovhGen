@@ -9438,6 +9438,32 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
+/* ── compacto: treino cabe na tela (v91) ── */
+.ec{padding:6px 10px!important}
+.ec-hd{gap:8px!important}
+.ec-chips{margin-top:4px!important;gap:4px!important;align-items:center}
+.ec-chip{padding:2px 7px!important;font-size:11px!important}
+.ec-chip.ec-chip-s,.ec-chip.ec-chip-progresso{min-height:24px}
+.sx-c{display:inline-flex;flex-direction:column;align-items:center;line-height:1}
+.sx-c i{font-style:normal;font-size:8px;font-weight:700;opacity:.7;margin-bottom:1px}
+.sx-c b{font-size:14px;font-weight:800}
+.sx-ex{font-size:9px;opacity:.7;margin-left:3px;align-self:flex-end}
+.ec-chip-progresso .sx-x{margin:6px 3px 0}
+.ec-chip-progresso [id$=series-count]{margin-left:3px;font-size:10.5px}
+.ec-n{font-size:14px!important}
+.ec-done-cb{width:20px;height:20px}
+.ec-o{font-size:11px!important;margin-top:2px;display:block}
+.vbtn{height:26px!important;padding:0 10px 0 8px!important;font-size:11px!important}
+.bloco{margin-bottom:8px!important;border-radius:14px!important}
+.bloco .bh{padding:8px 12px!important}
+.a-cj-group{border-radius:11px;border-width:1.5px;background:color-mix(in srgb,var(--P) 7%,transparent)}
+.a-cj-head{padding:4px 10px!important;border-bottom:none!important;background:color-mix(in srgb,var(--P) 14%,transparent)}
+.a-cj-items{padding:3px!important;gap:2px!important}
+.a-cj-foot{padding:3px 10px!important;font-size:10px}
+#tDashConteudo .dash-semfase{margin-bottom:.35rem!important}
+#tDashConteudo .pt{margin-bottom:4px!important}
+.dash-badges-row{margin-bottom:.4rem!important}
+.pt{font-size:22px!important}
 /* ── visual moderno (v90) ── */
 body{font-size:15px;letter-spacing:-.005em}
 button,.btn,.sbt,.dbt,.ec-chip-clicavel,.vbtn{-webkit-tap-highlight-color:transparent}
@@ -9460,13 +9486,12 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .cargabox{padding:2px 3px 2px 8px!important;background:var(--card)!important;border:1px solid var(--bd)!important;gap:5px!important}
 .cargabox .ic{display:none}
 .cargabox input{font-weight:700;font-size:14px}
-.cargabox{flex:1 1 100%;order:9;padding:4px 4px 4px 12px!important;gap:6px!important}
-.cargabox::before{content:"Carga";font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;opacity:.55;margin-right:2px}
-.cargabox .u{display:inline;font-size:11px;opacity:.7;font-weight:700;margin-right:2px}
-.cargabox input{width:46px!important;text-align:center;font-size:15px!important;border-bottom:2px solid var(--bd)!important;border-radius:4px}
+.cargabox{padding:1px 3px 1px 6px!important;gap:1px!important;margin-left:auto;flex-wrap:nowrap}
+.cargabox .u{display:inline;font-size:9px;opacity:.65;font-weight:700;margin-right:1px}
+.cargabox input{width:22px!important;text-align:center;font-size:13px!important;padding:2px 0!important;border:none!important;border-bottom:1.5px solid var(--bd)!important;border-radius:0;background:transparent!important}
 .cargabox input:focus{border-bottom-color:var(--P)!important}
-.cargabox .sep{opacity:.5;font-weight:800}
-.cargabox .salvar-mini{margin-left:auto!important}
+.cargabox .sep{opacity:.45;font-weight:800;margin:0 1px}
+.cargabox .salvar-mini{width:20px;height:20px;padding:0!important;margin-left:2px;display:inline-flex;align-items:center;justify-content:center;font-size:13px!important}
 .ph{border-bottom:none!important;margin-bottom:4px!important;padding-bottom:0!important}
 #tHeaderToggle{padding:0 0 2px!important;margin-top:5px!important;opacity:.7}
 .preview-aviso{font-size:12px!important;padding:8px 12px!important;line-height:1.35!important}
@@ -10851,8 +10876,8 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   if (serieCurtoM) {
     const repsM = serieCurtoM[2].trim().match(/^([\\d\\-–\\/]+)\\s*(.*)$/);
     const lblS = aLang==='en' ? 'sets' : 'séries';
-    seriesBadgeHTML = '<b class="sx-n">' + aEsc(serieCurtoM[1]) + '</b><i class="sx-l">' + lblS + '</i><span class="sx-x">×</span>' +
-      (repsM ? '<b class="sx-n">' + aEsc(repsM[1]) + '</b><i class="sx-l">reps</i>' + (repsM[2] ? '<i class="sx-l sx-ex">' + aEsc(repsM[2]) + '</i>' : '') : '<b class="sx-n">' + aEsc(serieCurtoM[2].trim()) + '</b>');
+    seriesBadgeHTML = '<span class="sx-c"><i>' + lblS + '</i><b>' + aEsc(serieCurtoM[1]) + '</b></span><span class="sx-x">×</span>' +
+      (repsM ? '<span class="sx-c"><i>reps</i><b>' + aEsc(repsM[1]) + '</b></span>' + (repsM[2] ? '<span class="sx-ex">' + aEsc(repsM[2]) + '</span>' : '') : '<span class="sx-c"><i>reps</i><b>' + aEsc(serieCurtoM[2].trim()) + '</b></span>');
   }
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
   const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
@@ -10862,20 +10887,20 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   const cargaBadge = isTempo
     ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':'')+'">'+aEsc(aT('tempo'))+' ⏱️' +
         '<input type="number" step="1" placeholder="seg" class="tempobox-input" id="'+eid+'-tempo" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'">s' +
-        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">'+aEsc(aT('salvar'))+'</button>' +
+        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
     : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="ic">🏋️</span>' +
         '<input type="number" inputmode="decimal" step="0.5" placeholder="0" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
         '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
-        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">'+aEsc(aT('salvar'))+'</button>' +
+        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>';
   const chips = [
     ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
     restExibir ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir)+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir)+'</span>' : '',
-    mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+(aLang==='en'?'Suggested ':'Sugerido ')+'<b>'+aEsc(sugestao.valor)+' kg</b></span>' : '',
+    mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
   ].filter(Boolean).join('');
   return '<div class="ec" id="'+eid+'">' +
