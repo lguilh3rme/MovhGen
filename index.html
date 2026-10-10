@@ -164,6 +164,7 @@ select{cursor:pointer}
 .kb-col-nome{font-size:11.5px;font-weight:700;color:var(--tx);flex:1;min-width:0;background:transparent;border:none;padding:2px 3px;border-radius:5px}
 .kb-col-nome:focus{background:var(--cl);box-shadow:none;border:none}
 .kb-edit-btn{font-size:11px;padding:3px 6px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:var(--t3);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:inherit;line-height:1}
+.kb-dow{font-size:10.5px;padding:2px 3px;border-radius:99px;width:auto;max-width:56px;flex-shrink:0}
 .kb-edit-btn:hover{border-color:var(--P);color:var(--Pd)}
 .kb-col-body{padding:7px;overflow-y:auto;flex:1}
 .kb-grupo{margin-bottom:8px;border-radius:8px;transition:background .1s}
@@ -320,8 +321,21 @@ select{cursor:pointer}
 }
 @media(max-width:640px){
   .app{grid-template-columns:1fr}
-  .sb{display:none;position:fixed;inset:0;z-index:300;width:220px}
+  .sb{display:none;position:fixed;top:0;bottom:0;left:0;z-index:300;width:min(86vw,320px);box-shadow:8px 0 32px rgba(0,0,0,.45);animation:sbIn .18s ease-out}
   .sb.open{display:flex}
+  #sb-bd{display:none;position:fixed;inset:0;z-index:299;background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
+  #sb-bd.open{display:block}
+  .sb .ni{min-height:44px;font-size:14px;padding:9px 12px}
+  .sb .ni .ic{font-size:16px;width:20px}
+  .sb .sn-act-btn{min-width:34px;min-height:34px;font-size:15px}
+  .sb .sn-actions button[title="+ dia"]{min-width:34px;min-height:34px;font-size:20px!important}
+  .sb .sn-row > input[type=number]{width:46px!important;min-height:34px;font-size:13px!important}
+  .sb .sn-edit{font-size:11px;letter-spacing:.06em}
+  .sb .ni-x{min-width:32px;min-height:34px;font-size:15px!important}
+  .sb .ni-x[title^=Mover]{display:none}
+  .mob-menu{position:sticky;top:0;z-index:50;background:var(--bg);padding:6px 0;margin:-1rem 0 .6rem}
+  .mob-btn{width:40px;height:40px;font-size:18px}
+  @keyframes sbIn{from{transform:translateX(-24px);opacity:0}to{transform:none;opacity:1}}
   .mob-menu{display:flex;align-items:center;gap:8px;margin-bottom:1rem}
   .mob-btn{width:32px;height:32px;border:1px solid var(--bd);border-radius:var(--rs);background:var(--card);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
   .main{padding:1rem}
@@ -333,6 +347,8 @@ select{cursor:pointer}
   .db-grid{grid-template-columns:1fr}
 }
 @media(min-width:641px){.mob-menu{display:none}}
+#sb-bd{display:none}
+@media(max-width:640px){#sb-bd.open{display:block}}
 
 .db-splits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px}
 .db-sp-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
@@ -425,6 +441,20 @@ select{cursor:pointer}
 .sn-row > .sn-actions{order:3;margin-left:auto;margin-top:0}
 .sn-row > .sn-actions button[title="+ dia"]{margin-top:0!important}
 /* ── painel de alunos (v89) ── */
+.al-more-btn{display:none}
+@media(max-width:700px){
+  .aluno-row{padding:12px!important}
+  .aluno-row > div:first-child{gap:10px!important}
+  .aluno-row > div:first-child > div:nth-child(2){flex:1 1 calc(100% - 52px)!important;min-width:0!important}
+  .aluno-row > div:first-child > div:last-child{width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .al-more-btn{display:flex;align-items:center;justify-content:space-between;width:100%;margin-top:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--cl);color:var(--t2);font:600 12px inherit;font-family:inherit;cursor:pointer}
+  .al-more-btn span{transition:transform .15s}
+  .al-open .al-more-btn span{transform:rotate(180deg)}
+  .al-rodape{display:none!important}
+  .al-open .al-rodape{display:flex!important;gap:8px!important;padding-top:10px!important}
+  .aluno-row .btn.bs{font-size:12px!important;padding:8px 12px!important;min-height:38px}
+  .aluno-row .al-rodape input[type=date]{flex:1 1 40%;width:auto!important;min-height:38px;font-size:13px!important}
+}
 .aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
 .aluno-row input[type=date]{font-size:11px!important}
 </style>
@@ -457,10 +487,11 @@ select{cursor:pointer}
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
 </div>
 
+<div id="sb-bd" onclick="sbToggle(false)"></div>
 <!-- MAIN -->
 <div class="main" id="main-scroll">
 <div class="mob-menu">
-  <button class="mob-btn" onclick="document.getElementById('sb').classList.toggle('open')">☰</button>
+  <button class="mob-btn" onclick="sbToggle()">☰</button>
   <span style="font-size:13px;font-weight:700;color:var(--tx)">MOV<span style="color:var(--P)">A</span></span>
 </div>
 
@@ -1797,12 +1828,14 @@ function sincronizarExerciciosComBanco(){
 }
 
 // ══ NAV ══
+function sbToggle(on){const sb=document.getElementById('sb'),bd=document.getElementById('sb-bd');const o=(typeof on==='boolean')?on:!sb.classList.contains('open');sb.classList.toggle('open',o);if(bd)bd.classList.toggle('open',o);}
 function nav(id){
+  if(id.indexOf('kb-')===0)renderKanbanSemana(id.slice(3));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
   const nv=document.getElementById('nav-'+id);if(nv)nv.classList.add('active');
-  document.getElementById('sb').classList.remove('open');
+  sbToggle(false);
   if(id==='db-ex')renderDBEx();
   if(id==='db-pre'){renderPre();renderModelosCondicUI();}
   if(id==='db-splits')renderDBSplits();
@@ -1811,7 +1844,6 @@ function nav(id){
   if(id==='planos')plInit();
   if(id==='branding')renderLogoBranding();
   if(id==='coletivas')mbCarregarAulasColetivas();
-  if(id.indexOf('kb-')===0)renderKanbanSemana(id.slice(3));
   document.getElementById('main-scroll').scrollTop=0;
 }
 function goFirstDay(){if(semanas.length&&semanas[0].dias.length)nav(semanas[0].dias[0].id);}
@@ -2477,6 +2509,8 @@ function renderKanbanSemana(sid){
       <div class="kb-col-head">
         <span style="font-size:13px;flex-shrink:0">📅</span>
         <input class="kb-col-nome" value="${escAttr(d.nome)}" oninput="setDF('${d.id}','nome',this.value)" onblur="renderSB()" placeholder="Nome do dia"/>
+        <select class="kb-dow" onchange="setDF('${d.id}','diaSemana',this.value)" title="Dia real da semana em que este treino aparece para o aluno">${['','Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'].map(x=>`<option value="${x}"${(d.diaSemana||'')===x?' selected':''}>${x?x.slice(0,3):'dia?'}</option>`).join('')}</select>
+        <button class="kb-edit-btn" onclick="dupDia('${sid}','${d.id}')" title="Duplicar este dia">⧉</button>
         <button class="kb-edit-btn" onclick="nav('${d.id}')" title="Editar este dia por completo (progressão automática, dia da semana, fase...)">✎</button>
       </div>
       <div class="kb-col-body">${body}</div>
@@ -6598,7 +6632,8 @@ function renderPainelAlunos() {
 
     // Rodapé do card (só para alunos fora da lixeira) — ultra-compacto
     const rodape = lixeira ? '' : `
-      <div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="al-more-btn" onclick="this.closest('.aluno-row').classList.toggle('al-open')">⚙️ Acesso, pedidos e testes <span>▾</span></button>
+      <div class="al-rodape" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
         <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">Acesso</span>
         <input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
           style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Início"/>
@@ -9399,6 +9434,39 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
+/* ── visual moderno (v90) ── */
+body{font-size:15px;letter-spacing:-.005em}
+button,.btn,.sbt,.dbt,.ec-chip-clicavel,.vbtn{-webkit-tap-highlight-color:transparent}
+button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
+.bloco{border-radius:18px!important;border:1px solid var(--bd);box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.18);overflow:hidden;background:var(--card)}
+.bloco .bh{padding:12px 14px!important}
+.bloco .bt{font-size:12px!important;letter-spacing:.09em!important}
+.bloco-concluido{border-color:color-mix(in srgb,var(--G) 45%,var(--bd))}
+.ec-n{font-family:var(--font-d);font-size:15px!important;font-weight:700!important;letter-spacing:-.015em;line-height:1.25}
+.ec-done-cb{appearance:none;-webkit-appearance:none;width:24px;height:24px;border-radius:50%;border:2px solid var(--bd);background:transparent;display:inline-grid;place-content:center;transition:all .18s;position:relative}
+.ec-done-cb:checked{background:var(--G);border-color:var(--G);box-shadow:0 0 0 4px color-mix(in srgb,var(--G) 18%,transparent)}
+.ec-done-cb:checked::after{content:"";width:10px;height:6px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
+.ec-done-hint{display:none!important}
+.ec.done .ec-n{color:var(--t3);text-decoration:line-through;text-decoration-thickness:1.5px}
+.ec-chips{gap:7px!important;margin-top:7px!important}
+.ec-chip{border-radius:99px!important;padding:3px 11px!important;font-size:12px!important;font-weight:700!important;letter-spacing:.01em}
+.ec-chip.ec-chip-s,.ec-chip.ec-chip-progresso{border:1px solid color-mix(in srgb,var(--P) 35%,transparent);min-height:28px}
+.ec-chip.ec-chip-r{background:transparent!important;border:1px solid var(--bd);color:var(--t2)!important;font-weight:600!important}
+.ec-chip-r.ec-chip-clicavel:active{background:var(--Pl)!important}
+.cargabox{padding:2px 3px 2px 8px!important;background:var(--card)!important;border:1px solid var(--bd)!important;gap:5px!important}
+.cargabox .ic{display:none}
+.cargabox input{font-weight:700;font-size:14px}
+.cargabox .u{display:none}
+.cargabox input{width:34px!important;text-align:center;font-size:13px!important}
+.cargabox .sep{opacity:.5}
+.cargabox .salvar-mini{background:var(--P)!important;color:#fff!important;border-radius:99px!important;padding:5px 11px!important;font-size:11px!important;font-weight:700!important;margin-left:4px;letter-spacing:.02em}
+.cargabox.carga-registrada .salvar-mini{background:var(--G)!important}
+.vbtn{width:auto!important;height:32px!important;padding:0 13px 0 10px!important;border-radius:99px!important;background:var(--Pl)!important;color:var(--Pd)!important;border:none!important;font-size:12px!important;font-weight:700;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.vbtn::before{content:"";width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.vbtn span{display:inline}
+.semana-strip-dia{border-radius:16px!important}
+.pt{font-size:26px!important;letter-spacing:-.03em!important}
+.btn{border-radius:12px!important}
 @keyframes ecDica{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--P) 55%,transparent)}50%{box-shadow:0 0 0 5px transparent}}
 .ec-just-done{animation:ecJust .6s ease}
 @keyframes ecJust{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--G) 60%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
@@ -10757,18 +10825,18 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   const cargaBadge = isTempo
     ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':'')+'">'+aEsc(aT('tempo'))+' ⏱️' +
         '<input type="number" step="1" placeholder="seg" class="tempobox-input" id="'+eid+'-tempo" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'">s' +
-        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">💾</button>' +
+        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">'+aEsc(aT('salvar'))+'</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
     : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="ic">🏋️</span>' +
-        '<input type="number" inputmode="decimal" step="0.5" placeholder="–" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
+        '<input type="number" inputmode="decimal" step="0.5" placeholder="kg" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
-        '<input type="number" inputmode="numeric" placeholder="–" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
-        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">💾</button>' +
+        '<input type="number" inputmode="numeric" placeholder="reps" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
+        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">'+aEsc(aT('salvar'))+'</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>';
   const chips = [
-    ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'📊 ')+aEsc(seriesCurto)+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
+    ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+aEsc(seriesCurto)+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
     restExibir ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir)+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir)+'</span>' : '',
     mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
@@ -10787,7 +10855,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         (ex.obs ? '<span class="ec-o">'+aEsc(ex.obs)+'</span>' : '') +
         baseRefHTML +
       '</div>' +
-      (emb ? '<button class="vbtn" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)">▶</button>' : '') +
+      (emb ? '<button class="vbtn" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)"><span>'+(aLang==='en'?'Video':'Vídeo')+'</span></button>' : '') +
     '</div>' +
     '<div class="vs" id="'+eid+'-vs" style="display:none"></div>' +
   '</div>';
