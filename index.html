@@ -9438,6 +9438,18 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
+/* ── cores (v93): marfim no claro, vidro no escuro ── */
+:root:not([data-theme=dark]){--bg:#F3EFE6;--card:#FBF8F1;--cl:#F1EDE3;--bd:#E2DCCD}
+[data-theme=dark]{--card:rgba(255,255,255,.055);--cl:rgba(255,255,255,.04);--bd:rgba(255,255,255,.09)}
+[data-theme=dark] .bloco{background:rgba(255,255,255,.05);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-color:rgba(255,255,255,.09)}
+[data-theme=dark] .a-cj-items .ec{background:rgba(255,255,255,.05)}
+.ec-n{color:var(--tx)}
+[data-theme=dark] .ec-n{color:#fff}
+.ec-chip-sug{background:transparent!important;color:var(--t2)!important;border:1px dashed var(--bd);font-weight:600!important}
+.bloco-done-btn{width:26px!important;height:26px!important;border:2px solid var(--bd)!important;font-size:0!important;position:relative}
+.bloco-done-btn::after{content:"";width:10px;height:6px;border-left:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(-45deg) translate(1px,-1px);opacity:.35}
+.bloco.bloco-concluido .bloco-done-btn{background:var(--G)!important;border-color:var(--G)!important;color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--G) 18%,transparent)}
+.bloco.bloco-concluido .bloco-done-btn::after{opacity:1}
 /* ── alinhamento (v92) ── */
 .ec-hd{position:relative;align-items:flex-start!important}
 .ec-info{flex:1;min-width:0}
