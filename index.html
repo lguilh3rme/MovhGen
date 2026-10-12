@@ -470,6 +470,34 @@ select{cursor:pointer}
 .pg-title{letter-spacing:-.03em}
 .exi-q input{border-radius:99px}
 .badd{border-radius:99px}
+/* ── barra do protocolo, prévia do aluno, quadro responsivo (v96) ── */
+.pbar{position:sticky;top:-1rem;z-index:30;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 2px;margin:-4px 0 10px;background:var(--bg);border-bottom:1px solid var(--bd2)}
+.pb-btn,.pb-chip{border:1px solid var(--bd);background:var(--card);color:var(--t2);border-radius:99px;padding:4px 11px;font:600 11px inherit;font-family:inherit;cursor:pointer;white-space:nowrap}
+.pb-chip.on,.pb-btn.on{background:var(--P);border-color:var(--P);color:#fff}
+.pb-sep{width:1px;height:18px;background:var(--bd);margin:0 2px}
+.pb-sp{flex:1}
+#aluno-dock{display:none;position:fixed;top:10px;right:10px;bottom:10px;width:392px;z-index:60;border:1px solid var(--bd);border-radius:22px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45);background:var(--bg);flex-direction:column}
+body.dock-open #aluno-dock{display:flex}
+#aluno-dock .dk-h{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:11px;font-weight:700;border-bottom:1px solid var(--bd);background:var(--card)}
+#aluno-dock .dk-h span{flex:1}
+#aluno-dock iframe{flex:1;border:0;width:100%;background:var(--bg)}
+@media(min-width:1100px){body.dock-open .main{padding-right:420px}}
+@media(max-width:1099px){#aluno-dock{left:8px;width:auto;top:8px;bottom:8px}}
+.cfg-sem{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0;border-top:1px solid var(--bd2)}
+.cfg-sem:first-of-type{border-top:none}
+.cfg-sem b{font-size:11.5px;min-width:70px}
+.kb-board{display:grid!important;grid-auto-flow:column;grid-auto-columns:minmax(215px,1fr);gap:8px!important;align-items:start}
+.kb-col{width:auto!important;max-height:calc(100vh - 170px)}
+.kb-col-head{flex-wrap:nowrap}
+.kb-card{padding:5px 7px}
+.kb-add{padding:3px!important;font-size:9.5px!important}
+.kb-grupo{margin-bottom:6px}
+@media(max-width:700px){
+  .kb-board{grid-auto-columns:86vw;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -1rem;padding:0 1rem 12px}
+  .kb-col{scroll-snap-align:center;max-height:none}
+  .kb-drag-h{display:none}
+  .pbar{top:-.2rem}
+}
 /* ── painel de alunos (v89) ── */
 .al-more-btn{display:none}
 @media(max-width:700px){
@@ -518,6 +546,7 @@ select{cursor:pointer}
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
+<div id="aluno-dock"><div class="dk-h"><span>📱 Como o aluno vê</span><button class="pb-btn" onclick="toggleDock()">✕ Fechar</button></div><iframe id="dock-frame" title="Prévia do aluno"></iframe></div>
 <!-- MAIN -->
 <div class="main" id="main-scroll">
 <div class="mob-menu">
@@ -527,7 +556,8 @@ select{cursor:pointer}
 
 <!-- CONFIG -->
 <div class="page active" id="page-config">
-  <div class="pg-head"><div><div class="pg-title">Configuração</div><div class="pg-sub">Informações gerais e senha de acesso.</div></div></div>
+  <div class="pg-head"><div><div class="pg-title">Configuração</div><div class="pg-sub">Informações gerais, acesso e atalhos para editar o treino.</div></div></div>
+  <div class="card" id="cfg-treino"></div>
 
   <!-- ══ MOVA BANCO: conta do professor + aluno ══ -->
   <div class="card" id="mb-card">
@@ -1878,6 +1908,58 @@ function nav(id){
   if(id==='coletivas')mbCarregarAulasColetivas();
   document.getElementById('main-scroll').scrollTop=0;
 }
+
+// ══ Barra do protocolo + prévia fiel do aluno (iframe com o próprio app exportado) ══
+const DIAS7_PV=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+function pbarHTML(sid,did,mode){
+  const s=semanas.find(x=>x.id===sid);if(!s)return '';
+  const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
+  const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+}
+function pbGoSem(sid){const s=semanas.find(x=>x.id===sid);if(!s)return;nav(s.dias[0]?s.dias[0].id:'kb-'+sid);}
+function refreshPBars(){document.querySelectorAll('.pbar').forEach(el=>{const h=pbarHTML(el.dataset.sid,el.dataset.did,el.dataset.mode);if(h)el.outerHTML=h;});}
+function renderCfgTreino(){
+  const el=document.getElementById('cfg-treino');if(!el)return;
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:12px;font-weight:700">✏️ Treino em edição</span><span style="flex:1"></span><button class="pb-btn on" onclick="toggleDock()">📱 Prévia do aluno</button></div>'+
+    semanas.map(s=>`<div class="cfg-sem"><b>${escAttr(s.nome||'Semana')}</b>${s.dias.map(d=>`<button class="pb-chip" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('')}<button class="pb-btn" data-sid="${s.id}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button></div>`).join('');
+}
+const _renderSB0=renderSB;
+renderSB=function(){_renderSB0.apply(this,arguments);refreshPBars();renderCfgTreino();};
+function dockDiaAtivo(){
+  const p=document.querySelector('#main-scroll .page.active');const id=p?p.id.replace(/^page-/,''):'';
+  if(fDia(id))return id;
+  if(id.indexOf('kb-')===0){const s=semanas.find(x=>x.id===id.slice(3));if(s&&s.dias[0])return s.dias[0].id;}
+  return semanas[0]&&semanas[0].dias[0]?semanas[0].dias[0].id:null;
+}
+function alunoPreviewHTML(did){
+  const sem0=semObjDeDia(did)||semanas[0];if(!sem0)return '';
+  const cp=JSON.parse(JSON.stringify(semanas));
+  const si=cp.findIndex(x=>x.id===sem0.id);const chosen=cp.splice(si,1)[0];cp.unshift(chosen);
+  const ord=chosen.dias.slice();const di=ord.findIndex(d=>d.id===did);if(di>0)ord.unshift(ord.splice(di,1)[0]);
+  const dow=new Date().getDay();ord.forEach((d,i)=>{d.diaSemana=DIAS7_PV[(dow+i)%7];});
+  const ex=[];Object.values(REP).forEach(l=>l.forEach(e=>{if(e.u)ex.push({nome:e.n,url:e.u});}));
+  const payload={nome:'Prévia',professor_id:'p',exercicios:ex,conteudo:{nome:'Prévia',lang:'pt',semanas:cp}};
+  const stub="window.supabase={createClient:function(){const q={select(){return q},eq(){return q},limit(){return q},maybeSingle(){return Promise.resolve({data:null,error:null})},order(){return q},in(){return q},insert(){return q},upsert(){return q},update(){return q},delete(){return q},then(r){r({data:[],error:null})}};return {rpc:()=>Promise.resolve({data:"+JSON.stringify(payload).replace(/</g,'\\u003c')+",error:null}),from:()=>q,auth:{getSession:()=>Promise.resolve({data:{session:null}}),signOut:()=>Promise.resolve(),onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}}),refreshSession:()=>Promise.resolve({data:{}})}}}};";
+  window._movhSoHTML=true;let html;try{html=exportarComLogin();}finally{window._movhSoHTML=false;}
+  html=html.replace(/<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"><\/script>/,()=>'<script>'+stub+'<\/script>');
+  return html.split('window.location.search').join("'?treino=x'");
+}
+let _dockSig='',_dockTimer=null;
+function dockRender(force){
+  const did=dockDiaAtivo();if(!did)return;
+  const sig=did+'|'+document.documentElement.getAttribute('data-theme')+'|'+JSON.stringify(semanas);
+  if(!force&&sig===_dockSig)return;_dockSig=sig;
+  const fr=document.getElementById('dock-frame');if(!fr)return;
+  try{fr.srcdoc=alunoPreviewHTML(did);}catch(e){console.error('[MOVH] prévia do aluno:',e);}
+}
+function toggleDock(){
+  const on=document.body.classList.toggle('dock-open');
+  clearInterval(_dockTimer);
+  if(on){dockRender(true);_dockTimer=setInterval(()=>dockRender(false),1500);}
+  refreshPBars();
+}
+
 function goFirstDay(){if(semanas.length&&semanas[0].dias.length)nav(semanas[0].dias[0].id);}
 
 // ── Logo customizada da tela de login (aba "Logo do login") ──
@@ -2553,6 +2635,7 @@ function renderKanbanSemana(sid){
   const kbFocoTxt = sem.focoDim&&FOCO_TREINO[sem.focoDim]?`${FOCO_TREINO[sem.focoDim].emoji} ${sem.focoItem||FOCO_TREINO[sem.focoDim].label}`:'';
   const kbBadges = [kbFaseTxt,kbFocoTxt].filter(Boolean).join(' · ');
   pg.innerHTML=`
+    ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.${kbBadges?` <b style="color:var(--tx)">· ${kbBadges}</b>`:''}</div></div>
       <button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button>
@@ -4261,6 +4344,7 @@ function renderDia(did){
     }
   });
   pg.innerHTML=`
+    ${pbarHTML(semObj?semObj.id:'',did,'dia')}
     <div class="pg-head">
       <div>
         <div class="pg-title" style="display:flex;align-items:center;gap:6px">
@@ -9549,6 +9633,12 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .bloco-done-btn::after{content:"";width:10px;height:6px;border-left:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(-45deg) translate(1px,-1px);opacity:.35}
 .bloco.bloco-concluido .bloco-done-btn{background:var(--G)!important;border-color:var(--G)!important;color:#fff;box-shadow:0 0 0 4px color-mix(in srgb,var(--G) 18%,transparent)}
 .bloco.bloco-concluido .bloco-done-btn::after{opacity:1}
+/* ── obs inline entre parênteses (v96) ── */
+.ec-o,.ec-o.ec-o-aberto{position:static!important;display:inline!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;background:none!important;border:none!important;box-shadow:none!important;border-radius:0!important;font-size:10.5px!important;font-weight:500!important;color:var(--t3)!important;white-space:normal!important;overflow:visible!important;cursor:default!important;line-height:1.3}
+.ec-o::before,.ec-o::after{content:none!important;display:none!important}
+.ec-o-i{font-size:8px!important;vertical-align:1px;opacity:.8}
+.ec-n .ec-o{letter-spacing:0;text-decoration:none!important;font-family:var(--font-b)}
+.ec-hd:has(.ec-o) .vbtn{top:0!important}
 /* ── alinhamento (v92) ── */
 .ec-hd{position:relative;align-items:flex-start!important}
 .ec-info{flex:1;min-width:0}
@@ -11031,13 +11121,12 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   return '<div class="ec" id="'+eid+'">' +
     '<div class="ec-hd">' +
       '<div class="ec-info">' +
-        (ex.obs ? '<span class="ec-o" onclick="aToggleObs(this)">'+aEsc(ex.obs)+'</span>' : '') +
         '<div class="ec-name-row">' +
           '<span class="ec-done-wrap">' +
             '<input type="checkbox" class="ec-done-cb" id="'+eid+'-done" data-eid="'+eid+'" onchange="aToggleDone(this.dataset.eid)" title="'+aEsc(aT('marcar_feito'))+'">' +
             '<span class="ec-done-hint" aria-hidden="true">✔️</span>' +
           '</span>' +
-          '<span class="ec-n">'+aEsc(ex.nome)+'</span>' +
+          '<span class="ec-n">'+aEsc(ex.nome)+(ex.obs ? '<span class="ec-o"> (<span class="ec-o-i">💬</span> '+aEsc(ex.obs)+')</span>' : '')+'</span>' +
         '</div>' +
         (chips ? '<div class="ec-chips">'+chips+'</div>' : '') +
         baseRefHTML +
@@ -13086,6 +13175,7 @@ aBoot();
 </div>
 </body>
 </html>`;
+  if (window._movhSoHTML) return out;
   const blob = new Blob([out], { type: 'text/html' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
