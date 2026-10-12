@@ -509,6 +509,7 @@ body.dock-open #aluno-dock{display:flex}
 .aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
 .aluno-row input[type=date]{font-size:11px!important}
 /* ── editor enxuto (v97) ── */
+.pb-btn.sv{background:var(--P);color:#fff;border-color:var(--P)}
 .sel-cb{display:none;width:16px;height:16px;flex:0 0 auto;accent-color:var(--P);cursor:pointer;margin:0 4px 0 0}
 body.sel-mode .sel-cb{display:inline-block}
 .cj-met{font-size:11px;padding:2px 4px;max-width:118px}
@@ -1938,7 +1939,14 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn sv" onclick="pbSalvar()" title="Grava este treino no banco: o aluno vê ao abrir o app (ou atualizar) e o link ?treino= também">${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?'💾 Atualizar aluno':'💾 Salvar'}</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+}
+async function pbSalvar(){
+  if(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)await mbAtualizarProtocolo();
+  else if(typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)await mbSalvarProtocolo();
+  else{notify('Escolha o aluno em ⚙️ Configuração (ou carregue um protocolo dele) para salvar.');nav('config');return;}
+  const m=document.getElementById('mb-save-msg');if(m&&m.textContent)notify(m.textContent);
+  refreshPBars();
 }
 function pbGoSem(sid){const s=semanas.find(x=>x.id===sid);if(!s)return;nav(s.dias[0]?s.dias[0].id:'kb-'+sid);}
 function refreshPBars(){document.querySelectorAll('.pbar').forEach(el=>{const h=pbarHTML(el.dataset.sid,el.dataset.did,el.dataset.mode);if(h)el.outerHTML=h;});}
@@ -10920,19 +10928,33 @@ function aDescansoAgendarNotificacao(){
   clearTimeout(aDescansoTimeout);
   if (!aDescansoTimer) return;
   const restante = aDescansoTimer.fim - Date.now();
-  aDescansoTimeout = setTimeout(function(){
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(aLang==='en' ? 'Rest done! 💪' : 'Descanso acabou! 💪', {
-          body: (aDescansoTimer && aDescansoTimer.nome) ? ((aLang==='en'?'Back to: ':'Hora de voltar pro: ') + aDescansoTimer.nome) : ''
-        });
-      } catch(e){}
-    }
-    if (navigator.vibrate) { try { navigator.vibrate([250,120,250]); } catch(e){} }
-    aTocarBeepDescanso();
-    aFecharWidgetDescanso();
-  }, Math.max(0, restante));
+  aDescansoTimeout = setTimeout(aDescansoFinalizar, Math.max(0, restante));
+  aWakeLockPedir();
 }
+function aDescansoFinalizar(){
+  if (!aDescansoTimer) return;
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      new Notification(aLang==='en' ? 'Rest done! 💪' : 'Descanso acabou! 💪', {
+        body: aDescansoTimer.nome ? ((aLang==='en'?'Back to: ':'Hora de voltar pro: ') + aDescansoTimer.nome) : ''
+      });
+    } catch(e){}
+  }
+  if (navigator.vibrate) { try { navigator.vibrate([250,120,250]); } catch(e){} }
+  aTocarBeepDescanso();
+  aFecharWidgetDescanso();
+}
+// mantém a tela acesa durante o descanso (o navegador pausa os timers com a
+// tela apagada) e, ao voltar pro app, avisa na hora se o descanso já acabou
+let aWakeLock = null;
+async function aWakeLockPedir(){
+  try { if ('wakeLock' in navigator && !aWakeLock) { aWakeLock = await navigator.wakeLock.request('screen'); aWakeLock.addEventListener('release', function(){ aWakeLock = null; }); } } catch(e){}
+}
+function aWakeLockSoltar(){ try { if (aWakeLock) { aWakeLock.release(); aWakeLock = null; } } catch(e){} }
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState !== 'visible' || !aDescansoTimer) return;
+  if (aDescansoTimer.fim <= Date.now()) aDescansoFinalizar(); else aWakeLockPedir();
+});
 function aAjustarDescanso(deltaSeg){
   if (!aDescansoTimer) return;
   aDescansoTimer.fim += deltaSeg*1000;
@@ -10965,6 +10987,7 @@ function aAtualizarWidgetDescanso(){
     '<button onclick="aFecharWidgetDescanso()">✕</button>';
 }
 function aFecharWidgetDescanso(){
+  aWakeLockSoltar();
   clearInterval(aDescansoInterval);
   clearTimeout(aDescansoTimeout);
   const w = document.getElementById('movh-descanso-widget');
