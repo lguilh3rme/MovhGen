@@ -509,6 +509,21 @@ body.dock-open #aluno-dock{display:flex}
 .aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
 .aluno-row input[type=date]{font-size:11px!important}
 /* ── editor enxuto (v97) ── */
+.sel-cb{display:none;width:16px;height:16px;flex:0 0 auto;accent-color:var(--P);cursor:pointer;margin:0 4px 0 0}
+body.sel-mode .sel-cb{display:inline-block}
+.cj-met{font-size:11px;padding:2px 4px;max-width:118px}
+.btn.bs.on{background:var(--P);color:#fff;border-color:var(--P)}
+#bulkbar{display:none;position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:900;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:8px 12px;box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:calc(100vw - 20px);flex-direction:column;gap:6px}
+#bulkbar.on{display:flex}
+@media(min-width:1100px){body.sel-mode.dock-open #bulkbar{left:calc(50% - 210px)}}
+#bulkbar .bk-r1,#bulkbar .bk-r2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#bulkbar .bk-r1 b{font-size:12px;flex:1}
+#bulkbar label{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase}
+#bulkbar input{width:62px;font-size:12px;padding:4px 6px}
+#bulkbar #bk-s{width:46px}
+#bulkbar select{font-size:12px;padding:4px 6px;width:auto}
+.cj-foot select{width:auto!important}
+.pg-title .btn{white-space:nowrap}
 @media(hover:hover){.ni .ni-x{opacity:0;transition:opacity .12s}.ni:hover .ni-x,.ni.active .ni-x{opacity:.8}.sn-row .sn-actions{opacity:.35;transition:opacity .12s}.sn-row:hover .sn-actions{opacity:1}}
 .sn-row{margin-top:6px}
 .dia-cfg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;align-items:center}
@@ -556,6 +571,9 @@ body.dock-open #aluno-dock{display:flex}
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
+<div id="bulkbar"><div class="bk-r1"><b id="bk-n">0 selecionados</b><button class="pb-btn" onclick="bkTodos()">todos</button><button class="pb-btn" onclick="selModeToggle(false)">✕ sair</button></div>
+<div class="bk-r2"><label>Séries<input id="bk-s" type="number" min="1" placeholder="4"/></label><label>Reps<input id="bk-r" placeholder="8-12"/></label><label>Desc.<input id="bk-d" placeholder="60s"/></label><button class="pb-btn on" onclick="bkAplicar()">Aplicar</button><button class="pb-btn" onclick="bkSerie(1)">＋1 série</button><button class="pb-btn" onclick="bkSerie(-1)">−1</button></div>
+<div class="bk-r2"><select id="bk-m"><option value="conjugado">🔗 Conjugado</option><option value="progressivo">📈 Progressivo</option><option value="piramide">🔺 Pirâmide</option><option value="dropset">⬇️ Drop-set</option></select><button class="pb-btn on" onclick="bkAgrupar()">Agrupar</button><button class="pb-btn" onclick="bkDesagrupar()">Desagrupar</button><button class="pb-btn" onclick="bkDup()">⧉ Duplicar</button><button class="pb-btn" onclick="bkDel()">🗑 Excluir</button></div></div>
 <div id="aluno-dock"><div class="dk-h"><span>📱 Como o aluno vê</span><button class="pb-btn" onclick="toggleDock()">✕ Fechar</button></div><iframe id="dock-frame" title="Prévia do aluno"></iframe></div>
 <!-- MAIN -->
 <div class="main" id="main-scroll">
@@ -4055,6 +4073,7 @@ function renderExItem(did,bi,i,ex,inCJ){
   const totalEx=b2?b2.exercicios.length:0;
   return `<div class="exi" ondragover="exDragOver(event,'${did}',${bi})" ondragleave="exDragLeave(event)" ondrop="exDrop(event,'${did}',${bi},${i})">
     <div class="exi-top" onclick="toggleExDet('${eid}',this)">
+      <input type="checkbox" class="sel-cb" ${_bkSel.has(ex)?'checked':''} onclick="event.stopPropagation()" onchange="bkTog('${did}',${bi},${i},this.checked)"/>
       <span class="exi-grip" draggable="true" title="Arraste para reordenar" onclick="event.stopPropagation()" ondragstart="exDragStart(event,'${did}',${bi},${i})" ondragend="exDragEnd()">⋮⋮</span>
       <span class="exi-lbl">${label}</span>
       <span class="exi-q" onclick="event.stopPropagation()">
@@ -4199,8 +4218,8 @@ function renderExList(did,bi){
         const gExs=b.exercicios.map((e,idx)=>({e,idx})).filter(({e})=>String(e.cj)===gk);
         h+=`<div class="cj-group">
           <div class="cj-head">
-            <span>🔗</span>
-            <input value="${escAttr(g.label)}" oninput="setCJ('${did}',${bi},'${ex.cj}','label',this.value)" placeholder="Conjugado"/>
+            <select class="cj-met" title="Método do grupo" onchange="setCJMetodo('${did}',${bi},'${ex.cj}',this.value)">${Object.keys(METODOS).map(k=>`<option value="${k}"${(g.metodo||'conjugado')===k?' selected':''}>${METODOS[k].e} ${METODOS[k].l}</option>`).join('')}</select>
+            <input value="${escAttr(g.label)}" oninput="setCJ('${did}',${bi},'${ex.cj}','label',this.value)" placeholder="Nome do grupo"/>
             <div class="cj-rest"><span>entre:</span><input value="${escAttr(g.rest)}" oninput="setCJ('${did}',${bi},'${ex.cj}','rest',this.value)" placeholder="30s"/></div>
             <button class="bic" style="width:20px;height:20px;font-size:11px;margin-left:4px" onclick="rmCJ('${did}',${bi},'${ex.cj}')">×</button>
           </div>
@@ -4298,6 +4317,7 @@ function renderDia(did){
       const bloco_body_id=`bb-${did}-${bi}`;
       bh+=`<div class="card" style="padding:0;overflow:hidden">
         <div class="ch" style="padding:10px 12px;cursor:pointer;margin-bottom:0" onclick="toggleBlocoBody('${bloco_body_id}',this)">
+          <input type="checkbox" class="sel-cb" ${(b.exercicios&&b.exercicios.length&&b.exercicios.every(e=>_bkSel.has(e)))?'checked':''} title="Selecionar o bloco inteiro" onclick="event.stopPropagation()" onchange="bkBloco('${did}',${bi},this.checked)"/>
           <div class="bdot" style="border-left-color:${b.cor}"></div>
           <input class="ie label" value="${escAttr(b.nome)}" oninput="setBl('${did}',${bi},'nome',this.value)" onclick="event.stopPropagation()" style="flex:1"/>
           <input class="ie sm" value="${escAttr(b.meta||'')}" placeholder="Prescrição: 4×8-10 | 90s" oninput="setBl('${did}',${bi},'meta',this.value)" onclick="event.stopPropagation()"/>
@@ -4333,7 +4353,7 @@ function renderDia(did){
         <div class="pg-title" style="display:flex;align-items:center;gap:6px">
           <span style="font-size:12px;color:var(--t3);font-weight:400">${semNome} /</span>
           <input class="ie big" value="${escAttr(dia.nome)}" oninput="setDF('${did}','nome',this.value);renderSB()"/>
-          <button class="btn bs" style="margin-left:auto;font-size:10.5px;padding:4px 10px" onclick="dupDia('${semObj?semObj.id:''}','${did}')" title="Cria uma cópia deste dia na mesma semana">⧉ Duplicar dia</button>
+          <button class="btn bs${document.body.classList.contains('sel-mode')?' on':''}" style="margin-left:auto;font-size:10.5px;padding:4px 10px" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="btn bs" style="font-size:10.5px;padding:4px 10px" onclick="dupDia('${semObj?semObj.id:''}','${did}')" title="Cria uma cópia deste dia na mesma semana">⧉ Duplicar dia</button>
         </div>
         <input style="font-size:11px;color:var(--t3);background:transparent;border:none;outline:none;margin-top:2px;width:100%" placeholder="Subtítulo (ex: Upper A)" value="${escAttr(dia.sub||'')}" oninput="setDF('${did}','sub',this.value)"/>
         <div class="dia-cfg">
@@ -4390,6 +4410,29 @@ function renderDia(did){
   dia.blocos.forEach((b,bi)=>{if(b.exercicios)renderExList(did,bi);});
 }
 
+const METODOS={conjugado:{e:'🔗',l:'Conjugado',rest:'30s'},progressivo:{e:'📈',l:'Progressivo',rest:''},piramide:{e:'🔺',l:'Pirâmide',rest:''},dropset:{e:'⬇️',l:'Drop-set',rest:''}};
+function setCJMetodo(did,bi,g,m){const b=fBloco(did,bi);if(!b||!b.conjGroups||!b.conjGroups[g])return;const c=b.conjGroups[g],old=METODOS[c.metodo||'conjugado'];c.metodo=m;if(!c.label||c.label===old.l||c.label==='Conjugado')c.label=METODOS[m].l;if(!c.rest||c.rest===old.rest)c.rest=METODOS[m].rest;renderExList(did,bi);}
+// ── edição em massa ──
+const _bkSel=new Set();
+function bkDia(){const p=document.querySelector('#main-scroll .page.active');const id=p?p.id.replace(/^page-/,''):'';return fDia(id)?id:null;}
+function bkItens(){const did=bkDia();if(!did)return[];const dia=fDia(did),r=[];dia.blocos.forEach((b,bi)=>{(b.exercicios||[]).forEach((ex,i)=>{if(_bkSel.has(ex))r.push({did,b,bi,ex,i});});});return r;}
+function bkAtualizar(){const n=_bkSel.size;const bar=document.getElementById('bulkbar');if(!bar)return;bar.classList.toggle('on',document.body.classList.contains('sel-mode'));document.getElementById('bk-n').textContent=n+(n===1?' selecionado':' selecionados');}
+function selModeToggle(on){const v=on===undefined?!document.body.classList.contains('sel-mode'):on;document.body.classList.toggle('sel-mode',v);if(!v)_bkSel.clear();const did=bkDia();if(did)renderDia(did);bkAtualizar();}
+function bkTog(did,bi,i,on){const b=fBloco(did,bi);const ex=b&&b.exercicios[i];if(!ex)return;if(on)_bkSel.add(ex);else _bkSel.delete(ex);bkAtualizar();}
+function bkBloco(did,bi,on){const b=fBloco(did,bi);if(!b)return;(b.exercicios||[]).forEach(e=>on?_bkSel.add(e):_bkSel.delete(e));renderExList(did,bi);bkAtualizar();}
+function bkLimpa(b){const cont={};b.exercicios.forEach(e=>{if(e.cj!=null)cont[e.cj]=(cont[e.cj]||0)+1;});b.exercicios.forEach(e=>{if(e.cj!=null&&cont[e.cj]<2&&((b.conjGroups[e.cj]||{}).metodo||'conjugado')==='conjugado')e.cj=null;});Object.keys(b.conjGroups||{}).forEach(k=>{if(!b.exercicios.some(e=>String(e.cj)===k))delete b.conjGroups[k];});}
+function bkRender(){const did=bkDia();if(did)renderDia(did);bkAtualizar();}
+function bkAplicar(){const it=bkItens();if(!it.length){notify('Selecione exercícios ou blocos.');return;}const s=document.getElementById('bk-s').value.trim(),r=document.getElementById('bk-r').value.trim(),d=document.getElementById('bk-d').value.trim();if(!s&&!r&&!d){notify('Preencha séries, reps ou descanso.');return;}
+ it.forEach(({ex})=>{if(s||r){const m=/^\s*(\d+)\s*[x×X]\s*(.*)$/.exec(ex.series||'');const ns=s||(m?m[1]:''),nr=r||(m?m[2]:(/^\d+$/.test(ex.series||'')?'':ex.series||''));ex.series=ns?(ns+(nr?'×'+nr:'')):nr;}if(d)ex.rest=d;});
+ bkRender();notify('Alterado em '+it.length+' exercício'+(it.length>1?'s':'')+'.');}
+function bkSerie(dl){const it=bkItens();if(!it.length){notify('Selecione exercícios ou blocos.');return;}it.forEach(({ex})=>{const m=/^\s*(\d+)\s*[x×X]\s*(.*)$/.exec(ex.series||'');if(m)ex.series=Math.max(1,+m[1]+dl)+'×'+m[2];else if(/^\d+$/.test(ex.series||''))ex.series=String(Math.max(1,+ex.series+dl));});bkRender();}
+function bkAgrupar(){const it=bkItens();if(!it.length){notify('Selecione exercícios ou blocos.');return;}const m=document.getElementById('bk-m').value;let n=0;const porBloco=new Map();it.forEach(x=>{if(!porBloco.has(x.b))porBloco.set(x.b,[]);porBloco.get(x.b).push(x.ex);});
+ porBloco.forEach((sel,b)=>{if(m==='conjugado'&&sel.length<2)return;const gid=Date.now()+n++;b.conjGroups=b.conjGroups||{};b.conjGroups[gid]={label:METODOS[m].l,rest:METODOS[m].rest,restAfter:'',metodo:m};const first=b.exercicios.indexOf(sel[0]);const antes=b.exercicios.slice(0,first).filter(e=>!sel.includes(e));const resto=b.exercicios.filter(e=>!sel.includes(e));sel.forEach(e=>e.cj=gid);b.exercicios=resto.slice(0,antes.length).concat(sel,resto.slice(antes.length));bkLimpa(b);});
+ if(!n){notify('Conjugado precisa de 2+ exercícios no mesmo bloco.');return;}bkRender();notify(METODOS[m].l+' aplicado.');}
+function bkDesagrupar(){const it=bkItens();if(!it.length)return;const bs=new Set();it.forEach(({b,ex})=>{ex.cj=null;bs.add(b);});bs.forEach(bkLimpa);bkRender();}
+function bkDup(){const it=bkItens();if(!it.length)return;const bs=new Map();it.forEach(x=>{if(!bs.has(x.b))bs.set(x.b,[]);bs.get(x.b).push(x.ex);});bs.forEach((sel,b)=>{const ult=b.exercicios.indexOf(sel[sel.length-1]);const cp=sel.map(e=>{const c=JSON.parse(JSON.stringify(e));c.cj=null;return c;});b.exercicios.splice(ult+1,0,...cp);});_bkSel.clear();bkRender();notify('Duplicado.');}
+function bkDel(){const it=bkItens();if(!it.length)return;if(!confirm('Excluir '+it.length+' exercício(s) selecionado(s)?'))return;const bs=new Set();it.forEach(({b})=>bs.add(b));bs.forEach(b=>{b.exercicios=b.exercicios.filter(e=>!_bkSel.has(e));bkLimpa(b);});_bkSel.clear();bkRender();}
+function bkTodos(){const did=bkDia();if(!did)return;const dia=fDia(did);const tudo=dia.blocos.every(b=>(b.exercicios||[]).every(e=>_bkSel.has(e)));dia.blocos.forEach(b=>(b.exercicios||[]).forEach(e=>tudo?_bkSel.delete(e):_bkSel.add(e)));bkRender();}
 function blToggleTodos(did){const dia=fDia(did);if(!dia)return;window._blClosed=window._blClosed||{};const ks=dia.blocos.flatMap((b,bi)=>['bb-'+did+'-'+bi,'cb-'+did+'-'+bi]);const alguemAberto=ks.some(k=>!window._blClosed[k]);ks.forEach(k=>{if(alguemAberto)window._blClosed[k]=1;else delete window._blClosed[k];});renderDia(did);}
 function goNext(did){const all=semanas.flatMap(s=>s.dias);const i=all.findIndex(d=>d.id===did);if(i>=0&&i<all.length-1)nav(all[i+1].id);else nav('export');}
 function renderAll(){renderSB();semanas.forEach(s=>s.dias.forEach(d=>renderDia(d.id)));atualizarPreviewConfig();renderCalProto();}
@@ -9569,6 +9612,15 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .meso-datas{font-size:11px;color:var(--t3);margin-bottom:8px;font-weight:600}
 .dbt-data{font-size:9px;opacity:.7;display:block;font-weight:400;margin-top:1px}
 @media(max-width:480px){.wrap{padding:3rem .75rem 2.5rem}.pt{font-size:19px}}
+/* ── v97: métodos, recorde, confete ── */
+.a-cj-dica{font-size:10px;color:var(--t3);padding:0 12px 4px;margin-top:-2px}
+.a-cj-head .a-cj-label{flex:1}
+.carga-pr .cargabox-ic,.carga-pr{box-shadow:0 0 0 1.5px #E3A82B inset}
+.ec-pr{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;color:#8a5a00;background:#FFE29A;border-radius:99px;padding:2px 8px;margin-left:6px;animation:ecPop .5s ease}
+@keyframes ecPop{0%{transform:scale(.4);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+.cf-p{position:fixed;top:-12px;width:8px;height:12px;z-index:10001;pointer-events:none;opacity:.95;animation:cfFall linear forwards}
+@keyframes cfFall{to{transform:translateY(105vh) rotate(720deg);opacity:.9}}
+.sc-streak{display:inline-block;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--P) 16%,transparent);color:var(--tx);border-radius:99px;padding:4px 12px;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -10730,6 +10782,79 @@ function aContarSerieConcluida(eid){
   if (navigator.vibrate) { try { navigator.vibrate(aSeriesFeitas[eid] ? 15 : [10,40,10]); } catch(e){} }
   badge.classList.remove('ec-series-pulse'); void badge.offsetWidth; badge.classList.add('ec-series-pulse');
   setTimeout(function(){ badge.classList.remove('ec-series-pulse'); }, 500);
+  if (aSeriesFeitas[eid] > atual) {
+    const fim = total && aSeriesFeitas[eid] >= total;
+    if (fim) aScrollProximo(eid);
+    if (!(fim && !aProximoPendente(eid))) aAutoDescanso(eid);
+  }
+}
+function aProximoPendente(eid){
+  const todos = [].slice.call(document.querySelectorAll('.ec'));
+  const i = todos.findIndex(function(x){ return x.id === eid; });
+  for (let k = i + 1; k < todos.length; k++) { if (!todos[k].classList.contains('done')) return todos[k]; }
+  return null;
+}
+// ao tocar numa série, já inicia o cronômetro de descanso do exercício
+// (desligável: localStorage movh-autotimer = 0). Fora do modo prévia.
+function aAutoDescanso(eid){
+  if (window._movhPreview) return;
+  try { if (localStorage.getItem('movh-autotimer') === '0') return; } catch(e){}
+  const chip = document.querySelector('.ec-chip-clicavel[data-eid="' + eid + '"]');
+  if (chip) aIniciarDescanso(chip.dataset.tempo, chip.dataset.nome, eid);
+}
+// exercício concluído: abre o bloco do próximo pendente e rola até ele
+function aScrollProximo(eid){
+  const nx = aProximoPendente(eid);
+  if (!nx) return;
+  const bl = nx.closest('.bloco');
+  if (bl) { const body = document.getElementById(bl.id.replace('bloco-','')); if (body && body.style.display === 'none') { body.style.display = 'block'; const ar = bl.querySelector('.bh .bt-arr'); if (ar) ar.style.transform = 'rotate(0deg)'; } }
+  setTimeout(function(){ try { nx.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){} }, 650);
+}
+// por padrão só o primeiro bloco fica aberto (o treino cabe na tela)
+(function aBlocosColapsoPadrao(){
+  function aplicar(root){
+    const pais = new Set();
+    root.querySelectorAll ? root.querySelectorAll('.bloco').forEach(function(b){ pais.add(b.parentNode); }) : null;
+    if (root.classList && root.classList.contains('bloco')) pais.add(root.parentNode);
+    pais.forEach(function(p){
+      const bl = [].slice.call(p.children).filter(function(c){ return c.classList && c.classList.contains('bloco'); });
+      if (bl.length < 2) return;
+      bl.forEach(function(b, i){
+        if (b.dataset.autoc) return; b.dataset.autoc = '1';
+        if (i === 0) return;
+        const body = document.getElementById(b.id.replace('bloco-',''));
+        if (body && !b.classList.contains('bloco-concluido')) { body.style.display = 'none'; const ar = b.querySelector('.bh .bt-arr'); if (ar) ar.style.transform = 'rotate(-90deg)'; }
+      });
+    });
+  }
+  new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes.forEach(function(n){ if (n.nodeType === 1 && (n.matches('.bloco') || n.querySelector('.bloco'))) aplicar(n); }); }); }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+function aConfete(){
+  const cores = ['#7C6FE0','#E3A82B','#1A9E72','#D45828','#3580D8','#E0457B'];
+  for (let i = 0; i < 46; i++) {
+    const p = document.createElement('i'); p.className = 'cf-p';
+    p.style.left = (Math.random() * 100) + 'vw';
+    p.style.background = cores[i % cores.length];
+    p.style.animationDuration = (1.6 + Math.random() * 1.6) + 's';
+    p.style.animationDelay = (Math.random() * 0.4) + 's';
+    p.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    document.body.appendChild(p);
+    setTimeout(function(el){ el.remove(); }, 3800, p);
+  }
+}
+async function aStreakSemana(){
+  if (window._movhPreview || !aAlunoRow) return;
+  try {
+    const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+    await new Promise(function(r){ setTimeout(r, 1800); });
+    const res = await aClient.from('rpe_sessoes').select('criado_em').eq('aluno_id', aAlunoRow.id).gte('criado_em', d.toISOString());
+    const dias = new Set((res.data || []).map(function(x){ return String(x.criado_em).slice(0,10); }));
+    const n = dias.size; if (!n) return;
+    const t = document.querySelector('#movh-sessao-overlay .sc-titulo'); if (!t || document.getElementById('sc-streak')) return;
+    const el = document.createElement('div'); el.id = 'sc-streak'; el.className = 'sc-streak';
+    el.textContent = aLang === 'en' ? ('🔥 ' + n + ' workout' + (n > 1 ? 's' : '') + ' this week') : ('🔥 ' + n + (n > 1 ? ' treinos' : ' treino') + ' nesta semana');
+    t.insertAdjacentElement('afterend', el);
+  } catch(e){}
 }
 // progresso do bloco: exercícios feitos contam 1, os em andamento contam a fração de séries
 function aAtualizarBlocoProgresso(bloco){
@@ -11001,7 +11126,9 @@ function aToggleDone(eid, auto){
       if(arr) arr.style.transform = 'rotate(0deg)';
     }
     aAtualizarBlocoProgresso(bloco);
+    if(all && done){ const nb = bloco.nextElementSibling; if(nb && nb.classList.contains('bloco')){ const nbody = document.getElementById(nb.id.replace('bloco-','')); if(nbody){ nbody.style.display='block'; const nar = nb.querySelector('.bh .bt-arr'); if(nar) nar.style.transform='rotate(0deg)'; } } }
   }
+  if(done && auto !== true) aScrollProximo(eid);
   aSessaoSalvar();
   aVerificarTreinoConcluido();
 }
@@ -11078,6 +11205,7 @@ function aVerificarTreinoConcluido(forcar){
   </div>\`;
   document.body.appendChild(overlay);
   aDorExerciciosSelecionados = [];
+  aConfete(); aStreakSemana();
   aChecarSolicitacaoMudanca(overlay);
   // registra a sessão como concluída pro professor (badge "x/y sessões no
   // mês" no painel) mesmo que o aluno feche a tela sem enviar o RPE —
@@ -11298,6 +11426,9 @@ async function aSalvarCarga(eid, exercicioNome){
   const carga = document.getElementById(eid+'-carga').value;
   const reps = document.getElementById(eid+'-reps').value;
   if (!carga && !reps) return;
+  const cargaNum = carga ? parseFloat(carga) : null;
+  let maxAnt = 0;
+  (aTodosRegistros || []).forEach(function(r){ if (r.exercicio_nome === exercicioNome && r.carga != null && r.carga > maxAnt) maxAnt = r.carga; });
   const { error } = await aClient.from('registros_sessao').insert({
     aluno_id: aAlunoRow.id,
     protocolo_id: aProtocolo.id,
@@ -11312,6 +11443,15 @@ async function aSalvarCarga(eid, exercicioNome){
   // destaca a badge de carga (fica verde) pra indicar que já tem registro
   const cargabox = okEl ? okEl.closest('.cargabox') : null;
   if(cargabox) cargabox.classList.add('carga-registrada');
+  if (cargaNum != null) {
+    (aTodosRegistros = aTodosRegistros || []).push({ exercicio_nome: exercicioNome, carga: cargaNum, reps: reps ? parseInt(reps) : null });
+    if (maxAnt > 0 && cargaNum > maxAnt) {
+      if (cargabox) cargabox.classList.add('carga-pr');
+      const hd = document.getElementById(eid) ? document.getElementById(eid).querySelector('.ec-n') : null;
+      if (hd && !hd.querySelector('.ec-pr')) { const s = document.createElement('span'); s.className = 'ec-pr'; s.textContent = '🏆 PR +' + (Math.round((cargaNum - maxAnt) * 10) / 10) + 'kg'; hd.appendChild(s); }
+      if (navigator.vibrate) { try { navigator.vibrate([20,40,20,40,60]); } catch(e){} }
+    }
+  }
 }
 
 async function aSalvarTempo(eid, exercicioNome){
@@ -11613,6 +11753,12 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
 // como "conjugado" (cj) no mesmo card visual — espelha o agrupamento que já
 // existe no editor do Gerador (cj-group), pra o aluno ver claramente quais
 // exercícios são feitos em sequência, sem descanso entre eles.
+const A_METODOS = {
+  conjugado: { e:'🔗', pt:'Faça em sequência, descansando só ao fim do grupo.', en:'Do them back to back, rest only after the group.' },
+  progressivo: { e:'📈', pt:'Aumente a carga a cada série, mantendo a execução.', en:'Increase the load every set, keeping form.' },
+  piramide: { e:'🔺', pt:'A carga sobe e as repetições descem a cada série.', en:'Load goes up and reps go down every set.' },
+  dropset: { e:'⬇️', pt:'Ao chegar perto da falha, reduza a carga e continue.', en:'Near failure, drop the load and keep going.' }
+};
 function aRenderExercicios(b, faseAtual, ctxPrefix, semanaDentroFase, duracaoSemanas){
   const cgs = b.conjGroups || {};
   const exercicios = b.exercicios || [];
@@ -11625,11 +11771,13 @@ function aRenderExercicios(b, faseAtual, ctxPrefix, semanaDentroFase, duracaoSem
       if (renderedGroups.has(gk)) return; // já renderizou esse grupo inteiro
       renderedGroups.add(gk);
       const g = cgs[gk] || { label: aT('conjugado'), rest: '', restAfter: '' };
+      const mt = A_METODOS[g.metodo] || A_METODOS.conjugado;
       const gExsIdx = [];
       exercicios.forEach((e,i) => { if (String(e.cj) === gk) gExsIdx.push(i); });
       const itensHTML = gExsIdx.map(i => aExCard(exercicios[i], faseAtual, ctxPrefix + '-e' + i, b.progressaoAuto, semanaDentroFase, duracaoSemanas)).join('');
       h += '<div class="a-cj-group">' +
-        '<div class="a-cj-head"><span class="a-cj-ic">🔗</span><span class="a-cj-label">' + aEsc(g.label || aT('conjugado')) + '</span></div>' +
+        '<div class="a-cj-head"><span class="a-cj-ic">' + mt.e + '</span><span class="a-cj-label">' + aEsc(g.label || aT('conjugado')) + '</span></div>' +
+        '<div class="a-cj-dica">' + aEsc(aLang === 'en' ? mt.en : mt.pt) + '</div>' +
         '<div class="a-cj-items">' + itensHTML + '</div>' +
         (g.restAfter ? '<div class="a-cj-foot">⏱ ' + aEsc(aT('descanso_apos_grupo')) + ': ' + aEsc(g.restAfter) + '</div>' : '') +
       '</div>';
