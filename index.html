@@ -440,6 +440,36 @@ select{cursor:pointer}
 .sn-row > input[type=number]{order:2;margin:2px 0 4px 6px}
 .sn-row > .sn-actions{order:3;margin-left:auto;margin-top:0}
 .sn-row > .sn-actions button[title="+ dia"]{margin-top:0!important}
+/* ── gerador no estilo do app (v94) ── */
+.al-more-btn{display:flex!important;align-items:center;justify-content:space-between;width:100%;margin-top:8px;padding:7px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--cl);color:var(--t2);font:600 11.5px inherit;font-family:inherit;cursor:pointer}
+.al-more-btn span{transition:transform .15s}
+.al-open .al-more-btn span{transform:rotate(180deg)}
+.aluno-row .al-rodape{display:none!important}
+.aluno-row.al-open .al-rodape{display:flex!important;gap:8px!important;padding-top:10px!important}
+.aluno-row:not(.al-open) .al-det{display:none}
+.aluno-row{padding:10px 14px!important;margin-bottom:6px!important}
+.al-feed{margin-bottom:10px;border:1px solid var(--bd);border-radius:14px;background:var(--card);overflow:hidden}
+.al-feed summary{cursor:pointer;padding:10px 14px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px;list-style:none}
+.al-feed summary::-webkit-details-marker{display:none}
+.al-feed-n{background:var(--P);color:#fff;border-radius:99px;font-size:10px;padding:1px 8px}
+.al-feed-list{max-height:210px;overflow-y:auto;border-top:1px solid var(--bd2)}
+.al-feed-it{display:flex;align-items:center;gap:8px;padding:6px 14px;font-size:11.5px;border-bottom:1px solid var(--bd2)}
+.al-feed-it:last-child{border-bottom:none}
+.al-feed-tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--t2)}
+.al-feed-tx b{color:var(--tx)}
+.al-feed-t{font-size:10px;color:var(--t3);white-space:nowrap}
+.al-feed-vazio{padding:10px 14px;font-size:11.5px;color:var(--t3)}
+/* ── gerador no estilo do app: marfim/vidro (v94) ── */
+:root:not([data-theme=dark]){--bg:#F3EFE6;--card:#FBF8F1;--cl:#F1EDE3;--bd:#E2DCCD}
+[data-theme=dark] .card,[data-theme=dark] .db-card,[data-theme=dark] .db-sp-card,[data-theme=dark] .kb-col,[data-theme=dark] .cj-group{background:rgba(255,255,255,.05);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-color:rgba(255,255,255,.09)}
+.card,.db-card,.db-sp-card,.kb-col,.al-feed{border-radius:14px!important}
+.db-collapsed .db-row{display:none}
+.db-collapsed .db-ch{border-bottom:none}
+.db-grid{gap:8px}
+.db-splits-grid{gap:8px}
+.pg-title{letter-spacing:-.03em}
+.exi-q input{border-radius:99px}
+.badd{border-radius:99px}
 /* ── painel de alunos (v89) ── */
 .al-more-btn{display:none}
 @media(max-width:700px){
@@ -699,6 +729,7 @@ select{cursor:pointer}
         <div id="alunos-contadores" style="display:flex;gap:5px;flex-wrap:wrap;margin-left:auto"></div>
       </div>
     </div>
+    <details class="al-feed" id="alunos-atividade" open style="display:none"></details>
     <div id="alunos-tabela"></div>
   </div>
 </div>
@@ -729,6 +760,7 @@ select{cursor:pointer}
     <button class="btn bs" style="font-size:11px;padding:5px 12px;align-self:flex-start" onclick="abrirExPendentes()" title="Lista exercícios que estão em protocolos de alunos mas ainda não foram salvos no banco">🔎 Exercícios fora do banco</button>
     <button class="btn bp" onclick="openAddCat()">+ Categoria</button>
   </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px"><input type="search" id="db-ex-busca" placeholder="🔍 Buscar exercício…" oninput="window._dbExQ=this.value;renderDBEx()" style="flex:1;max-width:360px;font-size:12.5px;padding:8px 12px;border-radius:99px"/><button class="btn bs" style="font-size:11px;padding:6px 12px" onclick="dbExTodas(true)">Expandir tudo</button><button class="btn bs" style="font-size:11px;padding:6px 12px" onclick="dbExTodas(false)">Recolher tudo</button></div>
   <div id="db-ex-content"></div>
 </div>
 
@@ -4373,15 +4405,22 @@ async function adicionarExPendente(i){
 }
 function renderDBEx(){
   const el=document.getElementById('db-ex-content');if(!el)return;
+  const q=(window._dbExQ||'').toLowerCase().trim();
+  window._dbExOpen=window._dbExOpen||{};
   let h='<div class="db-grid">';
   for(const[cat,exs]of Object.entries(REP)){
-    h+=`<div class="db-card"><div class="db-ch"><span class="db-cat">${cat}</span><div class="db-acts"><button class="bsm" onclick="openAddEx('${cat}')">+</button><button class="bsm" onclick="delCat('${cat}')" style="color:#c03030">×</button></div></div>`;
-    exs.forEach((ex,i)=>{const nomeDisplay=mbExNome(ex);h+=`<div class="db-row"><span class="db-n" title="${ex.n}">${nomeDisplay}</span><span class="db-u">${ex.u?'🔗 '+ex.u.replace('https://',''):'—'}</span><div class="db-acts"><button class="bsm" onclick="openEditEx('${cat}',${i})">✏️</button><button class="bsm" onclick="delEx('${cat}',${i})" style="color:#c03030">×</button></div></div>`;});
+    const visiveis=q?exs.filter(ex=>((ex.n||'')+' '+mbExNome(ex)).toLowerCase().includes(q)):exs;
+    if(q&&!visiveis.length)continue;
+    const recolhido=!q&&!window._dbExOpen[cat];
+    h+=`<div class="db-card${recolhido?' db-collapsed':''}"><div class="db-ch" onclick="dbToggleCat(event,this)" data-cat="${escAttr(cat)}" style="cursor:pointer"><span class="db-cat">${recolhido?'▸':'▾'} ${cat} <small style="opacity:.55;font-weight:600">${q?visiveis.length+'/':''}${exs.length}</small></span><div class="db-acts"><button class="bsm" onclick="openAddEx('${cat}')">+</button><button class="bsm" onclick="delCat('${cat}')" style="color:#c03030">×</button></div></div>`;
+    exs.forEach((ex,i)=>{if(q&&!visiveis.includes(ex))return;const nomeDisplay=mbExNome(ex);h+=`<div class="db-row"><span class="db-n" title="${ex.n}">${nomeDisplay}</span><span class="db-u">${ex.u?'🔗 '+ex.u.replace('https://',''):'—'}</span><div class="db-acts"><button class="bsm" onclick="openEditEx('${cat}',${i})">✏️</button><button class="bsm" onclick="delEx('${cat}',${i})" style="color:#c03030">×</button></div></div>`;});
     h+='</div>';
   }
   h+='</div>';
   el.innerHTML=h;
 }
+function dbToggleCat(ev,hd){if(ev.target.closest('button'))return;const c=hd.dataset.cat;window._dbExOpen[c]=!window._dbExOpen[c];renderDBEx();}
+function dbExTodas(abrir){window._dbExOpen={};if(abrir)Object.keys(REP).forEach(c=>window._dbExOpen[c]=true);renderDBEx();}
 let _mm=null,_mc=null,_mi=null;
 function openAddCat(){document.getElementById('mcat-nome').value='';openM('modal-cat');}
 function saveCat(){const n=document.getElementById('mcat-nome').value.trim();if(!n)return;if(!REP[n])REP[n]=[];refreshExDatalist();renderDBEx();closeM('modal-cat');notify('Categoria criada!');}
@@ -5708,7 +5747,7 @@ function renderDBSplits(){
   let h='<div class="db-splits-grid">';
   SPLITS.forEach((s,i)=>{
     h+=`<div class="db-sp-card">
-      <div class="db-sp-head"><span class="db-sp-name">${s.icone} ${s.nome}</span>
+      <div class="db-sp-head"><span class="db-sp-name">${(s.nome||'').trim().startsWith((s.icone||'').trim())&&s.icone?'':s.icone+' '}${s.nome}</span>
       <div class="db-acts">
         <button class="bsm" onclick="loadSplitToEditor(${i})" title="Editar exercícios" style="color:var(--Pd)">⚙️</button>
         <button class="bsm" onclick="openEditSplit(${i})" title="Editar info">✏️</button>
@@ -6458,9 +6497,44 @@ async function mbCarregarPainelAlunos() {
     registrosCarga: registrosMap[a.id] || []
   }));
 
+  mbMontarAtividade(alunos, sessoesMesData, registrosData, dorData);
   document.getElementById('alunos-loading').style.display = 'none';
   document.getElementById('alunos-content').style.display = 'block';
   renderPainelAlunos();
+}
+// Log de atividade dos alunos: treino concluído, cargas registradas e dor relatada.
+// Usa só dados que o painel já carrega (sessões do mês, registros de 30 dias).
+function mbTempoRel(iso){
+  const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (m < 1) return 'agora';
+  if (m < 60) return 'há ' + m + ' min';
+  if (m < 1440) return 'há ' + Math.round(m/60) + ' h';
+  const d = Math.round(m/1440);
+  return d === 1 ? 'ontem' : 'há ' + d + ' dias';
+}
+function mbMontarAtividade(alunos, sessoes, registros, dores){
+  const nome = id => ((alunos.find(x => x.id === id) || {}).nome || 'Aluno').split(' ')[0];
+  const ev = [];
+  (sessoes || []).forEach(r => ev.push({ t: r.criado_em, i: '✅', a: nome(r.aluno_id), x: 'terminou o treino' }));
+  (dores || []).forEach(r => ev.push({ t: r.criado_em, i: '⚠️', a: nome(r.aluno_id), x: 'relatou dor' + (r.dor_obs ? ': ' + r.dor_obs : '') }));
+  const por = {};
+  (registros || []).forEach(r => { (por[r.aluno_id] = por[r.aluno_id] || []).push(r); });
+  Object.keys(por).forEach(id => {
+    let g = null;
+    por[id].forEach(r => {
+      const t = new Date(r.criado_em).getTime();
+      if (g && g.t0 - t < 3 * 3600000) { g.n++; }
+      else { g = { t0: t, t: r.criado_em, n: 1, r: r }; ev.push(g); g.i = '🏋️'; g.a = nome(id); }
+      g.x = 'registrou ' + g.n + (g.n > 1 ? ' cargas' : ' carga') + ' · ' + (g.r.exercicio_nome || '') + (g.r.carga != null ? ' ' + g.r.carga + 'kg' : '') + (g.r.reps != null ? '×' + g.r.reps : '') + (g.n > 1 ? ' e +' + (g.n - 1) : '');
+    });
+  });
+  ev.sort((a, b) => new Date(b.t) - new Date(a.t));
+  const box = document.getElementById('alunos-atividade');
+  if (!box) return;
+  const lista = ev.slice(0, 20);
+  box.style.display = 'block';
+  box.innerHTML = '<summary>🔔 Atividade recente <span class="al-feed-n">' + ev.length + '</span></summary>' +
+    (lista.length ? '<div class="al-feed-list">' + lista.map(e => '<div class="al-feed-it"><span class="al-feed-ic">' + e.i + '</span><span class="al-feed-tx"><b>' + escAttr(e.a) + '</b> ' + escAttr(e.x) + '</span><span class="al-feed-t">' + mbTempoRel(e.t) + '</span></div>').join('') + '</div>' : '<div class="al-feed-vazio">Sem atividade nos últimos dias.</div>');
 }
 
 function renderPainelAlunos() {
@@ -6632,7 +6706,7 @@ function renderPainelAlunos() {
 
     // Rodapé do card (só para alunos fora da lixeira) — ultra-compacto
     const rodape = lixeira ? '' : `
-      <button type="button" class="al-more-btn" onclick="this.closest('.aluno-row').classList.toggle('al-open')">⚙️ Acesso, pedidos e testes <span>▾</span></button>
+      <button type="button" class="al-more-btn" onclick="this.closest('.aluno-row').classList.toggle('al-open')">⚙️ Detalhes · acesso · pedidos · testes <span>▾</span></button>
       <div class="al-rodape" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
         <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">Acesso</span>
         <input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
@@ -6677,7 +6751,7 @@ function renderPainelAlunos() {
             <button type="button" onclick="mbEditarNomeAluno('${a.id}')" title="Editar nome" style="border:none;background:none;cursor:pointer;font-size:10px;padding:0 2px;opacity:.55;line-height:1">✏️</button>
             ${statusBadge}${linkAvulsoBadge}${acessoBadge}${sessoesBadge}${anamBadge}${parqBadge}${alertaDorBadge}${cargasBadge}${solicMudancaBadge}${novoComDemandaBadge}
           </div>
-          <div style="font-size:10px;color:var(--t3)">${escAttr(a.email||'')}${acessoLabel ? ` · 🗓 ${acessoLabel}` : ''}</div>
+          <div class="al-det" style="font-size:10px;color:var(--t3)">${escAttr(a.email||'')}${acessoLabel ? ` · 🗓 ${acessoLabel}` : ''}</div>
           <div style="font-size:10px;color:var(--t2);margin-top:1px">📋 ${protoLinha}</div>
         </div>
 
@@ -9438,6 +9512,12 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
+/* ── balão de observação (v94) ── */
+.ec-o{display:inline-block!important;position:relative;margin:0 0 8px 2px!important;padding:4px 10px!important;background:color-mix(in srgb,var(--P) 13%,var(--card))!important;border:1px solid color-mix(in srgb,var(--P) 26%,transparent);border-radius:12px 12px 12px 3px!important;font-size:11px!important;line-height:1.35;color:var(--tx)!important;max-width:calc(100% - 70px)}
+.ec-o::before{content:none!important}
+.ec-o::after{content:"";position:absolute;left:11px;bottom:-5px;width:8px;height:8px;background:color-mix(in srgb,var(--P) 13%,var(--card));border-right:1px solid color-mix(in srgb,var(--P) 26%,transparent);border-bottom:1px solid color-mix(in srgb,var(--P) 26%,transparent);transform:rotate(45deg);border-radius:0 0 2px 0}
+.ec-hd .vbtn{top:0}
+.ec-hd:has(.ec-o) .vbtn{top:32px}
 /* ── cores (v93): marfim no claro, vidro no escuro ── */
 :root:not([data-theme=dark]){--bg:#F3EFE6;--card:#FBF8F1;--cl:#F1EDE3;--bd:#E2DCCD}
 [data-theme=dark]{--card:rgba(255,255,255,.055);--cl:rgba(255,255,255,.04);--bd:rgba(255,255,255,.09)}
@@ -10900,7 +10980,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     const repsM = serieCurtoM[2].trim().match(/^([\\d\\-–\\/]+)\\s*(.*)$/);
     const lblS = aLang==='en' ? 'sets' : 'séries';
     seriesBadgeHTML = '<span class="sx-c"><i>' + lblS + '</i><b>' + aEsc(serieCurtoM[1]) + '</b></span><span class="sx-x">×</span>' +
-      (repsM ? '<span class="sx-c"><i>reps</i><b>' + aEsc(repsM[1]) + '</b></span>' + (repsM[2] ? '<span class="sx-ex">' + aEsc(repsM[2]) + '</span>' : '') : '<span class="sx-c"><i>reps</i><b>' + aEsc(serieCurtoM[2].trim()) + '</b></span>');
+      (repsM ? (function(){ const sfx = repsM[2].trim(); const tk = sfx.split(' ')[0].toLowerCase(); const ehT = ['s','seg','min','m',"'",'"'].indexOf(tk) >= 0; const resto = ehT ? sfx.slice(tk.length).trim() : sfx; return '<span class="sx-c"><i>' + (ehT ? (aLang==='en'?'time':'tempo') : 'reps') + '</i><b>' + aEsc(repsM[1]) + (ehT ? aEsc(tk) : '') + '</b></span>' + (resto ? '<span class="sx-ex">' + aEsc(resto) + '</span>' : ''); })() : '<span class="sx-c"><i>reps</i><b>' + aEsc(serieCurtoM[2].trim()) + '</b></span>');
   }
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
   const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
@@ -10929,6 +11009,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   return '<div class="ec" id="'+eid+'">' +
     '<div class="ec-hd">' +
       '<div class="ec-info">' +
+        (ex.obs ? '<span class="ec-o">'+aEsc(ex.obs)+'</span>' : '') +
         '<div class="ec-name-row">' +
           '<span class="ec-done-wrap">' +
             '<input type="checkbox" class="ec-done-cb" id="'+eid+'-done" data-eid="'+eid+'" onchange="aToggleDone(this.dataset.eid)" title="'+aEsc(aT('marcar_feito'))+'">' +
@@ -10937,7 +11018,6 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
           '<span class="ec-n">'+aEsc(ex.nome)+'</span>' +
         '</div>' +
         (chips ? '<div class="ec-chips">'+chips+'</div>' : '') +
-        (ex.obs ? '<span class="ec-o">'+aEsc(ex.obs)+'</span>' : '') +
         baseRefHTML +
       '</div>' +
       (emb ? '<button class="vbtn" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)"><span>'+(aLang==='en'?'Video':'Vídeo')+'</span></button>' : '') +
