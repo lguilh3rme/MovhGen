@@ -384,10 +384,6 @@ select{cursor:pointer}
   .exi-top .exi-rm{width:34px;height:34px}
   .preview-toggle,.bd-btn{min-width:34px;min-height:34px}
   .badd{padding:9px 14px;font-size:12px}
-  .pg-head div[style*="margin-top:6px"]{flex-wrap:wrap;gap:4px 8px!important}
-  .pg-head div[style*="margin-top:6px"] > span:first-child{flex:0 0 100%}
-  .pg-head div[style*="margin-top:6px"] > span:not(:first-child){display:none}
-  .pg-head div[style*="margin-top:6px"] > select{flex:1 1 40%;min-width:0;font-size:16px!important;padding:7px 8px!important}
 }
 /* ── navegação e densidade no PC (v89) ── */
 .main{padding:1.1rem 1.4rem}
@@ -431,9 +427,6 @@ select{cursor:pointer}
   .exi{padding:3px 6px;gap:3px}
   .exi-top{padding:3px 6px;gap:8px}
   .ch{margin-bottom:6px}
-  .pg-head > div:first-child{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px;width:100%;max-width:1040px}
-  .pg-head > div:first-child > *{grid-column:1/-1}
-  .pg-head > div:first-child > div[style*="margin-top:6px"]{grid-column:auto;margin-top:2px!important;flex-wrap:wrap}
 }
 .sn-row{flex-wrap:wrap;row-gap:0;padding:0 2px}
 .sn-edit{flex:1 1 100%!important;width:100%;color:#8a8a84;font-size:10px;padding:8px 6px 3px}
@@ -515,6 +508,23 @@ body.dock-open #aluno-dock{display:flex}
 }
 .aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
 .aluno-row input[type=date]{font-size:11px!important}
+/* ── editor enxuto (v97) ── */
+@media(hover:hover){.ni .ni-x{opacity:0;transition:opacity .12s}.ni:hover .ni-x,.ni.active .ni-x{opacity:.8}.sn-row .sn-actions{opacity:.35;transition:opacity .12s}.sn-row:hover .sn-actions{opacity:1}}
+.sn-row{margin-top:6px}
+.dia-cfg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;align-items:center}
+.dcf{display:flex;align-items:center;gap:6px;margin:0!important}
+.dcf-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;font-weight:700;white-space:nowrap}
+.dcf select{max-width:170px;font-size:11px;padding:3px 7px}
+.gv,.bl-more{margin:0 0 8px;border:1px solid var(--bd2);border-radius:var(--rs);background:var(--cl)}
+.gv>summary,.bl-more>summary{cursor:pointer;list-style:none;padding:5px 10px;font-size:10.5px;font-weight:600;color:var(--t3)}
+.gv>summary::-webkit-details-marker,.bl-more>summary::-webkit-details-marker{display:none}
+.gv[open]>summary,.bl-more[open]>summary{color:var(--t2)}
+.gv-in{display:flex;align-items:center;gap:6px;padding:0 9px 8px}
+.bl-more{background:transparent;border-style:dashed;margin:6px 0 0}
+.bl-more>.fr,.bl-more>div{padding:0 10px 8px}
+.bl-n{font-size:10px;color:var(--t3);font-weight:700;white-space:nowrap;margin-left:2px}
+.bl-acts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+@media(max-width:700px){.pg-title>span:first-child{display:none}.pg-title .btn{white-space:nowrap}.dia-cfg{gap:6px 10px}.dcf{flex:1 1 100%}.dcf select{max-width:none;flex:1}}
 </style>
 </head>
 <body>
@@ -531,16 +541,16 @@ body.dock-open #aluno-dock{display:flex}
   <div class="sn">Protocolo</div>
   <div class="ni active" onclick="nav('config')" id="nav-config"><span class="ic">⚙️</span><span class="ni-name">Configuração</span></div>
   <div class="ni" onclick="nav('alunos')" id="nav-alunos"><span class="ic">👥</span><span class="ni-name">Alunos</span></div>
-  <div class="ni" onclick="nav('splits')" id="nav-splits"><span class="ic">📂</span><span class="ni-name">Carregar Split</span></div>
   <div id="semanas-nav"></div>
   <div class="sep"></div>
-  <div class="sn">Base de dados</div>
+  <div class="sn">Biblioteca</div>
   <div class="ni" onclick="nav('db-ex')" id="nav-db-ex"><span class="ic">🏋️</span><span class="ni-name">Exercícios</span></div>
   <div class="ni" onclick="nav('db-pre')" id="nav-db-pre"><span class="ic">📋</span><span class="ni-name">Presets</span></div>
   <div class="ni" onclick="nav('db-splits')" id="nav-db-splits"><span class="ic">📁</span><span class="ni-name">Splits</span></div>
   <div class="sep"></div>
+  <div class="sn">Gestão</div>
   <div class="ni" onclick="nav('planos')" id="nav-planos"><span class="ic">💳</span><span class="ni-name">Planos</span></div>
-  <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Gerar HTML</span></div>
+  <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
 </div>
@@ -853,7 +863,7 @@ body.dock-open #aluno-dock{display:flex}
 <div class="page" id="page-db-splits">
   <div class="pg-head" style="align-items:center">
     <div><div class="pg-title">Splits</div><div class="pg-sub">Edite, adicione ou remova splits. Salvo automaticamente.</div></div>
-    <button class="btn bp" onclick="openAddSplit()">+ Split</button>
+    <div style="display:flex;gap:6px"><button class="btn" onclick="nav('splits')">📂 Carregar no editor</button><button class="btn bp" onclick="openAddSplit()">+ Split</button></div>
   </div>
   <div id="db-splits-content"></div>
 </div>
@@ -1104,21 +1114,21 @@ body.dock-open #aluno-dock{display:flex}
   </div>
 </div>
 <div class="page" id="page-export">
-  <div class="pg-head"><div><div class="pg-title">Gerar Protocolo</div><div class="pg-sub">Exporta o index.html pronto para o Netlify.</div></div></div>
+  <div class="pg-head"><div><div class="pg-title">Publicar app do aluno</div><div class="pg-sub">Gera o index.html do app (um só para todos os alunos) para subir no Netlify/GitHub.</div></div></div>
   <div class="exp-box">
     <div style="font-size:32px;margin-bottom:10px">📦</div>
-    <div style="font-size:15px;font-weight:600;margin-bottom:5px">Pronto para exportar</div>
-    <div style="font-size:12px;color:var(--t2);margin-bottom:1.25rem;line-height:1.6">Gera <strong>index.html</strong> com vídeos ocultos (▶ abre inline), dark mode, senha e navegação completa.<br>Arraste no <strong>Netlify Drop</strong> — link pronto em segundos.</div>
-    <button class="btn bg" onclick="exportar()">⬇ Baixar index.html</button>
-    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bd)">
-      <div style="font-size:12px;color:var(--t2);margin-bottom:.75rem;line-height:1.6">☁️ Versão com login: gera um <strong>index.html</strong> único que serve para todos os alunos. Cada um faz login e vê o próprio protocolo (puxado do banco), com campo de carga por exercício.</div>
-      <button class="btn bp" onclick="exportarComLogin()">⬇ Baixar index.html (com login)</button>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1rem;line-height:1.6">Cada aluno entra com login e vê o próprio protocolo, com carga, RPE e histórico. Os links de treino (<code>?treino=</code>) continuam funcionando sem reexportar.</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn bp" onclick="exportarComLogin()">⬇ Baixar index.html do app</button>
+      <button class="btn" onclick="toggleDock()">📱 Ver como aluno</button>
     </div>
-    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--bd)">
-      <div style="font-size:12px;color:var(--t2);margin-bottom:.75rem;line-height:1.6">🔐 <strong>Login não funciona?</strong> O problema mais comum é falta de policies RLS no Supabase. Copie o SQL abaixo e execute no <a href="https://supabase.com/dashboard/project/cfanjhuzrcgxrbfmhahi/sql" target="_blank" style="color:var(--P)">SQL Editor do Supabase</a>:</div>
+    <details class="gv" style="margin-top:1.25rem;text-align:left"><summary>🔐 Login não funciona? Policies RLS do Supabase</summary>
+      <div style="padding:0 10px 10px">
+      <div style="font-size:12px;color:var(--t2);margin-bottom:.6rem;line-height:1.6">O problema mais comum é falta de policies RLS. Copie o SQL e execute no <a href="https://supabase.com/dashboard" target="_blank" rel="noopener">SQL Editor do Supabase</a>.</div>
       <button class="btn" style="font-size:11px;padding:6px 12px" onclick="copiarSQLRLS()">📋 Copiar SQL das policies RLS</button>
       <div id="rlsSqlBox" style="display:none;margin-top:.5rem;background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:.75rem;font-size:11px;font-family:monospace;color:var(--t2);white-space:pre-wrap;line-height:1.5;max-height:200px;overflow:auto"></div>
-    </div>
+      </div>
+    </details>
   </div>
 </div>
 
@@ -1620,11 +1630,6 @@ async function dbDeletarExercicio(id){
   const { error } = await mbClient.from('exercicios').delete().eq('id', id);
   if(error) notify('Erro ao remover: '+error.message);
 }
-async function dbSalvarCategoria(cat){
-  // categoria existe implicitamente; só recarrega
-  if(!REP[cat]) REP[cat]=[];
-  refreshExDatalist(); renderDBEx();
-}
 async function dbDeletarCategoria(cat){
   if(!mbProfessor) return;
   const ids = (REP[cat]||[]).map(e=>e._id).filter(Boolean);
@@ -1921,7 +1926,7 @@ function pbGoSem(sid){const s=semanas.find(x=>x.id===sid);if(!s)return;nav(s.dia
 function refreshPBars(){document.querySelectorAll('.pbar').forEach(el=>{const h=pbarHTML(el.dataset.sid,el.dataset.did,el.dataset.mode);if(h)el.outerHTML=h;});}
 function renderCfgTreino(){
   const el=document.getElementById('cfg-treino');if(!el)return;
-  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:12px;font-weight:700">✏️ Treino em edição</span><span style="flex:1"></span><button class="pb-btn on" onclick="toggleDock()">📱 Prévia do aluno</button></div>'+
+  el.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="font-size:12px;font-weight:700">✏️ Treino em edição</span><span style="flex:1"></span><button class="pb-btn" onclick="nav(\'splits\')">📂 Carregar split</button><button class="pb-btn on" onclick="toggleDock()">📱 Prévia do aluno</button></div>'+
     semanas.map(s=>`<div class="cfg-sem"><b>${escAttr(s.nome||'Semana')}</b>${s.dias.map(d=>`<button class="pb-chip" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('')}<button class="pb-btn" data-sid="${s.id}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button></div>`).join('');
 }
 const _renderSB0=renderSB;
@@ -2840,27 +2845,6 @@ function _kbSemDeDia(did){for(const s of semanas){if(s.dias.find(d=>d.id===did))
 // Pula direto pro card/exercício certo dentro da edição completa do dia —
 // abre o bloco e o exercício automaticamente e rola até ele, pra quem veio
 // clicando a partir do kanban não precisar procurar/abrir tudo de novo.
-function abrirExNoEditor(did,bi,i){
-  nav(did);
-  requestAnimationFrame(()=>{
-    const body=document.getElementById('bb-'+did+'-'+bi)||document.getElementById('cb-'+did+'-'+bi);
-    if(body){
-      body.style.display='block';
-      const header=body.previousElementSibling;
-      const arr=header&&header.querySelector('.bloco-arr');
-      if(arr)arr.style.transform='rotate(90deg)';
-    }
-    const eid='ex-det-'+did+'-'+bi+'-'+i;
-    const det=document.getElementById(eid);
-    if(det){
-      det.style.display='block';
-      const top=det.previousElementSibling;
-      const arr2=top&&top.querySelector('.exi-arr');
-      if(arr2)arr2.style.transform='rotate(90deg)';
-      setTimeout(()=>det.scrollIntoView({behavior:'smooth',block:'center'}),30);
-    }
-  });
-}
 
 // ── Modal de exercício do kanban — reaproveita as MESMAS funções de dado
 // (setEx/addEx/rmEx/getUrl/catDoExercicio/PRE) do editor clássico, só que
@@ -3992,13 +3976,8 @@ function addToCJ(did,bi,g){const b=fBloco(did,bi);if(!b)return;b.exercicios.push
 function setCJ(did,bi,g,f,v){const b=fBloco(did,bi);if(!b||!b.conjGroups)return;if(!b.conjGroups[g])b.conjGroups[g]={label:'Conjugado',rest:'30s',restAfter:''};b.conjGroups[g][f]=v;}
 function rmCJ(did,bi,g){const b=fBloco(did,bi);if(!b)return;b.exercicios=b.exercicios.filter(e=>String(e.cj)!==String(g));delete b.conjGroups[g];renderExList(did,bi);}
 // MetCon exercises
-function addMCEx(did,bi){const b=fBloco(did,bi);if(!b)return;if(!b.metconExs)b.metconExs=[];b.metconExs.push({nome:'',url:'',reps:'',series:'',rest:'',obs:''});renderDia(did);}
-function rmMCEx(did,bi,i){const b=fBloco(did,bi);if(!b||!b.metconExs)return;b.metconExs.splice(i,1);renderDia(did);}
-function setMCEx(did,bi,i,f,v){const b=fBloco(did,bi);if(!b||!b.metconExs)return;b.metconExs[i][f]=v;if(f==='nome'){b.metconExs[i].url=getUrl(v);renderDia(did);}}
-function setMCExField(did,bi,i,f,v){const b=fBloco(did,bi);if(!b||!b.metconExs)return;b.metconExs[i][f]=v;b.metconExs[i].url=getUrl(v);renderDia(did);}
 
 // ══ SELECT ══
-function buildSel(val){let h='<option value="">— selecione —</option>';for(const[cat,exs]of Object.entries(REP)){h+=`<optgroup label="${cat}">`;exs.forEach(e=>{h+=`<option value="${e.n}"${e.n===val?' selected':''}>${e.n}</option>`;});h+='</optgroup>';}return h;}
 // Datalist único e compartilhado com todos os exercícios do banco — permite
 // digitar o nome livremente (com autocomplete) em vez de rolar um <select>
 // gigante com 22 categorias. Reconstruído sempre que REP muda (ex: ao
@@ -4250,6 +4229,8 @@ function renderDia(did){
   let semNome='';let semObj=null;for(const s of semanas){if(s.dias.find(d=>d.id===did)){semNome=s.nome;semObj=s;break;}}
   if(!semObj&&calEditDia&&calEditDia.id===did&&calEditOrigemInfo){semObj=calEditOrigemInfo.semanaObj;semNome=semObj?semObj.nome:'';}
   let bh='';
+  window._blClosed=window._blClosed||{};window._diaVisto=window._diaVisto||{};
+  if(!window._diaVisto[did]){window._diaVisto[did]=1;if(dia.blocos.length>2)dia.blocos.forEach((b,bi)=>{if(bi>0){window._blClosed['bb-'+did+'-'+bi]=1;window._blClosed['cb-'+did+'-'+bi]=1;}});}
   dia.blocos.forEach((b,bi)=>{
     const canRm=true;
     if(b.id==='con'||(b.tipo&&!b.exercicios)){
@@ -4271,9 +4252,9 @@ function renderDia(did){
           <button class="bd-btn btn" title="Duplicar bloco" onclick="event.stopPropagation();dupBloco('${did}',${bi})" style="font-size:11px;padding:3px 7px">⧉</button>
           <button class="preview-toggle${ehPreviewOn(did,bi)?' on':''}" onclick="event.stopPropagation();toggleExPreview('${did}',${bi},this)" title="Ver como o aluno vê estes exercícios">👁️</button>
           ${canRm?`<button class="bd-btn btn" onclick="event.stopPropagation();rmBloco('${did}',${bi})" style="font-size:10px;padding:3px 7px">×</button>`:''}
-          <span class="bloco-arr" style="color:var(--t3);font-size:16px;margin-left:4px;transform:rotate(90deg);display:inline-block;transition:transform .2s">›</span>
+          <span class="bl-n">${b.duracao||b.tipo||""}</span><span class="bloco-arr" style="color:var(--t3);font-size:16px;margin-left:4px;transform:rotate(${window._blClosed[cond_body_id]?0:90}deg);display:inline-block;transition:transform .2s">›</span>
         </div>
-        <div id="${cond_body_id}" style="padding:0 12px 12px">
+        <div id="${cond_body_id}" style="padding:0 12px 12px${window._blClosed[cond_body_id]?';display:none':''}">
         ${buildGavetaSelect(did,bi,'con')}
         <div class="fld" style="margin-bottom:6px"><span class="lbl">📋 Usar modelo pronto</span>
           <select onchange="if(this.value)aplicarModeloCondic('${did}',${bi},this.value);this.value=''">
@@ -4323,15 +4304,16 @@ function renderDia(did){
           <button class="bd-btn btn" title="Duplicar bloco" onclick="event.stopPropagation();dupBloco('${did}',${bi})" style="font-size:11px;padding:3px 7px">⧉</button>
           <button class="preview-toggle${ehPreviewOn(did,bi)?' on':''}" onclick="event.stopPropagation();toggleExPreview('${did}',${bi},this)" title="Ver como o aluno vê estes exercícios">👁️</button>
           ${canRm?`<button class="bd-btn btn" onclick="event.stopPropagation();rmBloco('${did}',${bi})" style="font-size:10px;padding:3px 7px">×</button>`:''}
-          <span class="bloco-arr" style="color:var(--t3);font-size:16px;margin-left:4px;transform:rotate(90deg);display:inline-block;transition:transform .2s">›</span>
+          <span class="bl-n">${(b.exercicios||[]).length} ex</span><span class="bloco-arr" style="color:var(--t3);font-size:16px;margin-left:4px;transform:rotate(${window._blClosed[bloco_body_id]?0:90}deg);display:inline-block;transition:transform .2s">›</span>
         </div>
-        <div id="${bloco_body_id}" style="padding:0 12px 12px">
+        <div id="${bloco_body_id}" style="padding:0 12px 12px${window._blClosed[bloco_body_id]?';display:none':''}">
           ${buildGavetaSelect(did,bi,b.id==='atv'?'atv':'pri')}
           <div class="exl" id="exl-${did}-${bi}"></div>
           <div style="display:${ehPreviewOn(did,bi)?'none':'flex'};gap:5px;flex-wrap:wrap;margin-bottom:8px">
             <button class="badd" onclick="addEx('${did}',${bi})">+ exercício</button>
             <button class="badd conj" onclick="addCJ('${did}',${bi})">🔗 + conjugado</button>
           </div>
+          <details class="bl-more"${(b.progressaoAuto||b.obs)?' open':''}><summary>⋯ mais opções do bloco</summary>
           <div class="fr r1" style="align-items:center;display:flex;gap:8px;margin-top:2px">
             <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);cursor:pointer">
               <input type="checkbox" ${b.progressaoAuto?'checked':''} onchange="setBl('${did}',${bi},'progressaoAuto',this.checked);renderExList('${did}',${bi})" style="width:auto"/>
@@ -4339,6 +4321,7 @@ function renderDia(did){
             </label>
           </div>
           <div class="fr r1"><div class="fld"><span class="lbl">Obs do bloco</span><input type="text" value="${escAttr(b.obs||'')}" placeholder="Dica técnica..." oninput="setBl('${did}',${bi},'obs',this.value)"/></div></div>
+          </details>
         </div>
       </div>`;
     }
@@ -4353,8 +4336,9 @@ function renderDia(did){
           <button class="btn bs" style="margin-left:auto;font-size:10.5px;padding:4px 10px" onclick="dupDia('${semObj?semObj.id:''}','${did}')" title="Cria uma cópia deste dia na mesma semana">⧉ Duplicar dia</button>
         </div>
         <input style="font-size:11px;color:var(--t3);background:transparent;border:none;outline:none;margin-top:2px;width:100%" placeholder="Subtítulo (ex: Upper A)" value="${escAttr(dia.sub||'')}" oninput="setDF('${did}','sub',this.value)"/>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-          <span style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;font-weight:700">Dia real da semana</span>
+        <div class="dia-cfg">
+        <div class="dcf">
+          <span class="dcf-l">Dia real da semana</span>
           <select onchange="setDF('${did}','diaSemana',this.value)" style="font-size:11px;padding:3px 7px">
             <option value=""${!dia.diaSemana?' selected':''}>— não definido —</option>
             <option value="Segunda"${dia.diaSemana==='Segunda'?' selected':''}>Segunda</option>
@@ -4365,10 +4349,9 @@ function renderDia(did){
             <option value="Sábado"${dia.diaSemana==='Sábado'?' selected':''}>Sábado</option>
             <option value="Domingo"${dia.diaSemana==='Domingo'?' selected':''}>Domingo</option>
           </select>
-          <span style="font-size:9px;color:var(--t3)">define quando esse treino aparece em destaque na agenda do aluno</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-          <span style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;font-weight:700">Fase desta semana</span>
+        <div class="dcf">
+          <span class="dcf-l">Fase desta semana</span>
           <select onchange="setSemFase('${semObj?semObj.id:''}',this.value)" style="font-size:11px;padding:3px 7px">
             <option value=""${!semObj||!semObj.fase?' selected':''}>— sem fase definida —</option>
             <option value="base"${semObj&&semObj.fase==='base'?' selected':''}>🔵 Base</option>
@@ -4376,10 +4359,9 @@ function renderDia(did){
             <option value="densidade"${semObj&&semObj.fase==='densidade'?' selected':''}>🟡 Densidade</option>
             <option value="deload"${semObj&&semObj.fase==='deload'?' selected':''}>⚫ Deload</option>
           </select>
-          <span style="font-size:9px;color:var(--t3)">aplica-se a todos os dias desta semana (referência, não altera séries/reps)</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap">
-          <span style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;font-weight:700">Foco predominante</span>
+        <div class="dcf">
+          <span class="dcf-l">Foco predominante</span>
           <select onchange="setSemFoco('${semObj?semObj.id:''}','dim',this.value)" style="font-size:11px;padding:3px 7px">
             <option value=""${!semObj||!semObj.focoDim?' selected':''}>— sem foco definido —</option>
             ${Object.keys(FOCO_TREINO).map(k=>`<option value="${k}"${semObj&&semObj.focoDim===k?' selected':''}>${FOCO_TREINO[k].emoji} ${FOCO_TREINO[k].label}</option>`).join('')}
@@ -4388,12 +4370,11 @@ function renderDia(did){
             <option value=""${!semObj.focoItem?' selected':''}>— item —</option>
             ${FOCO_TREINO[semObj.focoDim].itens.map(it=>`<option value="${escAttr(it)}"${semObj.focoItem===it?' selected':''}>${it}</option>`).join('')}
           </select>`:''}
-          <span style="font-size:9px;color:var(--t3)">opcional — o que este mesociclo prioriza, independente da fase acima</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-          <span style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.04em;font-weight:700">Idioma exercícios</span>
+        <div class="dcf">
+          <span class="dcf-l">Idioma exercícios</span>
           <button class="btn bs" style="font-size:10px;padding:2px 10px" onclick="mbToggleLangProtocolo()" id="lang-dia-btn-${did}">${_mbLangEditor==='en'?'🇬🇧 EN → PT':'🇧🇷 PT → EN'}</button>
-          <span style="font-size:9px;color:var(--t3)">troca os nomes dos exercícios deste dia pelo idioma do banco</span>
+        </div>
         </div>
         ${semObj&&semObj.fase&&FASES_TEMPLATE[semObj.fase]?(()=>{const ft=FASES_TEMPLATE[semObj.fase];return `<div style="margin-top:8px;padding:8px 10px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs);font-size:10px;color:var(--t2)">
           <b style="color:var(--tx)">${ft.emoji} ${ft.label}</b> — RPE ${ft.rpe} · RIR ${ft.rir} · Carga ${ft.carga} · Volume ${ft.volume} · Descanso ${ft.descanso}
@@ -4404,11 +4385,12 @@ function renderDia(did){
       </div>
     </div>
     ${bh}
-    <div id="addbloco-${did}"><button class="badd" onclick="addBlocoEscolherTipo('${did}')" style="margin-bottom:8px">+ bloco</button></div>
+    <div id="addbloco-${did}" class="bl-acts"><button class="badd" onclick="addBlocoEscolherTipo('${did}')">+ bloco</button><button class="badd" onclick="blToggleTodos('${did}')">⇕ abrir/fechar todos</button></div>
     <div class="btn-row"><button class="btn bp" onclick="goNext('${did}')">Próximo →</button></div>`;
   dia.blocos.forEach((b,bi)=>{if(b.exercicios)renderExList(did,bi);});
 }
 
+function blToggleTodos(did){const dia=fDia(did);if(!dia)return;window._blClosed=window._blClosed||{};const ks=dia.blocos.flatMap((b,bi)=>['bb-'+did+'-'+bi,'cb-'+did+'-'+bi]);const alguemAberto=ks.some(k=>!window._blClosed[k]);ks.forEach(k=>{if(alguemAberto)window._blClosed[k]=1;else delete window._blClosed[k];});renderDia(did);}
 function goNext(did){const all=semanas.flatMap(s=>s.dias);const i=all.findIndex(d=>d.id===did);if(i>=0&&i<all.length-1)nav(all[i+1].id);else nav('export');}
 function renderAll(){renderSB();semanas.forEach(s=>s.dias.forEach(d=>renderDia(d.id)));atualizarPreviewConfig();renderCalProto();}
 // Preview "como o aluno vê" no topo do editor de protocolo — espelha
@@ -5741,14 +5723,13 @@ function buildGavetaSelect(did, bi, tipo){
   const lista=getBlocosByTipo(tipo);
   if(!lista.length) return '';
   const opts=lista.map((item,i)=>`<option value="${i}">${escAttr(item.label)}</option>`).join('');
-  return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;padding:7px 9px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs)">
-    <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">📋 Carregar bloco:</span>
+  return `<details class="gv"><summary>📋 Carregar modelo de bloco</summary><div class="gv-in">
     <select id="gaveta-${did}-${bi}" style="flex:1;font-size:11px;padding:3px 6px" onchange="void 0">
       <option value="">— escolha um modelo —</option>
       ${opts}
     </select>
     <button class="btn bp" style="font-size:10px;padding:3px 9px;white-space:nowrap" onclick="(function(){const s=document.getElementById('gaveta-${did}-${bi}');if(s&&s.value!=='')blocoCarregarTemplate('${did}',${bi},s.value,'${tipo}');})()">Aplicar</button>
-  </div>`;
+  </div></details>`;
 }
 
 function renderSplitPicker(){
@@ -8794,29 +8775,6 @@ let _mbLangEditor = 'pt'; // idioma ativo no editor (pt|en)
 function _repFlat(){ return Object.values(REP).flat(); }
 function _repFind(nome){ return _repFlat().find(r => r.n === nome || r.nome_pt === nome || r.nome_en === nome); }
 
-function mbToggleLangDia(did){
-  const novoLang = _mbLangEditor === 'pt' ? 'en' : 'pt';
-  _mbLangEditor = novoLang;
-  const d = fDia(did);
-  if (!d) return;
-  let trocados = 0;
-  d.blocos.forEach(bloco => {
-    (bloco.exercicios || []).forEach(ex => {
-      const rep = _repFind(ex.nome);
-      if (!rep) return;
-      const novoNome = novoLang === 'en' ? (rep.nome_en || rep.n) : (rep.nome_pt || rep.n);
-      if (novoNome && novoNome !== ex.nome) { ex.nome = novoNome; trocados++; }
-    });
-    (bloco.metconExs || []).forEach(ex => {
-      const rep = _repFind(ex.nome);
-      if (!rep) return;
-      const novoNome = novoLang === 'en' ? (rep.nome_en || rep.n) : (rep.nome_pt || rep.n);
-      if (novoNome && novoNome !== ex.nome) { ex.nome = novoNome; trocados++; }
-    });
-  });
-  renderDia(did);
-  notify(trocados > 0 ? `✅ ${trocados} exercício${trocados!==1?'s':''} → ${novoLang.toUpperCase()}` : `Nenhum exercício do banco encontrado para traduzir.`);
-}
 
 async function mbToggleLangProtocolo(){
   const btn = document.getElementById('mb-lang-proto-btn');
@@ -8989,7 +8947,7 @@ async function mbSalvarProtocolo() {
   const nome = document.getElementById('cfg-nome').value || 'Protocolo';
   const lang = document.getElementById('cfg-lang') ? document.getElementById('cfg-lang').value : 'pt';
 
-  // aplica a tradução (se inglês) ANTES de salvar, igual o exportar() original faz na hora de montar o HTML
+  // aplica a tradução (se inglês) ANTES de salvar, igual o export faz na hora de montar o HTML
   const semanasTraduzidas = (semanas || []).map(s => ({
     ...s,
     nome: trNome(s.nome, lang),
@@ -9124,181 +9082,10 @@ async function mbAtualizarProtocolo() {
 // FIM MOVA BANCO
 // ══════════════════════════════════════════════════════════
 
-function exportar(){
-  const nome=document.getElementById('cfg-nome').value||'Protocolo';
-  const icone=document.getElementById('cfg-icone').value||'💪';
-  const desc=document.getElementById('cfg-desc').value||'';
-  const div=document.getElementById('cfg-div').value||'';
-  const lang=document.getElementById('cfg-lang')?document.getElementById('cfg-lang').value:'pt';
-  const UI=I18N_UI[lang]||I18N_UI.pt;
-  const maxD=Math.max(...semanas.map(s=>s.dias.length));
-
-  let _uid=0;
-  function exCard(ex){
-    const emb=embedUrl(ex.url||getUrl(ex.nome));
-    const eid='ec-'+(++_uid);
-    const chips=[
-      ex.series?`<span class="ec-chip ec-chip-s">${ex.series}</span>`:'',
-      ex.rest?`<span class="ec-chip ec-chip-r">⏱ ${ex.rest}</span>`:''
-    ].filter(Boolean).join('');
-    return `<div class="ec" id="${eid}">
-      <div class="ec-hd">
-        <button class="done-btn" onclick="markDone('${eid}')" title="${UI.marcar_feito}">✓</button>
-        <div class="ec-info">
-          <span class="ec-n">${trNome(ex.nome,lang)}</span>
-          ${chips?`<div class="ec-chips">${chips}</div>`:''}
-          ${ex.obs?`<span class="ec-o">${ex.obs}</span>`:''}
-        </div>
-        ${emb?`<button class="vbtn" onclick="tv(this,'${eid}-vs','${emb}')" title="${UI.ver_demonstracao}">▶</button>`:''}
-      </div>
-      <div class="vs" id="${eid}-vs" style="display:none"></div>
-    </div>`;
-  }
-  function blocoOut(b){
-    if(b.id==='con'||(b.tipo&&!b.exercicios)){
-      const isMC=b.tipo==='MetCon';
-      const badge=isMC?'background:#FAECE6;color:#701B10':'background:#E0F5EE;color:#085040';
-      const cgs2=b.conjGroups||{};const rendered2=new Set();let exh2='';
-      (b.exercicios||[]).forEach((ex,i)=>{
-        const gk=String(ex.cj);
-        if(ex.cj!=null){
-          if(!rendered2.has(gk)){rendered2.add(gk);const g=cgs2[gk]||{label:'Conjugado',rest:'30s',restAfter:''};const gExs=(b.exercicios||[]).filter(e=>String(e.cj)===gk);exh2+=`<div class="cj"><div class="cj-h">🔗 ${g.label}<span class="cj-r">${UI.entre}: ${g.rest}</span></div>${gExs.map(e=>exCard(e)).join('')}${g.restAfter?`<div class="cj-f">${UI.descanso_apos_grupo}: ${g.restAfter}</div>`:''}</div>`;}
-        }else exh2+=exCard(ex);
-      });
-      return `<div class="bloco"><div class="bh"><div class="dot" style="border-left-color:${b.cor}"></div><span class="bt">${trNome(b.nome,lang)}</span>${b.duracao?`<span class="bm">${b.duracao}</span>`:''}</div><div class="cb"><span class="c-badge" style="${badge}">${trNome(b.tipo,lang)}</span><div class="c-t">${b.titulo}</div><div class="c-d">${b.desc}</div>${exh2?`<div class="exl">${exh2}</div>`:''}</div></div>`
-    }
-    const cgs=b.conjGroups||{};
-    const rendered=new Set();
-    let exh='';
-    (b.exercicios||[]).forEach((ex,i)=>{
-      const gk=String(ex.cj);
-      if(ex.cj!=null){
-        if(!rendered.has(gk)){rendered.add(gk);const g=cgs[gk]||{label:'Conjugado',rest:'30s',restAfter:''};const gExs=(b.exercicios||[]).filter(e=>String(e.cj)===gk);exh+=`<div class="cj"><div class="cj-h">🔗 ${g.label}<span class="cj-r">${UI.entre}: ${g.rest}</span></div>${gExs.map(e=>exCard(e)).join('')}${g.restAfter?`<div class="cj-f">${UI.descanso_apos_grupo}: ${g.restAfter}</div>`:''}</div>`;}
-      }else exh+=exCard(ex);
-    });
-    return `<div class="bloco"><div class="bh"><div class="dot" style="border-left-color:${b.cor}"></div><span class="bt">${trNome(b.nome,lang)}</span>${b.meta?`<span class="bm">${b.meta}</span>`:''}</div><div class="exl">${exh}</div>${b.obs?`<div class="obs">${b.obs}</div>`:''}</div>`;
-  }
-  let semsH='';
-  semanas.forEach((s,si)=>{
-    semsH+=`<div class="sem${si===0?' active':''}" id="sem-${s.id}"><div class="dias-nav">`;
-    s.dias.forEach((d,di)=>{semsH+=`<button class="dbt${di===0?' active':''}" onclick="sd('${s.id}','${d.id}',this)">${trNome(d.nome,lang)}</button>`;});
-    semsH+=`</div>`;
-    s.dias.forEach((d,di)=>{semsH+=`<div class="dia${di===0?' active':''}" id="${d.id}">${d.sub?`<div class="dsub">${d.sub}</div>`:''}${d.blocos.map(b=>blocoOut(b)).join('')}</div>`;});
-    semsH+=`</div>`;
-  });
-  const semNav=semanas.map((s,si)=>`<button class="sbt${si===0?' active':''}" onclick="ss('${s.id}',this)">${trNome(s.nome,lang)}</button>`).join('');
-
-  const out=`<!DOCTYPE html>
-<html lang="${lang==='en'?'en':'pt-BR'}">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${nome}</title>
-<style>
-:root{--P:#7C74DC;--Pl:#EEEDFE;--Pd:#3A3290;--bg:#F2F1EE;--card:#FFF;--tx:#1A1A18;--t2:#666;--t3:#999;--bd:#DDDBD4;--r:10px;--rs:6px}
-[data-theme=dark]{--bg:#111110;--card:#1C1C1A;--tx:#F0EDE8;--t2:#A0A09A;--t3:#555;--bd:#2A2A27;--Pl:#1E1C3A;--Pd:#B0AAF8}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;transition:background .2s,color .2s}
-.wrap{max-width:800px;margin:0 auto;padding:1.5rem 1rem 3rem}
-.ph{margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:1px solid var(--bd)}
-.badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
-.badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--Pl);color:var(--Pd)}
-.b2{background:#E5F0FB;color:#0C4478}
-.pt{font-size:22px;font-weight:700;margin-bottom:5px}
-.pd{font-size:13px;color:var(--t2);max-width:560px;line-height:1.5}
-.pdiv{font-size:11px;color:var(--t3);margin-top:5px}
-.sem-nav{display:flex;gap:6px;margin-bottom:1.25rem;flex-wrap:wrap}
-.sbt{padding:6px 16px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:12px;font-weight:600;cursor:pointer;background:var(--card);color:var(--t2);transition:all .15s}
-.sbt.active{background:var(--P);color:#fff;border-color:var(--P)}
-.dias-nav{display:flex;gap:5px;margin-bottom:1.25rem;flex-wrap:wrap}
-.dbt{padding:5px 13px;border:1px solid var(--bd);border-radius:var(--rs);font-size:12px;cursor:pointer;background:var(--card);color:var(--t2);transition:all .15s}
-.dbt.active{border-color:var(--P);color:var(--Pd);background:var(--Pl);font-weight:600}
-.sem{display:none}.sem.active{display:block}.dia{display:none}.dia.active{display:block}
-.dsub{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);margin-bottom:1rem}
-.bloco{margin-bottom:1.5rem}
-.bh{display:flex;align-items:center;gap:7px;margin-bottom:8px;padding-bottom:7px;border-bottom:1px solid var(--bd)}
-.dot{width:9px;height:16px;box-sizing:border-box;border:3px solid transparent;border-radius:50%;flex-shrink:0}
-.bt{font-size:14px;font-weight:600}
-.bm{margin-left:auto;font-size:10px;color:var(--t3);background:var(--bg);padding:2px 9px;border-radius:99px;border:1px solid var(--bd)}
-.exl{display:flex;flex-direction:column;gap:5px}
-.ec{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
-.ec-hd{display:flex;align-items:center;gap:8px;padding:9px 12px}
-.ec-info{flex:1;display:flex;flex-direction:column;gap:2px}
-.ec-n{font-size:12px;font-weight:600}
-.ec-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:1px}
-.ec-chip{font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:99px;line-height:1.5}
-.ec-chip-s{background:var(--Pl);color:var(--Pd)}
-.ec-chip-r{background:var(--bg);color:var(--t2);border:1px solid var(--bd)}
-.ec-o{font-size:10px;color:var(--t3)}
-.vbtn{width:28px;height:28px;border-radius:50%;background:var(--Pl);border:none;cursor:pointer;color:var(--Pd);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
-.vbtn:hover,.vbtn.open{background:var(--P);color:#fff}
-.vs iframe{width:100%;aspect-ratio:16/9;border:0;display:block}
-.obs{margin-top:6px;padding:6px 12px;border-left:2px solid var(--P);background:var(--Pl);border-radius:0 var(--rs) var(--rs) 0;font-size:12px;color:var(--Pd)}
-.cb{background:var(--card);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px}
-.c-badge{display:inline-block;font-size:10px;font-weight:600;padding:2px 9px;border-radius:99px;margin-bottom:7px}
-.c-t{font-size:13px;font-weight:600;margin-bottom:3px}
-.c-d{font-size:12px;color:var(--t2);line-height:1.5}
-.mc-exs{margin-top:10px;display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--bd);padding-top:8px}
-.mc-ex{background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden}
-.mc-ex-hd{display:flex;align-items:center;gap:6px;padding:6px 10px}
-.mc-ex-n{font-size:11px;font-weight:600;flex:1}
-.mc-ex-r{font-size:10px;color:var(--t2)}
-.vbtn-sm{width:24px;height:24px;border-radius:50%;background:var(--Pl);border:none;cursor:pointer;color:var(--Pd);font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-right:8px}
-.vbtn-sm:hover,.vbtn-sm.open{background:var(--P);color:#fff}
-.cj{border:1.5px solid var(--P);border-radius:var(--r);overflow:hidden;margin-bottom:4px}
-.cj-h{background:var(--Pl);color:var(--Pd);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:4px 12px;display:flex;align-items:center;gap:8px}
-.cj-r{margin-left:auto;font-weight:400;font-size:9px}
-.cj-f{background:var(--Pl);color:var(--Pd);font-size:9px;padding:3px 12px;text-align:right}
-.cj .ec{border-radius:0;border:none;border-bottom:1px solid var(--Pl)}
-.cj .ec:last-of-type{border-bottom:none}
-.dm{position:fixed;top:14px;right:14px;z-index:10;width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--bd);cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.1)}
-.footer{margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--bd);font-size:11px;color:var(--t3);text-align:center}
-.ec.done{background:#E8F8EF!important;border-color:#A8DDB8!important}
-.ec.done .ec-n{color:#1A6E3A;text-decoration:line-through}
-.ec.done .done-btn{background:#1D9E72;color:#fff;border-color:#1D9E72}
-.done-btn{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--bd);background:var(--bg);cursor:pointer;color:var(--t3);font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
-.done-btn:hover{border-color:#1D9E72;color:#1D9E72}
-.bloco-toggle{width:100%;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:7px;padding:8px 0;text-align:left;font-family:inherit}
-.bt-arr{color:var(--t3);font-size:15px;transition:transform .2s;margin-left:auto}
-@media(max-width:480px){.wrap{padding:1rem .75rem 2.5rem}.pt{font-size:19px}}
-</style>
-</head>
-<body>
-<button class="dm" id="dmbtn" onclick="tdm()" title="${UI.dark_mode}">🌙</button>
-<div class="wrap">
-  <div class="ph">
-    <div class="badges"><span class="badge">${icone} ${nome}</span><span class="badge b2" id="days-badge">${maxD} ${maxD!==1?UI.dias:UI.dia}${UI.por_semana}</span></div>
-    <div class="pt">${nome}</div>
-    <div class="pd">${desc}</div>
-    ${div?`<div class="pdiv">${div}</div>`:''}
-  </div>
-  <div class="sem-nav">${semNav}</div>
-  ${semsH}
-  <div class="footer">${nome} · ${semanas.map(s=>trNome(s.nome,lang)).join(' + ')}</div>
-</div>
-<script>
-function tdm(){var on=document.documentElement.getAttribute("data-theme")==="dark";document.documentElement.setAttribute("data-theme",on?"":"dark");document.getElementById("dmbtn").textContent=on?"🌙":"☀️";localStorage.setItem("mdm",on?"":"dark");}
-function toggleBloco(id,btn){var body=document.getElementById(id);if(!body)return;var open=body.style.display!=="none";body.style.display=open?"none":"block";var arr=btn.querySelector(".bt-arr");if(arr)arr.style.transform=open?"":"rotate(90deg)";}
-
-function markDone(eid){var card=document.getElementById(eid);if(!card)return;var done=card.classList.toggle("done");localStorage.setItem("done_"+eid,done?"1":"");}
-(function(){document.querySelectorAll(".ec[id]").forEach(function(c){if(localStorage.getItem("done_"+c.id)==="1")c.classList.add("done");});})();
-(function(){var t=localStorage.getItem("mdm")||"";if(t==="dark"){document.documentElement.setAttribute("data-theme","dark");var b=document.getElementById("dmbtn");if(b)b.textContent="☀️";}})();
-function ss(id,btn){document.querySelectorAll(".sem").forEach(s=>s.classList.remove("active"));document.querySelectorAll(".sbt").forEach(b=>b.classList.remove("active"));document.getElementById("sem-"+id).classList.add("active");btn.classList.add("active");var dias=document.querySelectorAll("#sem-"+id+" .dia"),btns=document.querySelectorAll("#sem-"+id+" .dbt");if(dias.length){dias[0].classList.add("active");if(btns.length)btns[0].classList.add("active");}}
-function sd(sid,did,btn){var s=document.getElementById("sem-"+sid);s.querySelectorAll(".dia").forEach(d=>d.classList.remove("active"));s.querySelectorAll(".dbt").forEach(b=>b.classList.remove("active"));document.getElementById(did).classList.add("active");btn.classList.add("active");}
-function tv(btn,slotId,src){var slot=document.getElementById(slotId);if(!slot)return;var open=slot.style.display==="block";if(open){slot.style.display="none";slot.innerHTML="";btn.classList.remove("open");btn.textContent="▶";}else{slot.innerHTML='<iframe src="'+src+'?autoplay=1&rel=0" allow="autoplay;encrypted-media" allowfullscreen></iframe>';slot.style.display="block";btn.classList.add("open");btn.textContent="▼";}}
-
-
-(function(){document.querySelectorAll(".ec").forEach(function(c){if(localStorage.getItem("done_"+c.id)==="1"){c.classList.add("done");var b=c.querySelector(".done-btn");if(b)b.textContent="✓";}});})();
-<\/script>
-</body>
-</html>`;
-  const blob=new Blob([out],{type:'text/html'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='index.html';a.click();
-  notify('index.html baixado!');
-}
 
 // ══════════════════════════════════════════════════════════
 // MOVA BANCO — exportação do index.html COM login do aluno
-// Diferente de exportar(): este HTML não tem o treino "impresso".
+// Este HTML não tem o treino "impresso".
 // Ele nasce vazio, pede login do aluno, busca o protocolo ativo
 // dele na tabela "protocolos" e renderiza dinamicamente. Cada
 // exercício ganha um campo de carga que salva em "registros_sessao".
@@ -10981,7 +10768,6 @@ function aDicaSeriesMontar(){
   if (!d) { d = document.createElement('div'); d.id = 'aDicaSeries'; d.className = 'dica-series'; wrap.appendChild(d); }
   d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap the <b>sets badge</b> (e.g. 4×8) after each set — it counts and fills up. At the last set the exercise is marked done.' : 'Toque no badge <b>séries × reps</b> a cada série feita: ele conta e enche. Na última, o exercício conclui.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
 }
-function aToggleObs(el){ el.classList.toggle('ec-o-aberto'); }
 function aDicaSeriesFechar(){
   window._aDicaFechada = true;
   if (!window._movhPreview) { try { localStorage.setItem('movh-dica-series', '1'); } catch(e){} }
@@ -13393,6 +13179,7 @@ function toggleBlocoBody(id,header){
   const body=document.getElementById(id);if(!body)return;
   const open=body.style.display!=='none'&&body.style.display!=='';
   body.style.display=open?'none':'block';
+  window._blClosed=window._blClosed||{};if(open)window._blClosed[id]=1;else delete window._blClosed[id];
   const arr=header.querySelector('.bloco-arr');
   if(arr)arr.style.transform=open?'rotate(0deg)':'rotate(90deg)';
 }
