@@ -9512,6 +9512,25 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .dica-series span{flex:1}
 .dica-series button{border:none;background:var(--P);color:#fff;border-radius:7px;padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer}
 .ec-dica-pulse{animation:ecDica 1.6s ease-in-out infinite}
+/* ── balão sobreposto, janelas sólidas, pulso (v95) ── */
+.rpe-enviar{color:var(--bg)!important}
+.rpe-emojis{gap:1px!important}
+.rpe-em-btn{min-width:0!important;font-size:16px!important}
+.rpe-box{padding:14px 6px!important}
+.ec{position:relative}
+.ec-hd{padding-top:2px}
+.ec-o{position:absolute!important;top:-13px;left:40%;right:74px;max-width:none!important;width:fit-content;margin:0!important;padding:2px 9px!important;font-size:10.5px!important;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:3;border-radius:10px 10px 10px 2px!important;box-shadow:0 2px 8px -2px rgba(0,0,0,.3);cursor:pointer}
+.ec-o.ec-o-aberto{white-space:normal;overflow:visible;width:auto;right:12px}
+.ec-hd:not(:has(.vbtn)) .ec-o{right:12px}
+.ec-o::after{left:9px;bottom:-4px;width:7px;height:7px}
+.ec-hd:has(.ec-o) .vbtn{top:0!important}
+.sessao-concluida-card{background:#1d1b19!important;border:1px solid rgba(255,255,255,.12);border-radius:18px!important;box-shadow:0 24px 70px rgba(0,0,0,.55)}
+:root:not([data-theme=dark]) .sessao-concluida-card{background:#FBF8F1!important;border-color:#E2DCCD}
+.sessao-concluida-overlay{background:rgba(0,0,0,.72)!important;backdrop-filter:blur(3px)}
+.authcard,.dm,.tela-renovar{background-color:#1d1b19}
+:root:not([data-theme=dark]) .authcard,:root:not([data-theme=dark]) .dm{background-color:#FBF8F1}
+.ec-dica-pulse{animation:ecPulse 1.5s ease-in-out infinite!important;position:relative;z-index:1}
+@keyframes ecPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--P) 70%,transparent);transform:scale(1)}50%{box-shadow:0 0 0 7px transparent;transform:scale(1.045)}}
 /* ── balão de observação (v94) ── */
 .ec-o{display:inline-block!important;position:relative;margin:0 0 8px 2px!important;padding:4px 10px!important;background:color-mix(in srgb,var(--P) 13%,var(--card))!important;border:1px solid color-mix(in srgb,var(--P) 26%,transparent);border-radius:12px 12px 12px 3px!important;font-size:11px!important;line-height:1.35;color:var(--tx)!important;max-width:calc(100% - 70px)}
 .ec-o::before{content:none!important}
@@ -10859,17 +10878,20 @@ function aDicaSeriesAtiva(){ if (window._aDicaFechada) return false; try { retur
 function aDicaSeriesMontar(){
   const wrap = document.getElementById('tSessaoProgresso');
   if (!wrap) return;
+  // pulso no badge de séries do 1º exercício ainda sem nenhuma série contada
+  document.querySelectorAll('.ec-dica-pulse').forEach(function(x){ x.classList.remove('ec-dica-pulse'); });
+  const pend = Array.prototype.find.call(document.querySelectorAll('#tDashConteudo .ec-chip-progresso'), function(c){ return !(aSeriesFeitas[c.dataset.eid] > 0) && !(c.closest('.ec') && c.closest('.ec').classList.contains('done')); });
+  if (pend) pend.classList.add('ec-dica-pulse');
   const primeiro = document.querySelector('#tDashConteudo .ec-chip-progresso');
   let d = document.getElementById('aDicaSeries');
   if (!primeiro || !aDicaSeriesAtiva()) {
     if (d) d.remove();
-    document.querySelectorAll('.ec-dica-pulse').forEach(function(x){ x.classList.remove('ec-dica-pulse'); });
     return;
   }
   if (!d) { d = document.createElement('div'); d.id = 'aDicaSeries'; d.className = 'dica-series'; wrap.appendChild(d); }
   d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap the <b>sets badge</b> (e.g. 4×8) after each set — it counts and fills up. At the last set the exercise is marked done.' : 'Toque no badge <b>séries × reps</b> a cada série feita: ele conta e enche. Na última, o exercício conclui.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
-  primeiro.classList.add('ec-dica-pulse');
 }
+function aToggleObs(el){ el.classList.toggle('ec-o-aberto'); }
 function aDicaSeriesFechar(){
   window._aDicaFechada = true;
   if (!window._movhPreview) { try { localStorage.setItem('movh-dica-series', '1'); } catch(e){} }
@@ -11009,7 +11031,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   return '<div class="ec" id="'+eid+'">' +
     '<div class="ec-hd">' +
       '<div class="ec-info">' +
-        (ex.obs ? '<span class="ec-o">'+aEsc(ex.obs)+'</span>' : '') +
+        (ex.obs ? '<span class="ec-o" onclick="aToggleObs(this)">'+aEsc(ex.obs)+'</span>' : '') +
         '<div class="ec-name-row">' +
           '<span class="ec-done-wrap">' +
             '<input type="checkbox" class="ec-done-cb" id="'+eid+'-done" data-eid="'+eid+'" onchange="aToggleDone(this.dataset.eid)" title="'+aEsc(aT('marcar_feito'))+'">' +
