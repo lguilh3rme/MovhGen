@@ -509,6 +509,7 @@ body.dock-open #aluno-dock{display:flex}
 .aluno-row .btn.bs{font-size:10.5px!important;padding:3px 9px!important;white-space:nowrap}
 .aluno-row input[type=date]{font-size:11px!important}
 /* ── editor enxuto (v97) ── */
+.sb-ver{margin:10px 14px 4px;font-size:9.5px;color:var(--t3);opacity:.7}
 .pb-btn.sv{background:var(--P);color:#fff;border-color:var(--P)}
 .sel-cb{display:none;width:16px;height:16px;flex:0 0 auto;accent-color:var(--P);cursor:pointer;margin:0 4px 0 0}
 body.sel-mode .sel-cb{display:inline-block}
@@ -517,6 +518,9 @@ body.sel-mode .sel-cb{display:inline-block}
 #bulkbar{display:none;position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:900;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:8px 12px;box-shadow:0 12px 40px rgba(0,0,0,.35);max-width:calc(100vw - 20px);flex-direction:column;gap:6px}
 #bulkbar.on{display:flex}
 @media(min-width:1100px){body.sel-mode.dock-open #bulkbar{left:calc(50% - 210px)}}
+body.sel-mode .main{padding-bottom:250px}
+.sel-cb{width:18px;height:18px}
+@media(max-width:700px){#bulkbar{left:6px;right:6px;bottom:6px;transform:none;max-width:none;padding:6px 8px;gap:4px}#bulkbar .bk-r2{gap:4px}#bulkbar .pb-btn{padding:5px 8px;font-size:11px}#bulkbar input{width:56px}#bulkbar #bk-s{width:44px}#bulkbar select{flex:1}body.sel-mode .main{padding-bottom:210px}.sel-cb{width:22px;height:22px}}
 #bulkbar .bk-r1,#bulkbar .bk-r2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 #bulkbar .bk-r1 b{font-size:12px;flex:1}
 #bulkbar label{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--t3);font-weight:700;text-transform:uppercase}
@@ -569,10 +573,11 @@ body.sel-mode .sel-cb{display:inline-block}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v13 · 12/10 19:45</div>
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
-<div id="bulkbar"><div class="bk-r1"><b id="bk-n">0 selecionados</b><button class="pb-btn" onclick="bkTodos()">todos</button><button class="pb-btn" onclick="selModeToggle(false)">✕ sair</button></div>
+<div id="bulkbar"><div class="bk-r1"><b id="bk-n">Marque exercícios ou blocos</b><button class="pb-btn" onclick="bkTodos()">todos</button><button class="pb-btn" onclick="selModeToggle(false)">✕ sair</button></div>
 <div class="bk-r2"><label>Séries<input id="bk-s" type="number" min="1" placeholder="4"/></label><label>Reps<input id="bk-r" placeholder="8-12"/></label><label>Desc.<input id="bk-d" placeholder="60s"/></label><button class="pb-btn on" onclick="bkAplicar()">Aplicar</button><button class="pb-btn" onclick="bkSerie(1)">＋1 série</button><button class="pb-btn" onclick="bkSerie(-1)">−1</button></div>
 <div class="bk-r2"><select id="bk-m"><option value="conjugado">🔗 Conjugado</option><option value="progressivo">📈 Progressivo</option><option value="piramide">🔺 Pirâmide</option><option value="dropset">⬇️ Drop-set</option></select><button class="pb-btn on" onclick="bkAgrupar()">Agrupar</button><button class="pb-btn" onclick="bkDesagrupar()">Desagrupar</button><button class="pb-btn" onclick="bkDup()">⧉ Duplicar</button><button class="pb-btn" onclick="bkDel()">🗑 Excluir</button></div></div>
 <div id="aluno-dock"><div class="dk-h"><span>📱 Como o aluno vê</span><button class="pb-btn" onclick="toggleDock()">✕ Fechar</button></div><iframe id="dock-frame" title="Prévia do aluno"></iframe></div>
@@ -1939,7 +1944,7 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn sv" onclick="pbSalvar()" title="Grava este treino no banco: o aluno vê ao abrir o app (ou atualizar) e o link ?treino= também">${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?'💾 Atualizar aluno':'💾 Salvar'}</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span>${mode==='dia'?`<button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button>`:''}<button class="pb-btn sv" onclick="pbSalvar()" title="Grava este treino no banco: o aluno vê ao abrir o app (ou atualizar) e o link ?treino= também">${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?'💾 Atualizar aluno':'💾 Salvar'}</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 async function pbSalvar(){
   if(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)await mbAtualizarProtocolo();
@@ -4361,7 +4366,7 @@ function renderDia(did){
         <div class="pg-title" style="display:flex;align-items:center;gap:6px">
           <span style="font-size:12px;color:var(--t3);font-weight:400">${semNome} /</span>
           <input class="ie big" value="${escAttr(dia.nome)}" oninput="setDF('${did}','nome',this.value);renderSB()"/>
-          <button class="btn bs${document.body.classList.contains('sel-mode')?' on':''}" style="margin-left:auto;font-size:10.5px;padding:4px 10px" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="btn bs" style="font-size:10.5px;padding:4px 10px" onclick="dupDia('${semObj?semObj.id:''}','${did}')" title="Cria uma cópia deste dia na mesma semana">⧉ Duplicar dia</button>
+          <button class="btn bs" style="margin-left:auto;font-size:10.5px;padding:4px 10px" onclick="dupDia('${semObj?semObj.id:''}','${did}')" title="Cria uma cópia deste dia na mesma semana">⧉ Duplicar dia</button>
         </div>
         <input style="font-size:11px;color:var(--t3);background:transparent;border:none;outline:none;margin-top:2px;width:100%" placeholder="Subtítulo (ex: Upper A)" value="${escAttr(dia.sub||'')}" oninput="setDF('${did}','sub',this.value)"/>
         <div class="dia-cfg">
@@ -4424,8 +4429,8 @@ function setCJMetodo(did,bi,g,m){const b=fBloco(did,bi);if(!b||!b.conjGroups||!b
 const _bkSel=new Set();
 function bkDia(){const p=document.querySelector('#main-scroll .page.active');const id=p?p.id.replace(/^page-/,''):'';return fDia(id)?id:null;}
 function bkItens(){const did=bkDia();if(!did)return[];const dia=fDia(did),r=[];dia.blocos.forEach((b,bi)=>{(b.exercicios||[]).forEach((ex,i)=>{if(_bkSel.has(ex))r.push({did,b,bi,ex,i});});});return r;}
-function bkAtualizar(){const n=_bkSel.size;const bar=document.getElementById('bulkbar');if(!bar)return;bar.classList.toggle('on',document.body.classList.contains('sel-mode'));document.getElementById('bk-n').textContent=n+(n===1?' selecionado':' selecionados');}
-function selModeToggle(on){const v=on===undefined?!document.body.classList.contains('sel-mode'):on;document.body.classList.toggle('sel-mode',v);if(!v)_bkSel.clear();const did=bkDia();if(did)renderDia(did);bkAtualizar();}
+function bkAtualizar(){const n=_bkSel.size;const bar=document.getElementById('bulkbar');if(!bar)return;bar.classList.toggle('on',document.body.classList.contains('sel-mode'));document.getElementById('bk-n').textContent=n?(n+(n===1?' selecionado':' selecionados')):'Marque exercícios ou blocos';}
+function selModeToggle(on){const v=on===undefined?!document.body.classList.contains('sel-mode'):on;document.body.classList.toggle('sel-mode',v);if(!v)_bkSel.clear();const did=bkDia();if(did)renderDia(did);refreshPBars();bkAtualizar();}
 function bkTog(did,bi,i,on){const b=fBloco(did,bi);const ex=b&&b.exercicios[i];if(!ex)return;if(on)_bkSel.add(ex);else _bkSel.delete(ex);bkAtualizar();}
 function bkBloco(did,bi,on){const b=fBloco(did,bi);if(!b)return;(b.exercicios||[]).forEach(e=>on?_bkSel.add(e):_bkSel.delete(e));renderExList(did,bi);bkAtualizar();}
 function bkLimpa(b){const cont={};b.exercicios.forEach(e=>{if(e.cj!=null)cont[e.cj]=(cont[e.cj]||0)+1;});b.exercicios.forEach(e=>{if(e.cj!=null&&cont[e.cj]<2&&((b.conjGroups[e.cj]||{}).metodo||'conjugado')==='conjugado')e.cj=null;});Object.keys(b.conjGroups||{}).forEach(k=>{if(!b.exercicios.some(e=>String(e.cj)===k))delete b.conjGroups[k];});}
