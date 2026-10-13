@@ -519,6 +519,8 @@ body.sel-mode .sel-cb{display:inline-block}
 #bulkbar.on{display:flex}
 @media(min-width:1100px){body.sel-mode.dock-open #bulkbar{left:calc(50% - 210px)}}
 body.sel-mode .main{padding-bottom:250px}
+.kb-card{position:relative}.kb-card .sel-cb{margin:0 6px 0 0}.kb-card.sel{outline:2px solid var(--P);background:color-mix(in srgb,var(--P) 14%,transparent)}
+body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-right:4px}
 .sel-cb{width:18px;height:18px}
 @media(max-width:700px){#bulkbar{left:6px;right:6px;bottom:6px;transform:none;max-width:none;padding:6px 8px;gap:4px}#bulkbar .bk-r2{gap:4px}#bulkbar .pb-btn{padding:5px 8px;font-size:11px}#bulkbar input{width:56px}#bulkbar #bk-s{width:44px}#bulkbar select{flex:1}body.sel-mode .main{padding-bottom:210px}.sel-cb{width:22px;height:22px}}
 #bulkbar .bk-r1,#bulkbar .bk-r2{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -1944,7 +1946,7 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span>${mode==='dia'?`<button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button>`:''}<button class="pb-btn sv" onclick="pbSalvar()" title="Grava este treino no banco: o aluno vê ao abrir o app (ou atualizar) e o link ?treino= também">${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?'💾 Atualizar aluno':'💾 Salvar'}</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn sv" onclick="pbSalvar()" title="Grava este treino no banco: o aluno vê ao abrir o app (ou atualizar) e o link ?treino= também">${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?'💾 Atualizar aluno':'💾 Salvar'}</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 async function pbSalvar(){
   if(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)await mbAtualizarProtocolo();
@@ -2640,6 +2642,7 @@ function renderKanbanSemana(sid){
       const exs=b.exercicios||[];
       body+=`<div class="kb-grupo" ondragover="kbDragOver(event)" ondrop="kbDropNoGrupo(event,'${d.id}',${bi})">
         <div class="kb-grupo-hd" draggable="true" ondragstart="kbDragStartBloco(event,'${d.id}',${bi})">
+          <input type="checkbox" class="sel-cb" ${(exs.length&&exs.every(e=>_bkSel.has(e)))?'checked':''} title="Selecionar o bloco inteiro" onclick="event.stopPropagation()" onchange="bkBloco('${d.id}',${bi},this.checked)"/>
           <span class="kb-drag-h" title="Arraste para reordenar o bloco">⋮⋮</span>
           <div class="bdot" style="border-left-color:${b.cor||'var(--P)'}"></div>
           <input class="kb-grupo-nome" value="${escAttr(b.nome||'Bloco')}" oninput="setBl('${d.id}',${bi},'nome',this.value)" onclick="event.stopPropagation()"/>
@@ -2697,7 +2700,7 @@ function kbRenderExGrupo(did,bi,exs,conjGroups){
       const g=(conjGroups&&conjGroups[ex.cj])||{label:'Conjugado'};
       html+=`<div class="kb-cj">
         <div class="kb-cj-hd">
-          <span>🔗</span>
+          <span>${(METODOS[g.metodo||'conjugado']||METODOS.conjugado).e}</span>
           <input class="kb-cj-lbl" value="${escAttr(g.label||'Conjugado')}" oninput="setCJ('${did}',${bi},'${cjk}','label',this.value)" onclick="event.stopPropagation()"/>
           <button class="kb-rm-bloco" onclick="event.stopPropagation();kbRmCJ('${did}',${bi},'${cjk}')" title="Desfazer conjugado (remove os exercícios)">×</button>
         </div>
@@ -2766,11 +2769,13 @@ function kbAtualizarFooter(did){
 function kbCard(did,bi,i,ex){
   const badge=ex.series?(ex.rest?`${escAttr(ex.series)} · ${escAttr(ex.rest)}`:escAttr(ex.series)):'';
   const semNome=!ex.nome;
-  return `<div class="kb-card${semNome?' vazio':''}" draggable="true"
+  const sel=_bkSel.has(ex);
+  return `<div class="kb-card${semNome?' vazio':''}${sel?' sel':''}" draggable="true"
     ondragstart="kbDragStartEx(event,'${did}',${bi},${i})"
     ondragover="kbDragOver(event)"
     ondrop="kbDropOnCard(event,'${did}',${bi},${i})"
-    onclick="kbAbrirModalEx('${did}',${bi},${i})">
+    onclick="kbCardClick(event,'${did}',${bi},${i})">
+    <input type="checkbox" class="sel-cb" ${sel?'checked':''} onclick="event.stopPropagation()" onchange="bkTogKb('${did}',${bi},${i},this.checked,this)"/>
     <span class="kb-drag-h" onclick="event.stopPropagation()">⋮⋮</span>
     <div class="kb-card-txt">
       <div class="kb-card-n">${escAttr(ex.nome||'— clique pra escolher —')}</div>
@@ -2778,6 +2783,8 @@ function kbCard(did,bi,i,ex){
     </div>
   </div>`;
 }
+function kbCardClick(ev,did,bi,i){if(document.body.classList.contains('sel-mode')){const cb=ev.currentTarget.querySelector('.sel-cb');if(cb){cb.checked=!cb.checked;bkTogKb(did,bi,i,cb.checked,cb);}return;}kbAbrirModalEx(did,bi,i);}
+function bkTogKb(did,bi,i,on,el){bkTog(did,bi,i,on);const c=el&&el.closest('.kb-card');if(c)c.classList.toggle('sel',!!on);}
 function kbAddEx(did,bi){
   addEx(did,bi);
   const b=fBloco(did,bi);
@@ -4427,14 +4434,16 @@ const METODOS={conjugado:{e:'🔗',l:'Conjugado',rest:'30s'},progressivo:{e:'�
 function setCJMetodo(did,bi,g,m){const b=fBloco(did,bi);if(!b||!b.conjGroups||!b.conjGroups[g])return;const c=b.conjGroups[g],old=METODOS[c.metodo||'conjugado'];c.metodo=m;if(!c.label||c.label===old.l||c.label==='Conjugado')c.label=METODOS[m].l;if(!c.rest||c.rest===old.rest)c.rest=METODOS[m].rest;renderExList(did,bi);}
 // ── edição em massa ──
 const _bkSel=new Set();
-function bkDia(){const p=document.querySelector('#main-scroll .page.active');const id=p?p.id.replace(/^page-/,''):'';return fDia(id)?id:null;}
-function bkItens(){const did=bkDia();if(!did)return[];const dia=fDia(did),r=[];dia.blocos.forEach((b,bi)=>{(b.exercicios||[]).forEach((ex,i)=>{if(_bkSel.has(ex))r.push({did,b,bi,ex,i});});});return r;}
+function bkPag(){const p=document.querySelector('#main-scroll .page.active');return p?p.id.replace(/^page-/,''):'';}
+function bkDia(){const id=bkPag();if(fDia(id))return id;if(id.indexOf('kb-')===0){const s=semanas.find(x=>x.id===id.slice(3));return s&&s.dias[0]?s.dias[0].id:null;}return null;}
+function bkDias(){const id=bkPag();if(id.indexOf('kb-')===0){const s=semanas.find(x=>x.id===id.slice(3));return s?s.dias:[];}const d=fDia(id);return d?[d]:[];}
+function bkItens(){const r=[];bkDias().forEach(dia=>{dia.blocos.forEach((b,bi)=>{(b.exercicios||[]).forEach((ex,i)=>{if(_bkSel.has(ex))r.push({did:dia.id,b,bi,ex,i});});});});return r;}
 function bkAtualizar(){const n=_bkSel.size;const bar=document.getElementById('bulkbar');if(!bar)return;bar.classList.toggle('on',document.body.classList.contains('sel-mode'));document.getElementById('bk-n').textContent=n?(n+(n===1?' selecionado':' selecionados')):'Marque exercícios ou blocos';}
-function selModeToggle(on){const v=on===undefined?!document.body.classList.contains('sel-mode'):on;document.body.classList.toggle('sel-mode',v);if(!v)_bkSel.clear();const did=bkDia();if(did)renderDia(did);refreshPBars();bkAtualizar();}
+function selModeToggle(on){const v=on===undefined?!document.body.classList.contains('sel-mode'):on;document.body.classList.toggle('sel-mode',v);if(!v)_bkSel.clear();bkRender();}
 function bkTog(did,bi,i,on){const b=fBloco(did,bi);const ex=b&&b.exercicios[i];if(!ex)return;if(on)_bkSel.add(ex);else _bkSel.delete(ex);bkAtualizar();}
-function bkBloco(did,bi,on){const b=fBloco(did,bi);if(!b)return;(b.exercicios||[]).forEach(e=>on?_bkSel.add(e):_bkSel.delete(e));renderExList(did,bi);bkAtualizar();}
-function bkLimpa(b){const cont={};b.exercicios.forEach(e=>{if(e.cj!=null)cont[e.cj]=(cont[e.cj]||0)+1;});b.exercicios.forEach(e=>{if(e.cj!=null&&cont[e.cj]<2&&((b.conjGroups[e.cj]||{}).metodo||'conjugado')==='conjugado')e.cj=null;});Object.keys(b.conjGroups||{}).forEach(k=>{if(!b.exercicios.some(e=>String(e.cj)===k))delete b.conjGroups[k];});}
-function bkRender(){const did=bkDia();if(did)renderDia(did);bkAtualizar();}
+function bkBloco(did,bi,on){const b=fBloco(did,bi);if(!b)return;(b.exercicios||[]).forEach(e=>on?_bkSel.add(e):_bkSel.delete(e));bkRender();}
+function bkLimpa(b){b.conjGroups=b.conjGroups||{};const cont={};b.exercicios.forEach(e=>{if(e.cj!=null)cont[e.cj]=(cont[e.cj]||0)+1;});b.exercicios.forEach(e=>{if(e.cj!=null&&cont[e.cj]<2&&((b.conjGroups[e.cj]||{}).metodo||'conjugado')==='conjugado')e.cj=null;});Object.keys(b.conjGroups||{}).forEach(k=>{if(!b.exercicios.some(e=>String(e.cj)===k))delete b.conjGroups[k];});}
+function bkRender(){const id=bkPag();if(id.indexOf('kb-')===0)renderKanbanSemana(id.slice(3));else{const did=bkDia();if(did)renderDia(did);}refreshPBars();bkAtualizar();}
 function bkAplicar(){const it=bkItens();if(!it.length){notify('Selecione exercícios ou blocos.');return;}const s=document.getElementById('bk-s').value.trim(),r=document.getElementById('bk-r').value.trim(),d=document.getElementById('bk-d').value.trim();if(!s&&!r&&!d){notify('Preencha séries, reps ou descanso.');return;}
  it.forEach(({ex})=>{if(s||r){const m=/^\s*(\d+)\s*[x×X]\s*(.*)$/.exec(ex.series||'');const ns=s||(m?m[1]:''),nr=r||(m?m[2]:(/^\d+$/.test(ex.series||'')?'':ex.series||''));ex.series=ns?(ns+(nr?'×'+nr:'')):nr;}if(d)ex.rest=d;});
  bkRender();notify('Alterado em '+it.length+' exercício'+(it.length>1?'s':'')+'.');}
@@ -4445,7 +4454,7 @@ function bkAgrupar(){const it=bkItens();if(!it.length){notify('Selecione exercí
 function bkDesagrupar(){const it=bkItens();if(!it.length)return;const bs=new Set();it.forEach(({b,ex})=>{ex.cj=null;bs.add(b);});bs.forEach(bkLimpa);bkRender();}
 function bkDup(){const it=bkItens();if(!it.length)return;const bs=new Map();it.forEach(x=>{if(!bs.has(x.b))bs.set(x.b,[]);bs.get(x.b).push(x.ex);});bs.forEach((sel,b)=>{const ult=b.exercicios.indexOf(sel[sel.length-1]);const cp=sel.map(e=>{const c=JSON.parse(JSON.stringify(e));c.cj=null;return c;});b.exercicios.splice(ult+1,0,...cp);});_bkSel.clear();bkRender();notify('Duplicado.');}
 function bkDel(){const it=bkItens();if(!it.length)return;if(!confirm('Excluir '+it.length+' exercício(s) selecionado(s)?'))return;const bs=new Set();it.forEach(({b})=>bs.add(b));bs.forEach(b=>{b.exercicios=b.exercicios.filter(e=>!_bkSel.has(e));bkLimpa(b);});_bkSel.clear();bkRender();}
-function bkTodos(){const did=bkDia();if(!did)return;const dia=fDia(did);const tudo=dia.blocos.every(b=>(b.exercicios||[]).every(e=>_bkSel.has(e)));dia.blocos.forEach(b=>(b.exercicios||[]).forEach(e=>tudo?_bkSel.delete(e):_bkSel.add(e)));bkRender();}
+function bkTodos(){const dias=bkDias();const tudo=dias.every(d=>d.blocos.every(b=>(b.exercicios||[]).every(e=>_bkSel.has(e))));dias.forEach(d=>d.blocos.forEach(b=>(b.exercicios||[]).forEach(e=>tudo?_bkSel.delete(e):_bkSel.add(e))));bkRender();}
 function blToggleTodos(did){const dia=fDia(did);if(!dia)return;window._blClosed=window._blClosed||{};const ks=dia.blocos.flatMap((b,bi)=>['bb-'+did+'-'+bi,'cb-'+did+'-'+bi]);const alguemAberto=ks.some(k=>!window._blClosed[k]);ks.forEach(k=>{if(alguemAberto)window._blClosed[k]=1;else delete window._blClosed[k];});renderDia(did);}
 function goNext(did){const all=semanas.flatMap(s=>s.dias);const i=all.findIndex(d=>d.id===did);if(i>=0&&i<all.length-1)nav(all[i+1].id);else nav('export');}
 function renderAll(){renderSB();semanas.forEach(s=>s.dias.forEach(d=>renderDia(d.id)));atualizarPreviewConfig();renderCalProto();}
@@ -9157,6 +9166,7 @@ function exportarComLogin(){
   const out = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="preconnect" href="https://www.youtube-nocookie.com"><link rel="preconnect" href="https://i.ytimg.com"><link rel="dns-prefetch" href="https://www.google.com">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>MOVH — Meu Treino</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
@@ -10514,7 +10524,7 @@ async function aBoot(sessionParam){
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function aAttr(s){ return aEsc(s); }
-function aEmbedUrl(url){ if(!url) return ''; const m=url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/shorts\\/)([^&?\\/]+)/); return m ? 'https://www.youtube.com/embed/'+m[1] : ''; }
+function aEmbedUrl(url){ if(!url) return ''; const m=url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/shorts\\/)([^&?\\/]+)/); return m ? 'https://www.youtube-nocookie.com/embed/'+m[1] : ''; }
 
 // Converte formatos compactos de série/reps (ex: "3x12", "4×[6-10→10-12→4-6]")
 // num texto mais didático pro aluno (ex: "3 séries — 12 repetições"), no
@@ -11438,7 +11448,8 @@ async function aSolicitarMudancaTreino(){
 function aToggleVideo(btn, slotId, src){ aAbrirVideoModal(src); }
 function aAbrirVideoModal(src){
   const m=document.getElementById('a-video-modal');
-  document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1';
+  const ld=document.getElementById('a-video-load'); if(ld) ld.style.display='flex';
+  document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1&playsinline=1&modestbranding=1';
   m.style.display='flex';
   document.body.style.overflow='hidden';
 }
@@ -13098,7 +13109,8 @@ aBoot();
 <div id="a-video-modal" onclick="aFecharVideoModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div onclick="event.stopPropagation()" style="width:min(92vw,840px);position:relative">
     <button onclick="aFecharVideoModal()" style="position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:28px;line-height:1;cursor:pointer">&#x2715;</button>
-    <iframe id="a-video-iframe" src="" style="width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block" allow="autoplay;encrypted-media" allowfullscreen></iframe>
+    <div id="a-video-load" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;pointer-events:none">⏳ Carregando vídeo…</div>
+    <iframe id="a-video-iframe" src="" onload="var l=document.getElementById('a-video-load');if(l&&this.getAttribute('src'))l.style.display='none'" style="position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block;background:#000" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
   </div>
 </div>
 <div id="a-teste-modal" onclick="aFecharTesteModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:16px">
