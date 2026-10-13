@@ -197,6 +197,17 @@ select{cursor:pointer}
 .kb-cj .kb-card{background:var(--card)}
 .kb-add-cj{border-color:var(--P);color:var(--Pd);background:transparent}
 .kb-add-cj:hover{background:var(--card)}
+.aluno-row .al-meta{overflow-wrap:anywhere}
+.kb-gav{margin-top:8px;border:1px solid var(--bd);border-radius:10px;background:var(--cl);padding:6px}
+.kb-gav-q{width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;margin-bottom:6px}
+.kb-gav-box{max-height:38vh;overflow-y:auto}
+.kb-gav-cat{border-bottom:1px solid var(--bd2)}
+.kb-gav-cat summary{cursor:pointer;padding:7px 4px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.kb-gav-n{background:var(--bd2);color:var(--t2);border-radius:99px;font-size:10px;padding:0 7px;font-weight:600}
+.kb-gav-it{display:flex;align-items:center;gap:8px;padding:5px 6px;font-size:12px;cursor:pointer;border-radius:6px}
+.kb-gav-it:hover{background:var(--card)}
+.kb-gav-it input{width:auto;flex-shrink:0}
+.kb-gav-foot{display:flex;gap:6px;align-items:center;margin-top:6px}
 .kb-cond{background:var(--cl);border:1px solid var(--bd2);border-radius:8px;padding:6px;margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
 .kb-cond-row{display:flex;gap:4px}
 .kb-cond-sel,.kb-cond-inp{font-size:10px;padding:4px 6px;border-radius:6px}
@@ -2907,9 +2918,14 @@ function kbModalBody(did,bi,i){
   return `
     <div class="fr r2">
       <div class="fld"><span class="lbl">Categoria</span><select onchange="onCatFiltroChange(this,'${did}',${bi},${i},'kbex-dl')">${buildCatOptions(cat)}</select></div>
-      <div class="fld"><span class="lbl">Exercício</span><input type="text" list="kbex-dl" value="${escAttr(ex.nome||'')}" placeholder="Digite ou escolha do banco…" oninput="kbSetExField('${did}',${bi},${i},'nome',this.value)"/></div>
+      <div class="fld"><span class="lbl">Exercício</span><div style="display:flex;gap:6px"><input type="text" list="kbex-dl" style="flex:1;min-width:0" value="${escAttr(ex.nome||'')}" placeholder="Digite ou escolha do banco…" oninput="kbSetExField('${did}',${bi},${i},'nome',this.value)"/><button type="button" class="btn bs" style="padding:5px 10px;flex-shrink:0" onclick="kbGavToggle()" title="Gaveta com todos os exercícios, por categoria (marque vários)">🗂️</button></div></div>
     </div>
     <datalist id="kbex-dl">${buildExDatalistForCat(cat)}</datalist>
+    <div id="kbex-gav" class="kb-gav" style="display:none">
+      <input type="search" class="kb-gav-q" placeholder="Filtrar a gaveta…" oninput="kbGavFiltro(this.value)"/>
+      <div class="kb-gav-box">${kbGavetaHTML()}</div>
+      <div class="kb-gav-foot"><button type="button" class="btn bp" id="kbex-gav-add" style="flex:1" onclick="kbGavAplicar()" disabled>Marque exercícios</button><button type="button" class="btn bs" onclick="kbGavLimpar()">Limpar</button></div>
+    </div>
     <div class="fld" style="margin-top:8px">
       <span class="lbl">URL do vídeo (se não estiver no banco)</span>
       <div style="display:flex;gap:6px">
@@ -2936,6 +2952,49 @@ function kbModalBody(did,bi,i){
       </div>
     </div>
     <div class="fld" style="margin-top:6px"><span class="lbl">Obs</span><input type="text" value="${escAttr(ex.obs||'')}" placeholder="Dica técnica..." oninput="kbSetExField('${did}',${bi},${i},'obs',this.value)"/></div>`;
+}
+// Gaveta de exercícios do Quadro: subgavetas por categoria + seleção múltipla.
+function kbGavetaHTML(){
+  let h='';
+  for(const[cat,exs]of Object.entries(REP)){
+    if(!exs||!exs.length)continue;
+    h+='<details class="kb-gav-cat"><summary>'+escAttr(cat)+' <span class="kb-gav-n">'+exs.length+'</span></summary>';
+    exs.forEach(e=>{h+='<label class="kb-gav-it"><input type="checkbox" data-n="'+escAttr(e.n)+'" onchange="kbGavCont()"/><span>'+escAttr(e.n)+'</span></label>';});
+    h+='</details>';
+  }
+  return h;
+}
+function kbGavToggle(){const g=document.getElementById('kbex-gav');if(g)g.style.display=g.style.display==='none'?'block':'none';}
+function kbGavCont(){
+  const n=document.querySelectorAll('#kbex-gav input[type=checkbox]:checked').length;
+  const b=document.getElementById('kbex-gav-add');if(!b)return;
+  b.disabled=!n;b.textContent=n?('＋ Adicionar '+n+(n===1?' exercício':' exercícios')):'Marque exercícios';
+}
+function kbGavLimpar(){document.querySelectorAll('#kbex-gav input[type=checkbox]:checked').forEach(c=>{c.checked=false;});kbGavCont();}
+function kbGavFiltro(q){
+  q=(q||'').toLowerCase().trim();
+  document.querySelectorAll('#kbex-gav .kb-gav-cat').forEach(d=>{
+    let achou=0;
+    d.querySelectorAll('.kb-gav-it').forEach(l=>{const ok=!q||l.textContent.toLowerCase().includes(q);l.style.display=ok?'':'none';if(ok)achou++;});
+    d.style.display=achou?'':'none';
+    d.open=!!q&&achou>0;
+  });
+}
+function kbGavAplicar(){
+  if(!_kbExAtual)return;
+  const{did,bi,i}=_kbExAtual;
+  const b=fBloco(did,bi);const cur=b&&b.exercicios[i];if(!cur)return;
+  const nomes=[...document.querySelectorAll('#kbex-gav input[type=checkbox]:checked')].map(c=>c.dataset.n);
+  if(!nomes.length){notify('Marque ao menos um exercício na gaveta.');return;}
+  let pos=i;
+  nomes.forEach((nome,k)=>{
+    if(k===0&&!cur.nome){setEx(did,bi,i,'nome',nome);return;}
+    pos++;
+    b.exercicios.splice(pos,0,{nome:'',url:'',series:cur.series||'',rest:cur.rest||'',obs:'',cj:cur.cj!=null?cur.cj:null});
+    setEx(did,bi,pos,'nome',nome);
+  });
+  notify(nomes.length+(nomes.length===1?' exercício adicionado.':' exercícios adicionados.'));
+  kbFecharModalEx();
 }
 function kbSetExField(did,bi,i,field,val){
   setEx(did,bi,i,field,val);
@@ -4576,6 +4635,7 @@ function saveEx(){
   const pct=pctRaw!==''?parseFloat(pctRaw):null;
   if(!REP[cat])REP[cat]=[];
   const idExistente=(_mm==='edit'&&REP[_mc]&&REP[_mc][_mi])?REP[_mc][_mi]._id:null;
+  const antes=(_mm==='edit'&&REP[_mc]&&REP[_mc][_mi])?{n:REP[_mc][_mi].n,u:REP[_mc][_mi].u||''}:null;
   // atualiza memória local
   if(_mm==='add'){REP[cat].push({n,nome_pt:nomePt,nome_en:nomeEn,u,padrao_movimento:padrao,percentual_rm:pct});}
   else{const oc=_mc;if(oc!==cat){REP[cat].push({n,nome_pt:nomePt,nome_en:nomeEn,u,padrao_movimento:padrao,percentual_rm:pct});REP[oc].splice(_mi,1);}else REP[cat][_mi]={...REP[cat][_mi],n,nome_pt:nomePt,nome_en:nomeEn,u,padrao_movimento:padrao,percentual_rm:pct};}
@@ -4583,8 +4643,37 @@ function saveEx(){
   dbSalvarExercicio(cat,n,nomePt,nomeEn,u,idExistente,padrao,pct).then(saved=>{
     if(saved&&_mm==='add'){ const idx=REP[cat].length-1; if(REP[cat][idx])REP[cat][idx]._id=saved.id; }
     refreshExDatalist();renderDBEx();
+    if(saved&&antes&&(antes.n!==n||antes.u!==u))setTimeout(()=>mbPropagarExercicio(antes.n,n,antes.u,u),250);
   });
   closeM('modal-ex');notify('Exercício salvo!');
+}
+// Ao editar nome/link na biblioteca: oferece levar a mudança para os protocolos
+// ATIVOS dos alunos (que guardam uma cópia do nome e do link). Pede confirmação.
+async function mbPropagarExercicio(nomeAnt,nomeNovo,urlAnt,urlNova){
+  if(!mbProfessor)return;
+  const renomeou=nomeAnt!==nomeNovo,mudouUrl=urlAnt!==urlNova;
+  const msg='Atualizar também os protocolos ativos dos alunos?\n'+(mudouUrl?'• novo link do vídeo\n':'')+(renomeou?'• novo nome (as cargas já registradas continuam com o nome antigo)\n':'')+'\nSe preferir, cancele: o exercício já foi salvo na biblioteca.';
+  if(!confirm(msg))return;
+  try{
+    const{data:protos,error}=await mbClient.from('protocolos').select('id, conteudo').eq('ativo',true);
+    if(error){notify('Erro ao buscar protocolos: '+error.message);return;}
+    let np=0,ne=0,falhas=0;
+    for(const pr of (protos||[])){
+      let n=0;
+      ((pr.conteudo&&pr.conteudo.semanas)||[]).forEach(sm=>(sm.dias||[]).forEach(d=>(d.blocos||[]).forEach(b=>{
+        (b.exercicios||[]).concat(b.metconExs||[]).forEach(ex=>{
+          if(ex.nome!==nomeAnt&&ex.nome!==nomeNovo)return;
+          if(renomeou&&ex.nome!==nomeNovo){ex.nome=nomeNovo;n++;}
+          if(mudouUrl&&(ex.url||'')!==urlNova){ex.url=urlNova;n++;}
+        });
+      })));
+      if(!n)continue;
+      const{error:e2}=await mbClient.from('protocolos').update({conteudo:pr.conteudo}).eq('id',pr.id);
+      if(e2){falhas++;continue;}
+      np++;ne+=n;
+    }
+    notify(ne?('✅ '+ne+' alteração(ões) em '+np+' protocolo(s).'+(falhas?' ⚠️ '+falhas+' falharam.':'')):(falhas?('⚠️ '+falhas+' protocolo(s) falharam ao salvar.'):'Nenhum protocolo ativo usa esse exercício.'));
+  }catch(e){notify('Erro inesperado: '+e.message);}
 }
 function delEx(cat,i){if(!confirm(`Remover "${REP[cat][i].n}"?`))return;const id=REP[cat][i]._id;REP[cat].splice(i,1);dbDeletarExercicio(id).then(()=>{refreshExDatalist();renderDBEx();});notify('Exercício removido.');}
 
@@ -6675,7 +6764,7 @@ function renderPainelAlunos() {
 
   let lista = mbPainelAlunos;
   if (busca) {
-    lista = lista.filter(a => (a.nome||'').toLowerCase().includes(busca) || (a.email||'').toLowerCase().includes(busca));
+    lista = lista.filter(a => (a.nome||'').toLowerCase().includes(busca) || (a.email||'').toLowerCase().includes(busca) || String((a.anamnese&&a.anamnese.respostas&&a.anamnese.respostas.whatsapp)||'').replace(/\D/g,'').includes(busca.replace(/\D/g,'x')));
   }
   if (filtroStatus === 'ativos') lista = lista.filter(a => a.ativo !== false && !a._lixeira);
   if (filtroStatus === 'bloqueados') lista = lista.filter(a => a.ativo === false && !a._lixeira);
@@ -6827,16 +6916,22 @@ function renderPainelAlunos() {
            style="font-size:11px;padding:4px 10px;color:var(--G);border-color:var(--G)">↩ Restaurar</button>
          <button class="btn" title="Excluir permanentemente" data-id="${a.id}" onclick="mbExcluirDefinitivo(this.dataset.id)"
            style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#c03030;border-color:#f0b0b0">✕ Excluir</button>`
-      : `<label class="toggle-sw" title="${bloqueado?'Liberar acesso':'Bloquear acesso'}" style="margin-right:2px">
+      : `<button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
+         <label class="toggle-sw" title="${bloqueado?'Liberar acesso':'Bloquear acesso'}" style="margin-right:2px">
            <input type="checkbox" ${bloqueado?'':'checked'} data-id="${a.id}" onchange="mbToggleAlunoAtivo(this.dataset.id,this.checked)"/>
            <span class="toggle-sw-slider"></span>
          </label>
          <button class="bsm" title="Mover para lixeira" data-id="${a.id}" onclick="mbMoverLixeira(this.dataset.id)"
            style="color:var(--t3);font-size:14px" >🗑</button>`;
 
+    // WhatsApp do aluno: coluna do aluno (se existir) ou resposta da anamnese
+    const waTxt = String(a.whatsapp || (anamnese && anamnese.respostas && anamnese.respostas.whatsapp) || '').trim();
+    let waDig = waTxt.replace(/\D/g, '');
+    if (waDig && waDig.length <= 11) waDig = '55' + waDig;
+    const waHref = 'https://wa.me/' + waDig;
+
     // Rodapé do card (só para alunos fora da lixeira) — ultra-compacto
     const rodape = lixeira ? '' : `
-      <button type="button" class="al-more-btn" onclick="this.closest('.aluno-row').classList.toggle('al-open')">⚙️ Detalhes · acesso · pedidos · testes <span>▾</span></button>
       <div class="al-rodape" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
         <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">Acesso</span>
         <input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
@@ -6879,9 +6974,9 @@ function renderPainelAlunos() {
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:1px">
             <span style="font-size:12px;font-weight:700;color:var(--tx)">${escAttr(a.nome)}</span>
             <button type="button" onclick="mbEditarNomeAluno('${a.id}')" title="Editar nome" style="border:none;background:none;cursor:pointer;font-size:10px;padding:0 2px;opacity:.55;line-height:1">✏️</button>
-            ${statusBadge}${linkAvulsoBadge}${acessoBadge}${sessoesBadge}${anamBadge}${parqBadge}${alertaDorBadge}${cargasBadge}${solicMudancaBadge}${novoComDemandaBadge}
+            ${statusBadge}${linkAvulsoBadge}${alertaDorBadge}${solicMudancaBadge}${novoComDemandaBadge}
           </div>
-          <div class="al-det" style="font-size:10px;color:var(--t3)">${escAttr(a.email||'')}${acessoLabel ? ` · 🗓 ${acessoLabel}` : ''}</div>
+          <div class="al-meta" style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap">${a.email ? `<span>${escAttr(a.email)}</span>` : ''}${waTxt ? `<a href="${waHref}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp" style="color:#128C4A;font-weight:700;text-decoration:none">💬 ${escAttr(waTxt)}</a>` : ''}${acessoLabel ? `<span>🗓 ${acessoLabel}</span>` : ''}${acessoBadge}${sessoesBadge}${anamBadge}${parqBadge}${cargasBadge}</div>
           <div style="font-size:10px;color:var(--t2);margin-top:1px">📋 ${protoLinha}</div>
         </div>
 
@@ -9666,6 +9761,17 @@ body.preview-mode .toprow{position:sticky!important;top:0;z-index:40;background:
   .cargabox{transform-origin:right center}
   .bloco{margin-bottom:8px!important}
 }
+/* ── v99: conjugado compacto, descanso único no cabeçalho do grupo ── */
+.a-cj-group{border-radius:10px!important}
+.a-cj-head{padding:3px 8px!important;gap:6px!important;min-height:0!important;align-items:center!important}
+.a-cj-head .a-cj-label{font-size:10px!important;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.a-cj-head .a-cj-rest{flex:0 0 auto;padding:1px 8px!important;font-size:10.5px!important;white-space:nowrap}
+.a-cj-dica{padding:0 10px 3px!important;margin-top:0!important;font-size:9.5px!important;line-height:1.25}
+.a-cj-items{padding:2px!important;gap:2px!important}
+.a-cj-items .ec{padding:5px 8px!important;border-radius:8px!important}
+.a-cj-items .ec-chips{margin-top:3px!important;gap:4px!important}
+.a-cj-items .ec-hd{gap:6px!important}
+.a-cj-foot{display:none!important}
 </style>
 </head>
 <body>
@@ -11031,7 +11137,7 @@ function aFecharWidgetDescanso(){
   if (w) w.style.display = 'none';
   aDescansoTimer = null;
 }
-function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSemanas){
+function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSemanas, emConj){
   const emb = aEmbedUrl(ex.url || (ex.nome && aExVideoMap[ex.nome]) || '');
   const isTempo = ex.reg === 'tempo';
   const ultimo = aUltimaCargaPorExercicio[ex.nome];
@@ -11068,7 +11174,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
   const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
   const baseRefHTML = sugVolume
-    ? '<div class="ec-base-ref">' + aT('base_professor') + ': ' + aEsc(aFormatarSeries(ex.series)) + (ex.rest ? ' · ' + aEsc(ex.rest) : '') + '</div>'
+    ? '<div class="ec-base-ref">' + aT('base_professor') + ': ' + aEsc(aFormatarSeries(ex.series)) + (ex.rest && !emConj ? ' · ' + aEsc(ex.rest) : '') + '</div>'
     : '';
   const cargaBadge = isTempo
     ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':'')+'">'+aEsc(aT('tempo'))+' ⏱️' +
@@ -11085,7 +11191,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
       '</span>';
   const chips = [
     ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '',
-    '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+(restExibir?'':' ec-chip-rlivre')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir||'60s')+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir||'60s')+'</span>',
+    emConj ? '' : '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+(restExibir?'':' ec-chip-rlivre')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir||'60s')+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir||'60s')+'</span>',
     mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
   ].filter(Boolean).join('');
@@ -11835,12 +11941,20 @@ function aRenderExercicios(b, faseAtual, ctxPrefix, semanaDentroFase, duracaoSem
       const mt = A_METODOS[g.metodo] || A_METODOS.conjugado;
       const gExsIdx = [];
       exercicios.forEach((e,i) => { if (String(e.cj) === gk) gExsIdx.push(i); });
-      const itensHTML = gExsIdx.map(i => aExCard(exercicios[i], faseAtual, ctxPrefix + '-e' + i, b.progressaoAuto, semanaDentroFase, duracaoSemanas)).join('');
+      const itensHTML = gExsIdx.map(i => aExCard(exercicios[i], faseAtual, ctxPrefix + '-e' + i, b.progressaoAuto, semanaDentroFase, duracaoSemanas, true)).join('');
+      // Descanso do GRUPO (um só): "após o grupo" se o professor definiu; senão o
+      // descanso do 1º exercício que tiver; senão 60s. O chip fica no cabeçalho e
+      // o cronômetro automático dispara ao concluir a série do ÚLTIMO exercício.
+      let gRest = g.restAfter || '';
+      if (!gRest) { gExsIdx.forEach(function(i){ if (!gRest && exercicios[i].rest) gRest = exercicios[i].rest; }); }
+      const gLabel = g.label || aT('conjugado');
+      const gDica = aLang === 'en' ? mt.en : mt.pt;
+      const gLastEid = ctxPrefix + '-e' + gExsIdx[gExsIdx.length - 1];
+      const gChip = '<span class="ec-chip ec-chip-r ec-chip-clicavel a-cj-rest' + (gRest ? '' : ' ec-chip-rlivre') + '" data-tempo="' + aEsc(gRest || '60s') + '" data-nome="' + aEsc(gLabel) + '" data-eid="' + gLastEid + '" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="' + aEsc(aT('descanso_apos_grupo')) + '">⏱ ' + aEsc(gRest || '60s') + '</span>';
       h += '<div class="a-cj-group">' +
-        '<div class="a-cj-head"><span class="a-cj-ic">' + mt.e + '</span><span class="a-cj-label">' + aEsc(g.label || aT('conjugado')) + '</span></div>' +
-        '<div class="a-cj-dica">' + aEsc(aLang === 'en' ? mt.en : mt.pt) + '</div>' +
+        '<div class="a-cj-head" title="' + aEsc(gDica) + '"><span class="a-cj-ic">' + mt.e + '</span><span class="a-cj-label">' + aEsc(gLabel) + '</span>' + gChip + '</div>' +
+        (g.metodo && g.metodo !== 'conjugado' ? '<div class="a-cj-dica">' + aEsc(gDica) + '</div>' : '') +
         '<div class="a-cj-items">' + itensHTML + '</div>' +
-        (g.restAfter ? '<div class="a-cj-foot">⏱ ' + aEsc(aT('descanso_apos_grupo')) + ': ' + aEsc(g.restAfter) + '</div>' : '') +
       '</div>';
     } else {
       h += aExCard(ex, faseAtual, eid, b.progressaoAuto, semanaDentroFase, duracaoSemanas);
