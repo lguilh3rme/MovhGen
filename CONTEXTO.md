@@ -1,4 +1,4 @@
-# MOVH — Contexto v45 (13/10/2026)
+# MOVH — Contexto v45.1 (13/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -68,4 +68,5 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 - Mover hospedagem para GitHub Pages (elimina risco de créditos).
 - Do Gerador: editar clicando na prévia "Como aluno", atalhos de teclado e desfazer, copiar semana A→B, histórico de versões do protocolo, fase/foco/progressão dentro do quadro, indicador de "alterações não salvas".
 - Interruptor na tela para ligar/desligar o timer automático.
-- Verificar no banco real: `links_treino` e `get_treino_publico`; e testar tudo no celular real (só foi validado em ambiente simulado).
+- Verificar no banco real: `links_treino` e `get_treino_publico`.
+- Confirmado pelo usuário no uso real (13/10): edição em massa (página do dia e Quadro) e layout compacto/mobile do app estão bons. O restante (timer em 2º plano, vídeos) segue com as limitações da seção 6.
