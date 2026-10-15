@@ -6716,7 +6716,7 @@ async function mbCarregarPainelAlunos() {
     registrosCarga: registrosMap[a.id] || []
   }));
 
-  mbMontarAtividade(alunos, sessoesMesData, registrosData, dorData);
+  mbMontarAtividade(alunos, sessoesMesData, registrosData, dorData, { anamneses: anamnesesData, solic: solicMudancaData });
   document.getElementById('alunos-loading').style.display = 'none';
   document.getElementById('alunos-content').style.display = 'block';
   renderPainelAlunos();
@@ -6731,11 +6731,23 @@ function mbTempoRel(iso){
   const d = Math.round(m/1440);
   return d === 1 ? 'ontem' : 'há ' + d + ' dias';
 }
-function mbMontarAtividade(alunos, sessoes, registros, dores){
+function mbMontarAtividade(alunos, sessoes, registros, dores, extra){
   const nome = id => ((alunos.find(x => x.id === id) || {}).nome || 'Aluno').split(' ')[0];
   const ev = [];
   (sessoes || []).forEach(r => ev.push({ t: r.criado_em, i: '✅', a: nome(r.aluno_id), x: 'terminou o treino' }));
   (dores || []).forEach(r => ev.push({ t: r.criado_em, i: '⚠️', a: nome(r.aluno_id), x: 'relatou dor' + (r.dor_obs ? ': ' + r.dor_obs : '') }));
+  extra = extra || {};
+  const lim30 = Date.now() - 30 * 86400000, lim7 = Date.now() - 7 * 86400000;
+  (alunos || []).forEach(a => {
+    if (a.na_lixeira) return;
+    if (a.ultimo_acesso && new Date(a.ultimo_acesso).getTime() >= lim7) ev.push({ t: a.ultimo_acesso, i: '👀', a: nome(a.id), x: 'acessou o app' });
+    const dc = mbDataCadastro(a);
+    if (dc && new Date(dc).getTime() >= lim30) ev.push({ t: dc, i: '🆕', a: nome(a.id), x: 'novo cadastro' });
+  });
+  (extra.anamneses || []).forEach(r => {
+    if (r.tipo === 'anamnese' && r.respostas && r.criado_em && new Date(r.criado_em).getTime() >= lim30) ev.push({ t: r.criado_em, i: '📝', a: nome(r.aluno_id), x: 'preencheu a anamnese' });
+  });
+  (extra.solic || []).forEach(r => { if (r.solicitado_em) ev.push({ t: r.solicitado_em, i: '🔔', a: nome(r.aluno_id), x: 'pediu mudança de treino' }); });
   const por = {};
   (registros || []).forEach(r => { (por[r.aluno_id] = por[r.aluno_id] || []).push(r); });
   Object.keys(por).forEach(id => {
@@ -6750,7 +6762,7 @@ function mbMontarAtividade(alunos, sessoes, registros, dores){
   ev.sort((a, b) => new Date(b.t) - new Date(a.t));
   const box = document.getElementById('alunos-atividade');
   if (!box) return;
-  const lista = ev.slice(0, 20);
+  const lista = ev.slice(0, 30);
   box.style.display = 'block';
   box.innerHTML = '<summary>🔔 Atividade recente <span class="al-feed-n">' + ev.length + '</span></summary>' +
     (lista.length ? '<div class="al-feed-list">' + lista.map(e => '<div class="al-feed-it"><span class="al-feed-ic">' + e.i + '</span><span class="al-feed-tx"><b>' + escAttr(e.a) + '</b> ' + escAttr(e.x) + '</span><span class="al-feed-t">' + mbTempoRel(e.t) + '</span></div>').join('') + '</div>' : '<div class="al-feed-vazio">Sem atividade nos últimos dias.</div>');
@@ -10245,7 +10257,9 @@ function aPreviewSafetyNet(){
     return q;
   };
 }
+const A_APP_URL = 'https://movh.netlify.app/';
 function aIrParaRegistro(){
+  try { sessionStorage.setItem('movh-via-treino', '1'); } catch(e){}
   window.location.href = window.location.pathname + '?bemvindo=1';
 }
 function aPreviewErroTela(err){
@@ -10450,6 +10464,18 @@ async function aEnsureAlunoRow(user, nomeSugerido, diasTeste){
   return criado;
 }
 
+// grava alunos.ultimo_acesso (no máx. 1x a cada 20 min) pro professor ver em "Atividade recente".
+// Silencioso: se a coluna ainda não existe no Supabase, o erro é ignorado.
+function aRegistrarAcesso(){
+  try {
+    if (window._movhPreview || !aAlunoRow || !aAlunoRow.id) return;
+    const k = 'movh-ult-acesso';
+    const ult = parseInt(localStorage.getItem(k) || '0', 10);
+    if (Date.now() - ult < 20 * 60000) return;
+    localStorage.setItem(k, String(Date.now()));
+    aClient.from('alunos').update({ ultimo_acesso: new Date().toISOString() }).eq('id', aAlunoRow.id).then(function(){}, function(){});
+  } catch(e){}
+}
 async function aBoot(sessionParam){
   if (!sessionParam) {
     const tkTreino = new URLSearchParams(window.location.search).get('treino');
@@ -10516,6 +10542,8 @@ async function aBoot(sessionParam){
     await aClient.auth.signOut();
     return;
   }
+
+  aRegistrarAcesso();
 
   // Verificar período de acesso (acesso_fim)
   if (aAlunoRow.acesso_fim) {
@@ -10961,25 +10989,7 @@ function aScrollProximo(eid){
   if (bl) { const body = document.getElementById(bl.id.replace('bloco-','')); if (body && body.style.display === 'none') { body.style.display = 'block'; const ar = bl.querySelector('.bh .bt-arr'); if (ar) ar.style.transform = 'rotate(0deg)'; } }
   setTimeout(function(){ try { nx.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e){} }, 650);
 }
-// por padrão só o primeiro bloco fica aberto (o treino cabe na tela)
-(function aBlocosColapsoPadrao(){
-  function aplicar(root){
-    const pais = new Set();
-    root.querySelectorAll ? root.querySelectorAll('.bloco').forEach(function(b){ pais.add(b.parentNode); }) : null;
-    if (root.classList && root.classList.contains('bloco')) pais.add(root.parentNode);
-    pais.forEach(function(p){
-      const bl = [].slice.call(p.children).filter(function(c){ return c.classList && c.classList.contains('bloco'); });
-      if (bl.length < 2) return;
-      bl.forEach(function(b, i){
-        if (b.dataset.autoc) return; b.dataset.autoc = '1';
-        if (i === 0) return;
-        const body = document.getElementById(b.id.replace('bloco-',''));
-        if (body && !b.classList.contains('bloco-concluido')) { body.style.display = 'none'; const ar = b.querySelector('.bh .bt-arr'); if (ar) ar.style.transform = 'rotate(-90deg)'; }
-      });
-    });
-  }
-  new MutationObserver(function(ms){ ms.forEach(function(m){ m.addedNodes.forEach(function(n){ if (n.nodeType === 1 && (n.matches('.bloco') || n.querySelector('.bloco'))) aplicar(n); }); }); }).observe(document.documentElement, { childList: true, subtree: true });
-})();
+// blocos começam ABERTOS; recolhem sozinhos ao concluir (ver aToggleDone / aBlocoToggleDone)
 function aConfete(){
   const cores = ['#7C6FE0','#E3A82B','#1A9E72','#D45828','#3580D8','#E0457B'];
   for (let i = 0; i < 46; i++) {
@@ -11287,6 +11297,8 @@ function aToggleDone(eid, auto){
     if(all && body && auto !== true){
       body.style.display = 'none';
       if(arr) arr.style.transform = 'rotate(-90deg)';
+    } else if(all && body && auto === true){
+      setTimeout(function(){ if(bloco.classList.contains('bloco-concluido')){ body.style.display = 'none'; if(arr) arr.style.transform = 'rotate(-90deg)'; } }, 400);
     } else if(!done && body){
       body.style.display = 'block';
       if(arr) arr.style.transform = 'rotate(0deg)';
@@ -13108,6 +13120,10 @@ async function aAnamSubmit() {
   document.getElementById('anam-bvscreen').style.display = 'flex';
   setTimeout(() => {
     document.getElementById('anam-bvscreen').style.display = 'none';
+    // veio do link público do treino: leva o aluno ao app já logado (mesma origem = mesma sessão)
+    let viaTreino = false;
+    try { viaTreino = sessionStorage.getItem('movh-via-treino') === '1'; sessionStorage.removeItem('movh-via-treino'); } catch(e){}
+    if (viaTreino && window.location.origin === new URL(A_APP_URL).origin) { window.location.replace(A_APP_URL); return; }
     aBoot(null); // reinicia sem forçar session — vai buscar do cache
   }, 3000);
 }
@@ -13466,6 +13482,8 @@ function copiarSQLRLS(){
     '-- só conta anônima + link de convite) — a coluna nasceu NOT NULL.',
     'ALTER TABLE alunos ALTER COLUMN email DROP NOT NULL;',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS avulso_link text;',
+    '-- ÚLTIMO ACESSO do aluno (aparece em "Atividade recente" do painel)',
+    'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS ultimo_acesso timestamptz;',
     '',
     '-- AULAS COLETIVAS — coluna nova em alunos + tabela nova + policies',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS mostra_aulas_coletivas boolean DEFAULT false;',
