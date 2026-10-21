@@ -86,14 +86,22 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
   ```
   Conferir também: "Allow anonymous sign-ins" ligado (aluno avulso) e política SELECT de `rpe_sessoes`. Passo a passo de verificação já foi entregue ao usuário.
 - v47/v48 NÃO testados no banco real (redirect pós-anamnese, `ultimo_acesso`, `treino_visto_em`).
-- PIX (sessão separada, NÃO nesta rodada): sem Asaas. Chave PIX própria, vários bancos, o professor gerencia o que o aluno vê, no mesmo lugar dos Planos. A página de Planos precisa ser atualizada, modernizada e verificada (se continua funcionando).
+- PIX: feito na v48 em versão manual (ver seção 10). Falta: modernizar/verificar a página de Planos, QR Code, e decidir se vale um PSP para confirmação automática.
 - Controle financeiro dentro do Gerador (alunos e mensalidades, sem planilha): ideia para depois, junto com o PIX/Planos.
 - Verificar no plano do Supabase: pausa por inatividade e backup automático; exportar tabelas em CSV de vez em quando.
 - Privacidade: o app guarda anamnese e PAR-Q (dados de saúde). Futuro: termos de uso e política de privacidade conforme LGPD, revisados por profissional da área jurídica.
 
-## 10. Rodada v48 — estado
-FEITO (testes Playwright reg_all/bulk/kbm/t/reg sem FAIL novo; sem teste no banco real): destino explícito de salvamento (`_dest`, `pbSalvar`, `pbSalvarComo`, `pbSalvarSplit`), rascunho local `movh-rascunho-v1`, Central de alertas + presença + `treino_visto_em`, gaveta do Quadro com ordem de clique e prévia, visual opção A do app, `asaasKey` removida da landing (e sem exigência de chave no export), rótulo de versão v48.
-FALTA: card "Conta e armazenamento" na Config (desenho aprovado na seção 7); PIX próprio (sessão separada); `professores.config jsonb`; melhorias novas que o usuário vai pedir antes do merge; exportar app → `movh/index.html`, `cmp`, 1 PR por repo, merge.
+## 10. Rodada v48 — estado (21/10/2026)
+FEITO e testado em Playwright com Supabase simulado (reg_all, bulk, kbm, t, reg sem FAIL novo; modal Pix testado; CRC do BR Code validado). NÃO testado no banco real. Branch `v48-rodada` nos dois repos, ainda SEM PR/merge:
+- Salvar com destino explícito (`_dest`, `pbDestInfo`: split | aluno | aluno novo | sem destino), "Salvar como…", rascunho local `movh-rascunho-v1`, ● de não salvo.
+- Config: card "Conta e armazenamento" reorganizado (conectado + Sair, aluno, Atualizar protocolo, Salvar como novo, 🔄/🌐 como ícones, carregar protocolo recolhido).
+- Alunos: Central de alertas, presença (`mbPresenca`), `treino_visto_em`, Pix pendente com ✓ Confirmar / ✖ (`mbConfirmarPix`, `mbRecusarPix`: estende `acesso_fim` a partir do vencimento atual se ainda válido, senão de hoje; idempotente).
+- Gaveta do Quadro com ordem de clique e prévia lateral.
+- PIX (chave própria, SEM Asaas): Planos → card "💠 Pix" (nome, cidade, chaves por banco, mensagem; vai em `landing_config.config.pix`). App: banner "renove" (≤7 dias) e tela de acesso vencido abrem o card `aAbrirRenovar` (plano → Pix ou Cartão); Pix gera BR Code copia-e-cola estático com valor e txid (`aPixPayload`, CRC16), aluno toca "Já paguei" → linha em `pagamentos_pix` (pendente) → professor confirma no painel. Não há detecção automática do pagamento (exigiria PSP/webhook). Sem QR Code (só copia-e-cola e chave).
+- App do aluno (opção A + ajustes de 21/10): séries×reps vermelho `#b10000` na linha de baixo, contagem `0/` antes do nº de séries; carga com rótulo "carga utilizada" centralizado e caixa menor; cabeçalho de bloco fino com barra de progresso de 3 px; verde único `#1A9E72`; fundo claro `#E0C79D`, escuro `#0B101A`.
+- `asaasKey` removida da landing exportada; rótulo de versão v48.
+SQL para rodar (idempotente): colunas `ultimo_acesso`, `treino_visto_em`, `avulso_link`, email nullable e a tabela `pagamentos_pix` com RLS (está no script de configuração do Gerador, em Publicar app). A landing_config precisa estar legível pelo aluno (a landing já lê com a chave anon).
+FALTA: `professores.config jsonb` (seção 11), QR Code do Pix, revisar a página de Planos, controle financeiro, Web Push; PR + merge (Gerador com `[skip netlify]`, hospedado no GitHub Pages; app com deploy normal).
 
 ## 11. O que fica só no `localStorage` do Gerador (inventário e plano de integração)
 Já vão para o banco (confirmado no código): exercícios (`mova_rep` → tabela `exercicios`; migra e remove a chave local, local só como fallback), splits (`mova_splits` → tabela `splits`, upsert, local só como cache), planos/landing (`movh_planos`, com controle de "sujo" e última sincronização com o banco).

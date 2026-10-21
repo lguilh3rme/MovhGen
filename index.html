@@ -474,10 +474,10 @@ select{cursor:pointer}
 .al-feed summary{padding:6px 12px!important;gap:6px!important;font-size:11.5px!important}
 .al-feed-it{padding:3px 12px!important;font-size:11px!important}
 .al-feed-list{max-height:140px!important}
-.al-fch{border:1px solid var(--bd);background:var(--card);color:var(--t2);border-radius:99px;padding:1px 8px;font:600 10px inherit;font-family:inherit;cursor:pointer}
+.al-fch{border:1px solid var(--bd);background:var(--card);color:var(--t2);border-radius:99px;padding:1px 8px;font-size:10px;font-weight:600;font-family:inherit;cursor:pointer}
 .al-fch.on{background:var(--P);border-color:var(--P);color:#fff}
 .al-alerts{display:flex;gap:4px;overflow-x:auto;padding:5px 12px;border-top:1px solid var(--bd2);scrollbar-width:none}
-.al-al{flex:0 0 auto;border:1px solid var(--bd);background:var(--cl);color:var(--tx);border-radius:99px;padding:2px 9px;font:600 10.5px inherit;font-family:inherit;cursor:pointer;white-space:nowrap}
+.al-al{flex:0 0 auto;border:1px solid var(--bd);background:var(--cl);color:var(--tx);border-radius:99px;padding:2px 9px;font-size:10.5px;font-weight:600;font-family:inherit;cursor:pointer;white-space:nowrap}
 .al-al.n3{background:#FCEBEB;border-color:#D64545;color:#701B10}.al-al.n2{background:#FFF1DF;border-color:#FF8A00;color:#7A4300}.al-al.n1{background:#FFF8DB;border-color:#E3C23C;color:#6B5600}
 .aluno-row{padding:6px 10px!important;margin-bottom:4px!important}
 .al-pres{display:flex;gap:2px 10px;flex-wrap:wrap;font-size:10px;color:var(--t2);margin-top:1px}.al-pres-d{color:var(--t3)}
@@ -579,6 +579,14 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .bl-n{font-size:10px;color:var(--t3);font-weight:700;white-space:nowrap;margin-left:2px}
 .bl-acts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 @media(max-width:700px){.pg-title>span:first-child{display:none}.pg-title .btn{white-space:nowrap}.dia-cfg{gap:6px 10px}.dcf{flex:1 1 100%}.dcf select{max-width:none;flex:1}}
+.mb-top{display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:8px}
+.mb-dot{width:8px;height:8px;border-radius:50%;background:var(--G);flex:0 0 auto}
+.mb-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--t3);margin-bottom:3px}
+.mb-acts{display:flex;gap:5px}
+.mb-edit{font-size:9.5px;color:var(--Gd);margin-top:3px}
+.al-pix{display:inline-flex;align-items:center;gap:4px;background:#E6F0FD;color:#1A4E8A;border:1px solid #9CC0F0;border-radius:99px;padding:1px 3px 1px 8px;font-size:9.5px;font-weight:700}
+.al-pix .btn{font-size:9px!important;padding:1px 7px!important}
+.pix-row{display:flex;gap:6px;margin-bottom:5px}.pix-row input{min-width:0}
 </style>
 </head>
 <body>
@@ -650,36 +658,27 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 
     <!-- logado dentro -->
     <div id="mb-logged-in" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:11px">
-        <span>Conectado como <b id="mb-prof-name">—</b></span>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px" onclick="mbLogout()">Sair</button>
-      </div>
-
-      <div class="fld" style="margin-bottom:6px">
-        <span class="lbl">Aluno</span>
-        <select id="mb-aluno-select" onchange="mbOnAlunoChange()">
-          <option value="">— selecione —</option>
-        </select>
-      </div>
+      <div class="mb-top"><span class="mb-dot"></span><span>Conectado como <b id="mb-prof-name">—</b></span><span style="flex:1"></span><button class="btn bs" style="font-size:9px;padding:2px 7px" onclick="mbLogout()">Sair</button></div>
+      <div class="mb-lbl">Aluno do treino</div>
+      <div style="margin-bottom:6px"><select id="mb-aluno-select" onchange="mbOnAlunoChange()"><option value="">— selecione —</option></select></div>
       <div id="mb-aluno-new" style="display:none;gap:6px;margin-bottom:8px" >
         <input id="mb-aluno-novo-nome" type="text" placeholder="Nome do novo aluno" style="margin-bottom:4px"/>
         <input id="mb-aluno-novo-email" type="email" placeholder="Email do novo aluno" style="margin-bottom:6px"/>
         <button class="btn bp" style="font-size:11px;padding:5px 10px" onclick="mbCriarAluno()">Cadastrar aluno</button>
       </div>
-      <div id="mb-sugestao-periodizacao" style="margin-bottom:8px"></div>
-
+      <div id="mb-sugestao-periodizacao" style="margin-bottom:6px"></div>
       <div id="mb-save-msg" style="display:none;font-size:11px;padding:8px 10px;border-radius:6px;margin-bottom:6px"></div>
-      <div style="display:flex;gap:5px">
-        <button class="btn bp" id="mb-save-btn" style="flex:1;font-size:11px;padding:6px 8px" onclick="mbSalvarProtocolo()" disabled title="Salva o protocolo atual (todas as semanas) vinculado ao aluno selecionado acima — independente do botão &quot;Exportar index.html&quot;">💾 Salvar</button>
+      <div id="mb-update-wrap" style="display:none;margin-bottom:6px">
+        <button class="btn bp" id="mb-update-btn" style="width:100%;font-size:12px;padding:8px" onclick="mbAtualizarProtocolo()">✏️ Atualizar protocolo carregado</button>
+        <div id="mb-proto-editando" class="mb-edit"></div>
+      </div>
+      <div class="mb-acts">
+        <button class="btn bs" id="mb-save-btn" style="flex:1;font-size:11px;padding:6px 8px" onclick="mbSalvarProtocolo()" disabled title="Cria um protocolo NOVO e ativo para o aluno escolhido (o anterior fica no histórico)">💾 Salvar como novo p/ aluno</button>
         <button class="btn bs" id="mb-sync-btn" style="font-size:11px;padding:6px 9px;flex-shrink:0" onclick="mbSincronizarURLs()" disabled title="Atualiza as URLs dos exercícios do protocolo deste aluno com os vídeos cadastrados no banco de exercícios">🔄</button>
         <button class="btn bs" id="mb-lang-proto-btn" style="font-size:11px;padding:6px 9px;flex-shrink:0" onclick="mbToggleLangProtocolo()" disabled title="Traduz todos os exercícios do protocolo atual usando os nomes do banco de dados">🌐 <span id="mb-lang-proto-label">EN</span></button>
       </div>
-      <div id="mb-update-wrap" style="display:none;margin-top:6px">
-        <button class="btn" id="mb-update-btn" style="width:100%;font-size:11px;background:var(--Gl);color:var(--Gd);border-color:var(--Gd)" onclick="mbAtualizarProtocolo()">✏️ Atualizar protocolo carregado</button>
-        <div id="mb-proto-editando" style="font-size:9px;color:var(--Gd);margin-top:3px"></div>
-      </div>
 
-      <details style="margin-top:10px">
+      <details style="margin-top:8px">
         <summary style="font-size:10.5px;color:var(--t3);cursor:pointer;user-select:none">📂 Carregar protocolo existente como base</summary>
         <div style="margin-top:8px">
           <select id="mb-load-select" onchange="mbOnLoadSelectChange()" style="margin-bottom:6px">
@@ -949,6 +948,15 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
       </div>
       <div id="pl-tabela"></div>
       <div style="font-size:10px;color:var(--t3);margin-top:10px">💡 O plano do meio é destacado como "Mais popular" na landing page automaticamente.</div>
+    </div>
+    <div class="card" id="pl-pix-card" style="margin-bottom:.75rem">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">💠 Pix (chave própria)</div>
+        <span style="flex:1"></span>
+        <label class="toggle-sw" title="Mostrar Pix para o aluno"><input type="checkbox" id="pl-pix-ativo" onchange="plPixSet('ativo',this.checked)"/><span class="toggle-sw-slider"></span></label>
+      </div>
+      <div id="pl-pix-body"></div>
+      <div style="font-size:10px;color:var(--t3);margin-top:8px">O aluno vê o card de renovação com os planos acima. Ao pagar por Pix ele toca em "Já paguei" e você confirma no painel Alunos: o acesso é estendido pelo período do plano (a partir do vencimento atual, se ainda válido). Pix com chave própria não avisa o sistema sozinho, por isso a confirmação é com 1 toque.</div>
     </div>
     <div class="card">
       <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:.75rem;text-transform:uppercase;letter-spacing:.06em">⚡ Edge Functions (Webhooks)</div>
@@ -1984,6 +1992,7 @@ function pbarHTML(sid,did,mode){
 function pbDestInfo(){
   if(_dest&&_dest.tipo==='split'){const sp=(typeof SPLITS!=='undefined'?SPLITS:[]).find(x=>x.id===_dest.id);return{k:'split',txt:'📂 '+(sp?sp.nome:'Split'),acao:'💾 Salvar split'};}
   if(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId){const sel=document.getElementById('mb-aluno-select');const nm=(sel&&sel.selectedIndex>0)?sel.options[sel.selectedIndex].text:(_pbAlunoNome||'aluno');_pbAlunoNome=nm;return{k:'aluno',txt:'👤 '+nm,acao:'💾 Atualizar aluno'};}
+  if(typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId){const sel=document.getElementById('mb-aluno-select');const nm=(sel&&sel.selectedIndex>0)?sel.options[sel.selectedIndex].text:'aluno';return{k:'aluno_novo',txt:'👤 '+nm+' · novo',acao:'💾 Salvar p/ aluno'};}
   return{k:'novo',txt:'✳ Sem destino',acao:'💾 Salvar…'};
 }
 function pbRefreshDest(){refreshPBars();renderCfgTreino();}
@@ -1993,6 +2002,7 @@ async function pbSalvar(){
   const d=pbDestInfo();
   if(d.k==='split'){await pbSalvarSplit(_dest.id);}
   else if(d.k==='aluno'){await mbAtualizarProtocolo();const m=document.getElementById('mb-save-msg');if(m&&m.textContent)notify(m.textContent);}
+  else if(d.k==='aluno_novo'){await mbSalvarProtocolo();const m=document.getElementById('mb-save-msg');if(m&&m.textContent)notify(m.textContent);}
   else{pbSalvarComo();return;}
   pbRefreshDest();
 }
@@ -6733,6 +6743,13 @@ async function mbCarregarPainelAlunos() {
       .order('solicitado_em', { ascending: false });
     solicMudancaData = solic || [];
   }
+  let pixData = [];
+  if (alunoIds.length > 0) {
+    const { data: px } = await mbClient.from('pagamentos_pix').select('id, aluno_id, plano_nome, dias, valor, criado_em').in('aluno_id', alunoIds).eq('status', 'pendente').order('criado_em', { ascending: false });
+    pixData = px || [];
+  }
+  const pixMap = {};
+  pixData.forEach(r => { if (!pixMap[r.aluno_id]) pixMap[r.aluno_id] = r; });
   const solicMudancaMap = {};
   solicMudancaData.forEach(r => { if (!solicMudancaMap[r.aluno_id]) solicMudancaMap[r.aluno_id] = r; });
 
@@ -6807,6 +6824,7 @@ async function mbCarregarPainelAlunos() {
     alertaDor: dorMap[a.id] || null,
     sessoesMes: sessoesMesMap[a.id] || 0,
     ultimaSessao: ultSessMap[a.id] || null,
+    pixPendente: pixMap[a.id] || null,
     registrosCarga: registrosMap[a.id] || []
   }));
 
@@ -6882,6 +6900,7 @@ function mbAlertas(){
   (mbPainelAlunos || []).forEach(a => {
     if (a._lixeira) return;
     const n = (a.nome || 'Aluno').split(' ')[0];
+    if (a.pixPendente) L.push({ n:3, i:'💠', t:n + ' · Pix R$' + Number(a.pixPendente.valor).toFixed(2).replace('.', ',') + ' a confirmar', id:a.nome });
     if (a.alertaDor) L.push({ n:3, i:'⚠️', t:n + ' · dor', id:a.nome });
     if (a.solicitacaoMudanca) L.push({ n:2, i:'🔁', t:n + ' · pede novo treino', id:a.nome });
     if (a.acesso_fim) { const d = Math.ceil((new Date(a.acesso_fim + 'T23:59:59') - now) / 86400000); if (d <= 0) L.push({ n:3, i:'⏰', t:n + ' · acesso vencido', id:a.nome }); else if (d <= 7) L.push({ n:1, i:'⏰', t:n + ' · vence em ' + d + 'd', id:a.nome }); }
@@ -7063,6 +7082,9 @@ function renderPainelAlunos() {
       ? `<span style="font-size:9px;background:var(--P);color:#fff;padding:2px 8px;border-radius:99px;font-weight:800" title="Pendente: ${escAttr(demandasPendentes.join(', '))}">🆕 Novo · ${escAttr(demandasPendentes.join(' · '))}</span>`
       : '';
 
+    const pixBox = a.pixPendente
+      ? `<span class="al-pix">💠 Pix R$${Number(a.pixPendente.valor).toFixed(2).replace('.', ',')} · ${escAttr(a.pixPendente.plano_nome||'')}<button class="btn bp" data-id="${a.pixPendente.id}" onclick="mbConfirmarPix(this.dataset.id)" title="Confirmar recebimento e liberar +${a.pixPendente.dias} dias">✓ Confirmar</button><button class="btn bs" data-id="${a.pixPendente.id}" onclick="mbRecusarPix(this.dataset.id)" title="Não recebi / recusar">✖</button></span>` : '';
+
     // Botões de ação principais (topo direito)
     const acoesTopo = lixeira
       ? `<button class="btn bs" title="Restaurar aluno" data-id="${a.id}" onclick="mbRestaurarAluno(this.dataset.id)"
@@ -7127,7 +7149,7 @@ function renderPainelAlunos() {
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:1px">
             <span style="font-size:12px;font-weight:700;color:var(--tx)">${escAttr(a.nome)}</span>
             <button type="button" onclick="mbEditarNomeAluno('${a.id}')" title="Editar nome" style="border:none;background:none;cursor:pointer;font-size:10px;padding:0 2px;opacity:.55;line-height:1">✏️</button>
-            ${statusBadge}${linkAvulsoBadge}${alertaDorBadge}${solicMudancaBadge}${novoComDemandaBadge}
+            ${statusBadge}${linkAvulsoBadge}${alertaDorBadge}${solicMudancaBadge}${novoComDemandaBadge}${pixBox}
           </div>
           <div class="al-meta" style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap">${a.email ? `<span>${escAttr(a.email)}</span>` : ''}${waTxt ? `<a href="${waHref}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp" style="color:#128C4A;font-weight:700;text-decoration:none">💬 ${escAttr(waTxt)}</a>` : ''}${acessoLabel ? `<span>🗓 ${acessoLabel}</span>` : ''}${acessoBadge}${sessoesBadge}${anamBadge}${parqBadge}${cargasBadge}</div>
           <div style="font-size:10px;color:var(--t2);margin-top:1px">📋 ${protoLinha}</div>
@@ -7145,6 +7167,30 @@ function renderPainelAlunos() {
 }
 
 
+function mbIsoLocal(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+async function mbConfirmarPix(pid){
+  const a = (mbPainelAlunos || []).find(x => x.pixPendente && String(x.pixPendente.id) === String(pid)); if (!a) return;
+  const p = a.pixPendente;
+  if (!confirm('Confirmar o recebimento de R$' + Number(p.valor).toFixed(2).replace('.', ',') + ' de ' + a.nome + '? O acesso será estendido em ' + p.dias + ' dias.')) return;
+  const hoje = new Date(); hoje.setHours(12,0,0,0);
+  let base = hoje;
+  if (a.acesso_fim) { const f = new Date(a.acesso_fim + 'T12:00:00'); if (f > hoje) base = f; }
+  const fim = new Date(base.getTime() + p.dias * 86400000);
+  const { data: upd, error: e1 } = await mbClient.from('pagamentos_pix').update({ status: 'confirmado', confirmado_em: new Date().toISOString() }).eq('id', pid).eq('status', 'pendente').select('id');
+  if (e1 || !upd || !upd.length) { notify('Não foi possível confirmar (já tratado?).'); mbCarregarPainelAlunos(); return; }
+  const novo = { acesso_fim: mbIsoLocal(fim), ativo: true };
+  if (!a.acesso_inicio || base === hoje) novo.acesso_inicio = mbIsoLocal(hoje);
+  const { error: e2 } = await mbClient.from('alunos').update(novo).eq('id', a.id);
+  if (e2) { await mbClient.from('pagamentos_pix').update({ status: 'pendente', confirmado_em: null }).eq('id', pid); notify('Erro ao liberar o acesso: ' + e2.message); return; }
+  notify('✅ Pix confirmado. Acesso de ' + a.nome + ' até ' + novo.acesso_fim.split('-').reverse().join('/'));
+  mbCarregarPainelAlunos();
+}
+async function mbRecusarPix(pid){
+  if (!confirm('Marcar este Pix como NÃO recebido?')) return;
+  const { error } = await mbClient.from('pagamentos_pix').update({ status: 'recusado' }).eq('id', pid).eq('status', 'pendente');
+  if (error) { notify('Erro: ' + error.message); return; }
+  mbCarregarPainelAlunos();
+}
 // Bloquear/desbloquear acesso de um aluno: usa a coluna 'ativo' que já existe
 // na tabela 'alunos'. O app do aluno (index.html exportado) checa essa coluna
 // no login e impede o acesso se estiver false — ver aBoot() no template.
@@ -8985,6 +9031,7 @@ function mbOnAlunoChange() {
     document.getElementById('mb-lang-proto-btn').disabled = !val;
   }
   mbRenderSugestaoPeriodizacao();
+  _dest = null; if (typeof pbRefreshDest === 'function') pbRefreshDest();
 }
 
 function mbAbrirNovoAlunoModal(){
@@ -9931,9 +9978,9 @@ body.preview-mode .toprow{position:sticky!important;top:0;z-index:40;background:
 .a-cj-foot{display:none!important}
 /* ── v48 · opção A: séries×reps vermelho MOVH, verde único, carga com rótulo, avelã / preto azulado ── */
 :root{--mv:#b10000;--mvl:#FBE9E7}
-:root:not([data-theme=dark]){--bg:#EEE4D3!important;--card:#F8F2E7!important;--cl:#E9DECB!important;--bd:#DACCB5!important}
+:root:not([data-theme=dark]){--bg:#E0C79D!important;--card:#F1E4C8!important;--cl:#E7D4AE!important;--bd:#C9AF7E!important;--t2:#5A4E38!important;--t3:#7D705A!important}
 [data-theme=dark]{--bg:#0B101A!important;--card:rgba(150,175,255,.06)!important;--cl:rgba(150,175,255,.045)!important;--bd:rgba(150,175,255,.12)!important}
-:root:not([data-theme=dark]) .sessao-concluida-card,:root:not([data-theme=dark]) .authcard,:root:not([data-theme=dark]) .dm{background-color:#F8F2E7!important}
+:root:not([data-theme=dark]) .sessao-concluida-card,:root:not([data-theme=dark]) .authcard,:root:not([data-theme=dark]) .dm{background-color:#F1E4C8!important}
 [data-theme=dark] .authcard,[data-theme=dark] .dm,[data-theme=dark] .tela-renovar,[data-theme=dark] .sessao-concluida-card{background-color:#121a2a!important}
 .ec-name-row{gap:7px!important}
 .ec-name-row .ec-chip{flex:0 0 auto;margin:0!important}
@@ -9957,6 +10004,52 @@ body.preview-mode .toprow{position:sticky!important;top:0;z-index:40;background:
 [data-theme=dark] .semana-strip-dia.hoje:not(.sel){color:#8EE3BF!important;background:rgba(26,158,114,.14)!important}
 .cargabox .salvar-mini{background:var(--G)!important;color:#fff!important}
 [data-theme=dark] .hoje-banner{color:#8EE3BF!important;background:rgba(26,158,114,.14)!important}
+/* v48b */
+.sx-cnt{font-variant-numeric:tabular-nums;margin-right:1px}
+.ec-chip-progresso .sx-c b{display:inline-flex;align-items:baseline}
+.cargabox{align-items:center!important;padding:1px 7px 2px!important}
+.cargabox .cb-l{width:100%;text-align:center;font-size:8px!important;opacity:.7}
+.cargabox .cb-r .ic{display:none!important}
+.cargabox .cb-r{gap:0!important}
+.cargabox .cb-r input{font-size:14px!important}
+.cargabox .cb-r input[id$="-carga"]{width:3.6ch!important}
+.cargabox .cb-r input[id$="-reps"]{width:2.4ch!important}
+.cargabox .cb-r .u{font-size:9px!important;margin:0 2px 0 0!important}
+.cargabox .cb-r .sep{margin:0 2px!important}
+.bloco .bh{padding:3px 10px!important;min-height:0!important;gap:6px!important;background-image:linear-gradient(var(--G),var(--G))!important;background-repeat:no-repeat!important;background-size:var(--bp,0%) 3px!important;background-position:left bottom!important}
+.bloco .bh .bt{font-size:11px!important;line-height:1.2!important}
+.bloco .bh .bm{font-size:9.5px!important;padding:0 0 0 4px!important}
+.bloco .bh .bp{font-size:9.5px!important;padding:1px 6px!important}
+.bloco .bh .dot{height:14px!important}
+.bloco .bh .bloco-done-btn{width:22px!important;height:22px!important;min-width:0!important;font-size:11px!important;padding:0!important}
+.bloco .obs-bloco{font-size:10.5px!important}
+.bloco .bh .bloco-done-btn{margin:0!important;box-shadow:none!important}
+.bloco.bloco-concluido .bh .bloco-done-btn{box-shadow:none!important}
+.bloco .bh .bt-arr{margin:0 2px!important}
+.ec-chips{gap:4px!important}
+.ec-chips .ec-chip-r{padding:2px 6px!important}
+.cargabox .cb-r input{font-size:13px!important}
+.cargabox .cb-r input[id$="-carga"]{width:3.2ch!important}
+.cargabox .cb-r input[id$="-reps"]{width:2.2ch!important}
+.cargabox .cb-r .u{font-size:8.5px!important}
+.cargabox .salvar-mini{width:20px!important;height:20px!important;border-radius:50%!important;font-size:10px!important;margin-left:2px!important;padding:0!important}
+.ec-chip.ec-chip-s,.ec-chip.ec-chip-progresso{padding:2px 6px!important}
+.rn-card{position:relative;text-align:center;max-height:92vh;overflow-y:auto}
+.rn-x{position:absolute;top:8px;right:12px;font-size:22px;color:var(--t3);cursor:pointer;line-height:1}
+.rn-lbl{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--t3);margin:10px 0 4px;text-align:left}
+.rn-pl{display:flex;flex-wrap:wrap;gap:6px}
+.rn-opt{flex:1 1 110px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 6px;border-radius:10px;border:1.5px solid var(--bd);background:var(--card);color:var(--tx);font-family:inherit;cursor:pointer;font-size:12px}
+.rn-opt span{font-size:10.5px;color:var(--t2)}
+.rn-opt.sm{flex:0 0 auto;padding:5px 10px}
+.rn-opt.on{border-color:var(--G);background:var(--Gl);color:var(--Gd)}
+.rn-opt.on span{color:var(--Gd)}
+.rn-code{width:100%;box-sizing:border-box;font:10px/1.3 monospace;padding:6px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);resize:none;margin-bottom:6px}
+.rn-key{font-size:11px;color:var(--t2);margin:6px 0;line-height:1.4}
+.rn-err{font-size:11px;color:#c03030;margin:4px 0}
+.rn-pend{font-size:11px;background:#E6F0FD;color:#1A4E8A;border-radius:8px;padding:5px 8px;margin:6px 0;font-weight:700}
+.rn-pago{background:var(--G)!important}
+[data-theme=dark] .rn-opt.on,[data-theme=dark] .rn-opt.on span{color:#8EE3BF!important}
+.rn-code{min-height:74px}
 </style>
 </head>
 <body>
@@ -10371,7 +10464,7 @@ function aShowTelARenovar(fim){
   const div = document.createElement('div');
   div.id = 'tela-renovar';
   div.className = 'tela-renovar';
-  const btnRenovar = url ? '<button class="btn-renovar-principal" onclick="window.open(\\'' + (url + (url.includes('?')?'&':'?') + 'renovar=1') + '\\',\\'_blank\\')">'+btnTxt+'</button>' : '';
+  const btnRenovar = '<button class="btn-renovar-principal" onclick="aAbrirRenovar()">'+btnTxt+'</button>';
   div.innerHTML = '<div class="tela-renovar-icon">🔒</div>'
     + '<h2>' + titulo + '</h2>'
     + '<p>' + msg + '</p>'
@@ -10380,11 +10473,131 @@ function aShowTelARenovar(fim){
   document.body.appendChild(div);
 }
 
-function aAbrirRenovar(){
-  const url = A_NETLIFY_URL || '';
-  if (!url) return;
-  const sep = url.includes('?') ? '&' : '?';
-  window.open(url + sep + 'renovar=1', '_blank');
+function aPixCRC(str){var crc=0xFFFF;for(var i=0;i<str.length;i++){crc^=str.charCodeAt(i)<<8;for(var j=0;j<8;j++){crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1);crc&=0xFFFF;}}var h=crc.toString(16).toUpperCase();while(h.length<4)h='0'+h;return h;}
+function aPixTLV(id,v){var l=String(v.length);if(l.length<2)l='0'+l;return id+l+v;}
+function aPixPayload(chave,nome,cidade,valor,txid){
+  var limpa=function(t,n){return String(t||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^A-Za-z0-9 ]/g,'').toUpperCase().trim().slice(0,n);};
+  var conta=aPixTLV('00','br.gov.bcb.pix')+aPixTLV('01',String(chave||'').trim());
+  var tx=String(txid||'').replace(/[^A-Za-z0-9]/g,'').slice(0,25)||'***';
+  var p=aPixTLV('00','01')+aPixTLV('01','11')+aPixTLV('26',conta)+aPixTLV('52','0000')+aPixTLV('53','986')+aPixTLV('54',Number(valor).toFixed(2))+aPixTLV('58','BR')+aPixTLV('59',limpa(nome,25)||'MOVH')+aPixTLV('60',limpa(cidade,15)||'BRASIL')+aPixTLV('62',aPixTLV('05',tx));
+  p+='6304';return p+aPixCRC(p);
+}
+var aPixEst = { etapa:'escolha', plano:null, item:0, txid:'', msg:'', pend:null };
+async function aPixCarregar(){
+  if (window._aPixCfg) return window._aPixCfg;
+  var cfg = { planos:[], pix:null };
+  try {
+    var r = await aClient.from('landing_config').select('planos,config').eq('professor_id', aAlunoRow.professor_id).maybeSingle();
+    var d = r && r.data;
+    if (d) { cfg.planos = Array.isArray(d.planos) ? d.planos : []; cfg.pix = (d.config && d.config.pix) || null; }
+  } catch(e) {}
+  window._aPixCfg = cfg;
+  return cfg;
+}
+async function aAbrirRenovar(){
+  var cfg = await aPixCarregar();
+  aPixEst = { etapa:'escolha', plano:(cfg.planos.length === 1 ? cfg.planos[0].id : null), item:0, txid:'', msg:'', pend:null };
+  var old = document.getElementById('movh-renovar-overlay'); if (old) old.remove();
+  var ov = document.createElement('div'); ov.id = 'movh-renovar-overlay'; ov.className = 'sessao-concluida-overlay';
+  ov.innerHTML = '<div class="sessao-concluida-card rn-card" id="rn-card"></div>';
+  ov.onclick = function(e){
+    if (e.target === ov) { ov.remove(); return; }
+    var t = e.target.closest ? e.target.closest('[data-rn]') : null;
+    if (t) aPixAcao(t.dataset.rn, t.dataset.v);
+  };
+  document.body.appendChild(ov);
+  aPixDesenhar();
+  try {
+    var q = await aClient.from('pagamentos_pix').select('id,valor,plano_nome').eq('aluno_id', aAlunoRow.id).eq('status', 'pendente').order('criado_em', { ascending:false }).limit(1);
+    if (q && q.data && q.data[0]) { aPixEst.pend = q.data[0]; aPixDesenhar(); }
+  } catch(e) {}
+}
+function aPixMoeda(v){ return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+function aPixDesenhar(){
+  var box = document.getElementById('rn-card'); if (!box) return;
+  var en = aLang === 'en', cfg = window._aPixCfg || { planos:[], pix:null };
+  var pix = cfg.pix && cfg.pix.ativo ? cfg.pix : null;
+  var itens = pix ? (pix.itens || []).filter(function(i){ return i && i.chave; }) : [];
+  var pl = null; cfg.planos.forEach(function(p){ if (p.id === aPixEst.plano) pl = p; });
+  var h = '<div class="rn-x" data-rn="fechar">×</div><div class="sc-emoji">💳</div><div class="sc-titulo">' + (en ? 'Renew access' : 'Renovar acesso') + '</div>';
+  if (aPixEst.etapa === 'aguardando') {
+    h += '<div class="sc-sub">' + (en ? 'Thanks! Your coach was notified and will release your access as soon as the payment is confirmed.' : 'Obrigado! Avisei o professor. Seu acesso é liberado assim que ele confirmar o pagamento.') + '</div>';
+    h += '<button class="rpe-enviar" data-rn="zap">' + (en ? '💬 Send receipt on WhatsApp' : '💬 Enviar comprovante no WhatsApp') + '</button>';
+    h += '<button class="sc-btn-sec" data-rn="recarregar">' + (en ? '🔄 Already released? Refresh' : '🔄 Já liberou? Atualizar') + '</button>';
+    h += '<button class="sc-btn-sec" data-rn="fechar">' + (en ? 'Close' : 'Fechar') + '</button>';
+    box.innerHTML = h; return;
+  }
+  if (aPixEst.pend) h += '<div class="rn-pend">💠 ' + (en ? 'Pix in review: ' : 'Pix em análise: ') + aEsc(aPixMoeda(aPixEst.pend.valor)) + (aPixEst.pend.plano_nome ? ' · ' + aEsc(aPixEst.pend.plano_nome) : '') + '</div>';
+  if (!cfg.planos.length) {
+    h += '<div class="sc-sub">' + (en ? 'Ask your coach for the renewal options.' : 'Fale com o professor para renovar.') + '</div>';
+    h += '<button class="rpe-enviar" data-rn="zap0">💬 WhatsApp</button><button class="sc-btn-sec" data-rn="fechar">' + (en ? 'Close' : 'Fechar') + '</button>';
+    box.innerHTML = h; return;
+  }
+  h += '<div class="rn-lbl">' + (en ? 'Plan' : 'Plano') + '</div><div class="rn-pl">';
+  cfg.planos.forEach(function(p){
+    h += '<button type="button" class="rn-opt' + (p.id === aPixEst.plano ? ' on' : '') + '" data-rn="plano" data-v="' + aEsc(p.id) + '"><b>' + aEsc(p.nome) + '</b><span>' + aEsc(aPixMoeda(p.precoBR)) + '</span></button>';
+  });
+  h += '</div>';
+  if (pl) {
+    if (aPixEst.etapa === 'pix' && itens.length) {
+      var it = itens[Math.min(aPixEst.item, itens.length - 1)];
+      if (!aPixEst.txid) aPixEst.txid = 'MV' + Date.now().toString(36).toUpperCase();
+      var code = aPixPayload(it.chave, pix.nome, pix.cidade, pl.precoBR, aPixEst.txid);
+      h += '<div class="rn-lbl">' + (en ? 'Pay with Pix' : 'Pagar com Pix') + ' · ' + aEsc(aPixMoeda(pl.precoBR)) + '</div>';
+      if (itens.length > 1) {
+        h += '<div class="rn-pl">';
+        itens.forEach(function(x, i){ h += '<button type="button" class="rn-opt sm' + (i === aPixEst.item ? ' on' : '') + '" data-rn="banco" data-v="' + i + '"><b>' + aEsc(x.banco || ('Pix ' + (i + 1))) + '</b></button>'; });
+        h += '</div>';
+      }
+      h += '<textarea class="rn-code" id="rn-code" readonly rows="4">' + aEsc(code) + '</textarea>';
+      h += '<button class="rpe-enviar" data-rn="copiar">' + (en ? '📋 Copy Pix code' : '📋 Copiar código Pix') + '</button>';
+      h += '<div class="rn-key">' + (en ? 'Or use the key: ' : 'Ou use a chave: ') + '<b>' + aEsc(it.chave) + '</b>' + (pix.nome ? '<br>' + aEsc(pix.nome) : '') + '</div>';
+      if (pix.msg) h += '<div class="rn-key">' + aEsc(pix.msg) + '</div>';
+      if (aPixEst.msg) h += '<div class="rn-err">' + aEsc(aPixEst.msg) + '</div>';
+      h += '<button class="rpe-enviar rn-pago" data-rn="paguei">' + (en ? '✅ I have paid' : '✅ Já paguei') + '</button>';
+      h += '<button class="sc-btn-sec" data-rn="voltar">' + (en ? 'Back' : 'Voltar') + '</button>';
+    } else {
+      h += '<div class="rn-lbl">' + (en ? 'Payment method' : 'Forma de pagamento') + '</div><div class="rn-pl">';
+      if (itens.length) h += '<button type="button" class="rn-opt" data-rn="pix"><b>💠 Pix</b><span>' + (en ? 'released after confirmation' : 'liberado após confirmação') + '</span></button>';
+      if (A_NETLIFY_URL) h += '<button type="button" class="rn-opt" data-rn="cartao"><b>💳 ' + (en ? 'Card' : 'Cartão') + '</b><span>' + (en ? 'automatic release' : 'liberação automática') + '</span></button>';
+      h += '</div>';
+      if (!itens.length && !A_NETLIFY_URL) h += '<div class="sc-sub">' + (en ? 'Ask your coach how to pay.' : 'Fale com o professor para pagar.') + '</div><button class="rpe-enviar" data-rn="zap0">💬 WhatsApp</button>';
+      h += '<button class="sc-btn-sec" data-rn="fechar">' + (en ? 'Close' : 'Fechar') + '</button>';
+    }
+  } else {
+    h += '<div class="sc-sub">' + (en ? 'Pick a plan to continue.' : 'Escolha um plano para continuar.') + '</div><button class="sc-btn-sec" data-rn="fechar">' + (en ? 'Close' : 'Fechar') + '</button>';
+  }
+  box.innerHTML = h;
+}
+async function aPixAcao(acao, v){
+  var cfg = window._aPixCfg || { planos:[], pix:null };
+  var pl = null; cfg.planos.forEach(function(p){ if (p.id === aPixEst.plano) pl = p; });
+  if (acao === 'fechar') { var o = document.getElementById('movh-renovar-overlay'); if (o) o.remove(); return; }
+  if (acao === 'plano') { aPixEst.plano = v; aPixEst.etapa = 'escolha'; aPixEst.txid = ''; aPixEst.msg = ''; aPixDesenhar(); return; }
+  if (acao === 'pix') { aPixEst.etapa = 'pix'; aPixEst.item = 0; aPixEst.txid = ''; aPixDesenhar(); return; }
+  if (acao === 'voltar') { aPixEst.etapa = 'escolha'; aPixEst.msg = ''; aPixDesenhar(); return; }
+  if (acao === 'banco') { aPixEst.item = parseInt(v, 10) || 0; aPixDesenhar(); return; }
+  if (acao === 'cartao') { var u = A_NETLIFY_URL || ''; if (u) window.open(u + (u.indexOf('?') >= 0 ? '&' : '?') + 'renovar=1', '_blank'); return; }
+  if (acao === 'recarregar') { location.reload(); return; }
+  if (acao === 'copiar') {
+    var ta = document.getElementById('rn-code'); if (!ta) return;
+    try { await navigator.clipboard.writeText(ta.value); } catch(e) { ta.select(); try { document.execCommand('copy'); } catch(e2) {} }
+    var b = document.querySelector('#rn-card [data-rn=copiar]'); if (b) b.textContent = (aLang === 'en' ? '✓ Copied' : '✓ Copiado');
+    return;
+  }
+  if (acao === 'zap0' || acao === 'zap') {
+    var nm = (aAlunoRow && (aAlunoRow.nome || aAlunoRow.email)) || '';
+    var msg = acao === 'zap' && pl ? ('Oi! Sou ' + nm + '. Paguei o Pix de ' + aPixMoeda(pl.precoBR) + ' (' + pl.nome + ', ref ' + aPixEst.txid + '). Segue o comprovante.') : ('Oi! Sou ' + nm + ' e quero renovar meu acesso.');
+    window.open('https://wa.me/' + A_WHATSAPP_NUM + '?text=' + encodeURIComponent(msg), '_blank');
+    return;
+  }
+  if (acao === 'paguei') {
+    if (!pl) return;
+    var btn = document.querySelector('#rn-card [data-rn=paguei]'); if (btn) btn.disabled = true;
+    var r = await aClient.from('pagamentos_pix').insert({ aluno_id: aAlunoRow.id, professor_id: aAlunoRow.professor_id, plano_id: pl.id, plano_nome: pl.nome, dias: pl.dias, valor: pl.precoBR, txid: aPixEst.txid, status: 'pendente' });
+    if (r && r.error) { aPixEst.msg = (aLang === 'en' ? 'Could not notify your coach. Send the receipt on WhatsApp.' : 'Não consegui avisar o professor. Envie o comprovante pelo WhatsApp.'); aPixDesenhar(); return; }
+    aPixEst.etapa = 'aguardando'; aPixDesenhar();
+  }
 }
 
 function aIniciarRelogio(){
@@ -11104,7 +11317,7 @@ function aSeriesAtualizarUI(eid){
   const total = parseInt(badge.dataset.total, 10) || 0;
   const feitas = Math.min(aSeriesFeitas[eid] || 0, total || (aSeriesFeitas[eid] || 0));
   const contTxt = document.getElementById(eid + '-series-count');
-  if (contTxt) contTxt.textContent = (total && feitas >= total ? '✓ ' : '') + feitas + '/' + total;
+  if (contTxt) contTxt.textContent = (total && feitas >= total ? '✓ ' : '') + feitas + (contTxt.classList.contains('sx-cnt') ? '/' : '/' + total);
   badge.style.setProperty('--fill', (total ? Math.min(100, (feitas/total)*100) : 0) + '%');
   badge.classList.toggle('ec-chip-completo', !!total && feitas >= total);
   const card = document.getElementById(eid);
@@ -11362,7 +11575,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   if (serieCurtoM) {
     const repsM = serieCurtoM[2].trim().match(/^([\\d\\-–\\/]+)\\s*(.*)$/);
     const lblS = aLang==='en' ? 'sets' : 'séries';
-    seriesBadgeHTML = '<span class="sx-c"><i>' + lblS + '</i><b>' + aEsc(serieCurtoM[1]) + '</b></span><span class="sx-x">×</span>' +
+    seriesBadgeHTML = '<span class="sx-c"><i>' + lblS + '</i><b>' + (seriesTotal ? '<span class="sx-cnt" id="'+eid+'-series-count">' + (Math.min(aSeriesFeitas[eid]||0,seriesTotal)>=seriesTotal?'✓ ':'') + Math.min(aSeriesFeitas[eid]||0,seriesTotal) + '/</span>' : '') + aEsc(serieCurtoM[1]) + '</b></span><span class="sx-x">×</span>' +
       (repsM ? (function(){ const sfx = repsM[2].trim(); const tk = sfx.split(' ')[0].toLowerCase(); const ehT = ['s','seg','min','m',"'",'"'].indexOf(tk) >= 0; const resto = ehT ? sfx.slice(tk.length).trim() : sfx; return '<span class="sx-c"><i>' + (ehT ? (aLang==='en'?'time':'tempo') : 'reps') + '</i><b>' + aEsc(repsM[1]) + (ehT ? aEsc(tk) : '') + '</b></span>' + (resto ? '<span class="sx-ex">' + aEsc(resto) + '</span>' : ''); })() : '<span class="sx-c"><i>reps</i><b>' + aEsc(serieCurtoM[2].trim()) + '</b></span>');
   }
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
@@ -11376,15 +11589,16 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
-    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="cb-l">'+(aLang==='en'?'load used · reps':'carga usada · reps')+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
+    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="cb-l">'+(aLang==='en'?'load used':'carga utilizada')+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
         '<input type="number" inputmode="decimal" step="0.5" placeholder="0" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
         '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span></span>';
-  const serChip = ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+(seriesTotal?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '';
+  const serChip = ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+((seriesTotal && !serieCurtoM)?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '';
   const chips = [
+    serChip,
     emConj ? '' : '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+(restExibir?'':' ec-chip-rlivre')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir||'60s')+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir||'60s')+'</span>',
     mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
@@ -11393,7 +11607,6 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     '<div class="ec-hd">' +
       '<div class="ec-info">' +
         '<div class="ec-name-row">' +
-          serChip +
           '<span class="ec-n">'+aEsc(ex.nome)+(ex.obs ? '<span class="ec-o"> (<span class="ec-o-i">💬</span> '+aEsc(ex.obs)+')</span>' : '')+'</span>' +
         '</div>' +
         '<div class="ec-chips">' +
@@ -13674,6 +13887,28 @@ function copiarSQLRLS(){
     '-- ÚLTIMA VEZ que o aluno VIU o treino (mesmo sem registrar nada)',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS treino_visto_em timestamptz;',
     '',
+    '-- PIX próprio: aluno avisa "já paguei", professor confirma e o acesso é liberado',
+    'CREATE TABLE IF NOT EXISTS pagamentos_pix (',
+    '  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),',
+    '  aluno_id uuid NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,',
+    '  professor_id uuid NOT NULL,',
+    '  plano_id text, plano_nome text,',
+    '  dias int NOT NULL, valor numeric(10,2) NOT NULL, txid text,',
+    '  status text NOT NULL DEFAULT \'pendente\',',
+    '  criado_em timestamptz DEFAULT now(), confirmado_em timestamptz',
+    ');',
+    'ALTER TABLE pagamentos_pix ENABLE ROW LEVEL SECURITY;',
+    'DROP POLICY IF EXISTS "aluno cria pix" ON pagamentos_pix;',
+    'CREATE POLICY "aluno cria pix" ON pagamentos_pix FOR INSERT TO authenticated',
+    '  WITH CHECK (status = \'pendente\' AND aluno_id IN (SELECT id FROM alunos WHERE auth_id = auth.uid()));',
+    'DROP POLICY IF EXISTS "aluno ve proprio pix" ON pagamentos_pix;',
+    'CREATE POLICY "aluno ve proprio pix" ON pagamentos_pix FOR SELECT TO authenticated',
+    '  USING (aluno_id IN (SELECT id FROM alunos WHERE auth_id = auth.uid()));',
+    'DROP POLICY IF EXISTS "professor gerencia pix" ON pagamentos_pix;',
+    'CREATE POLICY "professor gerencia pix" ON pagamentos_pix FOR ALL TO authenticated',
+    '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
+    '-- a landing_config precisa ser legível pelo aluno (planos + chave Pix): a landing já lê com a chave anon',
+    '',
     '-- AULAS COLETIVAS — coluna nova em alunos + tabela nova + policies',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS mostra_aulas_coletivas boolean DEFAULT false;',
     '',
@@ -13872,10 +14107,26 @@ function plSaveLanding(){
     s1n:g('ld-s1n'), s1l:g('ld-s1l'), s2n:g('ld-s2n'), s2l:g('ld-s2l'),
     s3n:g('ld-s3n'), s3l:g('ld-s3l'),
     badgeEn:g('ld-badge-en'), tituloEn:g('ld-titulo-en'), subEn:g('ld-sub-en'),
-    netlifyUrl:g('ld-netlify-url'), appUrl:g('ld-app-url') };
+    netlifyUrl:g('ld-netlify-url'), appUrl:g('ld-app-url'), pix: plLand.pix };
   localStorage.setItem(PL_LAND_KEY, JSON.stringify(plLand));
   plMarcarDirty();
 }
+function plPixObj(){ if(!plLand.pix) plLand.pix={ativo:false,nome:'',cidade:'',msg:'',itens:[]}; if(!Array.isArray(plLand.pix.itens)) plLand.pix.itens=[]; return plLand.pix; }
+function plPixSalvar(){ localStorage.setItem(PL_LAND_KEY, JSON.stringify(plLand)); plMarcarDirty(); }
+function plPixSet(k,v){ plPixObj()[k]=v; plPixSalvar(); }
+function plPixItem(i,k,v){ plPixObj().itens[i][k]=v; plPixSalvar(); }
+function plPixAdd(){ plPixObj().itens.push({banco:'',chave:''}); plPixSalvar(); plPixRender(); }
+function plPixDel(i){ plPixObj().itens.splice(i,1); plPixSalvar(); plPixRender(); }
+function plPixRender(){
+  const el=document.getElementById('pl-pix-body'); if(!el) return;
+  const p=plPixObj(); const cb=document.getElementById('pl-pix-ativo'); if(cb) cb.checked=!!p.ativo;
+  el.innerHTML='<div class="fr r2"><div class="fld"><span class="lbl">Nome do recebedor (máx. 25)</span><input class="ie" maxlength="25" value="'+escAttr(p.nome||'')+'" oninput="plPixSet(\'nome\',this.value)"/></div><div class="fld"><span class="lbl">Cidade (máx. 15)</span><input class="ie" maxlength="15" value="'+escAttr(p.cidade||'')+'" oninput="plPixSet(\'cidade\',this.value)"/></div></div>'+
+   '<div class="lbl" style="margin:8px 0 3px">Chaves por banco (CPF/CNPJ só números, e-mail, +55DDDNÚMERO ou aleatória)</div>'+
+   p.itens.map((x,i)=>'<div class="pix-row"><input class="ie" style="flex:0 0 32%" placeholder="Banco" value="'+escAttr(x.banco||'')+'" oninput="plPixItem('+i+',\'banco\',this.value)"/><input class="ie" style="flex:1" placeholder="Chave Pix" value="'+escAttr(x.chave||'')+'" oninput="plPixItem('+i+',\'chave\',this.value)"/><button class="bic" onclick="plPixDel('+i+')" title="Remover">×</button></div>').join('')+
+   '<button class="btn bs" style="font-size:10px;padding:3px 10px;margin-top:2px" onclick="plPixAdd()">+ Banco</button>'+
+   '<div class="fld" style="margin-top:8px"><span class="lbl">Mensagem ao aluno (opcional)</span><input class="ie" value="'+escAttr(p.msg||'')+'" placeholder="Ex.: Envie o comprovante pelo WhatsApp" oninput="plPixSet(\'msg\',this.value)"/></div>';
+}
+const _plRender0=plRender; plRender=function(){ _plRender0.apply(this,arguments); plPixRender(); };
 function plLoadLanding(){
   const s = (id, val) => { const el=document.getElementById(id); if(el) el.value=val||''; };
   s('ld-badge',       plLand.badge);
@@ -14084,7 +14335,8 @@ async function plSincronizarLanding(){
       badge: plLand.badge||'', titulo: plLand.titulo||'', sub: plLand.sub||'',
       s1n: plLand.s1n||'', s1l: plLand.s1l||'', s2n: plLand.s2n||'', s2l: plLand.s2l||'', s3n: plLand.s3n||'', s3l: plLand.s3l||'',
       badgeEn: plLand.badgeEn||'', tituloEn: plLand.tituloEn||'', subEn: plLand.subEn||'',
-      netlifyUrl: plLand.netlifyUrl||'', appUrl: plLand.appUrl||''
+      netlifyUrl: plLand.netlifyUrl||'', appUrl: plLand.appUrl||'',
+      pix: plLand.pix ? { ativo: !!plLand.pix.ativo, nome: plLand.pix.nome||'', cidade: plLand.pix.cidade||'', msg: plLand.pix.msg||'', itens: (plLand.pix.itens||[]).filter(x=>x&&x.chave).map(x=>({banco:x.banco||'',chave:String(x.chave).trim()})) } : null
     };
     // Usa mbProfessor (já carregado em memória desde o login, ver mbRefresh)
     // em vez de mbClient.auth.getUser() — getUser() faz uma chamada de rede
