@@ -91,7 +91,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 - Verificar no plano do Supabase: pausa por inatividade e backup automático; exportar tabelas em CSV de vez em quando.
 - Privacidade: o app guarda anamnese e PAR-Q (dados de saúde). Futuro: termos de uso e política de privacidade conforme LGPD, revisados por profissional da área jurídica.
 
-## 10. Rodada v48 — estado (21/10/2026)
+## 10. Rodada v48 — estado (21/10/2026) — MERGEADA (Gerador PR #25 [skip netlify]; app PRs #19 [skip] e #20 deploy)
 FEITO e testado em Playwright com Supabase simulado (reg_all, bulk, kbm, t, reg sem FAIL novo; modal Pix testado; CRC do BR Code validado). NÃO testado no banco real. Branch `v48-rodada` nos dois repos, ainda SEM PR/merge:
 - Salvar com destino explícito (`_dest`, `pbDestInfo`: split | aluno | aluno novo | sem destino), "Salvar como…", rascunho local `movh-rascunho-v1`, ● de não salvo.
 - Config: card "Conta e armazenamento" reorganizado (conectado + Sair, aluno, Atualizar protocolo, Salvar como novo, 🔄/🌐 como ícones, carregar protocolo recolhido).
@@ -102,6 +102,8 @@ FEITO e testado em Playwright com Supabase simulado (reg_all, bulk, kbm, t, reg 
 - `asaasKey` removida da landing exportada; rótulo de versão v48.
 SQL para rodar (idempotente): colunas `ultimo_acesso`, `treino_visto_em`, `avulso_link`, email nullable e a tabela `pagamentos_pix` com RLS (está no script de configuração do Gerador, em Publicar app). A landing_config precisa estar legível pelo aluno (a landing já lê com a chave anon).
 FALTA: `professores.config jsonb` (seção 11), QR Code do Pix, revisar a página de Planos, controle financeiro, Web Push; PR + merge (Gerador com `[skip netlify]`, hospedado no GitHub Pages; app com deploy normal).
+
+v48c (21/10, tarde): app do aluno — círculo de concluir some quando o exercício tem botão de séries (`.ec:has(.ec-chip-progresso)`; o checkbox continua no DOM), botão de vídeo vermelho como o de séries, progresso do bloco = preenchimento do título (`--bp`), ✓ do bloco corrigido (um só ícone: `font-size:0` + `::after`). Aulas Coletivas (Gerador): editor de UM dia por vez com abas Seg–Dom (`coletivasRenderEditor`), campos largos, textarea auto-ajustável (`detalhes` agora existe em TODO bloco, normal e condicionamento; o app do aluno mostra), mover/duplicar bloco e exercício, copiar dia para outra data, limpar dia, aviso ao sair com alterações. Modelo de dados em `aulas_coletivas.dados` não mudou (só `detalhes` passou a valer em blocos normais).
 
 ## 11. O que fica só no `localStorage` do Gerador (inventário e plano de integração)
 Já vão para o banco (confirmado no código): exercícios (`mova_rep` → tabela `exercicios`; migra e remove a chave local, local só como fallback), splits (`mova_splits` → tabela `splits`, upsert, local só como cache), planos/landing (`movh_planos`, com controle de "sujo" e última sincronização com o banco).
