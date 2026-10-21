@@ -1,6 +1,7 @@
-# MOVH — Contexto v47 (20/10/2026)
+# MOVH — Contexto v48 (20/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
+
 
 ## 1. Repositórios (ambos públicos) e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~14.4k linhas) = FONTE de tudo. Site: movhgen.netlify.app.
@@ -8,13 +9,14 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 - Gerar o app (em MovhGen): `node tools/export_app.js index.html tools/config.json <saida.html>` e copiar para `movh/index.html`. Checar igualdade: `git -C movh show origin/main:index.html | cmp - saida.html` (deve dar "APP == GERADOR").
 - O app é um template literal dentro de `exportarComLogin()` do Gerador. Gancho `window._movhSoHTML` devolve o HTML como string (usado na prévia "Como aluno").
 
-## 2. Netlify / créditos (IMPORTANTE)
-- Duas contas Netlify separadas (Gerador numa, app do aluno noutra). Plano Free por créditos: cada deploy de produção = 15 créditos; previews de PR = 0.
-- Saldo em 13/10 (aprox.): Gerador ~59–74 (aviso "Low on credits"); app do aluno ~180–195. Quando zera, o site pode ser pausado (confirmar nas regras do Netlify). O usuário tem medo disso.
-- O saldo NÃO é visível pelo shell; o usuário confere em Netlify → Team settings → Billing (não inventar saldo). Todo commit no `main` dispara deploy, inclusive edição feita direto no GitHub; só `[skip netlify]` no título evita. O MovhGen também mostra status "Workers Builds: movhgen" (Cloudflare) no GitHub — confirmar com o usuário onde o Gerador é hospedado.
-- Regras: UM merge por rodada; juntar mudanças; usar `[skip netlify]` no TÍTULO do PR (vira título do squash) quando não precisa de deploy (docs, testes, mudança só no template exportado do Gerador, já que o app é commitado no outro repo).
-- Alternativa gratuita sem créditos: GitHub Pages nos dois repos (HTML estático, sem build). Ainda não ativado; seria só liberar o novo domínio no Supabase (URL redirect) se o login exigir. Oferecer ao usuário.
-- Não dá para ver o Netlify nem o site no ar pelo shell (proxy bloqueia). WebFetch lê o site mas trunca página grande (scripts no fim) — só confiável para marcadores no início do HTML.
+## 2. Hospedagem / créditos
+- App do aluno: continua em `movh.netlify.app` (link curto importa para vendas). Plano por créditos: cada deploy de produção = 15; previews de PR = 0 (confirmar no Billing no primeiro PR). Saldo estimado após v46/v47: Gerador ~29–44, app ~150–165 (confirmar em Team settings → Billing; não inventar saldo).
+- Gerador: DECISÃO = hospedar no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (usuário já abriu e funciona). Também existe cópia na Cloudflare Workers (`movhgen.lguilh3rme.workers.dev`, status "Workers Builds: movhgen" no GitHub, reconstrói a cada push no main). Falta o usuário PARAR os builds do Netlify da conta do Gerador (Build & deploy → Continuous deployment) para não gastar 15 créditos por merge.
+- Trocar de endereço do Gerador perde o que está só em `localStorage` (cada origem tem o seu). Ver seção 11 (integração para o banco) antes de migrar.
+- Domínio próprio para o app do aluno (ex.: .com.br) fica para depois; ao trocar, mudar o redirect fixo `https://movh.netlify.app/` no código do app e adicionar o domínio nas URLs de redirect do Supabase. Encurtador de link só serve de atalho.
+- Ativar Deploy Previews do Netlify (Project configuration → Build & deploy → Continuous Deployment → Branches and deploy contexts → Configure) nos dois sites, para ver o PR antes de mergear. No preview o login pode falhar se o Supabase não aceitar o domínio de preview como redirect.
+- Regras mantidas: um merge por repo por rodada; `[skip netlify]` no título do PR quando não precisa de deploy. Nesta rodada o MovhGen e o movh precisam de deploy (a v48 mexe no Gerador e no app).
+- Pedir à sessão: atualizar o rótulo de versão na tela do Gerador a cada merge (hoje fica fixo em "v13 · 12/10 19:45" e não prova o que está no ar).
 
 ## 3. Fluxo Git (aprendido na dor)
 1. `git fetch`; `git checkout -f -B minha-branch origin/main` (partir SEMPRE do main atualizado; branch antiga fica obsoleta após squash).
@@ -50,6 +52,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 - Obs do exercício: inline `(💬 texto)`, pequena e apagada, na frente do nome. Chip de descanso sempre presente (60s tracejado se vazio).
 - Vídeo: YouTube `youtube-nocookie.com`, preconnect, indicador "Carregando vídeo…". Ainda pode demorar (rede/YouTube). Ideia: miniatura + player só ao tocar.
 - Layout compacto/mobile (v98): título de bloco em 1 linha, descrição (`.bm`) na 2ª linha, topbar (`.toprow`) estática (sticky com fundo só em `body.preview-mode`), faixa de dias baixa, fontes menores.
+- DECISÕES VISUAIS (opção A, v48): botão séries×reps vermelho `#b10000` (claro avermelhado; preenche como barra), ocupa o lugar do ✓ antes do nome; o ✓ de concluir foi para a linha de baixo (início); carga com rótulo "carga usada · reps" e unidade colada; MESMO verde `#1A9E72` em dia de hoje, séries completas, carga registrada, ✓ salvar. Tema: claro "avelã" `#EEE4D3` e escuro "preto azulado" `#0B101A` (valores aproximados; ajustar se o usuário passar hex). Tudo num bloco CSS `!important` no fim do `<style>` do template.
 
 ## 7. Gerador — o que existe
 - Menu: Protocolo (Configuração, Alunos, semanas/dias), Biblioteca (Exercícios, Presets, Splits), Gestão (Planos, Publicar app, Logo do login, Aulas Coletivas). "Carregar Split" saiu do menu: botão na Configuração e na página Splits. Ações ↑↓⧉× aparecem no hover/ativo.
@@ -62,6 +65,9 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 - v47: "Atividade recente" (`mbMontarAtividade`) inclui acessos (7 dias), novos cadastros e anamnese (30 dias) e pedidos de mudança de treino, além de treino concluído, cargas e dor; lista até 30 itens.
 - Config: card "Treino em edição" (atalhos de dias/quadro/prévia/Carregar split). Página "Publicar app": só a versão com login + SQL de RLS recolhido (export estático antigo foi removido).
 - Splits padrão vêm SEM "dia real da semana" (causa dos dias vazios no app real): definir no quadro/editor.
+- Card "Conta e armazenamento" (Config): status Conectado + Sair; seletor "Salvar em" (Aluno | Split | Nenhum, ligado ao destino explícito `_dest` da v48); aluno escolhido + "+ Novo"; linha "Editando: protocolo, semana"; botão principal "Atualizar protocolo"; sincronizar URLs e traduzir viram ícones; "Carregar protocolo existente como base" recolhido.
+- Modal "Salvar como": opção "Protocolo para aluno" (select) e "Novo split" (nome).
+- Central de alertas (`mbAlertas`), presença (`mbPresenca`, pontos verde/âmbar/vermelho) e gaveta do Quadro com prévia lateral ("Neste bloco · N", novos destacados, numeração na ordem dos cliques) já estão no código da v48: verificar e testar, não refazer.
 
 ## 8. Testes
 - `reg_all.py` e `bulk.py` precisam de caminhos ABSOLUTOS (`$PWD/index.html`, `$PWD/tools/tests/gpage.py`). `t.py` imprime uma linha FAIL no caminho de erro do link público: é esperada (existe no baseline).
@@ -70,14 +76,39 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 - Sempre: `node --check` (script extraído) nos dois HTML, `t.py` (link público), `reg.py` (botão registro), `reg_all.py`, `bulk.py`, `kbm.py`, e comparar app gerado == app no GitHub.
 - Para ver o app: script com conteúdo de protocolo embutido + stub (ex.: viewport 450x900, DPR 2).
 
-## 9. Pendências / ideias
-- AÇÃO DO USUÁRIO: rodar no Supabase `ALTER TABLE alunos ADD COLUMN IF NOT EXISTS ultimo_acesso timestamptz;` (sem isso o item "👀 acessou o app" da Atividade recente não aparece; também falha em silêncio se a RLS não deixar o aluno atualizar a própria linha — não testado no banco real).
-- v47 NÃO testado no banco real: redirecionamento após a anamnese (só lido no código) e gravação de `ultimo_acesso`.
-- Skill `movh-gerador` foi reescrita em 20/10 (procedimento: repos, PR, testes, créditos); este arquivo guarda o ESTADO.
-- Web Push para o fim do descanso com tela bloqueada (Service Worker + Supabase Edge Function).
-- Miniatura de vídeo no card (player só ao tocar) para acelerar.
-- Mover hospedagem para GitHub Pages (elimina risco de créditos).
-- Do Gerador: editar clicando na prévia "Como aluno", atalhos de teclado e desfazer, copiar semana A→B, histórico de versões do protocolo, fase/foco/progressão dentro do quadro, indicador de "alterações não salvas".
-- Interruptor na tela para ligar/desligar o timer automático.
-- Verificar no banco real: `links_treino` e `get_treino_publico`.
-- Confirmado pelo usuário no uso real (13/10): edição em massa (página do dia e Quadro) e layout compacto/mobile do app estão bons. O restante (timer em 2º plano, vídeos) segue com as limitações da seção 6.
+## 9. Pendências
+- AÇÃO DO USUÁRIO no Supabase (SQL idempotente):
+  ```sql
+  ALTER TABLE alunos ADD COLUMN IF NOT EXISTS ultimo_acesso timestamptz;
+  ALTER TABLE alunos ADD COLUMN IF NOT EXISTS treino_visto_em timestamptz;
+  ALTER TABLE alunos ADD COLUMN IF NOT EXISTS avulso_link text;
+  ALTER TABLE alunos ALTER COLUMN email DROP NOT NULL;
+  ```
+  Conferir também: "Allow anonymous sign-ins" ligado (aluno avulso) e política SELECT de `rpe_sessoes`. Passo a passo de verificação já foi entregue ao usuário.
+- v47/v48 NÃO testados no banco real (redirect pós-anamnese, `ultimo_acesso`, `treino_visto_em`).
+- PIX (sessão separada, NÃO nesta rodada): sem Asaas. Chave PIX própria, vários bancos, o professor gerencia o que o aluno vê, no mesmo lugar dos Planos. A página de Planos precisa ser atualizada, modernizada e verificada (se continua funcionando).
+- Controle financeiro dentro do Gerador (alunos e mensalidades, sem planilha): ideia para depois, junto com o PIX/Planos.
+- Verificar no plano do Supabase: pausa por inatividade e backup automático; exportar tabelas em CSV de vez em quando.
+- Privacidade: o app guarda anamnese e PAR-Q (dados de saúde). Futuro: termos de uso e política de privacidade conforme LGPD, revisados por profissional da área jurídica.
+
+## 10. Rodada v48 — estado
+FEITO (testes Playwright reg_all/bulk/kbm/t/reg sem FAIL novo; sem teste no banco real): destino explícito de salvamento (`_dest`, `pbSalvar`, `pbSalvarComo`, `pbSalvarSplit`), rascunho local `movh-rascunho-v1`, Central de alertas + presença + `treino_visto_em`, gaveta do Quadro com ordem de clique e prévia, visual opção A do app, `asaasKey` removida da landing (e sem exigência de chave no export), rótulo de versão v48.
+FALTA: card "Conta e armazenamento" na Config (desenho aprovado na seção 7); PIX próprio (sessão separada); `professores.config jsonb`; melhorias novas que o usuário vai pedir antes do merge; exportar app → `movh/index.html`, `cmp`, 1 PR por repo, merge.
+
+## 11. O que fica só no `localStorage` do Gerador (inventário e plano de integração)
+Já vão para o banco (confirmado no código): exercícios (`mova_rep` → tabela `exercicios`; migra e remove a chave local, local só como fallback), splits (`mova_splits` → tabela `splits`, upsert, local só como cache), planos/landing (`movh_planos`, com controle de "sujo" e última sincronização com o banco).
+
+Só no navegador, por origem (perdem-se ao trocar de endereço):
+| Chave | O que é | Plano |
+|---|---|---|
+| `movh_pl_keys` | chaves Asaas/Stripe (API key, webhook, secret) | NÃO migrar para o banco. Ver segurança abaixo; com PIX próprio deixam de ser necessárias |
+| `movh_logo_custom` | logo da tela de login (base64) | levar para o banco |
+| `mova_pre` | presets de séries/reps e descanso | levar para o banco |
+| `mova_modelos_condic` | modelos de condicionamento editados | levar para o banco |
+| `movh_lang`, `mova_theme` | idioma e tema do Gerador | opcional (preferência do aparelho; pode ficar local) |
+| `movh-rascunho-v1` | rascunho do protocolo (a cada 3 s) | manter local (cache); sincronizar depois, se quiser |
+
+Proposta (uma rodada, baixo risco): coluna `professores.config jsonb` (SQL: `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jsonb DEFAULT '{}'::jsonb;`) guardando `{ presets, modelos_condic, logo_login, lang, theme }`. Ler ao logar; se o banco estiver vazio e houver dado local, subir o local uma vez (migração automática, como foi feito em exercícios e splits); a cada salvar, upsert; o local vira cache. Logo: limitar o tamanho (comprimir) ou usar bucket do Supabase Storage. Conferir que a RLS de `professores` permite o professor atualizar a própria linha. Depois disso trocar de endereço ou de navegador não perde nada.
+
+## 12. ALERTA DE SEGURANÇA
+`plExportarLanding()` exige ao menos uma chave de pagamento e grava `asaasKey: '${keys.mpToken}'` dentro do `MOVH_CONFIG` do HTML da landing exportada (linha ~14258; `asaasKey` não é usado em outro ponto do arquivo). Se a landing publicada foi exportada com a Asaas API Key preenchida, a chave está visível no código-fonte público. Ação: (1) o usuário abre o código-fonte da landing publicada e procura `asaasKey`; (2) se aparecer a chave, REVOGAR e gerar outra no Asaas; (3) FEITO nesta rodada: removido `asaasKey` do template da landing e tirar a exigência de chave no export; chaves secretas só em Supabase secrets/edge functions, nunca no navegador nem em HTML público.
