@@ -985,6 +985,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
         <label class="toggle-sw" title="Mostrar Pix para o aluno"><input type="checkbox" id="pl-pix-ativo" onchange="plPixSet('ativo',this.checked)"/><span class="toggle-sw-slider"></span></label>
       </div>
       <div id="pl-pix-body"></div>
+      <div id="pl-pix-status" style="font-size:10.5px;color:var(--t3);margin-top:8px"></div>
       <div style="font-size:10px;color:var(--t3);margin-top:8px">O aluno vê o card de renovação com os planos acima. Ao pagar por Pix ele toca em "Já paguei" e você confirma no painel Alunos: o acesso é estendido pelo período do plano (a partir do vencimento atual, se ainda válido). Pix com chave própria não avisa o sistema sozinho, por isso a confirmação é com 1 toque.</div>
     </div>
     <div class="card">
@@ -9979,7 +9980,7 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .sc-streak{display:inline-block;font-size:12px;font-weight:700;background:color-mix(in srgb,var(--P) 16%,transparent);color:var(--tx);border-radius:99px;padding:4px 12px;margin-bottom:10px}
 /* ── v98: compacto e mobile ── */
 .toprow{position:static!important;justify-content:flex-end;margin:0 0 6px}
-body.preview-mode .toprow{position:sticky!important;top:0;z-index:40;background:var(--bg);padding:6px 0;margin:0 0 6px}
+body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .regbtn{padding:6px 12px!important;font-size:12px!important}
 .semana-strip-dia{padding:3px 0!important;min-height:0!important;line-height:1.15!important;border-radius:12px!important}
 .bh{flex-wrap:wrap!important;gap:3px 8px!important;padding:10px 12px!important}
@@ -10090,6 +10091,15 @@ body.preview-mode .toprow{position:sticky!important;top:0;z-index:40;background:
 [data-theme=dark] .ec .vbtn{background:rgba(255,90,90,.12)!important;color:#FF9A9A!important;border-color:rgba(255,120,120,.4)!important}
 .bloco .bh{background-image:linear-gradient(color-mix(in srgb,var(--G) 30%,transparent),color-mix(in srgb,var(--G) 30%,transparent))!important;background-size:var(--bp,0%) 100%!important;background-position:left top!important;background-repeat:no-repeat!important}
 .bloco .bh .bloco-done-btn{font-size:0!important}
+/* v48d */
+.nt-it{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;text-align:left;margin:0 0 6px;padding:8px 12px;border-radius:12px;border:1px solid #F59E0B;background:#FFF8E1;color:#7A4A00;font-family:inherit;cursor:pointer}
+[data-theme=dark] .nt-it{background:rgba(245,158,11,.12);color:#F7C766;border-color:rgba(245,158,11,.5)}
+.nt-i{font-size:18px}.nt-tx{flex:1;display:flex;flex-direction:column;line-height:1.2}.nt-tx b{font-size:12.5px}.nt-tx i{font-style:normal;font-size:10.5px;opacity:.8}.nt-go{font-size:18px;opacity:.6}
+.cl-ex-r{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--bd);font-size:13px;font-weight:600}
+.cl-ex-c{font-size:12px;font-weight:800;color:var(--mv);white-space:nowrap}
+.cl-det{font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--t2);margin:8px 0 2px}
+.cl-meta{font-size:11.5px;margin-bottom:3px}
+[data-theme=dark] .cl-ex-c{color:#FF9A9A}
 </style>
 </head>
 <body>
@@ -10169,11 +10179,12 @@ body.preview-mode .toprow{position:sticky!important;top:0;z-index:40;background:
         <div class="sp-bar-track"><div class="sp-bar-fill" id="tSpFill" style="width:0%"></div></div>
         <div class="sp-texto" id="tSpTexto"></div>
       </div>
+      <div id="tNotifs"></div>
       <div id="tDashConteudo"></div>
       <div class="dash-actions">
         <button class="vksbtn" id="tBtnProgresso" onclick="aVerProgresso()">📈 Meu progresso</button>
         <button class="vksbtn" id="tBtnColetivas" onclick="aVerColetivas()" style="display:none">🤸 Aulas coletivas</button>
-        <button class="vksbtn" id="tBtnAvaliacaoMov" onclick="aAbrirSolicitarAvaliacao()">🎥 Avaliação de movimento</button>
+        <button class="vksbtn" id="tBtnAvaliacaoMov" onclick="aAbrirSolicitarAvaliacao()">🎥 Análise de movimento</button>
       </div>
     </div>
 
@@ -11672,7 +11683,7 @@ function aSolicitarAvaliacao(nomesExercicios){
   const exsTxt = lista.filter(Boolean).join(aLang==='en'?' and ':' e ');
   const msg = aLang==='en'
     ? ('Hi! I\\'m ' + alunoNome + ' and I\\'d like to send a video for you to check my form on: ' + exsTxt + '.')
-    : ('Oi! Sou ' + alunoNome + ' e queria mandar um vídeo pra você avaliar minha execução de: ' + exsTxt + '.');
+    : ('Oi! Sou ' + alunoNome + ' e queria mandar um vídeo pra você analisar minha execução de: ' + exsTxt + '.');
   window.open('https://wa.me/' + A_WHATSAPP_NUM + '?text=' + encodeURIComponent(msg), '_blank');
 }
 // Botão único (rodapé) em vez de um por exercício: abre uma seleção com os
@@ -11692,7 +11703,7 @@ function aAbrirSolicitarAvaliacao(){
   }).join('');
   overlay.innerHTML = \`<div class="sessao-concluida-card">
     <div class="sc-emoji">🎥</div>
-    <div class="sc-titulo">\${aLang==='en'?'Movement feedback':'Avaliação de movimento'}</div>
+    <div class="sc-titulo">\${aLang==='en'?'Movement analysis':'Análise de movimento'}</div>
     <div class="sc-sub">\${semExercicios
       ? (aLang==='en'?'No workout logged for today, but you can still reach out.':'Sem treino de hoje pra listar, mas você pode chamar direto.')
       : (aLang==='en'?'Pick which exercise(s) you want feedback on, then send it over WhatsApp.':'Marque qual (ou quais) exercício você quer que eu avalie, e manda pelo WhatsApp.')}</div>
@@ -12897,6 +12908,17 @@ async function aEnviarFotosAvaliacao(){
   }
 }
 
+function aMontarNotifs(){
+  const box = document.getElementById('tNotifs'); if (!box) return;
+  const en = aLang === 'en', it = [];
+  const sol = (aAvaliacoesFisicas || []).find(function(v){ return v.status === 'solicitada'; });
+  if (sol) it.push({ i:'📸', t: en ? 'Physical assessment requested' : 'Avaliação física solicitada', s: en ? 'Send your photos' : 'Toque para enviar suas fotos' });
+  let re = ''; try { re = aMontarAvisoReteste(); } catch(e) {}
+  if (re) it.push({ i:'🏃', t: en ? 'Conditioning test' : 'Teste de condicionamento', s: en ? 'Tap to see the details' : 'Toque para ver os detalhes' });
+  box.innerHTML = it.map(function(n){
+    return '<button type="button" class="nt-it" onclick="aVerProgresso();window.scrollTo(0,0)"><span class="nt-i">' + n.i + '</span><span class="nt-tx"><b>' + n.t + '</b><i>' + n.s + '</i></span><span class="nt-go">›</span></button>';
+  }).join('');
+}
 function aVerProgresso(){
   document.getElementById('tDashboard').style.display = 'none';
   document.getElementById('tSemanaCompleta').style.display = 'none';
@@ -12954,48 +12976,52 @@ function aColetivasMudarSemana(delta){
   aColetivasSemana = d;
   aCarregarColetivas();
 }
+var aColetivasDiaSel = null;
+function aColetivasSelDia(k){ aColetivasDiaSel = k; var el = document.getElementById('tColetivasConteudo'); if (el) el.innerHTML = aMontarColetivas(aColetivasCache || {}); }
+function aColToggle(h){ var n = h.nextElementSibling; if (!n) return; var abre = n.style.display === 'none'; n.style.display = abre ? 'block' : 'none'; var a = h.querySelector('.bt-arr'); if (a) a.style.transform = abre ? '' : 'rotate(-90deg)'; }
 function aMontarColetivas(dados){
-  const diasLabel = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  const hojeKey = aColetivasDateKey(new Date());
-  const fmt = function(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); };
-  const datas = [];
-  for (let i=0; i<7; i++) { const d = new Date(aColetivasSemana); d.setDate(d.getDate()+i); datas.push(d); }
-  let html = '<div class="pt" style="margin-bottom:6px">🤸 Aulas coletivas</div>';
-  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">';
-  html += '<button class="vksbtn" style="padding:4px 12px" onclick="aColetivasMudarSemana(-1)">‹</button>';
+  var en = aLang === 'en';
+  var diasLabel = en ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'] : ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  var letras = en ? ['S','M','T','W','T','F','S'] : ['D','S','T','Q','Q','S','S'];
+  var hojeKey = aColetivasDateKey(new Date());
+  var fmt = function(d){ return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0'); };
+  var datas = [];
+  for (var i = 0; i < 7; i++) { var d0 = new Date(aColetivasSemana); d0.setDate(d0.getDate() + i); datas.push(d0); }
+  var keys = datas.map(aColetivasDateKey);
+  if (!aColetivasDiaSel || keys.indexOf(aColetivasDiaSel) < 0) {
+    aColetivasDiaSel = keys.indexOf(hojeKey) >= 0 ? hojeKey : (keys.filter(function(k){ return ((dados && dados[k]) || []).length; })[0] || keys[0]);
+  }
+  var html = '<div class="pt" style="margin-bottom:6px">🤸 ' + (en ? 'Group classes' : 'Aulas coletivas') + '</div>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+  html += '<button class="vksbtn" style="padding:4px 12px;margin:0;width:auto" onclick="aColetivasMudarSemana(-1)">‹</button>';
   html += '<span style="font-size:11px;font-weight:700;flex:1;text-align:center">' + fmt(datas[0]) + ' – ' + fmt(datas[6]) + '</span>';
-  html += '<button class="vksbtn" style="padding:4px 12px" onclick="aColetivasMudarSemana(1)">›</button>';
-  html += '</div>';
+  html += '<button class="vksbtn" style="padding:4px 12px;margin:0;width:auto" onclick="aColetivasMudarSemana(1)">›</button>';
+  html += '</div><div class="semana-strip">';
   datas.forEach(function(d){
-    const key = aColetivasDateKey(d);
-    const blocos = (dados && dados[key]) || [];
-    const isHoje = key === hojeKey;
-    html += '<div class="card" style="margin-bottom:10px;padding:12px 14px' + (isHoje ? ';border-color:var(--P)' : '') + '">';
-    html += '<div style="font-size:12px;font-weight:800;margin-bottom:6px' + (isHoje ? ';color:var(--P)' : '') + '">' + diasLabel[d.getDay()] + ' ' + fmt(d) + (isHoje ? ' · hoje' : '') + '</div>';
-    if (!blocos.length) {
-      html += '<div style="font-size:10.5px;color:var(--t3)">Sem aula coletiva.</div>';
-    } else {
-      blocos.forEach(function(b){
-        const isCondic = b.tipo === 'condicionamento';
-        const titulo = isCondic ? '🔥 Condicionamento' : ('🏋️ ' + (b.nome ? aEsc(b.nome) : 'Bloco'));
-        html += '<div style="background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;margin-bottom:6px">';
-        html += '<div style="font-size:10px;font-weight:700;color:var(--P);margin-bottom:4px">' + titulo + (b.conjugado ? (' · Conjugado' + (b.series ? (' (' + aEsc(b.series) + ' séries)') : '')) : '') + '</div>';
-        if (isCondic) {
-          if (b.formato) html += '<div style="font-size:10.5px;margin-bottom:2px"><b>Formato:</b> ' + aEsc(b.formato) + '</div>';
-          if (b.materiais) html += '<div style="font-size:10.5px;margin-bottom:2px"><b>Materiais:</b> ' + aEsc(b.materiais) + '</div>';
-        }
-        if (b.detalhes) html += '<div style="font-size:11px;margin:2px 0 4px;white-space:pre-wrap;line-height:1.45">' + aEsc(b.detalhes) + '</div>';
-        (b.exercicios||[]).forEach(function(ex){
-          if (!ex.nome) return;
-          const sr = b.conjugado
-            ? (ex.reps ? (' — ' + aEsc(ex.reps) + ' reps') : '')
-            : ((ex.series || ex.reps) ? (' — ' + aEsc(ex.series||'') + (ex.series && ex.reps ? '×' : '') + aEsc(ex.reps||'')) : '');
-          html += '<div style="font-size:10.5px;padding:2px 0">• ' + aEsc(ex.nome) + sr + '</div>';
-        });
-        html += '</div>';
-      });
+    var k = aColetivasDateKey(d), tem = ((dados && dados[k]) || []).length > 0;
+    html += '<div class="semana-strip-dia' + (tem ? ' tem-treino' : '') + (k === hojeKey ? ' hoje' : '') + (k === aColetivasDiaSel ? ' sel' : '') + '" onclick="aColetivasSelDia(this.dataset.k)" data-k="' + k + '"><span>' + letras[d.getDay()] + '</span><span class="ssd-dot"></span><span class="ssd-data">' + fmt(d) + '</span></div>';
+  });
+  html += '</div>';
+  var di = keys.indexOf(aColetivasDiaSel), dSel = datas[di];
+  html += '<div style="font-size:15px;font-weight:800;margin:12px 0 8px">' + diasLabel[dSel.getDay()] + ' <span style="font-weight:600;color:var(--t3);font-size:12px">' + fmt(dSel) + (aColetivasDiaSel === hojeKey ? (en ? ' · today' : ' · hoje') : '') + '</span></div>';
+  var blocos = (dados && dados[aColetivasDiaSel]) || [];
+  if (!blocos.length) { html += '<div style="font-size:12px;color:var(--t3);padding:10px 0">' + (en ? 'No group class.' : 'Sem aula coletiva.') + '</div>'; return html; }
+  blocos.forEach(function(b){
+    var isC = b.tipo === 'condicionamento';
+    var titulo = isC ? ('🔥 ' + (en ? 'Conditioning' : 'Condicionamento')) : ('🏋️ ' + (b.nome ? aEsc(b.nome) : (en ? 'Block' : 'Bloco')));
+    var meta = (!isC && b.conjugado) ? (en ? 'Superset' : 'Conjugado') + (b.series ? (' · ' + aEsc(b.series) + (en ? ' sets' : ' séries')) : '') : '';
+    var corpo = '';
+    if (isC) {
+      if (b.formato) corpo += '<div class="cl-meta"><b>' + (en ? 'Format' : 'Formato') + ':</b> ' + aEsc(b.formato) + '</div>';
+      if (b.materiais) corpo += '<div class="cl-meta"><b>' + (en ? 'Equipment' : 'Materiais') + ':</b> ' + aEsc(b.materiais) + '</div>';
     }
-    html += '</div>';
+    (b.exercicios || []).forEach(function(ex){
+      if (!ex.nome) return;
+      var sr = b.conjugado ? (ex.reps ? (aEsc(ex.reps) + ' reps') : '') : ((ex.series || ex.reps) ? (aEsc(ex.series || '') + (ex.series && ex.reps ? '×' : '') + aEsc(ex.reps || '')) : '');
+      corpo += '<div class="cl-ex-r"><span>' + aEsc(ex.nome) + '</span><span class="cl-ex-c">' + sr + '</span></div>';
+    });
+    if (b.detalhes) corpo += '<div class="cl-det">' + aEsc(b.detalhes) + '</div>';
+    html += '<div class="bloco"><div class="bh" onclick="aColToggle(this)"><div class="dot" style="border-left-color:' + (isC ? '#D45828' : 'var(--P)') + '"></div><span class="bt">' + titulo + '</span>' + (meta ? '<span class="bm">' + meta + '</span>' : '') + '<span class="bt-arr">▾</span></div><div class="exl" style="padding:6px 12px 10px">' + corpo + '</div></div>';
   });
   return html;
 }
@@ -13440,6 +13466,7 @@ function aRenderProtocolo(proto){
 
   // ── Dashboard: treino de hoje, já expandido ──
   document.getElementById('tDashConteudo').innerHTML = aMontarDashboardHoje(semanas, agenda);
+  aMontarNotifs();
   // restaura estado de conclusão da sessão de hoje (persistido no localStorage)
   aSessaoRestaurar();
 
@@ -14152,7 +14179,24 @@ function plSaveLanding(){
   plMarcarDirty();
 }
 function plPixObj(){ if(!plLand.pix) plLand.pix={ativo:false,nome:'',cidade:'',msg:'',itens:[]}; if(!Array.isArray(plLand.pix.itens)) plLand.pix.itens=[]; return plLand.pix; }
-function plPixSalvar(){ localStorage.setItem(PL_LAND_KEY, JSON.stringify(plLand)); plMarcarDirty(); }
+function plPixSalvar(){ localStorage.setItem(PL_LAND_KEY, JSON.stringify(plLand)); plMarcarDirty(); plPixPublicarSoon(); }
+let _plPixT = null;
+function plPixPublicarSoon(){ clearTimeout(_plPixT); _plPixT = setTimeout(plPixPublicar, 1200); const st = document.getElementById('pl-pix-status'); if (st) st.textContent = '⏳ Publicando para os alunos…'; }
+async function plPixPublicar(){
+  const st = document.getElementById('pl-pix-status');
+  if (!mbProfessor || !mbProfessor.id) { if (st) st.textContent = '⚠️ Entre na sua conta (Configuração) para o Pix chegar aos alunos.'; return; }
+  try {
+    const { data, error: e0 } = await mbClient.from('landing_config').select('config, planos').eq('professor_id', mbProfessor.id).maybeSingle();
+    if (e0) throw e0;
+    const p = plPixObj();
+    const pix = { ativo: !!p.ativo, nome: p.nome || '', cidade: p.cidade || '', msg: p.msg || '', itens: (p.itens || []).filter(x => x && x.chave).map(x => ({ banco: x.banco || '', chave: String(x.chave).trim() })) };
+    const row = { professor_id: mbProfessor.id, config: Object.assign({}, (data && data.config) || {}, { pix: pix }), updated_at: new Date().toISOString() };
+    if (!data || !Array.isArray(data.planos) || !data.planos.length) row.planos = plPlanos.filter(x => x.ativo).map(x => ({ id: x.id, nome: x.nome, dias: x.dias, precoBR: x.precoBR, precoUK: x.precoUK }));
+    const { error } = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
+    if (error) throw error;
+    if (st) st.textContent = '✅ Pix ' + (pix.ativo ? 'ativo' : 'desativado') + ' e publicado para os alunos às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '.';
+  } catch (e) { if (st) st.textContent = '❌ Não publicou: ' + (e.message || e); }
+}
 function plPixSet(k,v){ plPixObj()[k]=v; plPixSalvar(); }
 function plPixItem(i,k,v){ plPixObj().itens[i][k]=v; plPixSalvar(); }
 function plPixAdd(){ plPixObj().itens.push({banco:'',chave:''}); plPixSalvar(); plPixRender(); }
