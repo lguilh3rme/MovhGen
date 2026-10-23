@@ -1,4 +1,4 @@
-# MOVH — Contexto v48 (20/10/2026)
+# MOVH — Contexto v49 (23/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -20,7 +20,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 
 ## 3. Fluxo Git (aprendido na dor)
 1. `git fetch`; `git checkout -f -B minha-branch origin/main` (partir SEMPRE do main atualizado; branch antiga fica obsoleta após squash).
-2. Editar, testar, `node --check`, exportar o app, regravar `movh/index.html`.
+2. Editar, testar, `node --check`, exportar o app, regravar `movh/index.html` E `movh/version.json` (o export grava os dois; o app consulta `version.json` e se recarrega sozinho quando o carimbo muda).
 3. Commit (com `Co-Authored-By: Claude ...` e `Claude-Session: ...` conforme o system-reminder), `git push -u origin branch`.
 4. PR via `gh api repos/lguilh3rme/REPO/pulls -f title=... -f head=... -f base=main -f body=...` (GraphQL é bloqueado). Merge: `gh api -X PUT repos/.../pulls/N/merge -f merge_method=squash`.
 5. Depois: `git fetch origin` e `git branch -u origin/BRANCH` (o hook de stop reclama de branch sem upstream). Se o fetch não atualizar `refs/remotes`, `git config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'`.
@@ -108,6 +108,16 @@ v48c (21/10, tarde): app do aluno — círculo de concluir some quando o exercí
 v48d (21/10, noite): (1) Pix agora é PUBLICADO direto em `landing_config.config.pix` ao editar o card (antes só ia no rascunho `editor_state`; só "Sincronizar Landing" publicava): `plPixPublicar` faz merge do `config` existente e, se `planos` estiver vazio, publica os planos ativos; status em `#pl-pix-status`. (2) App: aulas coletivas no formato de treino (faixa semanal `.semana-strip` + um dia por vez + blocos recolhíveis); notificações na home (`aMontarNotifs`: avaliação física solicitada, teste de condicionamento) que levam a "Meu progresso"; "Avaliação de movimento" virou "Análise de movimento"; cabeçalho (`.toprow`) rola com a página também no modo prévia.
 REGRA DE MERGE: PR de 1 commit usa a mensagem do COMMIT (não o título do PR) no squash. Para pular o Netlify passar `-f commit_title='[skip netlify] ...'` na chamada de merge da API.
 PWA/app nas lojas (resposta dada ao usuário): 1º PWA (manifest + service worker + ícones; instalar pelo navegador; push no iOS só com o PWA instalado, iOS 16.4+), depois, se houver demanda, Capacitor/TWA para Play Store (US$25 único) e App Store (US$99/ano; Apple pode recusar wrapper sem valor nativo).
+
+v49 (23/10, noite): feedback de aluno + pedidos do usuário, tudo no app do aluno.
+- Badge de carga COMPACTO (`.cargabox`, 28 px, mesma altura dos outros chips): fechado mostra só `🏋️ 32.5kg` (vazio `🏋️ — kg`) ou, em exercício de tempo, `⏱️ 45s` (vazio `⏱️ — s`). Tocar abre (`aCargaAbrir`, classe `.aberto`) kg × reps (ou só segundos) + botão "salvar" (pílula; o ✓ redondo saiu porque confundia com o check de concluir). Ao salvar, `aCargaFechar` volta ao compacto e atualiza o resumo. O botão salvar tem `event.stopPropagation()` (senão o clique sobe e reabre o badge). Verde = `carga-registrada` como antes.
+- Removidos da home do aluno o badge do dia ("📅 Sexta · 23/10") e o "📈 Periodização prevista" (`aMontarLinhaBadges` mostra só o badge de fase, se houver). `aMontarBadgeTimeline` ficou no código, sem uso.
+- Descanso agora é `💤 90s` (antes ⏱); o ⏱️ ficou para tempo executado.
+- Botão de vídeo: ícone ▶ redondo ANTES do nome do exercício (dentro de `.ec-name-row`).
+- Avisos da home (`aMontarNotifs`): ficam ACIMA da barra de progresso, numa linha só, com × (`aNotifFechar`; localStorage `movh-notif-x-<id>`: "cond" some por 7 dias, "aval" por 1 dia).
+- ATUALIZAÇÃO AUTOMÁTICA: `tools/export_app.js` troca `__MOVH_BUILD__` por um hash do conteúdo e grava `version.json` ao lado da saída. O app (`aChecarVersao`) busca `version.json` (no-store) ao carregar (3 s), ao voltar para a aba, no `pageshow` e a cada 10 min; se o carimbo for diferente e o aluno não estiver digitando, faz `location.reload()` (1x por versão, guarda em sessionStorage). Sempre copiar `version.json` junto com `index.html` para o repo `movh`. No Gerador/prévia (placeholder não substituído) não faz nada.
+- Créditos Netlify do app: 104 antes desta rodada; 1 deploy (15) → ~89.
+- Testes: `tools/tests/` sem falhas novas; teste próprio do badge/aviso/auto-update (stub, http local) passou.
 
 v48e (21-23/10, diagnóstico): app v48d CONFIRMADO no ar (Netlify movh, deploy #22 publicado 18:35; 104 créditos restantes). Pix só apareceu para o aluno depois de: (a) rodar no Supabase `CREATE POLICY "aluno le landing" ON landing_config FOR SELECT TO authenticated USING (true)` e (b) o Gerador republicar (status "✅ Pix ativo e publicado"). Se o Pix sumir do modal, checar `landing_config.config.pix` (ativo + itens com chave) e essa policy. Modal de Renovar = planos + forma de pagamento (Pix/Cartão).
 PENDENTE: cabeçalho (relógio/aviso/Sair, `.toprow`) "não desce junto" segundo o usuário. Teste Playwright (390 e 1366 px) mostra `.toprow` static e rolando junto (top 0 → -700). Antes do v48d só o preview-mode era sticky; o normal já era static. Precisa do print da tela rolada e do `getComputedStyle(#treinoScreen .toprow).position` do navegador do usuário (Firefox-like). Hipótese: a rolagem ocorre em outro elemento, ou o usuário se refere a outro bloco (ex.: aviso na Home).

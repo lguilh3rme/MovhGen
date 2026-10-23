@@ -644,7 +644,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v48 · 20/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v49 · 23/10</div>
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
@@ -10100,6 +10100,30 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .cl-det{font-size:12px;line-height:1.5;white-space:pre-wrap;color:var(--t2);margin:8px 0 2px}
 .cl-meta{font-size:11.5px;margin-bottom:3px}
 [data-theme=dark] .cl-ex-c{color:#FF9A9A}
+/* v49 */
+.ec .cargabox{flex-direction:row!important;align-items:center!important;height:28px!important;min-height:28px!important;box-sizing:border-box!important;padding:0 10px!important;border-radius:99px!important;margin-left:auto!important;gap:4px!important;cursor:pointer}
+.ec .cargabox .cb-l,.ec .cargabox .cargasalvo{display:none!important}
+.ec .cargabox:not(.aberto)>*:not(.cb-sum){display:none!important}
+.ec .cargabox .cb-sum{font-size:12px;font-weight:700;white-space:nowrap}
+.ec .cargabox.aberto{flex:1 1 100%!important;margin-left:0!important;padding:0 4px 0 12px!important;cursor:default;justify-content:flex-start}
+.ec .cargabox.aberto>.cb-sum{display:none!important}
+.ec .cargabox.aberto .cb-r{display:inline-flex!important}
+.ec .cargabox .cb-r input,.ec .cargabox .tempobox-input{font-size:14px!important}
+.ec .cargabox .cb-r input[id$="-carga"]{width:4.2ch!important}
+.ec .cargabox .cb-r input[id$="-reps"]{width:2.8ch!important}
+.ec .cargabox .tempobox-input{width:4ch!important;text-align:right}
+.ec .cargabox.aberto .salvar-mini{display:inline-flex!important;align-items:center;width:auto!important;height:22px!important;border-radius:99px!important;background:var(--P)!important;color:#fff!important;border:none!important;font-size:0!important;padding:0 12px!important;margin-left:8px!important}
+.ec .cargabox.aberto .salvar-mini::after{content:"salvar";font-size:11px;font-weight:700}
+.ec-hd:has(.vbtn) .ec-name-row{padding-right:0!important}
+.ec-name-row .vbtn{position:static!important;top:auto!important;width:30px!important;height:30px!important;padding:0!important;border-radius:50%!important;flex:0 0 auto;display:inline-flex!important;align-items:center;justify-content:center;margin:0!important}
+.ec-name-row .vbtn span{display:none!important}
+.ec-name-row .vbtn::before{margin-left:2px}
+.nt-wrap{position:relative;margin:0 0 6px}
+.nt-wrap .nt-it{margin:0!important;padding:6px 38px 6px 10px!important;border-radius:10px!important}
+.nt-wrap .nt-tx{flex-direction:row;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;min-width:0}
+.nt-wrap .nt-tx i{display:none}
+.nt-wrap .nt-i{font-size:15px}.nt-wrap .nt-go{display:none}
+.nt-x{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:transparent;color:inherit;font-size:20px;line-height:1;opacity:.7;cursor:pointer;padding:0}
 </style>
 </head>
 <body>
@@ -10175,11 +10199,11 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
     </div>
 
     <div id="tDashboard" style="display:none">
+      <div id="tNotifs"></div>
       <div id="tSessaoProgresso" class="sessao-progresso" style="display:none">
         <div class="sp-bar-track"><div class="sp-bar-fill" id="tSpFill" style="width:0%"></div></div>
         <div class="sp-texto" id="tSpTexto"></div>
       </div>
-      <div id="tNotifs"></div>
       <div id="tDashConteudo"></div>
       <div class="dash-actions">
         <button class="vksbtn" id="tBtnProgresso" onclick="aVerProgresso()">📈 Meu progresso</button>
@@ -11635,22 +11659,22 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     ? '<div class="ec-base-ref">' + aT('base_professor') + ': ' + aEsc(aFormatarSeries(ex.series)) + (ex.rest && !emConj ? ' · ' + aEsc(ex.rest) : '') + '</div>'
     : '';
   const cargaBadge = isTempo
-    ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':'')+'">'+aEsc(aT('tempo'))+' ⏱️' +
-        '<input type="number" step="1" placeholder="seg" class="tempobox-input" id="'+eid+'-tempo" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'">s' +
-        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
+    ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':'')+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">⏱️ '+((ultimo&&ultimo.reps!=null)?aEsc(ultimo.reps)+'s':'— s')+'</span><span class="cb-l">'+aEsc(aT('tempo'))+' ⏱️</span>' +
+        '<input type="number" step="1" placeholder="seg" class="tempobox-input" id="'+eid+'-tempo" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">s</span>' +
+        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="event.stopPropagation();aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
-    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'"><span class="cb-l">'+(aLang==='en'?'load used':'carga utilizada')+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
+    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':'— kg')+'</span><span class="cb-l">'+(aLang==='en'?'load used':'carga utilizada')+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
         '<input type="number" inputmode="decimal" step="0.5" placeholder="0" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
         '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
-        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
+        '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="event.stopPropagation();aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span></span>';
   const serChip = ex.series ? '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-s')+(seriesTotal?' ec-chip-progresso'+(seriesFeitasHoje>=seriesTotal?' ec-chip-completo':''):'')+'" id="'+eid+'-series-badge" data-total="'+seriesTotal+'" title="'+aEsc(seriesExibir)+(seriesTotal?(aLang==='en'?' — tap to count a set':' — toque para contar uma série'):'')+'"'+(seriesTotal?' role="button" data-eid="'+eid+'" onclick="aContarSerieConcluida(this.dataset.eid)" style="--fill:'+seriesFillPct+'%"':'')+'>'+(sugVolume?'🧭 ':'')+seriesBadgeHTML+((seriesTotal && !serieCurtoM)?' <span id="'+eid+'-series-count" style="opacity:.8;font-variant-numeric:tabular-nums">'+(seriesFeitasHoje>=seriesTotal?'✓ ':'')+seriesFeitasHoje+'/'+seriesTotal+'</span>':'')+'</span>' : '';
   const chips = [
     serChip,
-    emConj ? '' : '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+(restExibir?'':' ec-chip-rlivre')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir||'60s')+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">⏱ '+aEsc(restExibir||'60s')+'</span>',
+    emConj ? '' : '<span class="ec-chip'+(sugVolume?' ec-chip-fase':' ec-chip-r')+(restExibir?'':' ec-chip-rlivre')+' ec-chip-clicavel" data-tempo="'+aEsc(restExibir||'60s')+'" data-nome="'+aEsc(ex.nome||'')+'" data-eid="'+eid+'" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="'+(aLang==='en'?'Tap to start a rest timer':'Toque pra iniciar o cronômetro de descanso')+'">💤 '+aEsc(restExibir||'60s')+'</span>',
     mostrarSugestao ? '<span class="ec-chip ec-chip-sug" title="'+aEsc(sugestaoTitle)+'">'+(sugestao.origem==='padrao_movimento'?'🎯 ':'💡 ')+aEsc(sugestao.valor)+'kg</span>' : '',
     cargaBadge
   ].filter(Boolean).join('');
@@ -11658,6 +11682,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     '<div class="ec-hd">' +
       '<div class="ec-info">' +
         '<div class="ec-name-row">' +
+          (emb ? '<button class="vbtn" aria-label="Vídeo" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)"><span>'+(aLang==='en'?'Video':'Vídeo')+'</span></button>' : '') +
           '<span class="ec-n">'+aEsc(ex.nome)+(ex.obs ? '<span class="ec-o"> (<span class="ec-o-i">💬</span> '+aEsc(ex.obs)+')</span>' : '')+'</span>' +
         '</div>' +
         '<div class="ec-chips">' +
@@ -11668,7 +11693,6 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         chips + '</div>' +
         baseRefHTML +
       '</div>' +
-      (emb ? '<button class="vbtn" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)"><span>'+(aLang==='en'?'Video':'Vídeo')+'</span></button>' : '') +
     '</div>' +
     '<div class="vs" id="'+eid+'-vs" style="display:none"></div>' +
   '</div>';
@@ -11677,6 +11701,27 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
 // Mesmo número usado no botão de suporte da tela de login — se o professor
 // trocar o WhatsApp, precisa atualizar aqui e nos dois "wa-btn" do authScreen.
 const A_WHATSAPP_NUM = '5527988225340';
+// Atualização automática: o export grava o carimbo da versão em A_BUILD e em version.json.
+// Se o app ficou aberto/restaurado de uma versão antiga, recarrega sozinho (1x por versão).
+const A_BUILD = '__MOVH_BUILD__';
+async function aChecarVersao(){
+  try {
+    if (A_BUILD.indexOf('__') === 0) return;
+    const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const j = await r.json();
+    if (!j || !j.build || j.build === A_BUILD) return;
+    if (sessionStorage.getItem('movh-build-reload') === j.build) return;
+    const ae = document.activeElement;
+    if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+    sessionStorage.setItem('movh-build-reload', j.build);
+    location.reload();
+  } catch(e) {}
+}
+window.addEventListener('load', function(){ setTimeout(aChecarVersao, 3000); });
+document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') aChecarVersao(); });
+window.addEventListener('pageshow', function(ev){ if (ev.persisted) aChecarVersao(); });
+setInterval(aChecarVersao, 600000);
 function aSolicitarAvaliacao(nomesExercicios){
   const lista = Array.isArray(nomesExercicios) ? nomesExercicios : [nomesExercicios];
   const alunoNome = (aAlunoRow && (aAlunoRow.nome || aAlunoRow.email)) || (aLang==='en'?'a student':'um aluno');
@@ -12050,6 +12095,20 @@ function aFecharVideoModal(){
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')aFecharVideoModal();});
 
+function aCargaAbrir(box){
+  if (!box || box.classList.contains('aberto')) return;
+  box.classList.add('aberto');
+  const i = box.querySelector('input');
+  if (i) { try { i.focus(); } catch(e){} }
+}
+function aCargaFechar(eid){
+  const sum = document.getElementById(eid+'-sum'); if (!sum) return;
+  const box = sum.closest('.cargabox'); if (!box) return;
+  const tp = document.getElementById(eid+'-tempo');
+  if (tp) { sum.textContent = '⏱️ ' + (tp.value ? tp.value + 's' : '— s'); }
+  else { const c = document.getElementById(eid+'-carga'); sum.textContent = '🏋️ ' + (c && c.value ? c.value + 'kg' : '— kg'); }
+  box.classList.remove('aberto');
+}
 async function aSalvarCarga(eid, exercicioNome){
   if (aPreviewBloqueado()) return;
   const carga = document.getElementById(eid+'-carga').value;
@@ -12072,6 +12131,7 @@ async function aSalvarCarga(eid, exercicioNome){
   // destaca a badge de carga (fica verde) pra indicar que já tem registro
   const cargabox = okEl ? okEl.closest('.cargabox') : null;
   if(cargabox) cargabox.classList.add('carga-registrada');
+  aCargaFechar(eid);
   if (cargaNum != null) {
     (aTodosRegistros = aTodosRegistros || []).push({ exercicio_nome: exercicioNome, carga: cargaNum, reps: reps ? parseInt(reps) : null });
     if (maxAnt > 0 && cargaNum > maxAnt) {
@@ -12101,6 +12161,7 @@ async function aSalvarTempo(eid, exercicioNome){
   setTimeout(()=>okEl.classList.remove('show'), 2000);
   const box = okEl ? okEl.closest('.cargabox') : null;
   if(box) box.classList.add('carga-registrada');
+  aCargaFechar(eid);
 }
 
 function aToggleProg(id, header){
@@ -12159,6 +12220,11 @@ function aToggleTimelinePeriodizacao(btn){
   const aberto = el.style.display !== 'none';
   el.style.display = aberto ? 'none' : 'block';
   btn.classList.toggle('open', !aberto);
+}
+// Linha de badges do dia: só o badge de fase (data e "periodização prevista" saíram na v49).
+function aMontarLinhaBadges(semanaAtual){
+  const b = aMontarBadgeFase(semanaAtual, 'dash');
+  return b ? '<div class="dash-badges-row">' + b + '</div>' : '';
 }
 // Badge compacto e clicável ("📈 Periodização prevista ▾") — mesmo padrão do
 // badge de fase (aMontarBadgeFase/aToggleFaseDetalhe): recolhido por padrão,
@@ -12412,7 +12478,7 @@ function aRenderExercicios(b, faseAtual, ctxPrefix, semanaDentroFase, duracaoSem
       const gLabel = g.label || aT('conjugado');
       const gDica = aLang === 'en' ? mt.en : mt.pt;
       const gLastEid = ctxPrefix + '-e' + gExsIdx[gExsIdx.length - 1];
-      const gChip = '<span class="ec-chip ec-chip-r ec-chip-clicavel a-cj-rest' + (gRest ? '' : ' ec-chip-rlivre') + '" data-tempo="' + aEsc(gRest || '60s') + '" data-nome="' + aEsc(gLabel) + '" data-eid="' + gLastEid + '" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="' + aEsc(aT('descanso_apos_grupo')) + '">⏱ ' + aEsc(gRest || '60s') + '</span>';
+      const gChip = '<span class="ec-chip ec-chip-r ec-chip-clicavel a-cj-rest' + (gRest ? '' : ' ec-chip-rlivre') + '" data-tempo="' + aEsc(gRest || '60s') + '" data-nome="' + aEsc(gLabel) + '" data-eid="' + gLastEid + '" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="' + aEsc(aT('descanso_apos_grupo')) + '">💤 ' + aEsc(gRest || '60s') + '</span>';
       h += '<div class="a-cj-group">' +
         '<div class="a-cj-head" title="' + aEsc(gDica) + '"><span class="a-cj-ic">' + mt.e + '</span><span class="a-cj-label">' + aEsc(gLabel) + '</span>' + gChip + '</div>' +
         (g.metodo && g.metodo !== 'conjugado' ? '<div class="a-cj-dica">' + aEsc(gDica) + '</div>' : '') +
@@ -12533,14 +12599,14 @@ function aMontarDashboardHoje(semanas, agenda){
         '<button class="btn bs" style="width:100%;font-size:12px;padding:8px" onclick="aExecutarDiaSubstituto()">' + (aLang==='en'?'▶ Run this workout today':'▶ Executar este treino hoje') + '</button>' +
       '</div>'
     ) : '';
-    return '<div class="dash-badges-row"><div class="dash-banner">📅 ' + aEsc(aDiaExibicao(agenda.diaSemanaHoje)) + ' · ' + dataCompacta + '</div>' + aMontarBadgeFase(semanaAtual, 'dash') + aMontarBadgeTimeline('dash') + '</div>' +
+    return aMontarLinhaBadges(semanaAtual) +
       aMontarCardFase(semanaAtual, agenda.semanaDentroFase, 'dash') +
       aMontarTimelinePeriodizacao(semanas, agenda.semanaGlobal, 'dash') +
       '<div class="dash-empty"><div class="ic">😌</div>' + aT('dia_descanso_titulo') + '<br>' + aT('dia_descanso_desc') + '</div>' +
       seletorSub;
   }
 
-  let h = '<div class="dash-badges-row"><div class="dash-banner">📅 ' + aEsc(aDiaExibicao(agenda.diaSemanaHoje)) + ' · ' + dataCompacta + '</div>' + aMontarBadgeFase(semanaAtual, 'dash') + aMontarBadgeTimeline('dash') + '</div>';
+  let h = aMontarLinhaBadges(semanaAtual);
   h += aMontarCardFase(semanaAtual, agenda.semanaDentroFase, 'dash');
   h += aMontarTimelinePeriodizacao(semanas, agenda.semanaGlobal, 'dash');
   h += '<div class="dash-semfase">' + aEsc(semanaAtual.nome) + (diaHoje.sub ? ' · ' + aEsc(diaHoje.sub) : '') + '</div>';
@@ -12908,15 +12974,23 @@ async function aEnviarFotosAvaliacao(){
   }
 }
 
+function aNotifFechada(id, dias){
+  try { const t = parseInt(localStorage.getItem('movh-notif-x-' + id) || '0', 10); return !!t && (Date.now() - t) < dias * 86400000; } catch(e) { return false; }
+}
+function aNotifFechar(id){
+  try { localStorage.setItem('movh-notif-x-' + id, String(Date.now())); } catch(e) {}
+  aMontarNotifs();
+}
 function aMontarNotifs(){
   const box = document.getElementById('tNotifs'); if (!box) return;
   const en = aLang === 'en', it = [];
   const sol = (aAvaliacoesFisicas || []).find(function(v){ return v.status === 'solicitada'; });
-  if (sol) it.push({ i:'📸', t: en ? 'Physical assessment requested' : 'Avaliação física solicitada', s: en ? 'Send your photos' : 'Toque para enviar suas fotos' });
+  if (sol && !aNotifFechada('aval', 1)) it.push({ k:'aval', i:'📸', t: en ? 'Physical assessment requested' : 'Avaliação física solicitada', s: en ? 'Send your photos' : 'Toque para enviar suas fotos' });
   let re = ''; try { re = aMontarAvisoReteste(); } catch(e) {}
-  if (re) it.push({ i:'🏃', t: en ? 'Conditioning test' : 'Teste de condicionamento', s: en ? 'Tap to see the details' : 'Toque para ver os detalhes' });
+  if (re && !aNotifFechada('cond', 7)) it.push({ k:'cond', i:'🏃', t: en ? 'Conditioning test' : 'Teste de condicionamento', s: en ? 'Tap to see the details' : 'Toque para ver os detalhes' });
   box.innerHTML = it.map(function(n){
-    return '<button type="button" class="nt-it" onclick="aVerProgresso();window.scrollTo(0,0)"><span class="nt-i">' + n.i + '</span><span class="nt-tx"><b>' + n.t + '</b><i>' + n.s + '</i></span><span class="nt-go">›</span></button>';
+    return '<div class="nt-wrap"><button type="button" class="nt-it" onclick="aVerProgresso();window.scrollTo(0,0)"><span class="nt-i">' + n.i + '</span><span class="nt-tx"><b>' + n.t + '</b><i>' + n.s + '</i></span><span class="nt-go">›</span></button>' +
+      '<button type="button" class="nt-x" data-k="' + n.k + '" onclick="aNotifFechar(this.dataset.k)" aria-label="' + (en ? 'Dismiss' : 'Dispensar') + '">×</button></div>';
   }).join('');
 }
 function aVerProgresso(){
