@@ -109,6 +109,10 @@ v48d (21/10, noite): (1) Pix agora é PUBLICADO direto em `landing_config.config
 REGRA DE MERGE: PR de 1 commit usa a mensagem do COMMIT (não o título do PR) no squash. Para pular o Netlify passar `-f commit_title='[skip netlify] ...'` na chamada de merge da API.
 PWA/app nas lojas (resposta dada ao usuário): 1º PWA (manifest + service worker + ícones; instalar pelo navegador; push no iOS só com o PWA instalado, iOS 16.4+), depois, se houver demanda, Capacitor/TWA para Play Store (US$25 único) e App Store (US$99/ano; Apple pode recusar wrapper sem valor nativo).
 
+v48e (21-23/10, diagnóstico): app v48d CONFIRMADO no ar (Netlify movh, deploy #22 publicado 18:35; 104 créditos restantes). Pix só apareceu para o aluno depois de: (a) rodar no Supabase `CREATE POLICY "aluno le landing" ON landing_config FOR SELECT TO authenticated USING (true)` e (b) o Gerador republicar (status "✅ Pix ativo e publicado"). Se o Pix sumir do modal, checar `landing_config.config.pix` (ativo + itens com chave) e essa policy. Modal de Renovar = planos + forma de pagamento (Pix/Cartão).
+PENDENTE: cabeçalho (relógio/aviso/Sair, `.toprow`) "não desce junto" segundo o usuário. Teste Playwright (390 e 1366 px) mostra `.toprow` static e rolando junto (top 0 → -700). Antes do v48d só o preview-mode era sticky; o normal já era static. Precisa do print da tela rolada e do `getComputedStyle(#treinoScreen .toprow).position` do navegador do usuário (Firefox-like). Hipótese: a rolagem ocorre em outro elemento, ou o usuário se refere a outro bloco (ex.: aviso na Home).
+Dica: a sandbox não alcança movh.netlify.app (403 do proxy) nem a API de Pages; verificar deploy só pelo print do usuário.
+
 ## 11. O que fica só no `localStorage` do Gerador (inventário e plano de integração)
 Já vão para o banco (confirmado no código): exercícios (`mova_rep` → tabela `exercicios`; migra e remove a chave local, local só como fallback), splits (`mova_splits` → tabela `splits`, upsert, local só como cache), planos/landing (`movh_planos`, com controle de "sujo" e última sincronização com o banco).
 
