@@ -111,6 +111,7 @@ PWA/app nas lojas (resposta dada ao usuário): 1º PWA (manifest + service worke
 
 v49 (23/10, noite): feedback de aluno + pedidos do usuário, tudo no app do aluno.
 - Badge de carga COMPACTO (`.cargabox`, 28 px, mesma altura dos outros chips): fechado mostra só `🏋️ 32.5kg` (vazio `🏋️ — kg`) ou, em exercício de tempo, `⏱️ 45s` (vazio `⏱️ — s`). Tocar abre (`aCargaAbrir`, classe `.aberto`) kg × reps (ou só segundos) + botão "salvar" (pílula; o ✓ redondo saiu porque confundia com o check de concluir). Ao salvar, `aCargaFechar` volta ao compacto e atualiza o resumo. O botão salvar tem `event.stopPropagation()` (senão o clique sobe e reabre o badge). Verde = `carga-registrada` como antes.
+- Removidos da home do aluno o badge do dia ("📅 Sexta · 23/10") e o "📈 Periodização prevista" (`aMontarLinhaBadges` mostra só o badge de fase, se houver). `aMontarBadgeTimeline` ficou no código, sem uso.
 - Descanso agora é `💤 90s` (antes ⏱); o ⏱️ ficou para tempo executado.
 - Botão de vídeo: ícone ▶ redondo ANTES do nome do exercício (dentro de `.ec-name-row`).
 - Avisos da home (`aMontarNotifs`): ficam ACIMA da barra de progresso, numa linha só, com × (`aNotifFechar`; localStorage `movh-notif-x-<id>`: "cond" some por 7 dias, "aval" por 1 dia).

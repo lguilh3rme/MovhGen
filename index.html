@@ -12221,6 +12221,11 @@ function aToggleTimelinePeriodizacao(btn){
   el.style.display = aberto ? 'none' : 'block';
   btn.classList.toggle('open', !aberto);
 }
+// Linha de badges do dia: só o badge de fase (data e "periodização prevista" saíram na v49).
+function aMontarLinhaBadges(semanaAtual){
+  const b = aMontarBadgeFase(semanaAtual, 'dash');
+  return b ? '<div class="dash-badges-row">' + b + '</div>' : '';
+}
 // Badge compacto e clicável ("📈 Periodização prevista ▾") — mesmo padrão do
 // badge de fase (aMontarBadgeFase/aToggleFaseDetalhe): recolhido por padrão,
 // só mostra/esconde o gráfico ao clicar.
@@ -12594,14 +12599,14 @@ function aMontarDashboardHoje(semanas, agenda){
         '<button class="btn bs" style="width:100%;font-size:12px;padding:8px" onclick="aExecutarDiaSubstituto()">' + (aLang==='en'?'▶ Run this workout today':'▶ Executar este treino hoje') + '</button>' +
       '</div>'
     ) : '';
-    return '<div class="dash-badges-row"><div class="dash-banner">📅 ' + aEsc(aDiaExibicao(agenda.diaSemanaHoje)) + ' · ' + dataCompacta + '</div>' + aMontarBadgeFase(semanaAtual, 'dash') + aMontarBadgeTimeline('dash') + '</div>' +
+    return aMontarLinhaBadges(semanaAtual) +
       aMontarCardFase(semanaAtual, agenda.semanaDentroFase, 'dash') +
       aMontarTimelinePeriodizacao(semanas, agenda.semanaGlobal, 'dash') +
       '<div class="dash-empty"><div class="ic">😌</div>' + aT('dia_descanso_titulo') + '<br>' + aT('dia_descanso_desc') + '</div>' +
       seletorSub;
   }
 
-  let h = '<div class="dash-badges-row"><div class="dash-banner">📅 ' + aEsc(aDiaExibicao(agenda.diaSemanaHoje)) + ' · ' + dataCompacta + '</div>' + aMontarBadgeFase(semanaAtual, 'dash') + aMontarBadgeTimeline('dash') + '</div>';
+  let h = aMontarLinhaBadges(semanaAtual);
   h += aMontarCardFase(semanaAtual, agenda.semanaDentroFase, 'dash');
   h += aMontarTimelinePeriodizacao(semanas, agenda.semanaGlobal, 'dash');
   h += '<div class="dash-semfase">' + aEsc(semanaAtual.nome) + (diaHoje.sub ? ' · ' + aEsc(diaHoje.sub) : '') + '</div>';
