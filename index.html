@@ -644,7 +644,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v49 · 23/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v50 · 25/10</div>
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
@@ -1180,6 +1180,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="pg-head">
     <div><div class="pg-title">🤸 Aulas Coletivas</div><div class="pg-sub">Cada dia é independente — defina o treino de uma data específica, sem repetir automaticamente nas outras semanas. Sem vídeo, só a lista de blocos/exercícios pra quem vai dar a aula. Fica salvo no banco e pode ser mostrado no app pra alunos específicos (aba Alunos → botão 🤸).</div></div>
     <div style="display:flex;gap:6px;align-self:flex-start">
+      <button class="btn bs" onclick="coletivasCopiarLinkPublico()" title="Link público das aulas coletivas (sem login)">🔗 Copiar link</button>
       <button class="btn bs" onclick="coletivasAbrirColar()">📋 Colar plano da semana</button>
       <button class="btn bp" id="coletivas-save-btn" onclick="mbSalvarAulasColetivas()">💾 Salvar aulas coletivas</button>
     </div>
@@ -2492,6 +2493,14 @@ function coletivasIrParaData(key){
 let coletivasDiaSel = null;
 function coletivasAuto(el){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight + 2, parseInt(el.dataset.min || '60', 10)) + 'px'; }
 function coletivasSelDia(key){ coletivasDiaSel = key; renderColetivas(); }
+// Link público das coletivas (sem login): <URL do app>/coletivas — lido pela função get_coletivas_publico.
+function coletivasCopiarLinkPublico(){
+  const base = ((plLand && plLand.appUrl) || 'https://movh.netlify.app').trim().split('?')[0].split('#')[0].replace(/\/index\.html$/i,'').replace(/\/+$/,'');
+  const link = base + '/coletivas';
+  const ok = function(){ notify('Link copiado: ' + link); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(ok).catch(function(){ prompt('Copie o link:', link); });
+  else prompt('Copie o link:', link);
+}
 function coletivasRenderEditor(el, datas){
   const keys = datas.map(coletivasDateKey);
   const hojeKey = coletivasDateKey(new Date());
@@ -10721,7 +10730,7 @@ function aPreviewSafetyNet(){
 const A_APP_URL = 'https://movh.netlify.app/';
 function aIrParaRegistro(){
   try { sessionStorage.setItem('movh-via-treino', '1'); } catch(e){}
-  window.location.href = window.location.pathname + '?bemvindo=1';
+  window.location.href = aBaseApp() + '?bemvindo=1';
 }
 function aPreviewErroTela(err){
   const en = (navigator.language || '').toLowerCase().indexOf('en') === 0;
@@ -10741,7 +10750,7 @@ function aPreviewErroTela(err){
   if (err) { const c = document.createElement('div'); c.style.cssText = 'font-size:10px;opacity:.45;margin-bottom:16px;word-break:break-word'; c.textContent = String(err.message || err.code || err); box.appendChild(c); }
   const b = document.createElement('button'); b.style.cssText = 'padding:10px 18px;border-radius:99px;border:1px solid var(--bd,#DDDBD4);background:var(--card,#fff);color:inherit;font-weight:700;cursor:pointer';
   b.textContent = en ? 'Go to login' : 'Ir para o login';
-  b.onclick = function(){ window.location.href = window.location.pathname; };
+  b.onclick = function(){ window.location.href = aBaseApp(); };
   box.appendChild(b);
   d.innerHTML = ''; d.appendChild(box);
 }
@@ -10948,10 +10957,51 @@ function aRegistrarVisto(){
     aClient.from('alunos').update({ treino_visto_em: new Date().toISOString() }).eq('id', aAlunoRow.id).then(function(){}, function(){});
   } catch(e){}
 }
+// Rota pública /coletivas (ou ?coletivas=1): aulas coletivas sem login. O Netlify reescreve
+// /coletivas para o index.html (arquivo _redirects do repo do app).
+function aEhRotaColetivas(){
+  let p = window.location.pathname.toLowerCase();
+  while (p.length > 1 && p.charAt(p.length - 1) === '/') p = p.slice(0, -1);
+  return p.slice(-10) === '/coletivas' || new URLSearchParams(window.location.search).get('coletivas') === '1';
+}
+function aBaseApp(){
+  const p = window.location.pathname;
+  const i = p.toLowerCase().lastIndexOf('/coletivas');
+  return (aEhRotaColetivas() && i >= 0) ? (p.slice(0, i) + '/') : p;
+}
+async function aBootColetivas(){
+  document.getElementById('authScreen').style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'flex';
+  let dados = null, err = null;
+  try { const r = await aClient.rpc('get_coletivas_publico'); dados = r.data; err = r.error; } catch(e) { err = e; }
+  document.getElementById('loadingScreen').style.display = 'none';
+  window._movhPreview = true; window._movhColetivasPublico = true;
+  aAlunoRow = { id: null, nome: '', email: '', professor_id: null, mostra_aulas_coletivas: true };
+  document.body.classList.add('preview-mode');
+  const ph = document.querySelector('#treinoScreen .ph'); if (ph) ph.style.display = 'none';
+  ['tDashboard','tSemanaCompleta','tProgresso','tAvaliacaoUpload'].forEach(function(id){ const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  document.getElementById('tColetivas').style.display = 'block';
+  document.querySelectorAll('#tColetivas .tBtnVoltar').forEach(function(b){ b.style.display = 'none'; });
+  const en = aLang === 'en';
+  const btn = document.getElementById('tRegistroBtn');
+  if (btn) { btn.textContent = en ? 'Create account' : 'Fazer o registro'; btn.style.display = 'inline-block'; }
+  document.getElementById('treinoScreen').style.display = 'block';
+  if (!window._movhRelogioIniciado) { window._movhRelogioIniciado = true; try { aIniciarRelogio(); } catch(e) {} }
+  const el = document.getElementById('tColetivasConteudo');
+  if (err) {
+    console.error('[MOVH] Erro ao carregar coletivas:', err);
+    el.innerHTML = '<div style="padding:24px 8px;text-align:center;color:var(--t2)">' + (en ? 'Could not load the group classes. Try again in a moment.' : 'Não foi possível carregar as aulas coletivas. Tente novamente em instantes.') + '</div>';
+    return;
+  }
+  aColetivasCache = (dados && typeof dados === 'object') ? dados : {};
+  aColetivasSemana = aColetivasSegundaDaSemana(new Date());
+  el.innerHTML = aMontarColetivas(aColetivasCache);
+}
 async function aBoot(sessionParam){
   if (!sessionParam) {
     const tkTreino = new URLSearchParams(window.location.search).get('treino');
     if (tkTreino) { await aBootPreview(tkTreino); return; }
+    if (aEhRotaColetivas()) { await aBootColetivas(); return; }
   }
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';
@@ -14072,7 +14122,16 @@ function copiarSQLRLS(){
     'DROP POLICY IF EXISTS "aluno ve aulas coletivas do proprio professor" ON aulas_coletivas;',
     'CREATE POLICY "aluno ve aulas coletivas do proprio professor"',
     '  ON aulas_coletivas FOR SELECT',
-    '  USING (professor_id IN (SELECT professor_id FROM alunos WHERE auth_id = auth.uid()));'
+    '  USING (professor_id IN (SELECT professor_id FROM alunos WHERE auth_id = auth.uid()));',
+    '',
+    '-- LINK PÚBLICO DAS COLETIVAS (/coletivas): leitura sem login, só desta tabela',
+    'CREATE OR REPLACE FUNCTION get_coletivas_publico()',
+    'RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$',
+    '  SELECT dados FROM aulas_coletivas ORDER BY atualizado_em DESC NULLS LAST LIMIT 1',
+    '$fn$;',
+    'REVOKE ALL ON FUNCTION get_coletivas_publico() FROM public;',
+    'GRANT EXECUTE ON FUNCTION get_coletivas_publico() TO anon, authenticated;',
+    'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
   box.textContent = sql;
