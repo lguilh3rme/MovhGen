@@ -1,4 +1,4 @@
-# MOVH — Contexto v52 (25/10/2026)
+# MOVH — Contexto v53 (25/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -134,6 +134,13 @@ DECISÕES DE MARCA (25/10): o usuário PREFERE A LOGO ATUAL (barra curva + gráf
 PENDENTE (opcional, ainda não pedido): no login escuro, "MOV" e a frase da logo são PRETOS sobre azul-escuro (contraste ~1,1:1, quase invisíveis). Correção que preserva a arte dele: variante da MESMA logo com o preto trocado pelo creme, só no tema escuro (2 <img> + CSS por `data-theme`; logo personalizada continua única). Exige 1 deploy do app (15 créditos) — juntar com a próxima mudança do app.
 PENDENTE: `/coletivas` já abre no Netlify, mas mostra "Não foi possível carregar as aulas coletivas" até o usuário rodar o SQL `get_coletivas_publico()` no Supabase (seção v50). Se continuar após rodar: abrir o console (F12) e ler "[MOVH] Erro ao carregar coletivas".
 Créditos Netlify do app: ~59 estimados (104 − 3 deploys de 15 em 23–25/10; confirmar no Billing). Próximas ideias: PWA (manifest + service worker que NÃO cacheie o index.html, para não desfazer a atualização automática), Web Push, QR do Pix.
+
+v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
+- Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
+- Colar treino de splits/protocolos (`mbParsearTreinoTexto`): dia por "Treino A", "Dia N" ou dia da semana (sugere o dia); formato antigo (nome + "3x 8 a 10" na linha seguinte) OU estilo livre (reaproveita `coletivasParsearDia`: seções → blocos Ativação/Principal/Condicionamento, A1/A2 = conjugado `cj:0`, EMOM/For time → obs do bloco). Séries salvas como "S×reps". Nome casado com o banco (`mvAcharEx`) e `url` já preenchida via `getUrl` (não precisa mais do botão Sincronizar). Prévia ao colar com ✓ no banco / ➕ fora do banco / 📝 instruções.
+- App do aluno: (1) X do aviso agora também some o banner em "Meu progresso" (a avaliação solicitada respeitava o X só na home; reteste 7 dias, avaliação 1 dia); (2) "‹ Voltar para hoje" virou pílula que PULSA (`vhPulse`); (3) `aHeaderForcar`: a faixa de dias do topo recolhe sozinha em Meu progresso, Semana completa e Aulas coletivas e volta ao estado anterior em `aVoltarHoje`.
+- Netlify: o crédito mensal reseta no início do ciclo de cobrança da conta (o dia varia por conta; ver Team settings → Billing), crédito mensal não acumula. Créditos do app: 58 antes + 1 deploy (15) = ~43 (confirmar no Billing).
+PENDENTE (opcional, não pedido): variante da logo para tema escuro (juntar com o próximo deploy do app); Biblioteca/Exercícios com o mesmo visual em 3 colunas.
 
 v52 (25/10): SELETOR EM 3 COLUNAS + COLAR PLANO INTELIGENTE (só Gerador; app do aluno inalterado, mesmo A_BUILD).
 - Seletor (`mvAbrir`): Grupo › Subgrupo › Exercício lado a lado (clique); no celular vira passo a passo com "‹ Voltar". Modo em massa `mvAbrir({onMulti})`: caixinhas numeradas na ordem dos cliques + "＋ Adicionar N". A gaveta antiga do Quadro (accordions `kb-gav*`) foi REMOVIDA; `kbGavToggle` abre o seletor em massa e `kbGavAplicar` segue igual.
