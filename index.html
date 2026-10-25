@@ -198,24 +198,6 @@ select{cursor:pointer}
 .kb-add-cj{border-color:var(--P);color:var(--Pd);background:transparent}
 .kb-add-cj:hover{background:var(--card)}
 .aluno-row .al-meta{overflow-wrap:anywhere}
-.kb-gav{margin-top:8px;border:1px solid var(--bd);border-radius:10px;background:var(--cl);padding:6px}
-.kb-gav-q{width:100%;box-sizing:border-box;font-size:12px;padding:6px 8px;margin-bottom:6px}
-.kb-gav-box{max-height:38vh;overflow-y:auto}
-.kb-gav-cat{border-bottom:1px solid var(--bd2)}
-.kb-gav-cat summary{cursor:pointer;padding:7px 4px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
-.kb-gav-n{background:var(--bd2);color:var(--t2);border-radius:99px;font-size:10px;padding:0 7px;font-weight:600}
-.kb-gav-it{display:flex;align-items:center;gap:8px;padding:5px 6px;font-size:12px;cursor:pointer;border-radius:6px}
-.kb-gav-it:hover{background:var(--card)}
-.kb-gav-it input{width:auto;flex-shrink:0}
-.kb-gav-foot{display:flex;gap:6px;align-items:center;margin-top:6px}
-.kb-gav-wrap{display:flex;gap:6px;align-items:stretch}.kb-gav-wrap .kb-gav-box{flex:1;min-width:0}
-.kb-gav-prev{flex:0 0 38%;max-width:170px;max-height:38vh;overflow-y:auto;border:1px solid var(--bd2);border-radius:8px;padding:4px 6px;font-size:10.5px;background:var(--card)}
-.kb-gav-prev .p-h{font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;margin-bottom:2px}
-.kb-gav-prev .p-i{display:flex;gap:4px;align-items:baseline;padding:1px 0;color:var(--t2);line-height:1.25}
-.kb-gav-prev .p-i.new{color:var(--Pd);font-weight:700;background:var(--Pl);border-radius:4px;padding:1px 3px}
-.kb-gav-prev .p-n{flex:0 0 auto;opacity:.6}.kb-gav-prev .p-t{flex:1;min-width:0}
-.kb-gav-prev .p-x{margin-left:auto;cursor:pointer;color:var(--t3);border:none;background:none;padding:0 2px;font-size:12px;line-height:1}
-@media(max-width:600px){.kb-gav-wrap{flex-direction:column}.kb-gav-prev{flex:none;max-width:none;max-height:96px}.kb-gav-box{max-height:30vh}}
 .kb-cond{background:var(--cl);border:1px solid var(--bd2);border-radius:8px;padding:6px;margin-bottom:6px;display:flex;flex-direction:column;gap:4px}
 .kb-cond-row{display:flex;gap:4px}
 .kb-cond-sel,.kb-cond-inp{font-size:10px;padding:4px 6px;border-radius:6px}
@@ -623,16 +605,24 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
 .mv-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px;font-size:14px;font-weight:800}
 .mv-q{margin:0 14px 8px;width:calc(100% - 28px);box-sizing:border-box;font-size:13px;padding:9px 11px}
 .mv-crumb{padding:0 14px 6px;font-size:11px;color:var(--t3);font-weight:600}
-.mv-chips{display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
-.mv-chips::-webkit-scrollbar{display:none}
-.mv-chip{flex:0 0 auto;border:1px solid var(--bd2);background:var(--card);color:var(--tx);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit}
-.mv-chip.on{background:var(--P);border-color:var(--P);color:#fff}
-.mv-chip small{opacity:.65;font-weight:600;margin-left:5px}
-.mv-chips2 .mv-chip{font-size:11.5px;font-weight:600;padding:5px 10px}
-.mv-lista{overflow-y:auto;padding:2px 8px 14px;border-top:1px solid var(--bd2);min-height:170px;flex:1}
+.mv-sheet.mv-wide{width:min(840px,100%);height:min(600px,86vh);max-height:86vh}
+.mv-cols{display:grid;grid-template-columns:150px 210px 1fr;flex:1;min-height:0;border-top:1px solid var(--bd2)}
+.mv-cols>div{overflow-y:auto;padding:4px;min-width:0}
+.mv-c1,.mv-c2{border-right:1px solid var(--bd2)}
+.mv-cols.busca{grid-template-columns:1fr}.mv-cols.busca .mv-c1,.mv-cols.busca .mv-c2{display:none}
+.mv-r{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;border:none;background:none;color:var(--tx);padding:6px 8px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;font-family:inherit;text-align:left}
+.mv-r small{opacity:.55;font-weight:600;font-size:10.5px;white-space:nowrap}
+.mv-r:hover{background:var(--card)}.mv-r.on{background:var(--P);color:#fff}.mv-r.on small{opacity:.85}
+.mv-it{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:none;background:none;color:var(--tx);padding:6px 8px;font-size:12.5px;font-weight:600;border-radius:6px;cursor:pointer;font-family:inherit}
+.mv-it>span{flex:1;min-width:0}
+.mv-it:hover,.mv-it:focus{background:var(--card);outline:none}.mv-it.cur{background:var(--Pl);color:var(--Pd)}.mv-it.sel{background:var(--Pl);color:var(--Pd)}
+.mv-ck{flex:0 0 18px;height:18px;border:1.5px solid var(--bd2);border-radius:5px;font-size:10px;line-height:15px;text-align:center;font-weight:800}
+.mv-it.sel .mv-ck{background:var(--P);border-color:var(--P);color:#fff}
+.mv-foot{display:flex;gap:8px;align-items:center;padding:8px 12px;border-top:1px solid var(--bd2)}.mv-fn{flex:1;font-size:11.5px;color:var(--t2)}
+.mv-back{display:none;border:none;background:none;color:var(--P);font-weight:800;font-size:12px;cursor:pointer;margin-right:8px;font-family:inherit}
+.cl-ib.cl-new{color:var(--P);border-style:dashed}
+@media(max-width:640px){.mv-sheet.mv-wide{height:92vh;max-height:92vh}.mv-cols{grid-template-columns:1fr}.mv-cols>div{display:none;border-right:none}.mv-cols[data-step="1"]>.mv-c1,.mv-cols[data-step="2"]>.mv-c2,.mv-cols[data-step="3"]>.mv-c3,.mv-cols.busca>.mv-c3{display:block}.mv-back{display:inline-block}.mv-r,.mv-it{padding:11px 8px;font-size:13.5px}}
 .mv-sec{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);padding:10px 8px 3px}
-.mv-it{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:none;background:none;color:var(--tx);padding:10px 8px;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit}
-.mv-it:hover,.mv-it:focus{background:var(--card);outline:none}
 .mv-it.cur{background:var(--Pl);color:var(--Pd)}
 .mv-it i{font-style:normal;font-size:10.5px;color:var(--t3);font-weight:600;white-space:nowrap}
 .mv-livre{color:var(--P)}
@@ -640,9 +630,6 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
 .exi-r1-busca .exi-cat-filtro,.mv-catbtn{font-size:11px;padding:5px 7px;border:1px solid var(--bd2);background:var(--ip);color:var(--tx);border-radius:var(--rs);cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:inherit}
 .mv-catbtn{width:100%;min-height:32px}
 .mv-grp-sel{margin-bottom:4px}
-.kb-gav-grp{border-bottom:2px solid var(--bd2);margin-bottom:2px}
-.kb-gav-grp>summary{cursor:pointer;padding:8px 4px;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px}
-.kb-gav-grp>.kb-gav-cat{margin-left:10px}
 .db-grp{grid-column:1/-1;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);padding:6px 2px 0;border-bottom:1px solid var(--bd2)}
 </style>
 </head>
@@ -672,7 +659,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v51 · 25/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v52 · 25/10</div>
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
@@ -1223,13 +1210,13 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
     <div class="card" style="max-width:640px;width:100%;max-height:85vh;overflow:auto">
       <div style="font-size:14px;font-weight:800;margin-bottom:6px">📋 Colar plano da semana</div>
       <div style="font-size:11px;color:var(--t2);margin-bottom:10px;line-height:1.5">
-        Cole o texto com os treinos da semana (formato "SEG (título)", "Ativação", "Força" com A1/A2/B1/B2 pra conjugado, "Endurance" com EMOM/AMRAP na primeira linha). Detecta os 7 dias automaticamente pelas siglas SEG/TER/QUA/QUI/SEX/SAB/DOM.
+        Cole o plano (pode ser direto de uma tabela do Docs). Reconhece dia (Segunda/Terça… ou SEG/TER…), "Semana 2", seções (Ativação, Força, Localizada, C. Funcional, Endurance) e separa instruções (EMOM, For time, 2R, obs.) dos exercícios, que são casados com o banco para puxar o vídeo.
       </div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;font-size:11px">
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="coletivas-colar-semana" value="atual" style="margin:0"/> Semana atual (<span id="coletivas-colar-lbl-atual"></span>)</label>
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="coletivas-colar-semana" value="proxima" checked style="margin:0"/> Próxima semana (<span id="coletivas-colar-lbl-proxima"></span>)</label>
       </div>
-      <textarea id="coletivas-colar-texto" rows="14" placeholder="Cole aqui o texto da semana..." style="width:100%;font-size:11px;font-family:monospace;padding:8px"></textarea>
+      <textarea id="coletivas-colar-texto" rows="14" placeholder="Cole aqui o texto da semana..." style="width:100%;font-size:11px;font-family:monospace;padding:8px" oninput="coletivasPreviewColar()"></textarea>
       <div id="coletivas-colar-preview" style="font-size:11px;color:var(--t2);margin-top:8px"></div>
       <div style="display:flex;gap:8px;margin-top:12px">
         <button class="btn bp" onclick="coletivasAplicarColar()">✓ Aplicar</button>
@@ -2556,6 +2543,7 @@ function renderColetivasBloco(dia, i, b, total){
   const exs = (b.exercicios || []).map((ex, j) => '<div class="cl-ex">' +
     '<input type="text" list="ex-datalist" class="cl-exn" placeholder="Exercício (banco ou livre)" value="' + escAttr(ex.nome || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'nome\',this.value)"/>' +
     '<button type="button" class="cl-ib" onclick="mvAbrirParaInput(this.previousElementSibling)" title="Escolher: grupo › categoria › exercício">📂</button>' +
+    (ex.nome && !mvAcharEx(ex.nome) && !mvEhPausa(ex.nome) ? '<button type="button" class="cl-ib cl-new" data-n="' + escAttr(ex.nome) + '" onclick="mvCadastrar(this.dataset.n)" title="Fora do banco (sem vídeo). Toque para cadastrar">＋</button>' : '') +
     (b.conjugado ? '' : '<input type="text" class="cl-exs" placeholder="Sér." value="' + escAttr(ex.series || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'series\',this.value)"/>') +
     '<input type="text" class="cl-exs" placeholder="Reps" value="' + escAttr(ex.reps || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'reps\',this.value)"/>' +
     '<button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',-1)" title="Subir">↑</button><button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',1)" title="Descer">↓</button>' +
@@ -2623,106 +2611,184 @@ function coletivasRemoverEx(dia,i,j){
   coletivasMarcarSujo();
 }
 
-// ── Colar plano da semana (texto → blocos) ──
-// Reconhece um formato tipo:
-//   SEG (Lower Base)
-//   Ativação
-//   Dead Bug 8
-//   Força
-//   A1 RDL 3x10
-//   A2 Goblet Squat 3x10
-//   Endurance
-//   EMOM 12'
-//   12 Thruster / 10 Burpee / 12 Lunge / Rest
-// "Ativação" vira 1 bloco normal com cada linha como exercício.
-// "Força" com prefixo de letra+número (A1/A2, B1/B2...) agrupa em blocos
-// conjugados — a série do "3x10" vira a série do bloco (compartilhada), o
-// que vem depois do "x" vira o rep de cada exercício. Linhas de Força sem
-// prefixo caem num bloco "Força" normal (não conjugado).
-// "Endurance"/"Condicionamento": primeira linha vira o campo Formato,
-// linhas seguintes viram Detalhes.
-// Não é mágica perfeita — formatos fora do padrão (ex: "Complex 4x...",
-// circuitos com "(3x)" no meio da frase) caem como exercício de texto
-// livre, sem quebrar nada; só precisam de um ajuste manual depois.
 const COLETIVAS_DOW_ABREV = {seg:0, ter:1, qua:2, qui:3, sex:4, sab:5, dom:6};
 
-function coletivasParseLinhaExercicio(linha){
-  let m = linha.match(/^([A-Za-z]\d+)\s+(.+?)\s+(\d+)\s*[x×]\s*([\d/’”"'.\s]+)$/);
-  if (m) return { label: m[1].toUpperCase(), nome: m[2].trim(), series: m[3], reps: m[4].trim() };
-  m = linha.match(/^(.+?)\s+(\d+)\s*[x×]\s*([\d/’”"'.\s]+)$/);
-  if (m) return { label: null, nome: m[1].trim(), series: m[2], reps: m[3].trim() };
-  m = linha.match(/^(.+?)\s+([\d/]+[”"'′″]?)$/);
-  if (m) return { label: null, nome: m[1].trim(), series: '', reps: m[2].trim() };
-  return { label: null, nome: linha.trim(), series: '', reps: '' };
+// ── Casamento com o banco de exercícios (nome → exercício canônico, com vídeo) ──
+// Conservador de propósito: só casa nome igual (sem acento/pontuação/maiúscula, singular/plural,
+// com ou sem parênteses) ou o nome PT/EN. O que não casar vira "novo" (sem vídeo) e pode ser cadastrado.
+function mvKey(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
+let _mvIdx=null;
+function mvIndice(){
+  const m=new Map();
+  Object.keys(REP).forEach(function(cat){(REP[cat]||[]).forEach(function(e){
+    [e.n,e.nome_pt,e.nome_en].forEach(function(x){const k=mvKey(x);if(k&&!m.has(k))m.set(k,{n:e.n,cat:cat,u:e.u||''});});
+  });});
+  return m;
 }
+function mvAcharEx(nome){
+  const sig=Object.keys(REP).reduce(function(a,c){return a+(REP[c]||[]).length;},0);
+  if(!_mvIdx||_mvIdx._sig!==sig){_mvIdx=mvIndice();_mvIdx._sig=sig;}
+  const k=mvKey(nome);if(!k)return null;
+  const sp=mvKey(String(nome).replace(/\([^)]*\)/g,' '));
+  return _mvIdx.get(k)||_mvIdx.get(sp)||_mvIdx.get(k.replace(/s$/,''))||_mvIdx.get(k+'s')||null;
+}
+function mvEhPausa(nome){return /^(rest|descanso|pausa)$/.test(mvKey(nome));}
 
+// ── Colar plano da semana (texto → blocos) ──
+// Entende dois estilos (inclusive o que sai de uma tabela do Google Docs):
+//   • Dia: "SEG (título)", "Terça 27/10", "Quinta"; "Semana 2" soma 7 dias (vale para o resto do texto).
+//   • Seção: Ativação / Força / Localizada / C. Funcional / Endurance… A linha da seção pode trazer
+//     "2 séries" (vira série dos exercícios) e o formato ("EMOM 12'", "For time 4R (Barra…)").
+//   • Linhas que NÃO são exercício (EMOM, AMRAP, For time, 2R, Circuito, observações) vão para a
+//     descrição/formato do bloco, não para a lista de exercícios.
+//   • Exercício: "Dead Bug 10", "3x12", "15 Remador", "8/8 Thruster", "A1 RDL 3x10" (A1/A2 = conjugado),
+//     "6 Push-up + 6 Plank" (o "+" separa em dois). O nome é trocado pelo do banco quando casa.
+// Fora do padrão: vira exercício de texto livre (marcado como "novo") — nunca quebra.
+const COL_RE_DIA=/^(segunda|terca|quarta|quinta|sexta|sabado|domingo|seg|ter|qua|qui|sex|sab|dom)(?:-feira)?(?![a-z])\s*(.*)$/;
+const COL_RE_FMT=/^(emom|e2mom|amrap|for time|tabata|circuito|\d+\s*r(?:ounds?)?(?![a-z])|\d+\s*['′’"”]\s*$|\d+\s*min\s*$)/;
+function colNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
+const COL_SEC=[
+  {re:/^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/, tipo:'normal', nome:'Ativação'},
+  {re:/^(forca|hipertrofia|acessorios?)(?![a-z])/, tipo:'normal', nome:'Força', forca:true},
+  {re:/^(localizada)(?![a-z])/, tipo:'normal', nome:'Localizada'},
+  {re:/^(c\.?\s*funcional|funcional|metabolico|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional'},
+  {re:/^(endurance|condicionamento|cardio)(?![a-z])/, tipo:'condicionamento', nome:''}
+];
+let _colStats=null;
+function colDia(linha){
+  const m=colNorm(linha).match(COL_RE_DIA);if(!m)return null;
+  const resto=(m[2]||'').trim();
+  if(resto&&!/^([(\d]|[-–:])/.test(resto))return null;
+  const k=m[1].slice(0,3);
+  return COLETIVAS_DOW_ABREV[k]!=null?COLETIVAS_DOW_ABREV[k]:null;
+}
+function colSecao(linha){
+  const n=colNorm(linha);
+  for(const s of COL_SEC){
+    const m=n.match(s.re);if(!m)continue;
+    let resto=linha.slice(m[0].length).trim(),ser='';
+    resto=resto.replace(/(\d+)\s*s[eé]ries?/i,function(_,x){ser=x;return ' ';}).trim();
+    const partes=resto.split(/\s+e\s+|,|\//).map(function(p){return p.trim();}).filter(Boolean);
+    if(partes.length&&partes.every(function(p){const pn=colNorm(p);return COL_SEC.some(function(x){return x.re.test(pn);});}))resto='';
+    if(resto&&!COL_RE_FMT.test(colNorm(resto))&&!/^\(.*\)$/.test(resto))return null;
+    return {sec:s,ser:ser,resto:resto.replace(/^\((.*)\)$/,'$1')};
+  }
+  return null;
+}
+function colEhInstrucao(linha){
+  const n=colNorm(linha);
+  return COL_RE_FMT.test(n)||/^(obs|nota|dica|observ)/.test(n)||/^\(.*\)$/.test(linha.trim());
+}
+function coletivasParseLinhaExercicio(linha){
+  let m=linha.match(/^([A-Za-z]\d+)\s+(.+?)\s+(\d+)\s*[x×]\s*([\d/’”"'.\s]+)$/);
+  if(m)return {label:m[1].toUpperCase(),nome:m[2].trim(),series:m[3],reps:m[4].trim()};
+  if(mvAcharEx(linha))return {label:null,nome:linha.trim(),series:'',reps:''};
+  m=linha.match(/^(.+?)\s+(\d+)\s*[x×]\s*([\d/’”"'.\s]+)$/);
+  if(m)return {label:null,nome:m[1].trim(),series:m[2],reps:m[3].trim()};
+  m=linha.match(/^(.+?)\s+(\d+(?:\/\d+)*\s*['′’"”]{0,2})$/);
+  if(m)return {label:null,nome:m[1].trim(),series:'',reps:m[2].trim()};
+  m=linha.match(/^(\d+(?:\/\d+)*\s*['′’"”]{1,2}|\d+(?:\/\d+)*)\s+(\D.*)$/);
+  if(m)return {label:null,nome:m[2].trim(),series:'',reps:m[1].trim()};
+  return {label:null,nome:linha.trim(),series:'',reps:''};
+}
+function colExFinal(ex){
+  const a=mvAcharEx(ex.nome);
+  if(a){ex.nome=a.n;_colStats.ok++;}
+  else if(!mvEhPausa(ex.nome)){if(_colStats.novos.indexOf(ex.nome)<0)_colStats.novos.push(ex.nome);}
+  return ex;
+}
 function coletivasParsearDia(linhas){
-  const blocos = [];
-  let secaoTipo = null;
-  let blocoAtivacao = null;
-  let gruposConjugado = {};
-  let condicAtual = null;
-
-  linhas.forEach(linha => {
-    const low = linha.toLowerCase();
-    if (low.startsWith('ativa')) { secaoTipo = 'ativacao'; blocoAtivacao = null; return; }
-    if (low.startsWith('força') || low.startsWith('forca')) { secaoTipo = 'forca'; gruposConjugado = {}; return; }
-    if (low.startsWith('endurance') || low.startsWith('condic')) { secaoTipo = 'endurance'; condicAtual = { tipo:'condicionamento', nome:'', conjugado:false, exercicios:[], formato:'', materiais:'', detalhes:'' }; blocos.push(condicAtual); return; }
-
-    if (secaoTipo === 'endurance') {
-      if (condicAtual && !condicAtual.formato) condicAtual.formato = linha;
-      else if (condicAtual) condicAtual.detalhes = condicAtual.detalhes ? condicAtual.detalhes + '\n' + linha : linha;
-      return;
-    }
-
-    const ex = coletivasParseLinhaExercicio(linha);
-
-    if (secaoTipo === 'ativacao') {
-      if (!blocoAtivacao) { blocoAtivacao = { tipo:'normal', nome:'Ativação', conjugado:false, exercicios:[] }; blocos.push(blocoAtivacao); }
-      blocoAtivacao.exercicios.push({ nome: ex.nome, series: ex.series, reps: ex.reps });
-      return;
-    }
-
-    if (secaoTipo === 'forca') {
-      if (ex.label) {
-        const letra = ex.label.replace(/\d+$/, '');
-        if (!gruposConjugado[letra]) {
-          gruposConjugado[letra] = { tipo:'normal', nome:'Força '+letra, conjugado:true, series: ex.series, exercicios: [] };
-          blocos.push(gruposConjugado[letra]);
-        }
-        gruposConjugado[letra].exercicios.push({ nome: ex.nome, series:'', reps: ex.reps });
-      } else {
-        const chave = '_solo';
-        if (!gruposConjugado[chave]) { gruposConjugado[chave] = { tipo:'normal', nome:'Força', conjugado:false, exercicios: [] }; blocos.push(gruposConjugado[chave]); }
-        gruposConjugado[chave].exercicios.push({ nome: ex.nome, series: ex.series, reps: ex.reps });
+  const blocos=[];let cur=null,conj={},pend=[];
+  const novo=function(sec,nome){
+    const b=coletivasNovoBloco();b.tipo=sec.tipo;b.nome=nome!=null?nome:sec.nome;b.exercicios=[];b._sec=sec;
+    blocos.push(b);return b;
+  };
+  linhas.forEach(function(raw){
+    let linha=raw.replace(/^[\s•·▪●○*\-–—]+/,'').replace(/^\d{1,2}[.)]\s+(?=\S)/,'').trim();
+    if(!linha)return;
+    const s=colSecao(linha);
+    if(s){
+      cur=novo(s.sec);conj={};
+      if(s.ser)cur._ser=s.ser;
+      if(s.resto){
+        if(cur.tipo==='condicionamento')cur.formato=s.resto;
+        else cur.detalhes=s.resto;
+      }
+      if(pend.length){
+        if(cur.tipo==='condicionamento'&&!cur.formato)cur.formato=pend.shift();
+        if(pend.length)cur.detalhes=pend.join('\n')+(cur.detalhes?'\n'+cur.detalhes:'');
+        pend=[];
       }
       return;
     }
-  });
-  return blocos;
-}
-
-function coletivasParsearTexto(texto){
-  const linhas = texto.split('\n');
-  const dias = {};
-  let diaAtual = null;
-  linhas.forEach(linhaRaw => {
-    const linha = linhaRaw.trim();
-    if (!linha) return;
-    const mDia = linha.match(/^(SEG|TER|QUA|QUI|SEX|SAB|DOM)\b/i);
-    if (mDia) {
-      diaAtual = COLETIVAS_DOW_ABREV[mDia[1].toLowerCase()];
-      dias[diaAtual] = [];
+    if(colEhInstrucao(linha)){
+      _colStats.instr++;
+      const t=linha.replace(/^\((.*)\)$/,'$1');
+      if(!cur){pend.push(t);return;}
+      if(cur.tipo==='condicionamento'&&!cur.formato)cur.formato=t;
+      else cur.detalhes=cur.detalhes?cur.detalhes+'\n'+t:t;
       return;
     }
-    if (diaAtual == null) return;
+    if(!cur)cur=novo({tipo:'normal',nome:'Treino'});
+    if(cur.tipo==='condicionamento'){cur.detalhes=cur.detalhes?cur.detalhes+'\n'+linha:linha;return;}
+    const partes=linha.split(/\s+\+\s+/).filter(Boolean);
+    (partes.length>1?partes:[linha]).forEach(function(p){
+      const ex=coletivasParseLinhaExercicio(p);
+      if(ex.label&&cur._sec&&cur._sec.forca){
+        const letra=ex.label.replace(/\d+$/,'');
+        if(!conj[letra]){conj[letra]=novo(cur._sec,'Força '+letra);conj[letra].conjugado=true;conj[letra].series=ex.series;}
+        conj[letra].exercicios.push(colExFinal({nome:ex.nome,series:'',reps:ex.reps}));
+        return;
+      }
+      cur.exercicios.push(colExFinal({nome:ex.nome,series:ex.series,reps:ex.reps}));
+    });
+  });
+  if(pend.length&&!blocos.length){cur=novo({tipo:'normal',nome:'Treino'});cur.detalhes=pend.join('\n');}
+  return blocos.filter(function(b){return b.tipo==='condicionamento'||b.exercicios.length||b.detalhes;}).map(function(b){
+    if(b._ser)b.exercicios.forEach(function(e){if(!e.series&&!b.conjugado)e.series=b._ser;});
+    if(b.conjugado&&!b.series&&b._ser)b.series=b._ser;
+    delete b._sec;delete b._ser;
+    if(!b.exercicios.length&&b.tipo==='normal')b.exercicios=[{nome:'',series:'',reps:''}];
+    return b;
+  });
+}
+function coletivasParsearTexto(texto){
+  _mvIdx=null;_colStats={ok:0,novos:[],instr:0};
+  const dias={};let diaAtual=null,off=0,colunas=null;
+  const abre=function(d){diaAtual=off+d;dias[diaAtual]=[];};
+  texto.split('\n').forEach(function(raw){
+    const linha=raw.replace(/\r/g,'').trim();
+    if(!linha)return;
+    const mSem=linha.match(/^semana\s*(\d+)/i);
+    if(mSem){off=(Number(mSem[1])-1)*7;diaAtual=null;colunas=null;return;}
+    if(linha.indexOf('\t')>=0){
+      const segs=raw.replace(/\r/g,'').split('\t').map(function(x){return x.trim();});
+      const ds=segs.filter(Boolean).map(colDia);
+      if(ds.length>1&&ds.every(function(d){return d!=null;})){colunas=ds;ds.forEach(function(d){dias[off+d]=[];});diaAtual=null;return;}
+      if(colunas){segs.forEach(function(s,i){if(s&&colunas[i]!=null&&dias[off+colunas[i]])dias[off+colunas[i]].push(s);});return;}
+    }
+    const d=colDia(linha);
+    if(d!=null){abre(d);colunas=null;return;}
+    if(diaAtual==null||colunas)return;
     dias[diaAtual].push(linha);
   });
-  const resultado = {};
-  Object.keys(dias).forEach(diaIdx => {
-    resultado[diaIdx] = coletivasParsearDia(dias[diaIdx]);
-  });
+  const resultado={};
+  Object.keys(dias).forEach(function(k){const b=coletivasParsearDia(dias[k]);if(b.length)resultado[k]=b;});
   return resultado;
+}
+function coletivasPreviewColar(){
+  const t=document.getElementById('coletivas-colar-texto').value,pv=document.getElementById('coletivas-colar-preview');
+  if(!pv)return;
+  if(!t.trim()){pv.innerHTML='';return;}
+  const p=coletivasParsearTexto(t),st=_colStats,nd=Object.keys(p).length;
+  if(!nd){pv.textContent='⚠️ Nenhum dia reconhecido ainda (use Segunda/Terça…/SEG/TER… no começo da linha).';return;}
+  const nb=Object.keys(p).reduce(function(a,k){return a+p[k].length;},0);
+  pv.innerHTML='<b>'+nd+' dia(s) · '+nb+' bloco(s)</b> · ✓ '+st.ok+' no banco (vídeo automático) · 📝 '+st.instr+' instrução(ões) separadas dos exercícios'+(st.novos.length?'<br>➕ <b>'+st.novos.length+' fora do banco</b> (sem vídeo): '+st.novos.slice(0,12).map(escAttr).join(', ')+(st.novos.length>12?'…':''):'');
+}
+// Cadastrar no banco um exercício que veio do texto (abre o modal da Biblioteca já com o nome; é lá que se cola o vídeo).
+function mvCadastrar(nome){
+  const cats=Object.keys(REP);openAddEx(cats[0]||'');
+  const el=document.getElementById('mex-nome');if(el)el.value=nome;
 }
 
 function coletivasAbrirColar(){
@@ -2751,16 +2817,17 @@ function coletivasAplicarColar(){
   let segundaAlvo = new Date(coletivasSemanaAtual);
   if (alvo === 'proxima') segundaAlvo.setDate(segundaAlvo.getDate()+7);
   const datasAlvo = coletivasSemanaDatas(segundaAlvo);
+  const dataDe = n => { const d = new Date(segundaAlvo); d.setDate(d.getDate() + Number(n)); return d; };
 
   let jaTinhaConteudo = false;
   Object.keys(parsed).forEach(diaIdx => {
-    const key = coletivasDateKey(datasAlvo[Number(diaIdx)]);
+    const key = coletivasDateKey(dataDe(diaIdx));
     if ((coletivasData[key]||[]).length > 0) jaTinhaConteudo = true;
   });
   if (jaTinhaConteudo && !confirm('Já existe conteúdo em algum desses dias — colar vai SUBSTITUIR (não vai somar). Continuar?')) return;
 
   Object.keys(parsed).forEach(diaIdx => {
-    const key = coletivasDateKey(datasAlvo[Number(diaIdx)]);
+    const key = coletivasDateKey(dataDe(diaIdx));
     coletivasData[key] = parsed[diaIdx];
   });
 
@@ -2768,7 +2835,8 @@ function coletivasAplicarColar(){
   coletivasMarcarSujo();
   coletivasFecharColar();
   renderColetivas();
-  notify('✅ ' + diasEncontrados + ' dia(s) preenchido(s). Dá uma conferida no board (alguns formatos atípicos podem precisar de ajuste manual) e clica em "Salvar" quando estiver ok.');
+  const st = _colStats || {ok:0,novos:[]};
+  notify('✅ ' + diasEncontrados + ' dia(s) preenchido(s) · ' + st.ok + ' exercício(s) do banco' + (st.novos.length ? ' · ' + st.novos.length + ' fora do banco (marcados com ＋)' : '') + '. Confira e clique em "Salvar".');
 }
 
 async function mbSalvarAulasColetivas(){
@@ -3097,11 +3165,6 @@ function kbModalBody(did,bi,i){
       <div class="fld"><span class="lbl">Categoria</span><button type="button" class="mv-catbtn" value="${escAttr(cat)}" onclick="mvAbrirParaInput(document.getElementById('kbex-nome'))" title="Escolher: grupo › categoria › exercício">${escAttr(mvBtnLabel(cat))}</button></div>
       <div class="fld"><span class="lbl">Exercício</span><div style="display:flex;gap:6px"><input type="text" id="kbex-nome" list="ex-datalist" style="flex:1;min-width:0" value="${escAttr(ex.nome||'')}" placeholder="Digite ou escolha do banco…" oninput="kbSetExField('${did}',${bi},${i},'nome',this.value)"/><button type="button" class="btn bs" style="padding:5px 10px;flex-shrink:0" onclick="kbGavToggle()" title="Gaveta com todos os exercícios, por categoria (marque vários)">🗂️</button></div></div>
     </div>
-    <div id="kbex-gav" class="kb-gav" style="display:none">
-      <input type="search" class="kb-gav-q" placeholder="Filtrar a gaveta…" oninput="kbGavFiltro(this.value)"/>
-      <div class="kb-gav-wrap"><div class="kb-gav-box">${kbGavetaHTML()}</div><div class="kb-gav-prev" id="kbex-gav-prev"></div></div>
-      <div class="kb-gav-foot"><button type="button" class="btn bp" id="kbex-gav-add" style="flex:1" onclick="kbGavAplicar()" disabled>Marque exercícios</button><button type="button" class="btn bs" onclick="kbGavLimpar()">Limpar</button></div>
-    </div>
     <div class="fld" style="margin-top:8px">
       <span class="lbl">URL do vídeo (se não estiver no banco)</span>
       <div style="display:flex;gap:6px">
@@ -3144,41 +3207,52 @@ function mvGrupos(){
 function mvNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
 function mvBtnLabel(cat){return cat?cat:'📂 Escolher';}
 let _mv=null,_mvUlt={g:null,c:null};
+// Seletor em 3 colunas (cascata): Grupo › Subgrupo › Exercício. No celular vira passo a passo (‹ Voltar).
+// Modo unitário: opt.onPick(nome,cat). Modo em massa: opt.onMulti(nomes[]) com marcação e ordem dos cliques.
 function mvAbrir(opt){
   opt=opt||{};
   const atual=opt.atual||'',catAt=catDoExercicio(atual),gs=mvGrupos();
-  _mv={onPick:opt.onPick,atual:atual,q:'',g:null,c:null,titulo:opt.titulo||'Escolher exercício'};
-  if(catAt){_mv.g=mvGrupoDe(catAt);_mv.c=catAt;}
-  else if(_mvUlt.g&&gs.some(x=>x.k===_mvUlt.g)){_mv.g=_mvUlt.g;_mv.c=_mvUlt.c;}
-  else{_mv.g=gs[0]?gs[0].k:null;_mv.c=null;}
+  _mv={onPick:opt.onPick,onMulti:opt.onMulti,multi:!!opt.onMulti,sel:[],atual:atual,q:'',g:null,c:null,step:1,titulo:opt.titulo||(opt.onMulti?'Adicionar exercícios':'Escolher exercício')};
+  if(catAt){_mv.g=mvGrupoDe(catAt);_mv.c=catAt;_mv.step=3;}
+  else if(_mvUlt.g&&gs.some(x=>x.k===_mvUlt.g)){_mv.g=_mvUlt.g;_mv.c=_mvUlt.c;_mv.step=_mvUlt.c?3:2;}
+  else{_mv.g=gs[0]?gs[0].k:null;_mv.c=null;_mv.step=1;}
   const old=document.getElementById('mv-ov');if(old)old.remove();
   const ov=document.createElement('div');ov.id='mv-ov';ov.className='mv-ov';
-  ov.innerHTML='<div class="mv-sheet" role="dialog" aria-modal="true"><div class="mv-hd"><span id="mv-tit"></span><button type="button" class="bic" onclick="mvFechar()" aria-label="Fechar">×</button></div><input type="search" id="mv-q" class="mv-q" placeholder="Buscar em todos os exercícios…" autocomplete="off"/><div class="mv-crumb" id="mv-crumb"></div><div class="mv-chips" id="mv-gr"></div><div class="mv-chips mv-chips2" id="mv-ct"></div><div class="mv-lista" id="mv-ls"></div></div>';
+  ov.innerHTML='<div class="mv-sheet mv-wide" role="dialog" aria-modal="true"><div class="mv-hd"><span id="mv-tit"></span><button type="button" class="bic" onclick="mvFechar()" aria-label="Fechar">×</button></div><input type="search" id="mv-q" class="mv-q" placeholder="Buscar em todos os exercícios…" autocomplete="off"/><div class="mv-crumb" id="mv-crumb"></div><div class="mv-cols" id="mv-cols"><div class="mv-c1" id="mv-gr"></div><div class="mv-c2" id="mv-ct"></div><div class="mv-c3" id="mv-ls"></div></div><div class="mv-foot" id="mv-ft" style="display:none"></div></div>';
   document.body.appendChild(ov);
   ov.addEventListener('click',function(e){
     if(e.target===ov){mvFechar();return;}
     const b=e.target.closest('[data-mv]');if(!b||!_mv)return;
     const t=b.dataset.mv;
-    if(t==='g'){_mv.g=b.dataset.k;_mv.c=null;mvRender();}
-    else if(t==='c'){_mv.c=b.dataset.k||null;mvRender();}
+    if(t==='g'){_mv.g=b.dataset.k;_mv.c=null;_mv.step=2;mvRender(true);}
+    else if(t==='c'){_mv.c=b.dataset.k||null;_mv.step=3;mvRender(true);}
+    else if(t==='back'){_mv.step=Math.max(1,_mv.step-1);mvRender();}
     else if(t==='x'){mvEscolher(b.dataset.n);}
+    else if(t==='clr'){_mv.sel=[];mvRender();}
+    else if(t==='ok'){mvConfirmar();}
   });
   ov.addEventListener('keydown',function(e){if(e.key==='Escape')mvFechar();});
   const q=document.getElementById('mv-q');
-  q.addEventListener('input',function(){if(_mv){_mv.q=q.value;mvRender();}});
+  q.addEventListener('input',function(){if(_mv){_mv.q=q.value;mvRender(true);}});
   q.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();const p=document.querySelector('#mv-ls .mv-it');if(p)p.click();}});
-  mvRender();
+  mvRender(true);
   if(window.matchMedia&&window.matchMedia('(hover:hover)').matches)setTimeout(function(){q.focus();},30);
   const cur=document.querySelector('#mv-ls .mv-it.cur');if(cur&&cur.scrollIntoView)cur.scrollIntoView({block:'center'});
 }
-function mvItem(n,tag,cur){return '<button type="button" class="mv-it'+(cur?' cur':'')+'" data-mv="x" data-n="'+escAttr(n)+'"><span>'+escAttr(n)+'</span>'+(tag?'<i>'+escAttr(tag)+'</i>':'')+'</button>';}
-function mvRender(){
+function mvItem(n,tag,cur){
+  const k=_mv&&_mv.multi?_mv.sel.indexOf(n):-1;
+  return '<button type="button" class="mv-it'+(cur?' cur':'')+(k>=0?' sel':'')+'" data-mv="x" data-n="'+escAttr(n)+'">'+(_mv&&_mv.multi?'<b class="mv-ck">'+(k>=0?(k+1):'')+'</b>':'')+'<span>'+escAttr(n)+'</span>'+(tag?'<i>'+escAttr(tag)+'</i>':'')+'</button>';
+}
+function mvRow(t,k,label,count,on){return '<button type="button" class="mv-r'+(on?' on':'')+'" data-mv="'+t+'" data-k="'+escAttr(k)+'"><span>'+escAttr(label)+'</span><small>'+count+' ›</small></button>';}
+function mvRender(topo){
   if(!_mv)return;
   const gs=mvGrupos(),q=mvNorm(_mv.q.trim());
-  const gr=document.getElementById('mv-gr'),ct=document.getElementById('mv-ct'),ls=document.getElementById('mv-ls'),cr=document.getElementById('mv-crumb');
+  const cols=document.getElementById('mv-cols'),gr=document.getElementById('mv-gr'),ct=document.getElementById('mv-ct'),ls=document.getElementById('mv-ls'),cr=document.getElementById('mv-crumb');
+  const top=ls.scrollTop;
   document.getElementById('mv-tit').textContent=_mv.titulo;
+  mvFooter();
   if(q){
-    gr.style.display='none';ct.style.display='none';cr.textContent='Resultados em todos os grupos';
+    cols.classList.add('busca');cr.textContent='Resultados em todos os grupos';
     const res=[];
     Object.keys(REP).forEach(function(cat){(REP[cat]||[]).forEach(function(e){
       const n=mvNorm(e.n+' '+(e.nome_pt||'')+' '+(e.nome_en||''));
@@ -3186,24 +3260,40 @@ function mvRender(){
     });});
     res.sort(function(a,b){return (b.ini-a.ini)||a.n.localeCompare(b.n);});
     let h=res.slice(0,80).map(function(r){return mvItem(r.n,mvCatNome(r.cat),r.n===_mv.atual);}).join('');
-    if(!res.some(function(r){return mvNorm(r.n)===q;}))h+='<button type="button" class="mv-it mv-livre" data-mv="x" data-n="'+escAttr(_mv.q.trim())+'">＋ Usar “'+escAttr(_mv.q.trim())+'” (exercício livre)</button>';
-    ls.innerHTML=h;return;
+    if(!_mv.multi&&!res.some(function(r){return mvNorm(r.n)===q;}))h+='<button type="button" class="mv-it mv-livre" data-mv="x" data-n="'+escAttr(_mv.q.trim())+'"><span>＋ Usar “'+escAttr(_mv.q.trim())+'” (exercício livre)</span></button>';
+    ls.innerHTML=h;ls.scrollTop=topo?0:top;return;
   }
-  gr.style.display='';ct.style.display='';
+  cols.classList.remove('busca');
   const g=gs.find(function(x){return x.k===_mv.g;})||gs[0];
   if(!g){ls.innerHTML='<div class="mv-vazio">O banco de exercícios está vazio.</div>';return;}
   _mv.g=g.k;if(_mv.c&&g.cats.indexOf(_mv.c)<0)_mv.c=null;
-  gr.innerHTML=gs.map(function(x){return '<button type="button" class="mv-chip'+(x.k===g.k?' on':'')+'" data-mv="g" data-k="'+escAttr(x.k)+'">'+(x.k==='•'?'':x.k+' ')+x.n+'<small>'+x.total+'</small></button>';}).join('');
-  ct.innerHTML='<button type="button" class="mv-chip'+(!_mv.c?' on':'')+'" data-mv="c" data-k="">Todas</button>'+g.cats.map(function(c){return '<button type="button" class="mv-chip'+(c===_mv.c?' on':'')+'" data-mv="c" data-k="'+escAttr(c)+'">'+escAttr(mvCatNome(c))+'<small>'+(REP[c]||[]).length+'</small></button>';}).join('');
-  cr.textContent=g.n+(_mv.c?' › '+mvCatNome(_mv.c):' › todas as categorias');
+  cols.dataset.step=_mv.step;
+  gr.innerHTML=gs.map(function(x){return mvRow('g',x.k,(x.k==='•'?'':x.k+' ')+x.n,x.total,x.k===g.k);}).join('');
+  ct.innerHTML=mvRow('c','','Todos',g.total,!_mv.c)+g.cats.map(function(c){return mvRow('c',c,mvCatNome(c),(REP[c]||[]).length,c===_mv.c);}).join('');
+  cr.innerHTML=(_mv.step>1?'<button type="button" class="mv-back" data-mv="back">‹ Voltar</button>':'')+escAttr(g.n)+(_mv.c?' › '+escAttr(mvCatNome(_mv.c)):' › todos');
   const cats=_mv.c?[_mv.c]:g.cats;let h='';
   cats.forEach(function(c){
     if(!_mv.c&&cats.length>1)h+='<div class="mv-sec">'+escAttr(mvCatNome(c))+'</div>';
     (REP[c]||[]).forEach(function(e){h+=mvItem(e.n,'',e.n===_mv.atual);});
   });
-  ls.innerHTML=h||'<div class="mv-vazio">Nenhum exercício nesta categoria.</div>';
+  ls.innerHTML=h||'<div class="mv-vazio">Nenhum exercício aqui.</div>';
+  ls.scrollTop=topo?0:top;
+}
+function mvFooter(){
+  const f=document.getElementById('mv-ft');if(!f||!_mv)return;
+  if(!_mv.multi){f.style.display='none';return;}
+  const n=_mv.sel.length;f.style.display='flex';
+  f.innerHTML='<span class="mv-fn">'+(n?n+(n===1?' marcado':' marcados')+' · na ordem dos cliques':'Toque nos exercícios para marcar')+'</span><button type="button" class="btn bs" data-mv="clr"'+(n?'':' disabled')+'>Limpar</button><button type="button" class="btn bp" data-mv="ok"'+(n?'':' disabled')+'>＋ Adicionar'+(n?' '+n:'')+'</button>';
+}
+function mvConfirmar(){
+  if(!_mv||!_mv.multi||!_mv.sel.length)return;
+  const cb=_mv.onMulti,nomes=_mv.sel.slice(),cat=catDoExercicio(nomes[nomes.length-1]);
+  _mvUlt=cat?{g:mvGrupoDe(cat),c:cat}:{g:_mv.g,c:_mv.c};
+  mvFechar();
+  if(cb)cb(nomes);
 }
 function mvEscolher(n){
+  if(_mv&&_mv.multi){const k=_mv.sel.indexOf(n);if(k>=0)_mv.sel.splice(k,1);else if(n)_mv.sel.push(n);mvRender();return;}
   const cb=_mv&&_mv.onPick,cat=catDoExercicio(n);
   _mvUlt=cat?{g:mvGrupoDe(cat),c:cat}:{g:_mv?_mv.g:null,c:_mv?_mv.c:null};
   mvFechar();
@@ -3240,54 +3330,9 @@ function mvCatCascata(sel){
   g.addEventListener('change',function(){fill('');sel.dispatchEvent(new Event('change',{bubbles:true}));});
   sel.parentNode.insertBefore(g,sel);
 }
-// Gaveta de exercícios do Quadro: grupo › categoria › exercícios, com seleção múltipla.
-function kbGavetaHTML(){
-  let h='';
-  mvGrupos().forEach(function(g){
-    let inner='';
-    g.cats.forEach(function(cat){
-      const exs=REP[cat];if(!exs||!exs.length)return;
-      inner+='<details class="kb-gav-cat"><summary>'+escAttr(cat)+' <span class="kb-gav-n">'+exs.length+'</span></summary>';
-      exs.forEach(function(e){inner+='<label class="kb-gav-it"><input type="checkbox" data-n="'+escAttr(e.n)+'" onchange="kbGavCont(this)"/><span>'+escAttr(e.n)+'</span></label>';});
-      inner+='</details>';
-    });
-    if(inner)h+='<details class="kb-gav-grp"><summary>'+(g.k==='•'?'':g.k+' ')+g.n+' <span class="kb-gav-n">'+g.total+'</span></summary>'+inner+'</details>';
-  });
-  return h;
-}
+// Gaveta do Quadro (em massa): usa o mesmo seletor em 3 colunas, com marcação múltipla na ordem dos cliques.
 let _kbGavOrd=[];
-function kbGavToggle(){const g=document.getElementById('kbex-gav');if(!g)return;g.style.display=g.style.display==='none'?'block':'none';if(g.style.display==='block')kbGavPrev();}
-function kbGavCont(el){
-  if(el&&el.dataset){const n=el.dataset.n;_kbGavOrd=_kbGavOrd.filter(x=>x!==n);if(el.checked)_kbGavOrd.push(n);}
-  const n=_kbGavOrd.length;
-  const b=document.getElementById('kbex-gav-add');if(b){b.disabled=!n;b.textContent=n?('＋ Adicionar '+n+(n===1?' exercício':' exercícios')):'Marque exercícios';}
-  kbGavPrev();
-}
-function kbGavLimpar(){_kbGavOrd=[];document.querySelectorAll('#kbex-gav input[type=checkbox]:checked').forEach(c=>{c.checked=false;});kbGavCont();}
-function kbGavRem(n){const c=[...document.querySelectorAll('#kbex-gav input[type=checkbox]')].find(x=>x.dataset.n===n);if(c)c.checked=false;_kbGavOrd=_kbGavOrd.filter(x=>x!==n);kbGavCont();}
-// Prévia ao lado: exercícios que já estão no bloco + os marcados, na ordem exata em que vão entrar.
-function kbGavPrev(){
-  const p=document.getElementById('kbex-gav-prev');if(!p||!_kbExAtual)return;
-  const b=fBloco(_kbExAtual.did,_kbExAtual.bi);if(!b)return;
-  const at=_kbExAtual.i,ex=(b.exercicios||[]).map(e=>({n:e.nome||'',nw:false}));
-  const pend=_kbGavOrd.map(n=>({n:n,nw:true}));
-  if(pend.length){if(!ex[at]||ex[at].n)ex.splice(at+1,0,...pend);else{ex[at]=pend[0];ex.splice(at+1,0,...pend.slice(1));}}
-  p.innerHTML='<div class="p-h">Neste bloco · '+ex.length+'</div>'+ex.map((e,k)=>'<div class="p-i'+(e.nw?' new':'')+'"><span class="p-n">'+(k+1)+'.</span><span class="p-t">'+escAttr(e.n||'(novo)')+'</span>'+(e.nw?'<button type="button" class="p-x" data-n="'+escAttr(e.n)+'" onclick="kbGavRem(this.dataset.n)" title="Tirar">×</button>':'')+'</div>').join('');
-}
-function kbGavFiltro(q){
-  q=(q||'').toLowerCase().trim();
-  document.querySelectorAll('#kbex-gav .kb-gav-cat').forEach(d=>{
-    let achou=0;
-    d.querySelectorAll('.kb-gav-it').forEach(l=>{const ok=!q||l.textContent.toLowerCase().includes(q);l.style.display=ok?'':'none';if(ok)achou++;});
-    d.style.display=achou?'':'none';
-    d.open=!!q&&achou>0;
-  });
-  document.querySelectorAll('#kbex-gav .kb-gav-grp').forEach(g=>{
-    const vis=[...g.querySelectorAll('.kb-gav-cat')].some(d=>d.style.display!=='none');
-    g.style.display=vis?'':'none';
-    g.open=!!q&&vis;
-  });
-}
+function kbGavToggle(){mvAbrir({titulo:'Adicionar vários exercícios',onMulti:function(nomes){_kbGavOrd=nomes.slice();kbGavAplicar();}});}
 function kbGavAplicar(){
   if(!_kbExAtual)return;
   const{did,bi,i}=_kbExAtual;
