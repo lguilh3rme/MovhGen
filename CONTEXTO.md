@@ -1,4 +1,4 @@
-# MOVH — Contexto v49 (23/10/2026)
+# MOVH — Contexto v50 (25/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -118,6 +118,13 @@ v49 (23/10, noite): feedback de aluno + pedidos do usuário, tudo no app do alun
 - ATUALIZAÇÃO AUTOMÁTICA: `tools/export_app.js` troca `__MOVH_BUILD__` por um hash do conteúdo e grava `version.json` ao lado da saída. O app (`aChecarVersao`) busca `version.json` (no-store) ao carregar (3 s), ao voltar para a aba, no `pageshow` e a cada 10 min; se o carimbo for diferente e o aluno não estiver digitando, faz `location.reload()` (1x por versão, guarda em sessionStorage). Sempre copiar `version.json` junto com `index.html` para o repo `movh`. CONFERIR antes do merge: `version.json` do `movh` == `A_BUILD` do `index.html` (`grep -o "A_BUILD = '[a-f0-9]*'" index.html`). Testes que mexem em `version.json` devem usar CÓPIA do diretório de saída, não o arquivo exportado (na v49 um teste sobrescreveu o carimbo e foi preciso um 2º deploy). No Gerador/prévia (placeholder não substituído) não faz nada.
 - Créditos Netlify do app: 104 antes desta rodada; 1 deploy (15) → ~89.
 - Testes: `tools/tests/` sem falhas novas; teste próprio do badge/aviso/auto-update (stub, http local) passou.
+
+v50 (25/10): LINK PÚBLICO DAS COLETIVAS `https://movh.netlify.app/coletivas` (sem login, só leitura).
+- Rota: `aEhRotaColetivas()` (caminho termina em /coletivas, sem diferenciar caixa/barra final, ou `?coletivas=1`) → `aBootColetivas()` no `aBoot` (só sem sessão): esconde cabeçalho/dashboard, mostra só `#tColetivas` (sem "voltar"), botão "Fazer o registro" leva a `/?bemvindo=1` (`aBaseApp()`; antes usava o pathname, que voltaria para /coletivas).
+- Dados: RPC `get_coletivas_publico()` (SECURITY DEFINER, devolve `aulas_coletivas.dados` da linha mais recente; EXECUTE para anon). SQL está no script do Gerador (Publicar app → SQL) e precisa rodar no Supabase UMA vez. Sem o SQL, a página mostra "Não foi possível carregar as aulas coletivas".
+- Netlify: repo `movh` ganhou `_redirects` (`/coletivas /index.html 200`, também com barra final). O `_redirects` NÃO é gerado pelo export: fica no repo do app, não apagar.
+- Gerador: botão "🔗 Copiar link" na página Aulas Coletivas (usa a URL do app em Planos, senão movh.netlify.app).
+- Tudo que o professor publica nas coletivas fica visível a quem tiver o link (é público de propósito). Testes: `tools/tests` sem falha nova; teste próprio (rota, RPC, erro, /Coletivas/, ?coletivas=1, registro, raiz intacta) passou com servidor local que simula o rewrite.
 
 v48e (21-23/10, diagnóstico): app v48d CONFIRMADO no ar (Netlify movh, deploy #22 publicado 18:35; 104 créditos restantes). Pix só apareceu para o aluno depois de: (a) rodar no Supabase `CREATE POLICY "aluno le landing" ON landing_config FOR SELECT TO authenticated USING (true)` e (b) o Gerador republicar (status "✅ Pix ativo e publicado"). Se o Pix sumir do modal, checar `landing_config.config.pix` (ativo + itens com chave) e essa policy. Modal de Renovar = planos + forma de pagamento (Pix/Cartão).
 PENDENTE: cabeçalho (relógio/aviso/Sair, `.toprow`) "não desce junto" segundo o usuário. Teste Playwright (390 e 1366 px) mostra `.toprow` static e rolando junto (top 0 → -700). Antes do v48d só o preview-mode era sticky; o normal já era static. Precisa do print da tela rolada e do `getComputedStyle(#treinoScreen .toprow).position` do navegador do usuário (Firefox-like). Hipótese: a rolagem ocorre em outro elemento, ou o usuário se refere a outro bloco (ex.: aviso na Home).
