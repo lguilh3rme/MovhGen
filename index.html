@@ -618,10 +618,17 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
 .mv-it:hover,.mv-it:focus{background:var(--card);outline:none}.mv-it.cur{background:var(--Pl);color:var(--Pd)}.mv-it.sel{background:var(--Pl);color:var(--Pd)}
 .mv-ck{flex:0 0 18px;height:18px;border:1.5px solid var(--bd2);border-radius:5px;font-size:10px;line-height:15px;text-align:center;font-weight:800}
 .mv-it.sel .mv-ck{background:var(--P);border-color:var(--P);color:#fff}
+.mv-cols.mv-multi{grid-template-columns:140px 190px 1fr 200px}.mv-cols.mv-multi.busca{grid-template-columns:1fr 200px}
+.mv-pv{border-left:1px solid var(--bd2);background:var(--card);font-size:11.5px;padding:6px 8px!important}
+.mv-pv .p-h{font-size:9.5px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.mv-pv .p-i{display:flex;gap:5px;align-items:baseline;padding:2px 4px;color:var(--t2);line-height:1.3}
+.mv-pv .p-i.new{color:var(--Pd);font-weight:700;background:var(--Pl);border-radius:5px}
+.mv-pv .p-n{opacity:.6;flex:0 0 auto}.mv-pv .p-t{flex:1;min-width:0}
+.mv-pv .p-x{margin-left:auto;cursor:pointer;color:var(--t3);border:none;background:none;padding:0 2px;font-size:14px;line-height:1}
 .mv-foot{display:flex;gap:8px;align-items:center;padding:8px 12px;border-top:1px solid var(--bd2)}.mv-fn{flex:1;font-size:11.5px;color:var(--t2)}
 .mv-back{display:none;border:none;background:none;color:var(--P);font-weight:800;font-size:12px;cursor:pointer;margin-right:8px;font-family:inherit}
 .cl-ib.cl-new{color:var(--P);border-style:dashed}
-@media(max-width:640px){.mv-sheet.mv-wide{height:92vh;max-height:92vh}.mv-cols{grid-template-columns:1fr}.mv-cols>div{display:none;border-right:none}.mv-cols[data-step="1"]>.mv-c1,.mv-cols[data-step="2"]>.mv-c2,.mv-cols[data-step="3"]>.mv-c3,.mv-cols.busca>.mv-c3{display:block}.mv-back{display:inline-block}.mv-r,.mv-it{padding:11px 8px;font-size:13.5px}}
+@media(max-width:640px){.mv-cols.mv-multi{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.mv-cols.mv-multi>.mv-pv{display:block;max-height:100px;border-left:none;border-top:1px solid var(--bd2)}.mv-sheet.mv-wide{height:92vh;max-height:92vh}.mv-cols{grid-template-columns:1fr}.mv-cols>div{display:none;border-right:none}.mv-cols[data-step="1"]>.mv-c1,.mv-cols[data-step="2"]>.mv-c2,.mv-cols[data-step="3"]>.mv-c3,.mv-cols.busca>.mv-c3{display:block}.mv-back{display:inline-block}.mv-r,.mv-it{padding:11px 8px;font-size:13.5px}}
 .mv-sec{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);padding:10px 8px 3px}
 .mv-it.cur{background:var(--Pl);color:var(--Pd)}
 .mv-it i{font-style:normal;font-size:10.5px;color:var(--t3);font-weight:600;white-space:nowrap}
@@ -659,7 +666,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v52 · 25/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v53 · 25/10</div>
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
@@ -790,9 +797,9 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="modal" style="max-width:560px">
     <h3 style="margin-bottom:4px">📋 Colar treino</h3>
     <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.5">
-      Cola o texto no formato: uma linha <b>"Treino A"</b> pra começar o dia, depois o nome do exercício numa linha e a série na linha seguinte (ex: <code>3x 8 a 10</code>). Cada "Treino X" novo vira um dia. Vídeos são preenchidos depois com o botão "🔄 Sincronizar exercícios com banco".
+      Cada <b>"Treino A"</b>, "Dia 1" ou dia da semana vira um dia. Aceita nome numa linha e <code>3x 8 a 10</code> na seguinte, ou tudo em uma linha (<code>Supino 3x10</code>), seções (Ativação, Força, Condicionamento), A1/A2 como conjugado; EMOM/For time viram observação do bloco. Os nomes são casados com o banco e já puxam o vídeo.
     </div>
-    <textarea id="mb-colar-treino-texto" rows="14" placeholder="Treino A&#10;Levantamento Terra Sumô&#10;3x 8 a 10 / 1'30&quot; descanso&#10;Elevação de Quadril na Máquina&#10;3x 10 a 12- 1' rest&#10;&#10;Treino B&#10;..." style="width:100%;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)" oninput="mbPreviewColarTreino()"></textarea>
+    <textarea id="mb-colar-treino-texto" oninput="mbPreviewColarTreino()" rows="14" placeholder="Treino A&#10;Levantamento Terra Sumô&#10;3x 8 a 10 / 1'30&quot; descanso&#10;Elevação de Quadril na Máquina&#10;3x 10 a 12- 1' rest&#10;&#10;Treino B&#10;..." style="width:100%;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)" oninput="mbPreviewColarTreino()"></textarea>
     <div id="mb-colar-treino-preview" style="font-size:11px;color:var(--t2);margin-top:8px;line-height:1.6"></div>
     <div class="mfoot">
       <button class="btn bp" onclick="mbAplicarColarTreino()">✓ Aplicar</button>
@@ -2555,7 +2562,7 @@ function renderColetivasBloco(dia, i, b, total){
     (!isC ? '<label class="cl-conj"><input type="checkbox"' + (b.conjugado ? ' checked' : '') + ' onchange="coletivasSetBloco(' + q + ',\'conjugado\',this.checked)"/>Conj.</label>' + (b.conjugado ? '<input type="text" class="cl-exs" placeholder="Séries" title="Séries do conjugado" value="' + escAttr(b.series || '') + '" oninput="coletivasSetBloco(' + q + ',\'series\',this.value)"/>' : '') : '') +
     '<button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',-1)" title="Subir bloco"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',1)" title="Descer bloco"' + (i === total - 1 ? ' disabled' : '') + '>↓</button>' +
     '<button type="button" class="cl-ib" onclick="coletivasDupBloco(' + q + ')" title="Duplicar bloco">⧉</button><button type="button" class="cl-ib x" onclick="coletivasRemoverBloco(' + q + ')" title="Remover bloco">×</button></div>' +
-    (isC ? '<div class="cl-row2"><input type="text" placeholder="Formato (ex.: AMRAP 15min, EMOM 12min)" value="' + escAttr(b.formato || '') + '" oninput="coletivasSetBloco(' + q + ',\'formato\',this.value)"/><input type="text" placeholder="Materiais" value="' + escAttr(b.materiais || '') + '" oninput="coletivasSetBloco(' + q + ',\'materiais\',this.value)"/></div>' : exs + '<button type="button" class="cl-addex" onclick="coletivasAddEx(' + q + ')">＋ exercício</button>') +
+    (isC ? '<div class="cl-row2"><input type="text" placeholder="Formato (ex.: AMRAP 15min, EMOM 12min)" value="' + escAttr(b.formato || '') + '" oninput="coletivasSetBloco(' + q + ',\'formato\',this.value)"/><input type="text" placeholder="Materiais" value="' + escAttr(b.materiais || '') + '" oninput="coletivasSetBloco(' + q + ',\'materiais\',this.value)"/></div>' : exs + '<button type="button" class="cl-addex" onclick="coletivasAddEx(' + q + ')">＋ exercício</button><button type="button" class="cl-addex" onclick="coletivasAddVarios(' + q + ')">📂 vários</button>') +
     '<textarea class="cl-ta" data-min="' + (isC ? 170 : 70) + '" placeholder="' + (isC ? 'Descreva o treino completo: rounds, movimentos, cargas, tempos, variações, escalas…' : 'Descrição, instruções, cargas, observações do bloco (aparece para o aluno)…') + '" oninput="coletivasAuto(this);coletivasSetBloco(' + q + ',\'detalhes\',this.value)">' + escAttr(b.detalhes || '') + '</textarea></div>';
 }
 function coletivasMoverBloco(dia, i, dir){ const a = coletivasData[dia], j = i + dir; if (j < 0 || j >= a.length) return; const t = a[i]; a[i] = a[j]; a[j] = t; renderColetivas(); coletivasMarcarSujo(); }
@@ -2599,6 +2606,14 @@ function coletivasRemoverBloco(dia,i){
   coletivasData[dia].splice(i,1);
   renderColetivas();
   coletivasMarcarSujo();
+}
+function coletivasAddVarios(dia,i){
+  const b=coletivasData[dia]&&coletivasData[dia][i];if(!b)return;
+  mvAbrir({titulo:'Adicionar vários exercícios',base:(b.exercicios||[]).map(function(e){return e.nome||'';}),onMulti:function(nomes){
+    const ex=b.exercicios||(b.exercicios=[]);
+    nomes.forEach(function(n){if(ex.length&&!ex[ex.length-1].nome&&!ex[ex.length-1].reps&&!ex[ex.length-1].series)ex[ex.length-1].nome=n;else ex.push({nome:n,series:'',reps:''});});
+    renderColetivas();coletivasMarcarSujo();
+  }});
 }
 function coletivasAddEx(dia,i){
   coletivasData[dia][i].exercicios.push({nome:'', series:'', reps:''});
@@ -2908,6 +2923,7 @@ function renderKanbanSemana(sid){
         ${exs.length?kbRenderExGrupo(d.id,bi,exs,b.conjGroups):(isCon?'':'<div class="kb-vazio">Sem exercícios ainda.</div>')}
         <div style="display:flex;gap:4px">
           <button class="kb-add" style="flex:1" onclick="kbAddEx('${d.id}',${bi})">+ exercício</button>
+          <button class="kb-add" style="flex:1" onclick="addExVarios('${d.id}',${bi})" title="Vários de uma vez">📂 vários</button>
           <button class="kb-add" style="flex:1;color:var(--Pd);border-color:var(--P)" onclick="kbAddCJPar('${d.id}',${bi})">🔗 conjugado</button>
         </div>
       </div>`;
@@ -3212,14 +3228,15 @@ let _mv=null,_mvUlt={g:null,c:null};
 function mvAbrir(opt){
   opt=opt||{};
   const atual=opt.atual||'',catAt=catDoExercicio(atual),gs=mvGrupos();
-  _mv={onPick:opt.onPick,onMulti:opt.onMulti,multi:!!opt.onMulti,sel:[],atual:atual,q:'',g:null,c:null,step:1,titulo:opt.titulo||(opt.onMulti?'Adicionar exercícios':'Escolher exercício')};
+  _mv={onPick:opt.onPick,onMulti:opt.onMulti,multi:!!opt.onMulti,base:opt.base||[],pos:opt.pos==null?null:opt.pos,sel:[],atual:atual,q:'',g:null,c:null,step:1,titulo:opt.titulo||(opt.onMulti?'Adicionar exercícios':'Escolher exercício')};
   if(catAt){_mv.g=mvGrupoDe(catAt);_mv.c=catAt;_mv.step=3;}
   else if(_mvUlt.g&&gs.some(x=>x.k===_mvUlt.g)){_mv.g=_mvUlt.g;_mv.c=_mvUlt.c;_mv.step=_mvUlt.c?3:2;}
   else{_mv.g=gs[0]?gs[0].k:null;_mv.c=null;_mv.step=1;}
   const old=document.getElementById('mv-ov');if(old)old.remove();
   const ov=document.createElement('div');ov.id='mv-ov';ov.className='mv-ov';
-  ov.innerHTML='<div class="mv-sheet mv-wide" role="dialog" aria-modal="true"><div class="mv-hd"><span id="mv-tit"></span><button type="button" class="bic" onclick="mvFechar()" aria-label="Fechar">×</button></div><input type="search" id="mv-q" class="mv-q" placeholder="Buscar em todos os exercícios…" autocomplete="off"/><div class="mv-crumb" id="mv-crumb"></div><div class="mv-cols" id="mv-cols"><div class="mv-c1" id="mv-gr"></div><div class="mv-c2" id="mv-ct"></div><div class="mv-c3" id="mv-ls"></div></div><div class="mv-foot" id="mv-ft" style="display:none"></div></div>';
+  ov.innerHTML='<div class="mv-sheet mv-wide" role="dialog" aria-modal="true"><div class="mv-hd"><span id="mv-tit"></span><button type="button" class="bic" onclick="mvFechar()" aria-label="Fechar">×</button></div><input type="search" id="mv-q" class="mv-q" placeholder="Buscar em todos os exercícios…" autocomplete="off"/><div class="mv-crumb" id="mv-crumb"></div><div class="mv-cols" id="mv-cols"><div class="mv-c1" id="mv-gr"></div><div class="mv-c2" id="mv-ct"></div><div class="mv-c3" id="mv-ls"></div>'+(_mv.multi?'<div class="mv-pv" id="mv-pv"></div>':'')+'</div><div class="mv-foot" id="mv-ft" style="display:none"></div></div>';
   document.body.appendChild(ov);
+  if(_mv.multi)document.getElementById('mv-cols').classList.add('mv-multi');
   ov.addEventListener('click',function(e){
     if(e.target===ov){mvFechar();return;}
     const b=e.target.closest('[data-mv]');if(!b||!_mv)return;
@@ -3229,6 +3246,7 @@ function mvAbrir(opt){
     else if(t==='back'){_mv.step=Math.max(1,_mv.step-1);mvRender();}
     else if(t==='x'){mvEscolher(b.dataset.n);}
     else if(t==='clr'){_mv.sel=[];mvRender();}
+    else if(t==='rm'){_mv.sel=_mv.sel.filter(function(x){return x!==b.dataset.n;});mvRender();}
     else if(t==='ok'){mvConfirmar();}
   });
   ov.addEventListener('keydown',function(e){if(e.key==='Escape')mvFechar();});
@@ -3250,7 +3268,7 @@ function mvRender(topo){
   const cols=document.getElementById('mv-cols'),gr=document.getElementById('mv-gr'),ct=document.getElementById('mv-ct'),ls=document.getElementById('mv-ls'),cr=document.getElementById('mv-crumb');
   const top=ls.scrollTop;
   document.getElementById('mv-tit').textContent=_mv.titulo;
-  mvFooter();
+  mvFooter();mvPreview();
   if(q){
     cols.classList.add('busca');cr.textContent='Resultados em todos os grupos';
     const res=[];
@@ -3284,6 +3302,14 @@ function mvFooter(){
   if(!_mv.multi){f.style.display='none';return;}
   const n=_mv.sel.length;f.style.display='flex';
   f.innerHTML='<span class="mv-fn">'+(n?n+(n===1?' marcado':' marcados')+' · na ordem dos cliques':'Toque nos exercícios para marcar')+'</span><button type="button" class="btn bs" data-mv="clr"'+(n?'':' disabled')+'>Limpar</button><button type="button" class="btn bp" data-mv="ok"'+(n?'':' disabled')+'>＋ Adicionar'+(n?' '+n:'')+'</button>';
+}
+// Prévia ao lado (modo em massa): o que já está no bloco + o que foi marcado, na ordem exata em que vai entrar.
+function mvPreview(){
+  const p=document.getElementById('mv-pv');if(!p||!_mv)return;
+  const ex=(_mv.base||[]).map(function(n){return {n:n,nw:false};}),pend=_mv.sel.map(function(n){return {n:n,nw:true};});
+  const at=_mv.pos==null?ex.length-1:_mv.pos;
+  if(pend.length){if(!ex[at]||ex[at].n)ex.splice.apply(ex,[at+1,0].concat(pend));else{ex[at]=pend[0];ex.splice.apply(ex,[at+1,0].concat(pend.slice(1)));}}
+  p.innerHTML='<div class="p-h">Neste bloco · '+ex.length+'</div>'+ex.map(function(e,k){return '<div class="p-i'+(e.nw?' new':'')+'"><span class="p-n">'+(k+1)+'.</span><span class="p-t">'+escAttr(e.n||'(novo)')+'</span>'+(e.nw?'<button type="button" class="p-x" data-mv="rm" data-n="'+escAttr(e.n)+'" title="Tirar">×</button>':'')+'</div>';}).join('');
 }
 function mvConfirmar(){
   if(!_mv||!_mv.multi||!_mv.sel.length)return;
@@ -3332,7 +3358,7 @@ function mvCatCascata(sel){
 }
 // Gaveta do Quadro (em massa): usa o mesmo seletor em 3 colunas, com marcação múltipla na ordem dos cliques.
 let _kbGavOrd=[];
-function kbGavToggle(){mvAbrir({titulo:'Adicionar vários exercícios',onMulti:function(nomes){_kbGavOrd=nomes.slice();kbGavAplicar();}});}
+function kbGavToggle(){const b=_kbExAtual&&fBloco(_kbExAtual.did,_kbExAtual.bi);mvAbrir({titulo:'Adicionar vários exercícios',base:b?(b.exercicios||[]).map(function(e){return e.nome||'';}):[],pos:_kbExAtual?_kbExAtual.i:null,onMulti:function(nomes){_kbGavOrd=nomes.slice();kbGavAplicar();}});}
 function kbGavAplicar(){
   if(!_kbExAtual)return;
   const{did,bi,i}=_kbExAtual;
@@ -3897,33 +3923,64 @@ function mbParsearLinhaExercicioTreino(linha){
   if (m) return { series: m[1], reps: m[2].trim() };
   return null;
 }
+// Entende "Treino A", "Dia 1", Segunda/Terça…/SEG…; dentro do dia aceita (1) o formato antigo, nome numa linha e
+// "3x 8 a 10" na seguinte, ou (2) o estilo livre das coletivas: seções (Ativação, Força…), "Supino 3x10",
+// A1/A2 = conjugado, EMOM/For time viram observação do bloco. Nomes são trocados pelos do banco (vídeo automático).
+const MB_DIAS_PT = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
+function mbEhFormatoPares(ls){
+  const spec = l => !!mbParsearLinhaExercicioTreino(l);
+  if (!ls.some(spec)) return false;
+  if (ls.some(l => !spec(l) && /\d+\s*[x×]\s*\d/.test(l))) return false;
+  return ls.every((l,i) => !spec(l) || (i > 0 && !spec(ls[i-1])));
+}
+function mbExProto(e, cj){
+  const sr = (e.series && e.reps) ? (e.series + '×' + e.reps) : (e.reps || e.series || '');
+  return { nome: e.nome, url: getUrl(e.nome) || '', series: sr, rest: '', obs: '', cj: cj != null ? cj : null };
+}
+function mbBlocoDeColetiva(cb){
+  const ativ = /ativa|mobilidade|aquec/i.test(cb.nome || '');
+  const tipo = cb.tipo === 'condicionamento' ? 'con' : (ativ ? 'atv' : 'pri');
+  const b = nb(tipo);
+  if (tipo === 'con') { b.titulo = cb.formato || ''; b.desc = cb.detalhes || ''; return b; }
+  if (tipo === 'pri' && cb.nome) b.nome = cb.nome;
+  b.obs = cb.detalhes || '';
+  if (cb.conjugado) {
+    b.conjGroups[0] = { label: 'Conjugado', rest: '30s', restAfter: '' };
+    b.exercicios = (cb.exercicios || []).map(e => mbExProto({ nome: e.nome, series: cb.series, reps: e.reps }, 0));
+  } else b.exercicios = (cb.exercicios || []).filter(e => e.nome).map(e => mbExProto(e));
+  return b;
+}
+function mbBlocosDoDia(ls){
+  if (!ls.length) return [];
+  if (mbEhFormatoPares(ls)) {
+    const bloco = nb('pri'), exs = [];
+    let pend = null;
+    const push = (nome, spec) => { const a = mvAcharEx(nome); if (a) { nome = a.n; _colStats.ok++; } else if (_colStats.novos.indexOf(nome) < 0) _colStats.novos.push(nome); exs.push(mbExProto({ nome: nome, series: spec ? spec.series : '', reps: spec ? spec.reps : '' })); };
+    ls.forEach(l => {
+      const spec = mbParsearLinhaExercicioTreino(l);
+      if (spec && pend) { push(pend, spec); pend = null; }
+      else { if (pend) push(pend, null); pend = l; }
+    });
+    if (pend) push(pend, null);
+    bloco.exercicios = exs;
+    return [bloco];
+  }
+  return coletivasParsearDia(ls).map(mbBlocoDeColetiva);
+}
 function mbParsearTreinoTexto(texto){
-  const linhas = texto.split('\n').map(l => l.trim()).filter(Boolean);
-  const treinos = {};
-  const ordem = [];
-  let atual = null;
-  let pendente = null;
+  _mvIdx = null; _colStats = { ok:0, novos:[], instr:0 };
   const ignorar = /^(tempo estimado|adicionar exerc|total grupos musculares?|excluir protocolo|editar nome|sem descri|baixar pdf|duplicar protocolo)/i;
-  linhas.forEach(linha => {
-    const mDia = linha.match(/^treino\s+(.+)$/i);
-    if (mDia) {
-      atual = 'Treino ' + mDia[1].trim().toUpperCase();
-      if (!treinos[atual]) { treinos[atual] = []; ordem.push(atual); }
-      pendente = null;
-      return;
+  const dias = []; let atual = null;
+  texto.split('\n').map(l => l.trim()).filter(Boolean).forEach(linha => {
+    if (ignorar.test(linha)) return;
+    const mT = linha.match(/^treino\s+(.+)$/i), mD = mT ? null : linha.match(/^dia\s+(\d+)\b/i), wd = (mT || mD) ? null : colDia(linha);
+    if (mT || mD || wd != null) {
+      atual = { nome: mT ? 'Treino ' + mT[1].trim().toUpperCase() : (mD ? 'Dia ' + mD[1] : MB_DIAS_PT[wd]), diaSemana: wd != null ? MB_DIAS_PT[wd] : '', linhas: [] };
+      dias.push(atual); return;
     }
-    if (!atual || ignorar.test(linha)) return;
-    const spec = mbParsearLinhaExercicioTreino(linha);
-    if (spec && pendente) {
-      treinos[atual].push({ nome: pendente, series: spec.series, reps: spec.reps });
-      pendente = null;
-    } else {
-      if (pendente) treinos[atual].push({ nome: pendente, series: '', reps: '' });
-      pendente = linha;
-    }
+    if (atual) atual.linhas.push(linha);
   });
-  if (pendente && atual) treinos[atual].push({ nome: pendente, series: '', reps: '' });
-  return ordem.map(nome => ({ nome, exercicios: treinos[nome] }));
+  return dias.map(d => ({ nome: d.nome, diaSemana: d.diaSemana, blocos: mbBlocosDoDia(d.linhas) }));
 }
 let mbColarTreinoSemanaId = null;
 function mbAbrirColarTreino(sid){
@@ -3943,7 +4000,8 @@ function mbPreviewColarTreino(){
   const prev = document.getElementById('mb-colar-treino-preview');
   if (!prev) return;
   if (!parsed.length) { prev.textContent = texto.trim() ? '⚠️ Nenhum "Treino X" reconhecido ainda.' : ''; return; }
-  prev.innerHTML = parsed.map(t => `${escAttr(t.nome)} — ${t.exercicios.length} exercício${t.exercicios.length!==1?'s':''}`).join('<br>');
+  const nex = t => t.blocos.reduce((a,b) => a + (b.exercicios||[]).length, 0), st = _colStats;
+  prev.innerHTML = parsed.map(t => `${escAttr(t.nome)}${t.diaSemana && t.diaSemana !== t.nome ? ' ('+t.diaSemana+')' : ''} — ${t.blocos.length} bloco${t.blocos.length!==1?'s':''}, ${nex(t)} exercício${nex(t)!==1?'s':''}`).join('<br>') + `<br>✓ ${st.ok} no banco (vídeo automático) · 📝 ${st.instr} instrução(ões) separada(s)` + (st.novos.length ? `<br>➕ <b>${st.novos.length} fora do banco</b>: ${st.novos.slice(0,10).map(escAttr).join(', ')}${st.novos.length>10?'…':''}` : '');
 }
 function mbAplicarColarTreino(){
   const texto = document.getElementById('mb-colar-treino-texto').value;
@@ -3955,15 +4013,13 @@ function mbAplicarColarTreino(){
   const ns = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
   parsed.forEach(t => {
     const id = s.id + 'd' + dc++;
-    const sugestao = ns[s.dias.length] || '';
-    const bloco = nb('pri');
-    bloco.nome = t.nome;
-    bloco.exercicios = t.exercicios.map(ex => ({ nome: ex.nome, series: ex.series || '', reps: ex.reps || '' }));
-    s.dias.push({ id, nome: t.nome, diaSemana: sugestao, sub: '', blocos: [bloco] });
+    const sugestao = t.diaSemana || ns[s.dias.length] || '';
+    s.dias.push({ id, nome: t.nome, diaSemana: sugestao, sub: '', blocos: t.blocos.length ? t.blocos : [nb('pri')] });
   });
   renderAll();
   mbFecharColarTreino();
-  notify(parsed.length + ' dia(s) criado(s) a partir do texto colado! Ajuste o dia da semana de cada um, confira as séries/reps e clique em "🔄 Sincronizar exercícios com banco" pra puxar os vídeos.');
+  const st = _colStats || { ok:0, novos:[] };
+  notify(parsed.length + ' dia(s) criado(s) · ' + st.ok + ' exercício(s) do banco com vídeo' + (st.novos.length ? ' · ' + st.novos.length + ' fora do banco (sem vídeo)' : '') + '. Confira séries e dia da semana.');
   renderKanbanSemana(s.id);
 }
 function removeDia(sid,did){const s=semanas.find(x=>x.id===sid);if(!s||s.dias.length<=1)return;s.dias=s.dias.filter(d=>d.id!==did);renderAll();nav(semanas[0].dias[0].id);notify('Dia removido.');}
@@ -4406,6 +4462,15 @@ function setSemFase(sid,v){
   }
   renderAll();
 }
+function addExVarios(did,bi){
+  const b=fBloco(did,bi);if(!b)return;
+  mvAbrir({titulo:'Adicionar vários exercícios',base:(b.exercicios||[]).map(function(e){return e.nome||'';}),onMulti:function(nomes){
+    nomes.forEach(function(n){addEx(did,bi);setEx(did,bi,b.exercicios.length-1,'nome',n);});
+    renderExList(did,bi);
+    const sm=semanas.find(function(x){return x.dias.some(function(d){return d.id===did;});});
+    if(sm&&document.getElementById('page-kb-'+sm.id)&&document.getElementById('page-kb-'+sm.id).classList.contains('active'))renderKanbanSemana(sm.id);
+  }});
+}
 function addEx(did,bi,cj){const b=fBloco(did,bi);if(!b)return;const ex={nome:'',url:'',series:'',rest:'',obs:'',cj:cj!=null?cj:null};b.exercicios.push(ex);if(cj!=null&&!b.conjGroups[cj])b.conjGroups[cj]={label:'Conjugado',rest:'30s',restAfter:''};renderExList(did,bi);}
 function rmEx(did,bi,i){fBloco(did,bi)?.exercicios.splice(i,1);renderExList(did,bi);}
 // edição rápida de séries/descanso direto na linha (sincroniza com o detalhe aberto)
@@ -4693,6 +4758,7 @@ function renderDia(did){
           <div class="exl" id="exl-${did}-${bi}"></div>
           <div style="display:${ehPreviewOn(did,bi)?'none':'flex'};gap:5px;flex-wrap:wrap">
             <button class="badd" onclick="addEx('${did}',${bi})">+ exercício</button>
+            <button class="badd" onclick="addExVarios('${did}',${bi})" title="Escolher vários de uma vez, na ordem dos cliques">📂 vários</button>
             <button class="badd conj" onclick="addCJ('${did}',${bi})">🔗 + conjugado</button>
           </div>
         </div>`;
@@ -4764,6 +4830,7 @@ function renderDia(did){
           <div class="exl" id="exl-${did}-${bi}"></div>
           <div style="display:${ehPreviewOn(did,bi)?'none':'flex'};gap:5px;flex-wrap:wrap;margin-bottom:8px">
             <button class="badd" onclick="addEx('${did}',${bi})">+ exercício</button>
+            <button class="badd" onclick="addExVarios('${did}',${bi})" title="Escolher vários de uma vez, na ordem dos cliques">📂 vários</button>
             <button class="badd conj" onclick="addCJ('${did}',${bi})">🔗 + conjugado</button>
           </div>
           <details class="bl-more"${(b.progressaoAuto||b.obs)?' open':''}><summary>⋯ mais opções do bloco</summary>
@@ -10330,6 +10397,8 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .nt-wrap .nt-tx{flex-direction:row;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;min-width:0}
 .nt-wrap .nt-tx i{display:none}
 .nt-wrap .nt-i{font-size:15px}.nt-wrap .nt-go{display:none}
+.tBtnVoltar{display:inline-block;background:var(--Pl)!important;border:1px solid var(--P)!important;border-radius:99px!important;padding:6px 14px!important;margin:0 0 .8rem!important;animation:vhPulse 1.8s ease-in-out infinite}
+@keyframes vhPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--P) 55%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
 .nt-x{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:30px;height:30px;border-radius:50%;border:none;background:transparent;color:inherit;font-size:20px;line-height:1;opacity:.7;cursor:pointer;padding:0}
 </style>
 </head>
@@ -12900,12 +12969,25 @@ function aVerSemanaCompleta(){
   document.getElementById('tProgresso').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
   document.getElementById('tSemanaCompleta').style.display = 'block';
+  aHeaderForcar(true);
 }
 function aVoltarHoje(){
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tProgresso').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
   document.getElementById('tDashboard').style.display = 'block';
+  aHeaderForcar(false);
+}
+// Recolhe sozinho a faixa da semana no topo nas telas em que ela não serve (progresso, semana completa, coletivas) e devolve ao estado anterior ao voltar para hoje.
+function aHeaderForcar(rec){
+  const el = document.getElementById('tHeaderRecolhivel'); if (!el) return;
+  if (rec) {
+    if (window._aHdrPrev == null) window._aHdrPrev = el.style.display === 'none';
+    if (el.style.display !== 'none') aToggleHeader();
+  } else if (window._aHdrPrev != null) {
+    const prev = window._aHdrPrev; window._aHdrPrev = null;
+    if ((el.style.display === 'none') !== prev) aToggleHeader();
+  }
 }
 // Espelha mbAvalMontarPreviewHTML (painel do professor), com labels
 // traduzidos e aEsc no lugar de escAttr. Cai pro texto simples (pre-wrap) se
@@ -13020,7 +13102,7 @@ function aAvalDiagnosticoHTML(v){
 function aMontarAvisoAvaliacao(){
   const solicitada = aAvaliacoesFisicas.find(v => v.status === 'solicitada');
   const emRevisao = aAvaliacoesFisicas.find(v => v.status === 'pendente_revisao');
-  if (solicitada) {
+  if (solicitada && !aNotifFechada('aval', 1)) {
     return '<div style="background:#FFF8E1;border:1px solid #F59E0B;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:#92400E">' +
       '📸 <b>Seu professor pediu uma avaliação física/postural.</b><br>' +
       '<span style="font-size:11px">Envie as fotos pelo app — leva menos de 2 minutos.</span><br>' +
@@ -13246,7 +13328,8 @@ function aVerProgresso(){
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
   document.getElementById('tProgresso').style.display = 'block';
-  document.getElementById('tProgressoConteudo').innerHTML = aMontarAvisoAvaliacao() + aMontarAvisoReteste() + aMontarProgresso() + aMontarTestes();
+  aHeaderForcar(true);
+  document.getElementById('tProgressoConteudo').innerHTML = aMontarAvisoAvaliacao() + (aNotifFechada('cond', 7) ? '' : aMontarAvisoReteste()) + aMontarProgresso() + aMontarTestes();
 }
 
 // Aulas coletivas — tela opcional, só visível se o professor ativou
@@ -13273,6 +13356,7 @@ function aVerColetivas(){
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tProgresso').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'block';
+  aHeaderForcar(true);
   if (!aColetivasSemana) aColetivasSemana = aColetivasSegundaDaSemana(new Date());
   aCarregarColetivas();
 }
