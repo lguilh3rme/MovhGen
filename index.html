@@ -616,6 +616,34 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;padding:8px 10px;resize:vertical;overflow:hidden;border-radius:8px}
 .cl-add{display:flex;gap:8px;flex-wrap:wrap}
 @media(max-width:600px){.cl-row2{grid-template-columns:1fr}.cl-exs{width:50px!important;flex-basis:50px}.cl-day-t{font-size:13px}}
+/* v51 · seletor em cascata */
+.mv-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px}
+.mv-sheet{background:var(--bg);border:1px solid var(--bd2);border-radius:14px;width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.35);overflow:hidden}
+@media(max-width:640px){.mv-ov{align-items:flex-end;padding:0}.mv-sheet{border-radius:16px 16px 0 0;max-height:92vh;width:100%}}
+.mv-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 6px;font-size:14px;font-weight:800}
+.mv-q{margin:0 14px 8px;width:calc(100% - 28px);box-sizing:border-box;font-size:13px;padding:9px 11px}
+.mv-crumb{padding:0 14px 6px;font-size:11px;color:var(--t3);font-weight:600}
+.mv-chips{display:flex;gap:6px;padding:0 14px 8px;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+.mv-chips::-webkit-scrollbar{display:none}
+.mv-chip{flex:0 0 auto;border:1px solid var(--bd2);background:var(--card);color:var(--tx);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit}
+.mv-chip.on{background:var(--P);border-color:var(--P);color:#fff}
+.mv-chip small{opacity:.65;font-weight:600;margin-left:5px}
+.mv-chips2 .mv-chip{font-size:11.5px;font-weight:600;padding:5px 10px}
+.mv-lista{overflow-y:auto;padding:2px 8px 14px;border-top:1px solid var(--bd2);min-height:170px;flex:1}
+.mv-sec{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--t3);padding:10px 8px 3px}
+.mv-it{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;border:none;background:none;color:var(--tx);padding:10px 8px;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit}
+.mv-it:hover,.mv-it:focus{background:var(--card);outline:none}
+.mv-it.cur{background:var(--Pl);color:var(--Pd)}
+.mv-it i{font-style:normal;font-size:10.5px;color:var(--t3);font-weight:600;white-space:nowrap}
+.mv-livre{color:var(--P)}
+.mv-vazio{padding:24px 8px;text-align:center;font-size:12px;color:var(--t3)}
+.exi-r1-busca .exi-cat-filtro,.mv-catbtn{font-size:11px;padding:5px 7px;border:1px solid var(--bd2);background:var(--ip);color:var(--tx);border-radius:var(--rs);cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:inherit}
+.mv-catbtn{width:100%;min-height:32px}
+.mv-grp-sel{margin-bottom:4px}
+.kb-gav-grp{border-bottom:2px solid var(--bd2);margin-bottom:2px}
+.kb-gav-grp>summary{cursor:pointer;padding:8px 4px;font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:6px}
+.kb-gav-grp>.kb-gav-cat{margin-left:10px}
+.db-grp{grid-column:1/-1;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--t2);padding:6px 2px 0;border-bottom:1px solid var(--bd2)}
 </style>
 </head>
 <body>
@@ -644,7 +672,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v50 · 25/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v51 · 25/10</div>
 </div>
 
 <div id="sb-bd" onclick="sbToggle(false)"></div>
@@ -2527,6 +2555,7 @@ function renderColetivasBloco(dia, i, b, total){
   const q = "'" + dia + "'," + i;
   const exs = (b.exercicios || []).map((ex, j) => '<div class="cl-ex">' +
     '<input type="text" list="ex-datalist" class="cl-exn" placeholder="Exercício (banco ou livre)" value="' + escAttr(ex.nome || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'nome\',this.value)"/>' +
+    '<button type="button" class="cl-ib" onclick="mvAbrirParaInput(this.previousElementSibling)" title="Escolher: grupo › categoria › exercício">📂</button>' +
     (b.conjugado ? '' : '<input type="text" class="cl-exs" placeholder="Sér." value="' + escAttr(ex.series || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'series\',this.value)"/>') +
     '<input type="text" class="cl-exs" placeholder="Reps" value="' + escAttr(ex.reps || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'reps\',this.value)"/>' +
     '<button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',-1)" title="Subir">↑</button><button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',1)" title="Descer">↓</button>' +
@@ -3065,10 +3094,9 @@ function kbModalBody(did,bi,i){
   const emb=embedUrl(ex.url||getUrl(ex.nome||''));
   return `
     <div class="fr r2">
-      <div class="fld"><span class="lbl">Categoria</span><select onchange="onCatFiltroChange(this,'${did}',${bi},${i},'kbex-dl')">${buildCatOptions(cat)}</select></div>
-      <div class="fld"><span class="lbl">Exercício</span><div style="display:flex;gap:6px"><input type="text" list="kbex-dl" style="flex:1;min-width:0" value="${escAttr(ex.nome||'')}" placeholder="Digite ou escolha do banco…" oninput="kbSetExField('${did}',${bi},${i},'nome',this.value)"/><button type="button" class="btn bs" style="padding:5px 10px;flex-shrink:0" onclick="kbGavToggle()" title="Gaveta com todos os exercícios, por categoria (marque vários)">🗂️</button></div></div>
+      <div class="fld"><span class="lbl">Categoria</span><button type="button" class="mv-catbtn" value="${escAttr(cat)}" onclick="mvAbrirParaInput(document.getElementById('kbex-nome'))" title="Escolher: grupo › categoria › exercício">${escAttr(mvBtnLabel(cat))}</button></div>
+      <div class="fld"><span class="lbl">Exercício</span><div style="display:flex;gap:6px"><input type="text" id="kbex-nome" list="ex-datalist" style="flex:1;min-width:0" value="${escAttr(ex.nome||'')}" placeholder="Digite ou escolha do banco…" oninput="kbSetExField('${did}',${bi},${i},'nome',this.value)"/><button type="button" class="btn bs" style="padding:5px 10px;flex-shrink:0" onclick="kbGavToggle()" title="Gaveta com todos os exercícios, por categoria (marque vários)">🗂️</button></div></div>
     </div>
-    <datalist id="kbex-dl">${buildExDatalistForCat(cat)}</datalist>
     <div id="kbex-gav" class="kb-gav" style="display:none">
       <input type="search" class="kb-gav-q" placeholder="Filtrar a gaveta…" oninput="kbGavFiltro(this.value)"/>
       <div class="kb-gav-wrap"><div class="kb-gav-box">${kbGavetaHTML()}</div><div class="kb-gav-prev" id="kbex-gav-prev"></div></div>
@@ -3101,15 +3129,130 @@ function kbModalBody(did,bi,i){
     </div>
     <div class="fld" style="margin-top:6px"><span class="lbl">Obs</span><input type="text" value="${escAttr(ex.obs||'')}" placeholder="Dica técnica..." oninput="kbSetExField('${did}',${bi},${i},'obs',this.value)"/></div>`;
 }
-// Gaveta de exercícios do Quadro: subgavetas por categoria + seleção múltipla.
+// ══ SELETOR EM CASCATA: Grupo › Categoria › Exercício (v51) ══
+// Os grupos saem do emoji que abre o nome da categoria (🦵 Pernas, 💪 Superiores, …);
+// categoria nova sem esses emojis cai em "Outros". Um único seletor para todos os editores.
+const MV_GRUPOS=[['🦵','Pernas'],['💪','Superiores'],['🔩','Core'],['🌀','Mobilidade'],['🏋','CrossFit'],['🏃','Cardio']];
+function mvGrupoDe(cat){const c=Array.from(String(cat||'').trim())[0]||'';return MV_GRUPOS.some(g=>g[0]===c)?c:'•';}
+function mvGrupoNome(k){const g=MV_GRUPOS.find(x=>x[0]===k);return g?g[1]:'Outros';}
+function mvCatNome(cat){return String(cat||'').replace(/^[^\p{L}\p{N}]+/u,'').trim()||String(cat||'');}
+function mvGrupos(){
+  const m=new Map();
+  Object.keys(REP).forEach(cat=>{const k=mvGrupoDe(cat);if(!m.has(k))m.set(k,[]);m.get(k).push(cat);});
+  return MV_GRUPOS.map(g=>g[0]).concat(['•']).filter(k=>m.has(k)).map(k=>({k:k,n:mvGrupoNome(k),cats:m.get(k),total:m.get(k).reduce((a,c)=>a+((REP[c]||[]).length),0)}));
+}
+function mvNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');}
+function mvBtnLabel(cat){return cat?cat:'📂 Escolher';}
+let _mv=null,_mvUlt={g:null,c:null};
+function mvAbrir(opt){
+  opt=opt||{};
+  const atual=opt.atual||'',catAt=catDoExercicio(atual),gs=mvGrupos();
+  _mv={onPick:opt.onPick,atual:atual,q:'',g:null,c:null,titulo:opt.titulo||'Escolher exercício'};
+  if(catAt){_mv.g=mvGrupoDe(catAt);_mv.c=catAt;}
+  else if(_mvUlt.g&&gs.some(x=>x.k===_mvUlt.g)){_mv.g=_mvUlt.g;_mv.c=_mvUlt.c;}
+  else{_mv.g=gs[0]?gs[0].k:null;_mv.c=null;}
+  const old=document.getElementById('mv-ov');if(old)old.remove();
+  const ov=document.createElement('div');ov.id='mv-ov';ov.className='mv-ov';
+  ov.innerHTML='<div class="mv-sheet" role="dialog" aria-modal="true"><div class="mv-hd"><span id="mv-tit"></span><button type="button" class="bic" onclick="mvFechar()" aria-label="Fechar">×</button></div><input type="search" id="mv-q" class="mv-q" placeholder="Buscar em todos os exercícios…" autocomplete="off"/><div class="mv-crumb" id="mv-crumb"></div><div class="mv-chips" id="mv-gr"></div><div class="mv-chips mv-chips2" id="mv-ct"></div><div class="mv-lista" id="mv-ls"></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){
+    if(e.target===ov){mvFechar();return;}
+    const b=e.target.closest('[data-mv]');if(!b||!_mv)return;
+    const t=b.dataset.mv;
+    if(t==='g'){_mv.g=b.dataset.k;_mv.c=null;mvRender();}
+    else if(t==='c'){_mv.c=b.dataset.k||null;mvRender();}
+    else if(t==='x'){mvEscolher(b.dataset.n);}
+  });
+  ov.addEventListener('keydown',function(e){if(e.key==='Escape')mvFechar();});
+  const q=document.getElementById('mv-q');
+  q.addEventListener('input',function(){if(_mv){_mv.q=q.value;mvRender();}});
+  q.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();const p=document.querySelector('#mv-ls .mv-it');if(p)p.click();}});
+  mvRender();
+  if(window.matchMedia&&window.matchMedia('(hover:hover)').matches)setTimeout(function(){q.focus();},30);
+  const cur=document.querySelector('#mv-ls .mv-it.cur');if(cur&&cur.scrollIntoView)cur.scrollIntoView({block:'center'});
+}
+function mvItem(n,tag,cur){return '<button type="button" class="mv-it'+(cur?' cur':'')+'" data-mv="x" data-n="'+escAttr(n)+'"><span>'+escAttr(n)+'</span>'+(tag?'<i>'+escAttr(tag)+'</i>':'')+'</button>';}
+function mvRender(){
+  if(!_mv)return;
+  const gs=mvGrupos(),q=mvNorm(_mv.q.trim());
+  const gr=document.getElementById('mv-gr'),ct=document.getElementById('mv-ct'),ls=document.getElementById('mv-ls'),cr=document.getElementById('mv-crumb');
+  document.getElementById('mv-tit').textContent=_mv.titulo;
+  if(q){
+    gr.style.display='none';ct.style.display='none';cr.textContent='Resultados em todos os grupos';
+    const res=[];
+    Object.keys(REP).forEach(function(cat){(REP[cat]||[]).forEach(function(e){
+      const n=mvNorm(e.n+' '+(e.nome_pt||'')+' '+(e.nome_en||''));
+      if(n.indexOf(q)>=0)res.push({n:e.n,cat:cat,ini:mvNorm(e.n).indexOf(q)===0?1:0});
+    });});
+    res.sort(function(a,b){return (b.ini-a.ini)||a.n.localeCompare(b.n);});
+    let h=res.slice(0,80).map(function(r){return mvItem(r.n,mvCatNome(r.cat),r.n===_mv.atual);}).join('');
+    if(!res.some(function(r){return mvNorm(r.n)===q;}))h+='<button type="button" class="mv-it mv-livre" data-mv="x" data-n="'+escAttr(_mv.q.trim())+'">＋ Usar “'+escAttr(_mv.q.trim())+'” (exercício livre)</button>';
+    ls.innerHTML=h;return;
+  }
+  gr.style.display='';ct.style.display='';
+  const g=gs.find(function(x){return x.k===_mv.g;})||gs[0];
+  if(!g){ls.innerHTML='<div class="mv-vazio">O banco de exercícios está vazio.</div>';return;}
+  _mv.g=g.k;if(_mv.c&&g.cats.indexOf(_mv.c)<0)_mv.c=null;
+  gr.innerHTML=gs.map(function(x){return '<button type="button" class="mv-chip'+(x.k===g.k?' on':'')+'" data-mv="g" data-k="'+escAttr(x.k)+'">'+(x.k==='•'?'':x.k+' ')+x.n+'<small>'+x.total+'</small></button>';}).join('');
+  ct.innerHTML='<button type="button" class="mv-chip'+(!_mv.c?' on':'')+'" data-mv="c" data-k="">Todas</button>'+g.cats.map(function(c){return '<button type="button" class="mv-chip'+(c===_mv.c?' on':'')+'" data-mv="c" data-k="'+escAttr(c)+'">'+escAttr(mvCatNome(c))+'<small>'+(REP[c]||[]).length+'</small></button>';}).join('');
+  cr.textContent=g.n+(_mv.c?' › '+mvCatNome(_mv.c):' › todas as categorias');
+  const cats=_mv.c?[_mv.c]:g.cats;let h='';
+  cats.forEach(function(c){
+    if(!_mv.c&&cats.length>1)h+='<div class="mv-sec">'+escAttr(mvCatNome(c))+'</div>';
+    (REP[c]||[]).forEach(function(e){h+=mvItem(e.n,'',e.n===_mv.atual);});
+  });
+  ls.innerHTML=h||'<div class="mv-vazio">Nenhum exercício nesta categoria.</div>';
+}
+function mvEscolher(n){
+  const cb=_mv&&_mv.onPick,cat=catDoExercicio(n);
+  _mvUlt=cat?{g:mvGrupoDe(cat),c:cat}:{g:_mv?_mv.g:null,c:_mv?_mv.c:null};
+  mvFechar();
+  if(cb&&n)cb(n,cat);
+}
+function mvFechar(){const o=document.getElementById('mv-ov');if(o)o.remove();_mv=null;}
+// Abre o seletor para um <input> de exercício: escreve o nome e dispara 'input' (os handlers de cada editor rodam como se tivesse digitado).
+function mvAbrirParaInput(inp){
+  if(!inp)return;
+  mvAbrir({atual:inp.value,onPick:function(n,cat){
+    inp.value=n;
+    inp.dispatchEvent(new Event('input',{bubbles:true}));
+    inp.dispatchEvent(new Event('change',{bubbles:true}));
+    const sc=inp.closest('.fr,.exi-r1,.cl-ex'),bt=sc&&sc.querySelector('.mv-catbtn,.exi-cat-filtro');
+    if(bt){bt.value=cat||'';bt.textContent=mvBtnLabel(cat);}
+  }});
+}
+// Select de categoria em cascata: põe um select de GRUPO antes e deixa a categoria só com as do grupo.
+// O select de categoria continua sendo o mesmo elemento (mesmo id/value), então o código que o lê não muda.
+function mvCatCascata(sel){
+  if(!sel)return;
+  const prev=sel.previousElementSibling;if(prev&&prev.classList&&prev.classList.contains('mv-grp-sel'))prev.remove();
+  const gs=mvGrupos();if(gs.length<2)return;
+  const opts=Array.prototype.map.call(sel.options,function(o){return {v:o.value,t:o.textContent};});
+  const vazio=opts.find(function(o){return o.v==='';});
+  const g=document.createElement('select');g.className='mv-grp-sel';g.title='Grupo';g.style.cssText=sel.style.cssText;
+  g.innerHTML=gs.map(function(x){return '<option value="'+escAttr(x.k)+'">'+(x.k==='•'?'':x.k+' ')+x.n+'</option>';}).join('');
+  const fill=function(keep){
+    const k=g.value;
+    sel.innerHTML=(vazio?'<option value="">'+escAttr(vazio.t)+'</option>':'')+opts.filter(function(o){return o.v&&mvGrupoDe(o.v)===k;}).map(function(o){return '<option value="'+escAttr(o.v)+'">'+escAttr(mvCatNome(o.t))+'</option>';}).join('');
+    if(keep&&opts.some(function(o){return o.v===keep&&mvGrupoDe(o.v)===k;}))sel.value=keep;
+  };
+  const cur=sel.value;g.value=cur?mvGrupoDe(cur):gs[0].k;fill(cur);
+  g.addEventListener('change',function(){fill('');sel.dispatchEvent(new Event('change',{bubbles:true}));});
+  sel.parentNode.insertBefore(g,sel);
+}
+// Gaveta de exercícios do Quadro: grupo › categoria › exercícios, com seleção múltipla.
 function kbGavetaHTML(){
   let h='';
-  for(const[cat,exs]of Object.entries(REP)){
-    if(!exs||!exs.length)continue;
-    h+='<details class="kb-gav-cat"><summary>'+escAttr(cat)+' <span class="kb-gav-n">'+exs.length+'</span></summary>';
-    exs.forEach(e=>{h+='<label class="kb-gav-it"><input type="checkbox" data-n="'+escAttr(e.n)+'" onchange="kbGavCont(this)"/><span>'+escAttr(e.n)+'</span></label>';});
-    h+='</details>';
-  }
+  mvGrupos().forEach(function(g){
+    let inner='';
+    g.cats.forEach(function(cat){
+      const exs=REP[cat];if(!exs||!exs.length)return;
+      inner+='<details class="kb-gav-cat"><summary>'+escAttr(cat)+' <span class="kb-gav-n">'+exs.length+'</span></summary>';
+      exs.forEach(function(e){inner+='<label class="kb-gav-it"><input type="checkbox" data-n="'+escAttr(e.n)+'" onchange="kbGavCont(this)"/><span>'+escAttr(e.n)+'</span></label>';});
+      inner+='</details>';
+    });
+    if(inner)h+='<details class="kb-gav-grp"><summary>'+(g.k==='•'?'':g.k+' ')+g.n+' <span class="kb-gav-n">'+g.total+'</span></summary>'+inner+'</details>';
+  });
   return h;
 }
 let _kbGavOrd=[];
@@ -3138,6 +3281,11 @@ function kbGavFiltro(q){
     d.querySelectorAll('.kb-gav-it').forEach(l=>{const ok=!q||l.textContent.toLowerCase().includes(q);l.style.display=ok?'':'none';if(ok)achou++;});
     d.style.display=achou?'':'none';
     d.open=!!q&&achou>0;
+  });
+  document.querySelectorAll('#kbex-gav .kb-gav-grp').forEach(g=>{
+    const vis=[...g.querySelectorAll('.kb-gav-cat')].some(d=>d.style.display!=='none');
+    g.style.display=vis?'':'none';
+    g.open=!!q&&vis;
   });
 }
 function kbGavAplicar(){
@@ -4060,6 +4208,7 @@ function abrirModalNovoEx(did,bi){
     </div>
   </div>`;
   m.style.display='flex';
+  mvCatCascata(document.getElementById('modal-novo-ex-cat'));
 }
 function fecharModalNovoEx(){
   const m=document.getElementById('modal-novo-ex');
@@ -4330,9 +4479,8 @@ function renderExItem(did,bi,i,ex,inCJ){
     </div>
     <div class="exi-det" id="${eid}" style="display:none">
       <div class="exi-r1 exi-r1-busca">
-        <select class="exi-cat-filtro" onchange="onCatFiltroChange(this,'${did}',${bi},${i},'ex-dl-${did}-${bi}-${i}')" title="Filtrar por categoria">${buildCatOptions(catDoExercicio(ex.nome))}</select>
-        <datalist id="ex-dl-${did}-${bi}-${i}">${buildExDatalistForCat(catDoExercicio(ex.nome))}</datalist>
-        <input type="text" list="ex-dl-${did}-${bi}-${i}" placeholder="Digite ou escolha o exercício…" value="${escAttr(ex.nome||'')}" oninput="setEx('${did}',${bi},${i},'nome',this.value);updateExTop('${eid}',this.value,'${did}',${bi},${i})"/>
+        <button type="button" class="exi-cat-filtro mv-catbtn" value="${escAttr(catDoExercicio(ex.nome))}" onclick="mvAbrirParaInput(this.parentElement.querySelector('input[list]'))" title="Escolher: grupo › categoria › exercício">${escAttr(mvBtnLabel(catDoExercicio(ex.nome)))}</button>
+        <input type="text" list="ex-datalist" placeholder="Digite ou escolha o exercício…" value="${escAttr(ex.nome||'')}" oninput="setEx('${did}',${bi},${i},'nome',this.value);updateExTop('${eid}',this.value,'${did}',${bi},${i})"/>
         <input type="text" placeholder="Obs" value="${escAttr(ex.obs||'')}" oninput="setEx('${did}',${bi},${i},'obs',this.value)"/>
         <button class="bic" onclick="rmEx('${did}',${bi},${i})">×</button>
       </div>
@@ -4736,6 +4884,7 @@ function renderExPendentes(){
         <button class="btn bp" style="font-size:11px;padding:5px 10px" onclick="adicionarExPendente(${i})">+ Adicionar</button>
       </div>`;
     }).join('');
+  cont.querySelectorAll('select[id^="expd-cat-"]').forEach(function(sl){mvCatCascata(sl);});
 }
 async function adicionarExPendente(i){
   const item = _exPendentes[i];
@@ -4759,9 +4908,13 @@ function renderDBEx(){
   const q=(window._dbExQ||'').toLowerCase().trim();
   window._dbExOpen=window._dbExOpen||{};
   let h='<div class="db-grid">';
-  for(const[cat,exs]of Object.entries(REP)){
+  const _ordem=[];mvGrupos().forEach(g=>{_ordem.push(['__grp',g]);g.cats.forEach(c=>_ordem.push([c,REP[c]]));});
+  let _grpPend='';
+  for(const[cat,exs]of _ordem){
+    if(cat==='__grp'){_grpPend='<div class="db-grp">'+(exs.k==='•'?'':exs.k+' ')+exs.n+' <small style="opacity:.6">'+exs.total+'</small></div>';continue;}
     const visiveis=q?exs.filter(ex=>((ex.n||'')+' '+mbExNome(ex)).toLowerCase().includes(q)):exs;
     if(q&&!visiveis.length)continue;
+    if(_grpPend){h+=_grpPend;_grpPend='';}
     const recolhido=!q&&!window._dbExOpen[cat];
     h+=`<div class="db-card${recolhido?' db-collapsed':''}"><div class="db-ch" onclick="dbToggleCat(event,this)" data-cat="${escAttr(cat)}" style="cursor:pointer"><span class="db-cat">${recolhido?'▸':'▾'} ${cat} <small style="opacity:.55;font-weight:600">${q?visiveis.length+'/':''}${exs.length}</small></span><div class="db-acts"><button class="bsm" onclick="openAddEx('${cat}')">+</button><button class="bsm" onclick="delCat('${cat}')" style="color:#c03030">×</button></div></div>`;
     exs.forEach((ex,i)=>{if(q&&!visiveis.includes(ex))return;const nomeDisplay=mbExNome(ex);h+=`<div class="db-row"><span class="db-n" title="${ex.n}">${nomeDisplay}</span><span class="db-u">${ex.u?'🔗 '+ex.u.replace('https://',''):'—'}</span><div class="db-acts"><button class="bsm" onclick="openEditEx('${cat}',${i})">✏️</button><button class="bsm" onclick="delEx('${cat}',${i})" style="color:#c03030">×</button></div></div>`;});
@@ -4784,7 +4937,7 @@ document.getElementById('mex-nome').addEventListener('blur', function(){
   const sug = mexSugerirPorNome(this.value);
   if (sug){ document.getElementById('mex-padrao').value = sug.padrao; document.getElementById('mex-pct').value = sug.pct; }
 });
-function buildCatSel(sel){document.getElementById('mex-cat').innerHTML=Object.keys(REP).map(c=>`<option value="${c}"${c===sel?' selected':''}>${c}</option>`).join('');}
+function buildCatSel(sel){document.getElementById('mex-cat').innerHTML=Object.keys(REP).map(c=>`<option value="${c}"${c===sel?' selected':''}>${c}</option>`).join('');mvCatCascata(document.getElementById('mex-cat'));}
 function saveEx(){
   const n=document.getElementById('mex-nome').value.trim();if(!n){notify('Digite o nome.');return;}
   const nomePt=document.getElementById('mex-nome-pt').value.trim();
