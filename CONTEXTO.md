@@ -1,4 +1,4 @@
-# MOVH — Contexto v54 (26/10/2026)
+# MOVH — Contexto v54.1 (26/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -144,7 +144,9 @@ v54 (26/10): alunos, vídeo editável, logos e visual clean (Gerador + 1 deploy 
 - Coletivas no app: `mbSalvarAulasColetivas` embute `url` (do banco) em cada exercício sem link; o app mostra ▶ vermelho (`aColPlay`, mesmo modal de vídeo dos treinos) no acesso e no link público `/coletivas`. Só exercícios com link ganham o botão. Logo no rodapé da página de coletivas (`aColLogo`, lê `#aLogoClaro/#aLogoEscuro` do login).
 - Logos: `LOGO_PRONTAS` (lg16 padrão do login, lg15 com LG) com variante clara e escura (tinta preta↔creme, vermelho mantido); o export gera `<img class="lg-claro">` + `<img class="lg-escuro">` (troca por `[data-theme=dark]`). Página "Logo do login" tem as 3 opções (lg16, lg15, antiga) e `movh_logo_preset`; upload personalizado continua prevalecendo. `tools/export_app.js` agora extrai `LOGO_PRONTAS` do Gerador. SUPOSIÇÃO: lg16 = versão MOVH creme (sem LG) e lg15 = versão com LG; se estiver trocado, inverter as chaves em `LOGO_PRONTAS` e o padrão em `logoAtivaSrc`/export.
 - Créditos Netlify do app: 58 (25/10) − 15 (v53) − 15 (v54) = ~28 estimados (confirmar em Team settings → Billing; o ciclo reseta na data do ciclo da conta, não necessariamente dia 11).
-PENDENTE: logo da VOLT (rascunho entregue em arquivo, aguardando aprovação); notificar o aluno 14 dias antes (hoje só ≤ 7 dias); levar o visual em 3 colunas para a Biblioteca.
+- v54.1 Logos salvas (só Gerador): "Minhas logos salvas" (`movh_logo_salvas` = [{id,n,src}] no localStorage): ao salvar um recorte pede um nome e guarda na lista; clicar usa (`logoUsarSalva` → `movh_logo_custom`, que o export já lê); ✂️ reajusta enquadramento/zoom (`logoAjustarSalva`), ✏️ renomeia, 🗑️ exclui. "✂️ Ajustar enquadramento / zoom" em "Logo atual" abre qualquer logo (pronta ou salva) no recorte. "Voltar a uma logo pronta" só para de usar a personalizada (continua na lista). A lista fica só neste navegador. Testes: tools/tests + teste da lista OK.
+- VOLT: rascunho da logo APROVADO como bom, GUARDADO (não usar ainda) em `tools/assets/volt/` (volt_claro/escuro .png e .svg). Quando for usar, transformar em preset (ver `LOGO_PRONTAS`).
+PENDENTE: logo da VOLT (guardada, uso adiado); notificar o aluno 14 dias antes (hoje só ≤ 7 dias); levar o visual em 3 colunas para a Biblioteca.
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
