@@ -1,4 +1,4 @@
-# MOVH — Contexto v53 (25/10/2026)
+# MOVH — Contexto v54 (26/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -134,6 +134,17 @@ DECISÕES DE MARCA (25/10): o usuário PREFERE A LOGO ATUAL (barra curva + gráf
 PENDENTE (opcional, ainda não pedido): no login escuro, "MOV" e a frase da logo são PRETOS sobre azul-escuro (contraste ~1,1:1, quase invisíveis). Correção que preserva a arte dele: variante da MESMA logo com o preto trocado pelo creme, só no tema escuro (2 <img> + CSS por `data-theme`; logo personalizada continua única). Exige 1 deploy do app (15 créditos) — juntar com a próxima mudança do app.
 PENDENTE: `/coletivas` já abre no Netlify, mas mostra "Não foi possível carregar as aulas coletivas" até o usuário rodar o SQL `get_coletivas_publico()` no Supabase (seção v50). Se continuar após rodar: abrir o console (F12) e ler "[MOVH] Erro ao carregar coletivas".
 Créditos Netlify do app: ~59 estimados (104 − 3 deploys de 15 em 23–25/10; confirmar no Billing). Próximas ideias: PWA (manifest + service worker que NÃO cacheie o index.html, para não desfazer a atualização automática), Web Push, QR do Pix.
+
+v54 (26/10): alunos, vídeo editável, logos e visual clean (Gerador + 1 deploy do app).
+- Alunos: 📱 "ver como aluno" (`mbPreviaAluno`: troca `semanas` temporariamente pelo treino do aluno, gera `alunoPreviewHTML` num modal e restaura) e 🗂️ "editar no Quadro" (`mbEditarNoQuadro` → `mbCarregarProtoAluno` → `mbAplicarProtoNoEditor`, extraído de `mbOnLoadSelectChange`; também corrigiu a corrida do botão "Editar este protocolo"). Pede confirmação só se o editor tem alterações não salvas (`_pbDirty`).
+- Atividade recente em linha: hora compacta antes (`mbTempoC`: agora/min/h/d), clique leva ao aluno (`mbIrParaAluno`: rola, destaca `al-flash`; cartão tem `id="al-<id>"`). Os chips da Central também levam ao aluno.
+- Fim de treino/acesso (`mbFimAvisos`, `mbPrevisaoFim`): LARANJA ≤ 14 dias, VERMELHO ≤ 7 dias ou vencido; badge `.al-fim`, tira lateral `.al-lv-o/.al-lv-r`, chips da Central e aviso (toast) 1x ao carregar o painel + contador no menu. Ignora bloqueados/lixeira. O app do aluno já mostra o banner de renovar com ≤ 7 dias (não mudou).
+- Visual clean: `body.clean` (padrão; botão "🎨 Visual" no rodapé do menu volta ao clássico, `localStorage movh-visual`). Cartões translúcidos com blur, linhas finas, sem sombra, chips de aluno em contorno, modais com blur. Todo o CSS está no fim do 1º `<style>` do Gerador.
+- Vídeo editável (`mvVideo`): ▶ no editor do dia (`mvVideoEx`) e nas Aulas Coletivas (`coletivasVideo`). Painel por cima com player (youtube-nocookie), nome e link editáveis, categoria (cascata) e 3 modos: "só neste treino" (não toca no banco) / "atualizar no banco" (sobrescreve; pergunta se propaga aos treinos ativos via `mbPropagarExercicio`) / "salvar como novo no banco". Link fora do YouTube abre em outra aba.
+- Coletivas no app: `mbSalvarAulasColetivas` embute `url` (do banco) em cada exercício sem link; o app mostra ▶ vermelho (`aColPlay`, mesmo modal de vídeo dos treinos) no acesso e no link público `/coletivas`. Só exercícios com link ganham o botão. Logo no rodapé da página de coletivas (`aColLogo`, lê `#aLogoClaro/#aLogoEscuro` do login).
+- Logos: `LOGO_PRONTAS` (lg16 padrão do login, lg15 com LG) com variante clara e escura (tinta preta↔creme, vermelho mantido); o export gera `<img class="lg-claro">` + `<img class="lg-escuro">` (troca por `[data-theme=dark]`). Página "Logo do login" tem as 3 opções (lg16, lg15, antiga) e `movh_logo_preset`; upload personalizado continua prevalecendo. `tools/export_app.js` agora extrai `LOGO_PRONTAS` do Gerador. SUPOSIÇÃO: lg16 = versão MOVH creme (sem LG) e lg15 = versão com LG; se estiver trocado, inverter as chaves em `LOGO_PRONTAS` e o padrão em `logoAtivaSrc`/export.
+- Créditos Netlify do app: 58 (25/10) − 15 (v53) − 15 (v54) = ~28 estimados (confirmar em Team settings → Billing; o ciclo reseta na data do ciclo da conta, não necessariamente dia 11).
+PENDENTE: logo da VOLT (rascunho entregue em arquivo, aguardando aprovação); notificar o aluno 14 dias antes (hoje só ≤ 7 dias); levar o visual em 3 colunas para a Biblioteca.
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
