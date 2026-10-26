@@ -15,7 +15,9 @@ for (let i = start; i < lines.length; i++) { if (lines[i].startsWith('</html>`;'
 if (end < 0) throw new Error('fim do template não encontrado');
 const body = lines.slice(start, end + 1).join('\n').replace(/^function exportarComLogin\(\)\{/, '');
 const defLogo = (src.match(/const DEFAULT_LOGIN_LOGO = "([^"]*)"/) || [])[1] || '';
-const code = 'const localStorage={getItem:(k)=>k==="movh_logo_custom"?(' + JSON.stringify(cfg.logo || '') + '||null):null};' +
+const lpIni = src.indexOf('const LOGO_PRONTAS = {'), lpFim = src.indexOf('\n};', lpIni) + 3;
+const logosProntas = lpIni >= 0 ? src.slice(lpIni, lpFim) : 'const LOGO_PRONTAS={};';
+const code = logosProntas + '\nconst localStorage={getItem:(k)=>k==="movh_logo_custom"?(' + JSON.stringify(cfg.logo || '') + '||null):null};' +
   'const DEFAULT_LOGIN_LOGO=' + JSON.stringify(defLogo) + ';' +
   'const plLand={appUrl:"",netlifyUrl:' + JSON.stringify(cfg.netlifyUrl || '') + '};\n' + body + '\nreturn out;';
 const out = new Function('return (function(){' + code + '})()')();
