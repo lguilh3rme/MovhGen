@@ -709,7 +709,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54 · 26/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.1 · 26/10</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -1192,10 +1192,15 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
     <div class="card" style="max-width:420px;flex:1;min-width:300px">
       <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Logos prontas</div>
       <div id="logo-prontas" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+      <div id="logo-salvas-wrap" style="display:none">
+        <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Minhas logos salvas</div>
+        <div id="logo-salvas" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
+      </div>
       <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Logo atual</div>
       <div id="logo-atual-preview" style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:16px;text-align:center;margin-bottom:14px">
         <img id="logo-atual-img" style="max-width:280px;width:90%;height:auto" alt="Logo atual"/>
         <div id="logo-atual-label" style="font-size:10.5px;color:var(--t3);margin-top:6px"></div>
+        <button type="button" class="btn bs" style="font-size:10px;padding:3px 10px;margin-top:8px" onclick="logoAjustarAtual()">✂️ Ajustar enquadramento / zoom</button>
       </div>
       <div class="fld" style="margin-bottom:10px">
         <span class="lbl">Escolher nova imagem</span>
@@ -1226,7 +1231,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn bp" id="logo-salvar-btn" onclick="salvarLogoCustom()" disabled>💾 Salvar esta logo</button>
-        <button class="btn bs" onclick="removerLogoCustom()">🗑️ Remover personalizada</button>
+        <button class="btn bs" onclick="removerLogoCustom()">↩️ Voltar a uma logo pronta</button>
       </div>
     </div>
     <div class="card" style="width:280px;flex-shrink:0">
@@ -2253,6 +2258,40 @@ function logoAtivaSrc(){
   const p = LOGO_PRONTAS[k] || LOGO_PRONTAS.lg16;
   return dk ? p.e : p.c;
 }
+// ── Biblioteca de logos salvas (várias, com nome; cada uma pode ser reajustada) ──
+function logoSalvasLer(){ try { const a = JSON.parse(localStorage.getItem('movh_logo_salvas') || '[]'); return Array.isArray(a) ? a : []; } catch(e) { return []; } }
+function logoSalvasGravar(a){ try { localStorage.setItem('movh_logo_salvas', JSON.stringify(a)); return true; } catch(e) { notify('Sem espaço para salvar mais logos: ' + e.message); return false; } }
+function logoUsarSalva(id){
+  const l = logoSalvasLer().find(function(x){ return x.id === id; }); if (!l) return;
+  try { localStorage.setItem('movh_logo_custom', l.src); } catch(e) {}
+  notify('✅ Logo "' + l.n + '" em uso. Vale no próximo app que você exportar.');
+  renderLogoBranding();
+}
+function logoRenomearSalva(id){
+  const a = logoSalvasLer(), l = a.find(function(x){ return x.id === id; }); if (!l) return;
+  const n = prompt('Nome da logo:', l.n); if (!n || !n.trim()) return;
+  l.n = n.trim().slice(0, 30); logoSalvasGravar(a); renderLogoBranding();
+}
+function logoExcluirSalva(id){
+  const a = logoSalvasLer(), l = a.find(function(x){ return x.id === id; }); if (!l) return;
+  if (!confirm('Excluir a logo "' + l.n + '" da lista?')) return;
+  if (localStorage.getItem('movh_logo_custom') === l.src) localStorage.removeItem('movh_logo_custom');
+  logoSalvasGravar(a.filter(function(x){ return x.id !== id; })); renderLogoBranding();
+}
+function logoCarregarNoRecorte(src){
+  const img = new Image();
+  img.onload = function(){
+    logoImgObj = img; logoZoomMult = 1;
+    document.getElementById('logo-crop-stage').style.display = 'block';
+    const sl = document.getElementById('logo-zoom-slider'); if (sl) sl.value = 100;
+    logoRecentralizar(); logoDesenharCrop();
+    document.getElementById('logo-crop-stage').scrollIntoView({behavior:'smooth', block:'nearest'});
+  };
+  img.src = src;
+}
+function logoAjustarAtual(){ logoCarregarNoRecorte(logoAtivaSrc()); }
+function logoAjustarSalva(id){ const l = logoSalvasLer().find(function(x){ return x.id === id; }); if (l) logoCarregarNoRecorte(l.src); }
+
 function logoEscolherPreset(k){
   try { localStorage.setItem('movh_logo_preset', k); localStorage.removeItem('movh_logo_custom'); } catch(e) {}
   notify('✅ Logo "' + (k === 'antiga' ? 'antiga' : LOGO_PRONTAS[k].n) + '" escolhida. Vale no próximo app que você exportar.');
@@ -2268,6 +2307,15 @@ function renderLogoBranding(){
   if (pr) {
     const itens = [['lg16', LOGO_PRONTAS.lg16.n, LOGO_PRONTAS.lg16.c], ['lg15', LOGO_PRONTAS.lg15.n, LOGO_PRONTAS.lg15.c], ['antiga', 'Antiga (barra vermelha)', DEFAULT_LOGIN_LOGO]];
     pr.innerHTML = itens.map(it => '<button type="button" class="logo-opt' + (!custom && sel === it[0] ? ' on' : '') + '" onclick="logoEscolherPreset(\'' + it[0] + '\')" title="Usar esta logo no login"><img src="' + it[2] + '" alt=""/><span>' + it[1] + (it[0] === 'lg16' ? ' · padrão' : '') + '</span></button>').join('');
+  }
+  const sv = logoSalvasLer(), svW = document.getElementById('logo-salvas-wrap'), svL = document.getElementById('logo-salvas');
+  if (svW && svL) {
+    svW.style.display = sv.length ? 'block' : 'none';
+    svL.innerHTML = sv.map(function(l){
+      const on = custom && custom === l.src;
+      return '<div class="logo-opt' + (on ? ' on' : '') + '" style="position:relative"><button type="button" onclick="logoUsarSalva(\'' + l.id + '\')" title="Usar no login" style="all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%"><img src="' + l.src + '" alt=""/><span>' + String(l.n).replace(/</g,'&lt;') + '</span></button>' +
+        '<div style="display:flex;gap:4px;margin-top:2px"><button type="button" class="btn bs" style="font-size:9px;padding:1px 6px" onclick="logoAjustarSalva(\'' + l.id + '\')" title="Ajustar">✂️</button><button type="button" class="btn bs" style="font-size:9px;padding:1px 6px" onclick="logoRenomearSalva(\'' + l.id + '\')" title="Renomear">✏️</button><button type="button" class="btn bs" style="font-size:9px;padding:1px 6px" onclick="logoExcluirSalva(\'' + l.id + '\')" title="Excluir">🗑️</button></div></div>';
+    }).join('');
   }
   atualImg.src = logoAtivaSrc();
   atualLabel.textContent = custom ? '✅ Logo personalizada em uso' : ('Em uso: ' + (sel === 'antiga' ? 'logo antiga' : LOGO_PRONTAS[sel].n));
@@ -2435,8 +2483,14 @@ function logoAplicarRecorte(){
 function salvarLogoCustom(){
   if (!logoNovoBase64) return;
   try {
+    const a = logoSalvasLer();
+    if (!a.some(function(x){ return x.src === logoNovoBase64; })) {
+      const n = prompt('Nome para guardar esta logo na lista:', 'Logo ' + (a.length + 1));
+      a.push({ id: 'l' + Date.now().toString(36), n: ((n && n.trim()) || ('Logo ' + (a.length + 1))).slice(0, 30), src: logoNovoBase64 });
+      if (!logoSalvasGravar(a)) return;
+    }
     localStorage.setItem('movh_logo_custom', logoNovoBase64);
-    notify('✅ Logo salva! Ela vai aparecer no próximo HTML que você exportar.');
+    notify('✅ Logo salva e guardada em "Minhas logos salvas"! Ela vai aparecer no próximo HTML que você exportar.');
     renderLogoBranding();
   } catch(e) {
     notify('Erro ao salvar (imagem pode estar grande demais pro localStorage): ' + e.message);
@@ -2444,7 +2498,7 @@ function salvarLogoCustom(){
 }
 function removerLogoCustom(){
   if (!localStorage.getItem('movh_logo_custom')) { notify('Já está usando uma logo pronta.'); return; }
-  if (!confirm('Remover a logo personalizada e voltar pra logo pronta escolhida?')) return;
+  if (!confirm('Parar de usar a logo personalizada e voltar pra logo pronta escolhida? (ela continua guardada em Minhas logos salvas)')) return;
   localStorage.removeItem('movh_logo_custom');
   notify('Logo padrão restaurada.');
   renderLogoBranding();

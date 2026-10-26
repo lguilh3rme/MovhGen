@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="150 20 900 660" width="1200" height="880">
+<g fill="none" stroke="#E7DCC6" stroke-linecap="round">
+<path d="M262 262 Q600 232 938 262" stroke-width="14"/>
+<path d="M258 150 L268 352" stroke-width="20"/><path d="M222 176 L230 330" stroke-width="18"/><path d="M188 206 L194 302" stroke-width="16"/>
+<path d="M942 150 L932 352" stroke-width="20"/><path d="M978 176 L970 330" stroke-width="18"/><path d="M1012 206 L1006 302" stroke-width="16"/>
+</g>
+<path d="M628 36 L548 178 L597 178 L568 266 L664 126 L612 126 Z" fill="#B00000"/>
+<g fill="none" stroke="#E7DCC6" stroke-width="30" stroke-linejoin="miter">
+<path d="M238 384 L315 548 L392 384"/>
+<path d="M452 384 H540 L560 404 V530 L540 550 H452 L432 530 V404 Z"/>
+<path d="M616 384 V550 H722"/>
+</g>
+<path d="M742 384 H874 M808 384 V565" stroke="#B00000" stroke-width="30" fill="none"/>
+<text x="600" y="632" text-anchor="middle" font-family="Comfortaa,Nunito,Arial,sans-serif" font-size="34" letter-spacing="2" fill="#E7DCC6">Método de Treinamento e Performance</text>
+</svg>
