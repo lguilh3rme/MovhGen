@@ -709,7 +709,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.2 · 26/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.3 · 27/10</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -1950,7 +1950,7 @@ function parseRestSegundos(txt){
   if (!s) return null;
   let min = 0, sec = 0, achou = false;
   const mm = s.match(/(\d+)\s*'/); if (mm) { min = parseInt(mm[1]); achou = true; }
-  const ss = s.match(/(\d+)\s*"/); if (ss) { sec = parseInt(ss[1]); achou = true; }
+  const ss = s.match(/(\d+)\s*"/) || s.match(/'\s*(\d+)/); if (ss) { sec = parseInt(ss[1]); achou = true; }
   if (!achou) {
     const mMin = s.match(/(\d+)\s*(min|m)\b/i); if (mMin) { min = parseInt(mMin[1]); achou = true; }
     const mSeg = s.match(/(\d+)\s*(s|seg)\b/i); if (mSeg) { sec = parseInt(mSeg[1]); achou = true; }
@@ -1982,7 +1982,7 @@ function sugestaoVolumeFase(seriesTxt, restTxt, faseKey, semanaDentroFase, durac
   const p = parseSeriesSimples(seriesTxt);
   if (!p) return null;
   const semFator = fatorSemanaDentroFase(semanaDentroFase, duracaoSemanas, faseKey);
-  const sets = Math.max(2, p.sets + ajuste.sets + semFator.sets);
+  const sets = Math.max(Math.min(2, p.sets), p.sets + ajuste.sets + semFator.sets);
   const repMin = Math.max(1, Math.round(p.repMin * ajuste.repMinF * semFator.repF));
   const repMax = Math.max(repMin, Math.round(p.repMax * ajuste.repMaxF * semFator.repF));
   const seriesSug = formatSeriesSimples({ sets, repMin, repMax });
@@ -3093,7 +3093,7 @@ function renderKanbanSemana(sid){
         <button class="kb-edit-btn" onclick="nav('${d.id}')" title="Editar este dia por completo (progressão automática, dia da semana, fase...)">✎</button>
       </div>
       <div class="kb-col-body">${body}</div>
-      <div class="kb-col-foot" id="kb-foot-${d.id}">${totalEx} exercício${totalEx!==1?'s':''} · ⏱️ ~${minutos} min</div>
+      <div class="kb-col-foot" id="kb-foot-${d.id}" title="Tempo previsto = execução das séries (3 s por repetição ou o tempo da isometria) + descanso + 15 s de preparo por exercício. Conjugado: um descanso por rodada.">${totalEx} exercício${totalEx!==1?'s':''} · ⏱️ ~${minutos} min</div>
     </div>`;
   }).join('');
   const kbFaseTxt = sem.fase&&FASES_TEMPLATE[sem.fase]?`${FASES_TEMPLATE[sem.fase].emoji} ${FASES_TEMPLATE[sem.fase].label}`:'';
@@ -3279,6 +3279,12 @@ function kbAddDia(sid){
 }
 // ── estimativa de duração da sessão (heurística — não é cronometragem
 // real, é só uma referência pro professor calibrar o volume do dia) ──
+// Por exercício: séries × (EXECUÇÃO da série + descanso) + preparo.
+// Execução = reps × KB_SEG_REP (média se for faixa "10-12"; ×2 se "/lado" ou
+// exercício unilateral) OU o tempo da série quando é isometria ("30 a 40 s").
+// Conjugado: as séries alternam entre os exercícios do grupo e há UM descanso
+// por rodada (mesma regra do app: restAfter, senão o 1º descanso, senão 60 s).
+const KB_SEG_REP=3, KB_SEG_PREPARO=15;
 function kbParseSets(series){
   if(!series)return 3;
   const m=String(series).match(/^(\d+)\s*[x×]/i);
@@ -3289,18 +3295,48 @@ function kbParseSeg(txt){
   const s=String(txt).toLowerCase();
   let m;
   if((m=s.match(/(\d+)\s*['’]\s*(\d+)/)))return parseInt(m[1])*60+parseInt(m[2]);
+  if((m=s.match(/(\d+)\s*['’]/)))return parseInt(m[1])*60;
   if((m=s.match(/(\d+)\s*min/)))return parseInt(m[1])*60;
   if((m=s.match(/(\d+)\s*(s|"|seg)/)))return parseInt(m[1]);
   const n=parseInt(s);return isNaN(n)?60:n;
+}
+function kbMediaNums(txt){
+  const n=String(txt).match(/\d+(?:[.,]\d+)?/g);
+  if(!n||!n.length)return 0;
+  const v=n.slice(0,2).map(x=>parseFloat(x.replace(',','.')));
+  return v.reduce((a,b)=>a+b,0)/v.length;
+}
+// segundos de EXECUÇÃO de UMA série
+function kbExecSerie(ex){
+  const m=String(ex.series||'').trim().match(/^\d+\s*[x×]\s*(.+)$/i);
+  const resto=m?m[1]:'';
+  const lado=/\/\s*lado|por\s*lado|cada\s*lado|unilateral/i.test(resto+' '+(ex.nome||''))?2:1;
+  const ehTempo=/\d\s*(?:s\b|seg|"|min|['’])/i.test(resto)||ex.reg==='tempo';
+  const v=kbMediaNums(resto);
+  if(ehTempo&&v)return v*(/min|['’]/i.test(resto)?60:1)*lado;
+  return (v||10)*KB_SEG_REP*lado;
 }
 function kbEstimarDia(d){
   let seg=0,totalEx=0;
   (d.blocos||[]).forEach(b=>{
     if(b.duracao){const m=parseInt(String(b.duracao).match(/\d+/)?.[0]||'0',10);seg+=m*60;}
-    (b.exercicios||[]).forEach(ex=>{
-      if(!ex.nome)return;
+    const exs=(b.exercicios||[]).filter(ex=>ex.nome);
+    const feitos=new Set();
+    exs.forEach(ex=>{
       totalEx++;
-      seg += kbParseSets(ex.series)*(35+kbParseSeg(ex.rest));
+      if(ex.cj!=null){
+        const k=String(ex.cj);
+        if(feitos.has(k))return;feitos.add(k);
+        const grp=exs.filter(e=>String(e.cj)===k);
+        const g=(b.conjGroups&&b.conjGroups[ex.cj])||{};
+        let r=g.restAfter||'';
+        if(!r){const c=grp.find(e=>e.rest);r=c?c.rest:'';}
+        const sets=Math.max.apply(null,grp.map(e=>kbParseSets(e.series)));
+        const exec=grp.reduce((a,e)=>a+kbExecSerie(e),0);
+        seg+=sets*(exec+kbParseSeg(r))+KB_SEG_PREPARO*grp.length;
+      }else{
+        seg+=kbParseSets(ex.series)*(kbExecSerie(ex)+kbParseSeg(ex.rest))+KB_SEG_PREPARO;
+      }
     });
   });
   return{totalEx,minutos:Math.max(1,Math.round(seg/60))};
@@ -11898,7 +11934,7 @@ function aParseRestSegundos(txt){
   if (!s) return null;
   let min = 0, sec = 0, achou = false;
   const mm = s.match(/(\\d+)\\s*'/); if (mm) { min = parseInt(mm[1]); achou = true; }
-  const ss = s.match(/(\\d+)\\s*"/); if (ss) { sec = parseInt(ss[1]); achou = true; }
+  const ss = s.match(/(\\d+)\\s*"/) || s.match(/'\\s*(\\d+)/); if (ss) { sec = parseInt(ss[1]); achou = true; }
   if (!achou) {
     const mMin = s.match(/(\\d+)\\s*(min|m)\\b/i); if (mMin) { min = parseInt(mMin[1]); achou = true; }
     const mSeg = s.match(/(\\d+)\\s*(s|seg)\\b/i); if (mSeg) { sec = parseInt(mSeg[1]); achou = true; }
@@ -11947,7 +11983,7 @@ function aSugestaoVolumeFase(seriesTxt, restTxt, faseKey, semanaDentroFase, dura
   if (!p) return null;
   const semFator = aFatorSemanaDentroFase(semanaDentroFase, duracaoSemanas, faseKey);
   const rpeFator = aFatorRPE(aUltimoRPE);
-  const sets = Math.max(2, p.sets + ajuste.sets + semFator.sets);
+  const sets = Math.max(Math.min(2, p.sets), p.sets + ajuste.sets + semFator.sets);
   const repMin = Math.max(1, Math.round(p.repMin * ajuste.repMinF * semFator.repF * rpeFator.repF));
   const repMax = Math.max(repMin, Math.round(p.repMax * ajuste.repMaxF * semFator.repF * rpeFator.repF));
   const seriesSug = aFormatSeriesSimples({ sets, repMin, repMax });
@@ -12304,7 +12340,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   }
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
   const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
-  const baseRefHTML = sugVolume
+  const baseRefHTML = (sugVolume && (aFormatarSeries(sugVolume.series) !== aFormatarSeries(ex.series) || aParseRestSegundos(sugVolume.rest) !== aParseRestSegundos(ex.rest)))
     ? '<div class="ec-base-ref">' + aT('base_professor') + ': ' + aEsc(aFormatarSeries(ex.series)) + (ex.rest && !emConj ? ' · ' + aEsc(ex.rest) : '') + '</div>'
     : '';
   const cargaBadge = isTempo
