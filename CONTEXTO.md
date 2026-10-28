@@ -1,4 +1,4 @@
-# MOVH — Contexto v54.4 (27/10/2026)
+# MOVH — Contexto v54.5 (28/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -161,6 +161,14 @@ v54.4 (27/10): PRÉVIA "COMO ALUNO" FIEL AO QUADRO + logo lg15r (Gerador + app; 
 - Logo `lg15r` "lg (15) · barra vermelha" em `LOGO_PRONTAS` (barra + gráfico recoloridos para o vermelho do LG `#A1130F`, claro e escuro; texto MOVH/legenda continuam preto↔creme) e na lista de "Logo do login". Gerada recolorindo os pixels neutros da região da barra (y<178) do lg15 adaptado; o lg15 e os originais não mudaram.
 - Gerador hospedado no GitHub Pages: depois do merge pode levar ~1 min e o navegador pode ter cache — Ctrl+F5 e conferir o rótulo "v54.4 · 27/10" no rodapé do menu (se ainda aparece ~11 min no Sup. A é versão antiga).
 - Créditos Netlify do app: ~13 estimados (v54.3 e v54.4 NÃO foram deployadas; o próximo deploy publica as duas correções do app).
+
+v54.5 (28/10): CALENDÁRIO DO TREINO NO QUADRO + CENTRAL AGRUPADA + REATIVAR (só Gerador; app do aluno NÃO mudou, sem deploy).
+- Causa do "continua faltando 3 dias" (Izabella): a previsão de fim (`mbPrevisaoFim`) era SÓ `data_inicio + Σ duracaoSemanas × 7`; incluir um dia no treino nunca mexia nela. Agora existe fim manual: `conteudo.fimPrevisto` (AAAA-MM-DD, ÚLTIMO dia, inclusivo) ↔ global `mbProtoFim` (null = pelas fases). `mbPrevisaoFim` devolve o dia SEGUINTE ao último (convenção antiga: "acaba em Nd" conta hoje) e o cartão do aluno mostra o último dia. Gravado por `mbAtualizarProtocolo` (que agora também grava `protocolos.data_inicio` se editado) e `mbSalvarProtocolo`; entra no `pbSnap` (● de não salvo). Sem SQL novo (vai dentro do jsonb).
+- Quadro: o texto "fase · foco" do subtítulo saiu; no lugar, `<details class="kb-cal">` RECOLHIDO (`kbCalHTML`, estado `_kbCalAberto`): resumo "📅 04/10 → 31/10 · faltam N dias" (laranja ≤14, vermelho ≤7/vencido), dentro: início e fim editáveis (input date), botões +1 dia / +1 sem. / ↺ pelas fases, lista das fases com datas (fase atual destacada, "◂ editando", clique abre a fase), linha "➕ Extensão" se o fim passar da soma das fases. Mudar o início desloca as datas das fases. Só aparece com protocolo de aluno carregado (`mbProtoCarregadoId` + `mbProtoDataInicio`). Calendário mensal por dia continua em Configuração.
+- Central de atividade: UMA linha por aluno por dia (`mbRenderFeed`), cada ação com a hora (HH:MM) — `e.s` = texto curto de cada ação; linha com 1 ação mantém o texto completo; tempo relativo à esquerda é da ação mais recente; clique leva ao aluno. Máx. 30 linhas.
+- Histórico de protocolos do aluno (🗂 Todos os treinos): botão "↩ Reativar" nos inativos (`mbReativarProtocolo`: desativa o ativo, ativa o escolhido, repontua `links_treino` do antigo para o reativado, desfaz se falhar) e mostra "fim previsto". Se as datas já venceram, ajustar no calendário do Quadro.
+- Testes: tools/tests (reg_all, bulk, kbm) sem FAIL; teste próprio (desktop+mobile): calendário, +1 dia, reset, `mbFimAvisos` com/sem fim manual, Central agrupada — OK. NÃO testado no banco real (gravar fim/início e reativar).
+- Rótulo do Gerador: v54.5 · 28/10.
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
