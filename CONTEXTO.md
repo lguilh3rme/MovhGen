@@ -1,4 +1,4 @@
-# MOVH — Contexto v54.3 (27/10/2026)
+# MOVH — Contexto v54.4 (27/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -154,6 +154,13 @@ v54.3 (27/10): TEMPO PREVISTO do Quadro + divergência Quadro × visão do aluno
 - Por design a progressão automática (por bloco, `progressaoAuto`) ainda ajusta reps/descanso por semana da fase (ex.: semana 4: 3×10-12 → 2×11-13, descanso +5%); para o aluno ver exatamente o que está no Quadro, desmarcar "progressão automática" no bloco.
 - Tempo previsto (`kbEstimarDia`, rodapé de cada coluna do Quadro): por exercício = séries × (execução + descanso) + 15 s de preparo. Execução = reps × 3 s (média da faixa "10-12"; ×2 se "/lado" ou "unilateral" no nome) OU o tempo da série em isometria ("30 a 40 segundos" → 35 s; `reg:'tempo'`). Conjugado: sets × (soma das execuções + UM descanso: `restAfter`, senão o 1º `rest`, senão 60 s). Condicionamento: soma a `duracao` do bloco. Bug corrigido: `kbParseSeg("1'")` lia 1 SEGUNDO (por isso o Quadro mostrava ~11 min num dia de ~30). Constantes `KB_SEG_REP=3` e `KB_SEG_PREPARO=15` no código. Tooltip no rodapé explica a conta.
 - Rótulo do Gerador: v54.3 · 27/10. Créditos Netlify do app: ~13 estimados antes desta rodada (confirmar no Billing); app NÃO foi deployado nesta rodada para não estourar o saldo — o fix só chega ao aluno no próximo deploy (Netlify → Deploys → Trigger deploy, 15 créditos).
+
+v54.4 (27/10): PRÉVIA "COMO ALUNO" FIEL AO QUADRO + logo lg15r (Gerador + app; ambos `[skip netlify]`, app SEM deploy).
+- Causa: `alunoPreviewHTML` (dock "Como aluno" e modal "ver como aluno" dos Alunos) SEMPRE reescrevia `diaSemana` como sequência a partir de HOJE (editado = hoje, depois um por dia), ignorando Seg/Ter/Qua/Qui do Quadro (segunda ficava sem treino, o treino de quarta aparecia noutro dia). Agora `pvDiaReal(sem)` mantém o dia real de cada treino; os sem dia ganham o 1º dia livre (Seg→Dom). O payload leva `conteudo.diasReais=true` e o app (`if (hojeCasa || proto.conteudo.diasReais) return;`) não reembaralha mais. Link público `?treino=` (sem `diasReais`) continua com a sequência a partir de hoje quando hoje não casa.
+- `dockIrParaDia(fr,did)`: ao carregar a prévia fora do Quadro, seleciona a data (da semana corrente) do treino que está sendo editado (`aSelecionarDiaSemana` dentro do iframe). No Quadro mantém o dia de hoje; os outros dias se escolhem na faixa de dias (todos com ponto).
+- Logo `lg15r` "lg (15) · barra vermelha" em `LOGO_PRONTAS` (barra + gráfico recoloridos para o vermelho do LG `#A1130F`, claro e escuro; texto MOVH/legenda continuam preto↔creme) e na lista de "Logo do login". Gerada recolorindo os pixels neutros da região da barra (y<178) do lg15 adaptado; o lg15 e os originais não mudaram.
+- Gerador hospedado no GitHub Pages: depois do merge pode levar ~1 min e o navegador pode ter cache — Ctrl+F5 e conferir o rótulo "v54.4 · 27/10" no rodapé do menu (se ainda aparece ~11 min no Sup. A é versão antiga).
+- Créditos Netlify do app: ~13 estimados (v54.3 e v54.4 NÃO foram deployadas; o próximo deploy publica as duas correções do app).
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
