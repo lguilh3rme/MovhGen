@@ -681,6 +681,33 @@ body.clean .aluno-row.al-lv-o{box-shadow:inset 3px 0 0 #E8892B!important}
 body.clean .aluno-row.al-lv-r{box-shadow:inset 3px 0 0 #D64545!important}
 body.clean .aluno-row span[style*="border-radius:99px"]:not([style*="color:#fff"]){background:transparent!important;box-shadow:inset 0 0 0 1px currentColor;opacity:.85}
 body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
+/* v54.5 — calendário do treino (Quadro) + Central agrupada */
+.kb-cal{margin:0 0 8px;border:1px solid var(--bd2);border-radius:12px;background:transparent}
+.kb-cal>summary{cursor:pointer;list-style:none;padding:6px 12px;font-size:11.5px;font-weight:600;color:var(--t2);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.kb-cal>summary::-webkit-details-marker{display:none}
+.kb-cal>summary::before{content:'▸';font-size:10px;color:var(--t3)}
+.kb-cal[open]>summary::before{content:'▾'}
+.kb-cal-st{font-weight:500;color:var(--t3)}.kb-cal-st b{color:var(--tx)}
+.kb-cal.lv-o{box-shadow:inset 3px 0 0 #E8892B}.kb-cal.lv-r{box-shadow:inset 3px 0 0 #D64545}
+.kb-cal.lv-o .kb-cal-st b{color:#E8892B}.kb-cal.lv-r .kb-cal-st b{color:#D64545}
+.kb-cal-aj{font-size:9px;border:1px solid var(--bd);border-radius:99px;padding:0 6px;color:var(--t3)}
+.kb-cal-body{padding:4px 12px 10px;border-top:1px solid var(--bd2)}
+.kb-cal-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin:8px 0}
+.kb-cal-row label{display:flex;flex-direction:column;gap:2px;font-size:10px;color:var(--t3)}
+.kb-cal-row input[type=date]{font-size:12px;padding:4px 6px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--tx);font-family:inherit}
+.kb-cal-row .btn{font-size:10.5px;padding:5px 9px}
+.kb-cal-fases{display:flex;flex-direction:column;gap:2px}
+.kb-cal-f{display:flex;justify-content:space-between;gap:8px;align-items:center;width:100%;text-align:left;border:none;background:none;font-family:inherit;color:var(--t2);padding:4px 8px;border-radius:7px;font-size:11px;cursor:pointer}
+.kb-cal-f:hover{background:color-mix(in srgb,var(--tx) 5%,transparent)}
+.kb-cal-f.passou{opacity:.55}.kb-cal-f.atual{background:var(--Pl);color:var(--Pd);font-weight:700}.kb-cal-f.edit .kb-cal-fn::after{content:'  ◂ editando';font-weight:500;color:var(--t3);font-size:9.5px}
+.kb-cal-f.ext{cursor:default;border:1px dashed var(--bd)}
+.kb-cal-fd{font-size:10.5px;color:var(--t3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.kb-cal-dica{font-size:9.5px;color:var(--t3);margin-top:8px;line-height:1.4}
+.al-grp{align-items:baseline!important}
+.al-g-n{white-space:nowrap;color:var(--tx);font-size:11px}
+.al-g-ev{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:1px 12px;color:var(--t2)}
+.al-g-i{white-space:nowrap}
+.al-g-i i{font-style:normal;font-size:10px;color:var(--t3);font-variant-numeric:tabular-nums;margin-left:1px}
 </style>
 </head>
 <body>
@@ -709,7 +736,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.4 · 27/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.5 · 28/10</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -2008,6 +2035,8 @@ let testesAgendados=[];
 // o que o template calcularia pra aquela data. Usado quando o professor
 // edita "só este dia" pelo calendário.
 let calendarioOverrides = {};
+let mbProtoFim = null;        // fim previsto manual (AAAA-MM-DD, último dia) do protocolo carregado; null = pelas fases
+let _kbCalAberto = false;
 let mbProtoDataInicio = null; // data_inicio do protocolo carregado — base pra mapear data real -> semana/dia do template
 let calEditDia = null;        // clone temporário do dia em edição via calendário (não faz parte de `semanas`)
 let calEditDataAlvo = null;   // 'AAAA-MM-DD' sendo editada no momento
@@ -2108,7 +2137,7 @@ function pbDestInfo(){
   return{k:'novo',txt:'✳ Sem destino',acao:'💾 Salvar…'};
 }
 function pbRefreshDest(){refreshPBars();renderCfgTreino();}
-function pbSnap(){try{const g=id=>{const e=document.getElementById(id);return e?e.value:''};return JSON.stringify({s:semanas,n:g('cfg-nome'),i:g('cfg-icone'),d:g('cfg-desc'),v:g('cfg-div'),l:g('cfg-lang'),t:testesAgendados,o:calendarioOverrides});}catch(e){return '';}}
+function pbSnap(){try{const g=id=>{const e=document.getElementById(id);return e?e.value:''};return JSON.stringify({s:semanas,n:g('cfg-nome'),i:g('cfg-icone'),d:g('cfg-desc'),v:g('cfg-div'),l:g('cfg-lang'),t:testesAgendados,o:calendarioOverrides,f:mbProtoFim,di:mbProtoDataInicio});}catch(e){return '';}}
 function pbMarcarLimpo(){_pbBase=pbSnap();_pbDirty=false;_pbDraftHash='';try{localStorage.removeItem('movh-rascunho-v1');}catch(e){}pbRefreshDest();}
 async function pbSalvar(){
   const d=pbDestInfo();
@@ -2168,7 +2197,7 @@ function pbRestaurar(){
   let r=null;try{r=JSON.parse(localStorage.getItem('movh-rascunho-v1')||'null');}catch(e){}
   if(!r||!r.s||!Array.isArray(r.s.s)||!r.s.s.length)return;
   const x=r.s,set=(k,v)=>{const e=document.getElementById(k);if(e)e.value=v||'';};
-  semanas=x.s;testesAgendados=x.t||[];calendarioOverrides=x.o||{};
+  semanas=x.s;testesAgendados=x.t||[];calendarioOverrides=x.o||{};if(x.f!==undefined)mbProtoFim=x.f||null;
   set('cfg-nome',x.n);set('cfg-icone',x.i||'💪');set('cfg-desc',x.d);set('cfg-div',x.v);if(x.l)set('cfg-lang',x.l);
   _dest=r.dest||null;mbProtoCarregadoId=r.pid||null;_pbAlunoNome=r.an||'';
   renderAll();_pbDirty=true;_pbDraftHash=JSON.stringify(x);pbRefreshDest();
@@ -3118,19 +3147,83 @@ function renderKanbanSemana(sid){
       <div class="kb-col-foot" id="kb-foot-${d.id}" title="Tempo previsto = execução das séries (3 s por repetição ou o tempo da isometria) + descanso + 15 s de preparo por exercício. Conjugado: um descanso por rodada.">${totalEx} exercício${totalEx!==1?'s':''} · ⏱️ ~${minutos} min</div>
     </div>`;
   }).join('');
-  const kbFaseTxt = sem.fase&&FASES_TEMPLATE[sem.fase]?`${FASES_TEMPLATE[sem.fase].emoji} ${FASES_TEMPLATE[sem.fase].label}`:'';
-  const kbFocoTxt = sem.focoDim&&FOCO_TREINO[sem.focoDim]?`${FOCO_TREINO[sem.focoDim].emoji} ${sem.focoItem||FOCO_TREINO[sem.focoDim].label}`:'';
-  const kbBadges = [kbFaseTxt,kbFocoTxt].filter(Boolean).join(' · ');
   pg.innerHTML=`
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
-      <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.${kbBadges?` <b style="color:var(--tx)">· ${kbBadges}</b>`:''}</div></div>
+      <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
       <button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button>
     </div>
+    ${kbCalHTML(sid)}
     <div class="kb-board">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
       <span style="font-size:20px">+</span><span style="font-size:11px;font-weight:700">Novo dia</span>
     </div></div>`;
 }
+// ══ Calendário do treino (Quadro): início, fim previsto e fases com datas ══
+// Recolhido por padrão. O fim manual (`mbProtoFim`) vai em conteudo.fimPrevisto
+// e passa a valer nos alertas (laranja/vermelho) e no cartão do aluno.
+function kbFmtD(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+function kbFimPorFases(){
+  if(!mbProtoDataInicio)return null;
+  const tot=semanas.reduce((a,x)=>a+(parseInt(x.duracaoSemanas)||4),0)||(semanas.length*4);
+  const d=new Date(mbProtoDataInicio+'T00:00:00');d.setDate(d.getDate()+tot*7-1);return d;
+}
+function kbFimEfetivo(){return mbProtoFim?new Date(mbProtoFim+'T00:00:00'):kbFimPorFases();}
+function kbCalHTML(sid){
+  const hasP=(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&mbProtoDataInicio);
+  const aberto=_kbCalAberto?' open':'';
+  const tg=' ontoggle="_kbCalAberto=this.open"';
+  if(!hasP)return `<details class="kb-cal"${tg}${aberto}><summary>📅 Calendário do treino <span class="kb-cal-st">· disponível quando o treino de um aluno estiver salvo/carregado</span></summary></details>`;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  const ini=new Date(mbProtoDataInicio+'T00:00:00'),fim=kbFimEfetivo(),porF=kbFimPorFases();
+  const diff=Math.round((fim-hoje)/86400000),falta=diff+1;
+  const lv=diff<0?'r':(falta<=7?'r':(falta<=14?'o':''));
+  const st=diff<0?('terminou '+(diff===-1?'ontem':'há '+(-diff)+' dias')):(diff===0?'último dia é hoje':('faltam '+falta+' dias'));
+  const extra=mbProtoFim&&porF&&calDateKey(porF)!==mbProtoFim?` <span class="kb-cal-aj" title="Fim ajustado manualmente (pelas fases seria ${kbFmtD(porF)})">ajustado</span>`:'';
+  let acc=0;
+  const linhas=semanas.map(x=>{
+    const dur=parseInt(x.duracaoSemanas)||4;
+    const a=new Date(ini);a.setDate(a.getDate()+acc*7);
+    const b=new Date(a);b.setDate(b.getDate()+dur*7-1);
+    acc+=dur;
+    const ft=FASES_TEMPLATE[x.fase];
+    const foco=x.focoDim&&FOCO_TREINO[x.focoDim]?(' · '+FOCO_TREINO[x.focoDim].emoji+' '+(x.focoItem||FOCO_TREINO[x.focoDim].label)):'';
+    const cls=(hoje>=a&&hoje<=b)?' atual':(hoje>b?' passou':'');
+    return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
+  }).join('');
+  let ext='';
+  if(porF&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
+  return `<details class="kb-cal${lv?' lv-'+lv:''}"${tg}${aberto}>
+    <summary>📅 Calendário do treino <span class="kb-cal-st">· ${kbFmtD(ini)} → ${kbFmtD(fim)} · <b>${st}</b>${extra}</span></summary>
+    <div class="kb-cal-body">
+      <div class="kb-cal-row">
+        <label>Início <input type="date" value="${mbProtoDataInicio}" onchange="kbCalSet('ini',this.value,'${sid}')"/></label>
+        <label>Fim previsto <input type="date" value="${calDateKey(fim)}" min="${mbProtoDataInicio}" onchange="kbCalSet('fim',this.value,'${sid}')"/></label>
+        <button type="button" class="btn bs" onclick="kbCalAdd(1,'${sid}')" title="Estende o fim em 1 dia">+1 dia</button>
+        <button type="button" class="btn bs" onclick="kbCalAdd(7,'${sid}')" title="Estende o fim em 1 semana">+1 sem.</button>
+        ${mbProtoFim?`<button type="button" class="btn bs" onclick="kbCalReset('${sid}')" title="Volta a calcular o fim pela soma das fases">↺ pelas fases${porF?' ('+kbFmtD(porF)+')':''}</button>`:''}
+      </div>
+      <div class="kb-cal-fases">${linhas}${ext}</div>
+      <div class="kb-cal-dica">Mudar o <b>início</b> desloca as datas das fases. O <b>fim previsto</b> vale para os alertas (laranja ≤14 dias, vermelho ≤7). Grave com 💾 Atualizar aluno. Calendário mensal por dia: ⚙️ Configuração.</div>
+    </div>
+  </details>`;
+}
+function kbCalRefresh(sid){_kbCalAberto=true;_pbDirty=true;renderKanbanSemana(sid);try{renderCalProto();}catch(e){}pbRefreshDest();}
+function kbCalSet(k,v,sid){
+  if(!v)return;
+  if(k==='ini'){
+    mbProtoDataInicio=v;calMesAtual=new Date(v+'T00:00:00');
+    if(mbProtoFim&&mbProtoFim<v)mbProtoFim=null;
+  }else{
+    if(v<mbProtoDataInicio){notify('O fim não pode ser antes do início.');renderKanbanSemana(sid);return;}
+    const pf=kbFimPorFases();mbProtoFim=(pf&&calDateKey(pf)===v)?null:v;
+  }
+  kbCalRefresh(sid);
+}
+function kbCalAdd(n,sid){
+  const b=kbFimEfetivo();if(!b)return;
+  b.setDate(b.getDate()+n);mbProtoFim=calDateKey(b);kbCalRefresh(sid);
+}
+function kbCalReset(sid){mbProtoFim=null;kbCalRefresh(sid);}
 // Agrupa visualmente exercícios do mesmo conjugado (superset) num só
 // bloquinho com borda, em vez de cards soltos — mesma lógica de dados do
 // editor clássico (ex.cj + bloco.conjGroups), só a apresentação muda.
@@ -6690,7 +6783,7 @@ function loadSplit(){
       })
     }))
   }));
-  _dest=null;mbProtoCarregadoId=null;mbProtoDataInicio=null;calendarioOverrides={};calMesAtual=null;
+  _dest=null;mbProtoCarregadoId=null;mbProtoDataInicio=null;mbProtoFim=null;calendarioOverrides={};calMesAtual=null;
   const _uw=document.getElementById('mb-update-wrap');if(_uw)_uw.style.display='none';
   renderAll();
   pbMarcarLimpo();
@@ -7508,7 +7601,8 @@ function mbMontarAtividade(alunos, sessoes, registros, dores, extra){
     });
   });
   const KIND = { '⚠️':'a', '🔔':'a', '🆕':'a', '✅':'t', '🏋️':'t' };
-  ev.forEach(e => { e.k = KIND[e.i] || 'v'; });
+  const SH = { '✅':'treino concluído', '⚠️':'dor', '🔔':'pediu novo treino', '🆕':'novo cadastro', '📝':'anamnese', '👁':'abriu o treino', '👀':'abriu o app' };
+  ev.forEach(e => { e.k = KIND[e.i] || 'v'; e.s = SH[e.i] || String(e.x || '').split(' · ')[0]; });
   ev.sort((a, b) => new Date(b.t) - new Date(a.t));
   window._mbEv = ev;
   mbRenderFeed();
@@ -7533,7 +7627,9 @@ function mbPresenca(a){
 // Fim do treino (previsão pela duração das semanas) e do acesso: laranja ≤ 14 dias, vermelho ≤ 7 dias (ou já vencido).
 function mbPrevisaoFim(a){
   const p = a.protocoloAtivo; if (!p || !p.data_inicio) return null;
-  const ss = ((p._conteudo || p.conteudo || {}).semanas) || [];
+  const cc = (p._conteudo || p.conteudo || {});
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cc.fimPrevisto || '')) { const fm = new Date(cc.fimPrevisto + 'T00:00:00'); fm.setDate(fm.getDate() + 1); return fm; } // fim manual = último dia; f = dia seguinte
+  const ss = cc.semanas || [];
   const tot = ss.reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || (ss.length * 4);
   if (!tot) return null;
   return new Date(new Date(p.data_inicio + 'T00:00:00').getTime() + tot * 7 * 86400000);
@@ -7572,7 +7668,16 @@ function mbFiltrarAluno(nome){ const b = document.getElementById('alunos-busca')
 function mbRenderFeed(){
   const box = document.getElementById('alunos-atividade'); if (!box) return;
   const ev = window._mbEv || [], al = mbAlertas();
-  const lista = ev.filter(e => _mbFeedF === 'todos' || e.k === _mbFeedF).slice(0, 30);
+  // Agrupa por aluno + dia: uma linha por aluno, cada ação com a hora.
+  const grupos = [], gmap = {};
+  ev.filter(e => _mbFeedF === 'todos' || e.k === _mbFeedF).forEach(e => {
+    const k = (e.id || e.a) + '|' + new Date(e.t).toDateString();
+    let g = gmap[k]; if (!g) { g = gmap[k] = { id: e.id, a: e.a, t: e.t, evs: [] }; grupos.push(g); }
+    g.evs.push(e);
+  });
+  const hh = t => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  grupos.forEach(g => g.evs.sort((x, y) => new Date(x.t) - new Date(y.t)));
+  const lista = grupos.slice(0, 30);
   const chip = (f, l) => '<button type="button" class="al-fch' + (_mbFeedF === f ? ' on' : '') + '" onclick="event.stopPropagation();event.preventDefault();mbFeedFiltro(\'' + f + '\')">' + l + '</button>';
   if (!window._mbFimToast) {
     const r = (mbPainelAlunos || []).map(a => mbFimAvisos(a)).filter(f => f.length);
@@ -7586,7 +7691,7 @@ function mbRenderFeed(){
   box.style.display = 'block';
   box.innerHTML = '<summary>🔔 Central <span class="al-feed-n">' + al.length + '</span><span style="flex:1"></span>' + chip('todos','Tudo') + chip('a','⚠️') + chip('t','🏋️') + chip('v','👁') + '</summary>' +
     (al.length ? '<div class="al-alerts">' + al.map(x => '<button type="button" class="al-al n' + x.n + (x.lv ? ' lv-' + x.lv : '') + '" data-id="' + escAttr(x.aid || '') + '" onclick="mbIrParaAluno(this.dataset.id)" title="Ir para o aluno">' + x.i + ' ' + escAttr(x.t) + '</button>').join('') + '</div>' : '') +
-    (lista.length ? '<div class="al-feed-list">' + lista.map(e => '<button type="button" class="al-feed-it" data-id="' + escAttr(e.id || '') + '" onclick="mbIrParaAluno(this.dataset.id)" title="' + escAttr(e.a + ' ' + e.x + ' · ' + mbTempoRel(e.t)) + '"><span class="al-feed-t">' + mbTempoC(e.t) + '</span><span class="al-feed-ic">' + e.i + '</span><span class="al-feed-tx"><b>' + escAttr(e.a) + '</b> ' + escAttr(e.x) + '</span></button>').join('') + '</div>' : '<div class="al-feed-vazio">Sem atividade neste filtro.</div>');
+    (lista.length ? '<div class="al-feed-list">' + lista.map(g => '<button type="button" class="al-feed-it al-grp" data-id="' + escAttr(g.id || '') + '" onclick="mbIrParaAluno(this.dataset.id)" title="' + escAttr(g.evs.map(e => hh(e.t) + ' ' + e.a + ' ' + e.x).join('\n')) + '"><span class="al-feed-t">' + mbTempoC(g.t) + '</span><b class="al-g-n">' + escAttr(g.a) + '</b><span class="al-g-ev">' + g.evs.map(e => '<span class="al-g-i">' + e.i + ' ' + escAttr(g.evs.length === 1 ? e.x : e.s) + ' <i>' + hh(e.t) + '</i></span>').join('') + '</span></button>').join('') + '</div>' : '<div class="al-feed-vazio">Sem atividade neste filtro.</div>');
 }
 
 function renderPainelAlunos() {
@@ -7639,9 +7744,8 @@ function renderPainelAlunos() {
     if (proto && proto.data_inicio) {
       const conteudo = proto._conteudo || {};
       const semanas = conteudo.semanas || [];
-      const totalSemanas = semanas.reduce((acc, s) => acc + (parseInt(s.duracaoSemanas)||4), 0) || (semanas.length * 4);
-      const inicio = new Date(proto.data_inicio + 'T00:00:00');
-      previsaoFim = new Date(inicio.getTime() + totalSemanas * 7 * 24 * 3600 * 1000);
+      const fAf = mbPrevisaoFim(a);
+      previsaoFim = fAf ? new Date(fAf.getTime() - 86400000) : null;
       diasPorSemanaProto = semanas.length ? Math.max(...semanas.map(s => (s.dias||[]).length)) : 0;
     }
 
@@ -9206,16 +9310,24 @@ async function mbGerenciarProtocolos(alunoId) {
     const nome = c.nome || 'Sem nome';
     const semanas = (c.semanas||[]).length;
     const criado = p.data_inicio ? new Date(p.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+    let fimTxt = '';
+    if (p.data_inicio) {
+      let fd = null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto || '')) fd = new Date(c.fimPrevisto + 'T00:00:00');
+      else { const tw = (c.semanas || []).reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || ((c.semanas || []).length * 4); if (tw) { fd = new Date(p.data_inicio + 'T00:00:00'); fd.setDate(fd.getDate() + tw * 7 - 1); } }
+      if (fd) fimTxt = ' · fim previsto ' + fd.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    }
     const ativoBadge = p.ativo
       ? '<span style="font-size:9px;background:#E0F5EE;color:#085040;padding:2px 6px;border-radius:99px;font-weight:700">✅ ativo</span>'
       : '<span style="font-size:9px;background:#F3F3F3;color:#888;padding:2px 6px;border-radius:99px">inativo</span>';
     return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cl);margin-bottom:6px">
       <div style="flex:1;min-width:0">
         <div style="font-size:12px;font-weight:600;color:var(--tx)">${escAttr(nome)} ${ativoBadge}</div>
-        <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · criado ${criado}</div>
+        <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · criado ${criado}${fimTxt}</div>
       </div>
       <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
       <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
+      ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="Volta a ser o treino ativo do aluno (o ativo atual vai para o histórico)">↩ Reativar</button>` : ''}
       ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px;color:#c03030;border-color:#f0b0b0" onclick="mbDeletarProtocolo('${p.id}','${alunoId}')" title="Excluir protocolo">🗑 Excluir</button>` : ''}
     </div>`;
   }).join('');
@@ -9260,6 +9372,25 @@ async function mbRevogarLinkTreino(tipo, id){
   const col = tipo === 'split' ? 'split_id' : 'protocolo_id';
   const { error } = await mbClient.from('links_treino').delete().eq(col, String(id));
   if (error) notify('Erro ao revogar: ' + error.message); else notify('Link revogado.');
+}
+
+async function mbReativarProtocolo(protoId, alunoId) {
+  if (!confirm('Reativar este protocolo? O treino ativo atual do aluno vai para o histórico (inativo) e o aluno passa a ver este no app.\n\nSe as datas dele já venceram, ajuste início/fim no Quadro (📅 Calendário do treino).')) return;
+  try {
+    let antigos = [];
+    try { const { data } = await mbClient.from('protocolos').select('id').eq('aluno_id', alunoId).eq('ativo', true); antigos = (data || []).map(x => String(x.id)); } catch (_) {}
+    const r1 = await mbClient.from('protocolos').update({ ativo: false }).eq('aluno_id', alunoId).eq('ativo', true);
+    if (r1.error) throw r1.error;
+    const r2 = await mbClient.from('protocolos').update({ ativo: true }).eq('id', protoId);
+    if (r2.error) {
+      if (antigos.length) { try { await mbClient.from('protocolos').update({ ativo: true }).in('id', antigos); } catch (_) {} }
+      throw r2.error;
+    }
+    if (antigos.length) { try { await mbClient.from('links_treino').update({ protocolo_id: String(protoId) }).in('protocolo_id', antigos); } catch (_) {} }
+    notify('✅ Protocolo reativado.');
+    mbGerenciarProtocolos(alunoId);
+    mbCarregarPainelAlunos();
+  } catch (e) { notify('Erro ao reativar: ' + (e.message || e)); }
 }
 
 async function mbDeletarProtocolo(protoId, alunoId) {
@@ -9566,6 +9697,7 @@ function mbAplicarProtoNoEditor(proto) {
   (c.testesAgendados || []).forEach(t => testesAgendados.push(t));
   calendarioOverrides = c.overrides || {};
   mbProtoDataInicio = proto.data_inicio || null;
+  mbProtoFim = c.fimPrevisto || null;
   calMesAtual = mbProtoDataInicio ? new Date(mbProtoDataInicio + 'T00:00:00') : null;
 
   document.getElementById('cfg-nome').value = c.nome || proto.nome || '';
@@ -9700,6 +9832,7 @@ function mbOnAlunoChange() {
   // ao trocar aluno, limpa protocolo carregado
   mbProtoCarregadoId = null;
   mbProtoDataInicio = null;
+  mbProtoFim = null;
   calendarioOverrides = {};
   calMesAtual = null;
   renderCalProto();
@@ -10028,7 +10161,8 @@ async function mbSalvarProtocolo() {
     lang,
     semanas: semanasTraduzidas,
     testesAgendados: testesAgendados||[],
-    overrides: calendarioOverrides||{}
+    overrides: calendarioOverrides||{},
+    fimPrevisto: mbProtoFim || null
   };
 
   try {
@@ -10111,12 +10245,13 @@ async function mbAtualizarProtocolo() {
     lang,
     semanas: semanasTraduzidas,
     testesAgendados: testesAgendados||[],
-    overrides: calendarioOverrides||{}
+    overrides: calendarioOverrides||{},
+    fimPrevisto: mbProtoFim || null
   };
 
   try {
     const { error } = await mbClient.from('protocolos')
-      .update({ conteudo, nome })
+      .update(Object.assign({ conteudo, nome }, mbProtoDataInicio ? { data_inicio: mbProtoDataInicio } : {}))
       .eq('id', mbProtoCarregadoId);
     if (error) throw error;
     document.getElementById('mb-proto-editando').textContent = '✅ Atualizado: ' + nome;
