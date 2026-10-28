@@ -687,6 +687,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
 .kb-cal>summary::-webkit-details-marker{display:none}
 .kb-cal>summary::before{content:'▸';font-size:10px;color:var(--t3)}
 .kb-cal[open]>summary::before{content:'▾'}
+.kb-cal-hd{font-size:12.5px;font-weight:700;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .kb-cal-st{font-weight:500;color:var(--t3)}.kb-cal-st b{color:var(--tx)}
 .kb-cal.lv-o{box-shadow:inset 3px 0 0 #E8892B}.kb-cal.lv-r{box-shadow:inset 3px 0 0 #D64545}
 .kb-cal.lv-o .kb-cal-st b{color:#E8892B}.kb-cal.lv-r .kb-cal-st b{color:#D64545}
@@ -736,7 +737,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.5 · 28/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.6 · 28/10</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -2128,7 +2129,7 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 function pbDestInfo(){
   if(_dest&&_dest.tipo==='split'){const sp=(typeof SPLITS!=='undefined'?SPLITS:[]).find(x=>x.id===_dest.id);return{k:'split',txt:'📂 '+(sp?sp.nome:'Split'),acao:'💾 Salvar split'};}
@@ -3153,7 +3154,6 @@ function renderKanbanSemana(sid){
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
       <button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button>
     </div>
-    ${kbCalHTML(sid)}
     <div class="kb-board">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
       <span style="font-size:20px">+</span><span style="font-size:11px;font-weight:700">Novo dia</span>
     </div></div>`;
@@ -3172,7 +3172,7 @@ function kbCalHTML(sid){
   const hasP=(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&mbProtoDataInicio);
   const aberto=_kbCalAberto?' open':'';
   const tg=' ontoggle="_kbCalAberto=this.open"';
-  if(!hasP)return `<details class="kb-cal"${tg}${aberto}><summary>📅 Calendário do treino <span class="kb-cal-st">· disponível quando o treino de um aluno estiver salvo/carregado</span></summary></details>`;
+  if(!hasP)return `<div class="kb-cal"><div class="kb-cal-hd">📅 Calendário do treino</div><div class="kb-cal-body"><div class="kb-cal-dica">Disponível quando o treino de um aluno estiver salvo/carregado (escolha o aluno e salve, ou abra "Editar no Quadro" na aba Alunos).</div></div></div>`;
   const hoje=new Date();hoje.setHours(0,0,0,0);
   const ini=new Date(mbProtoDataInicio+'T00:00:00'),fim=kbFimEfetivo(),porF=kbFimPorFases();
   const diff=Math.round((fim-hoje)/86400000),falta=diff+1;
@@ -3192,8 +3192,8 @@ function kbCalHTML(sid){
   }).join('');
   let ext='';
   if(porF&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
-  return `<details class="kb-cal${lv?' lv-'+lv:''}"${tg}${aberto}>
-    <summary>📅 Calendário do treino <span class="kb-cal-st">· ${kbFmtD(ini)} → ${kbFmtD(fim)} · <b>${st}</b>${extra}</span></summary>
+  return `<div class="kb-cal${lv?' lv-'+lv:''}">
+    <div class="kb-cal-hd">📅 Calendário do treino <span class="kb-cal-st">· ${kbFmtD(ini)} → ${kbFmtD(fim)} · <b>${st}</b>${extra}</span></div>
     <div class="kb-cal-body">
       <div class="kb-cal-row">
         <label>Início <input type="date" value="${mbProtoDataInicio}" onchange="kbCalSet('ini',this.value,'${sid}')"/></label>
@@ -3205,16 +3205,25 @@ function kbCalHTML(sid){
       <div class="kb-cal-fases">${linhas}${ext}</div>
       <div class="kb-cal-dica">Mudar o <b>início</b> desloca as datas das fases. O <b>fim previsto</b> vale para os alertas (laranja ≤14 dias, vermelho ≤7). Grave com 💾 Atualizar aluno. Calendário mensal por dia: ⚙️ Configuração.</div>
     </div>
-  </details>`;
+  </div>`;
 }
-function kbCalRefresh(sid){_kbCalAberto=true;_pbDirty=true;renderKanbanSemana(sid);try{renderCalProto();}catch(e){}pbRefreshDest();}
+function kbCalRefresh(sid){_pbDirty=true;pbCalRender(sid);try{renderCalProto();}catch(e){}pbRefreshDest();}
+function pbCalRender(sid){const m=document.getElementById('pb-cal');if(!m)return;m.querySelector('.pbc-in').innerHTML=kbCalHTML(sid);}
+function pbCalAbrir(sid){
+  const old=document.getElementById('pb-cal');if(old)old.remove();
+  const m=document.createElement('div');m.id='pb-cal';
+  m.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:12px';
+  m.onclick=function(e){if(e.target===m)m.remove();};
+  m.innerHTML='<div class="card" style="width:min(560px,100%);max-height:90vh;overflow:auto;padding:14px;margin:0"><div class="pbc-in"></div><div style="text-align:right;margin-top:8px"><button class="btn bs" onclick="document.getElementById(\'pb-cal\').remove()">Fechar</button></div></div>';
+  document.body.appendChild(m);pbCalRender(sid);
+}
 function kbCalSet(k,v,sid){
   if(!v)return;
   if(k==='ini'){
     mbProtoDataInicio=v;calMesAtual=new Date(v+'T00:00:00');
     if(mbProtoFim&&mbProtoFim<v)mbProtoFim=null;
   }else{
-    if(v<mbProtoDataInicio){notify('O fim não pode ser antes do início.');renderKanbanSemana(sid);return;}
+    if(v<mbProtoDataInicio){notify('O fim não pode ser antes do início.');pbCalRender(sid);return;}
     const pf=kbFimPorFases();mbProtoFim=(pf&&calDateKey(pf)===v)?null:v;
   }
   kbCalRefresh(sid);

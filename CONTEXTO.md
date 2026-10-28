@@ -1,4 +1,4 @@
-# MOVH — Contexto v54.5 (28/10/2026)
+# MOVH — Contexto v54.6 (28/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -169,6 +169,8 @@ v54.5 (28/10): CALENDÁRIO DO TREINO NO QUADRO + CENTRAL AGRUPADA + REATIVAR (s�
 - Histórico de protocolos do aluno (🗂 Todos os treinos): botão "↩ Reativar" nos inativos (`mbReativarProtocolo`: desativa o ativo, ativa o escolhido, repontua `links_treino` do antigo para o reativado, desfaz se falhar) e mostra "fim previsto". Se as datas já venceram, ajustar no calendário do Quadro.
 - Testes: tools/tests (reg_all, bulk, kbm) sem FAIL; teste próprio (desktop+mobile): calendário, +1 dia, reset, `mbFimAvisos` com/sem fim manual, Central agrupada — OK. NÃO testado no banco real (gravar fim/início e reativar).
 - Rótulo do Gerador: v54.5 · 28/10.
+
+v54.6 (28/10): o `<details>` do calendário NÃO abria no navegador do usuário (clicar no resumo não expandia). Agora é botão `📅 Calendário` na barra do protocolo (`pbarHTML`, ao lado de 🗂️ Quadro e 📱 Como aluno) que abre painel/modal `#pb-cal` (`pbCalAbrir`/`pbCalRender`; mesmo conteúdo de `kbCalHTML`, agora um `<div>`). Editar início/fim/+1 dia/↺ re-renderiza o painel (`kbCalRefresh`). O início/fim só afetam datas de fases e alertas; os dias da semana do treino seguem como antes. Lição: evitar `<details>` com re-render do Quadro; preferir botão + modal (padrão do `pb-saveas`). Só Gerador, `[skip netlify]`.
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
