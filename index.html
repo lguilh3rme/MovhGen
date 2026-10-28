@@ -737,7 +737,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.6 · 28/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.7 · 28/10</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -3169,41 +3169,48 @@ function kbFimPorFases(){
 }
 function kbFimEfetivo(){return mbProtoFim?new Date(mbProtoFim+'T00:00:00'):kbFimPorFases();}
 function kbCalHTML(sid){
-  const hasP=(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&mbProtoDataInicio);
-  const aberto=_kbCalAberto?' open':'';
-  const tg=' ontoggle="_kbCalAberto=this.open"';
+  const hasP=(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId);
   if(!hasP)return `<div class="kb-cal"><div class="kb-cal-hd">📅 Calendário do treino</div><div class="kb-cal-body"><div class="kb-cal-dica">Disponível quando o treino de um aluno estiver salvo/carregado (escolha o aluno e salve, ou abra "Editar no Quadro" na aba Alunos).</div></div></div>`;
   const hoje=new Date();hoje.setHours(0,0,0,0);
-  const ini=new Date(mbProtoDataInicio+'T00:00:00'),fim=kbFimEfetivo(),porF=kbFimPorFases();
-  const diff=Math.round((fim-hoje)/86400000),falta=diff+1;
-  const lv=diff<0?'r':(falta<=7?'r':(falta<=14?'o':''));
-  const st=diff<0?('terminou '+(diff===-1?'ontem':'há '+(-diff)+' dias')):(diff===0?'último dia é hoje':('faltam '+falta+' dias'));
-  const extra=mbProtoFim&&porF&&calDateKey(porF)!==mbProtoFim?` <span class="kb-cal-aj" title="Fim ajustado manualmente (pelas fases seria ${kbFmtD(porF)})">ajustado</span>`:'';
-  let acc=0;
-  const linhas=semanas.map(x=>{
-    const dur=parseInt(x.duracaoSemanas)||4;
-    const a=new Date(ini);a.setDate(a.getDate()+acc*7);
-    const b=new Date(a);b.setDate(b.getDate()+dur*7-1);
-    acc+=dur;
-    const ft=FASES_TEMPLATE[x.fase];
-    const foco=x.focoDim&&FOCO_TREINO[x.focoDim]?(' · '+FOCO_TREINO[x.focoDim].emoji+' '+(x.focoItem||FOCO_TREINO[x.focoDim].label)):'';
-    const cls=(hoje>=a&&hoje<=b)?' atual':(hoje>b?' passou':'');
-    return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
-  }).join('');
-  let ext='';
-  if(porF&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
+  const di=mbProtoDataInicio,ini=di?new Date(di+'T00:00:00'):null,fim=kbFimEfetivo(),porF=kbFimPorFases();
+  let resumo='<b>sem datas definidas</b> · o app mostra o treino como sempre',lv='';
+  if(fim){
+    const diff=Math.round((fim-hoje)/86400000),falta=diff+1;
+    lv=diff<0?'r':(falta<=7?'r':(falta<=14?'o':''));
+    const st=diff<0?('terminou '+(diff===-1?'ontem':'há '+(-diff)+' dias')):(diff===0?'último dia é hoje':('faltam '+falta+' dias'));
+    const extra=mbProtoFim&&porF&&calDateKey(porF)!==mbProtoFim?` <span class="kb-cal-aj" title="Fim ajustado manualmente (pelas fases seria ${kbFmtD(porF)})">ajustado</span>`:'';
+    resumo=(ini?kbFmtD(ini)+' → ':'até ')+kbFmtD(fim)+' · <b>'+st+'</b>'+extra;
+  }
+  let linhas='',ext='';
+  if(ini){
+    let acc=0;
+    linhas=semanas.map(x=>{
+      const dur=parseInt(x.duracaoSemanas)||4;
+      const a=new Date(ini);a.setDate(a.getDate()+acc*7);
+      const b=new Date(a);b.setDate(b.getDate()+dur*7-1);
+      acc+=dur;
+      const ft=FASES_TEMPLATE[x.fase];
+      const foco=x.focoDim&&FOCO_TREINO[x.focoDim]?(' · '+FOCO_TREINO[x.focoDim].emoji+' '+(x.focoItem||FOCO_TREINO[x.focoDim].label)):'';
+      const cls=(hoje>=a&&hoje<=b)?' atual':(hoje>b?' passou':'');
+      return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
+    }).join('');
+    if(porF&&fim&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
+  }
+  const dica=ini
+    ?'Mudar o <b>início</b> desloca as datas das fases. O <b>fim previsto</b> vale para os alertas (laranja ≤14 dias, vermelho ≤7). Grave com 💾 Atualizar aluno. Calendário mensal por dia: ⚙️ Configuração.'
+    :'Este treino <b>não tem data de início</b>: o app mostra a 1ª fase, como sempre, e os dias da semana seguem iguais. Definir o início faz o app passar a seguir as fases por data. O <b>fim previsto</b> pode ser definido sozinho (só para os alertas). Grave com 💾 Atualizar aluno.';
   return `<div class="kb-cal${lv?' lv-'+lv:''}">
-    <div class="kb-cal-hd">📅 Calendário do treino <span class="kb-cal-st">· ${kbFmtD(ini)} → ${kbFmtD(fim)} · <b>${st}</b>${extra}</span></div>
+    <div class="kb-cal-hd">📅 Calendário do treino <span class="kb-cal-st">· ${resumo}</span></div>
     <div class="kb-cal-body">
       <div class="kb-cal-row">
-        <label>Início <input type="date" value="${mbProtoDataInicio}" onchange="kbCalSet('ini',this.value,'${sid}')"/></label>
-        <label>Fim previsto <input type="date" value="${calDateKey(fim)}" min="${mbProtoDataInicio}" onchange="kbCalSet('fim',this.value,'${sid}')"/></label>
+        <label>Início <input type="date" value="${di||''}" onchange="kbCalSet('ini',this.value,'${sid}')"/></label>
+        <label>Fim previsto <input type="date" value="${fim?calDateKey(fim):''}" ${di?`min="${di}"`:''} onchange="kbCalSet('fim',this.value,'${sid}')"/></label>
         <button type="button" class="btn bs" onclick="kbCalAdd(1,'${sid}')" title="Estende o fim em 1 dia">+1 dia</button>
         <button type="button" class="btn bs" onclick="kbCalAdd(7,'${sid}')" title="Estende o fim em 1 semana">+1 sem.</button>
-        ${mbProtoFim?`<button type="button" class="btn bs" onclick="kbCalReset('${sid}')" title="Volta a calcular o fim pela soma das fases">↺ pelas fases${porF?' ('+kbFmtD(porF)+')':''}</button>`:''}
+        ${mbProtoFim?`<button type="button" class="btn bs" onclick="kbCalReset('${sid}')" title="Volta a calcular o fim pela soma das fases">↺ ${porF?'pelas fases ('+kbFmtD(porF)+')':'limpar fim'}</button>`:''}
       </div>
-      <div class="kb-cal-fases">${linhas}${ext}</div>
-      <div class="kb-cal-dica">Mudar o <b>início</b> desloca as datas das fases. O <b>fim previsto</b> vale para os alertas (laranja ≤14 dias, vermelho ≤7). Grave com 💾 Atualizar aluno. Calendário mensal por dia: ⚙️ Configuração.</div>
+      ${linhas||ext?`<div class="kb-cal-fases">${linhas}${ext}</div>`:''}
+      <div class="kb-cal-dica">${dica}</div>
     </div>
   </div>`;
 }
@@ -3223,13 +3230,13 @@ function kbCalSet(k,v,sid){
     mbProtoDataInicio=v;calMesAtual=new Date(v+'T00:00:00');
     if(mbProtoFim&&mbProtoFim<v)mbProtoFim=null;
   }else{
-    if(v<mbProtoDataInicio){notify('O fim não pode ser antes do início.');pbCalRender(sid);return;}
+    if(mbProtoDataInicio&&v<mbProtoDataInicio){notify('O fim não pode ser antes do início.');pbCalRender(sid);return;}
     const pf=kbFimPorFases();mbProtoFim=(pf&&calDateKey(pf)===v)?null:v;
   }
   kbCalRefresh(sid);
 }
 function kbCalAdd(n,sid){
-  const b=kbFimEfetivo();if(!b)return;
+  let b=kbFimEfetivo();if(!b){b=new Date();b.setHours(0,0,0,0);}
   b.setDate(b.getDate()+n);mbProtoFim=calDateKey(b);kbCalRefresh(sid);
 }
 function kbCalReset(sid){mbProtoFim=null;kbCalRefresh(sid);}
@@ -7635,9 +7642,10 @@ function mbPresenca(a){
 }
 // Fim do treino (previsão pela duração das semanas) e do acesso: laranja ≤ 14 dias, vermelho ≤ 7 dias (ou já vencido).
 function mbPrevisaoFim(a){
-  const p = a.protocoloAtivo; if (!p || !p.data_inicio) return null;
+  const p = a.protocoloAtivo; if (!p) return null;
   const cc = (p._conteudo || p.conteudo || {});
   if (/^\d{4}-\d{2}-\d{2}$/.test(cc.fimPrevisto || '')) { const fm = new Date(cc.fimPrevisto + 'T00:00:00'); fm.setDate(fm.getDate() + 1); return fm; } // fim manual = último dia; f = dia seguinte
+  if (!p.data_inicio) return null;
   const ss = cc.semanas || [];
   const tot = ss.reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || (ss.length * 4);
   if (!tot) return null;
