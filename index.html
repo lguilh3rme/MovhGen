@@ -737,7 +737,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.7 · 28/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.8 · 28/10</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -2201,7 +2201,7 @@ function pbRestaurar(){
   semanas=x.s;testesAgendados=x.t||[];calendarioOverrides=x.o||{};if(x.f!==undefined)mbProtoFim=x.f||null;
   set('cfg-nome',x.n);set('cfg-icone',x.i||'💪');set('cfg-desc',x.d);set('cfg-div',x.v);if(x.l)set('cfg-lang',x.l);
   _dest=r.dest||null;mbProtoCarregadoId=r.pid||null;_pbAlunoNome=r.an||'';
-  renderAll();_pbDirty=true;_pbDraftHash=JSON.stringify(x);pbRefreshDest();
+  renderAll();_pbDirty=true;_pbDraftHash=JSON.stringify(x);pbRefreshDest();setTimeout(function(){mbCalSync();},2500);
   const h=new Date(r.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   notify('♻️ Rascunho de '+h+' restaurado. Use 💾 Salvar para gravar no banco.');
 }
@@ -3215,6 +3215,28 @@ function kbCalHTML(sid){
   </div>`;
 }
 function kbCalRefresh(sid){_pbDirty=true;pbCalRender(sid);try{renderCalProto();}catch(e){}pbRefreshDest();}
+// Recupera início/fim do treino carregado quando o editor os perdeu (ex.: rascunho restaurado só guarda o id).
+// Busca primeiro no painel de alunos (treino ativo) e, se não achar, direto no banco.
+function mbCalSync(cb){
+  const fim=()=>{try{if(cb)cb();}catch(e){}};
+  if(typeof mbProtoCarregadoId==='undefined'||!mbProtoCarregadoId||mbProtoDataInicio){fim();return;}
+  const aplicar=p=>{
+    if(!p||!p.data_inicio)return false;
+    mbProtoDataInicio=p.data_inicio;
+    const c=p._conteudo||p.conteudo||{};
+    if(!mbProtoFim&&/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto||''))mbProtoFim=c.fimPrevisto;
+    calMesAtual=new Date(p.data_inicio+'T00:00:00');
+    if(!_pbDirty)_pbBase=pbSnap();
+    return true;
+  };
+  const lista=(typeof mbPainelAlunos!=='undefined'&&mbPainelAlunos)||[];
+  const ap=lista.map(a=>a.protocoloAtivo).find(p=>p&&String(p.id)===String(mbProtoCarregadoId));
+  if(aplicar(ap)){fim();return;}
+  try{
+    if(typeof mbClient==='undefined'||!mbClient){fim();return;}
+    mbClient.from('protocolos').select('data_inicio, conteudo').eq('id',mbProtoCarregadoId).maybeSingle().then(function(r){if(r&&r.data)aplicar(r.data);fim();},function(){fim();});
+  }catch(e){fim();}
+}
 function pbCalRender(sid){const m=document.getElementById('pb-cal');if(!m)return;m.querySelector('.pbc-in').innerHTML=kbCalHTML(sid);}
 function pbCalAbrir(sid){
   const old=document.getElementById('pb-cal');if(old)old.remove();
@@ -3222,7 +3244,7 @@ function pbCalAbrir(sid){
   m.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:12px';
   m.onclick=function(e){if(e.target===m)m.remove();};
   m.innerHTML='<div class="card" style="width:min(560px,100%);max-height:90vh;overflow:auto;padding:14px;margin:0"><div class="pbc-in"></div><div style="text-align:right;margin-top:8px"><button class="btn bs" onclick="document.getElementById(\'pb-cal\').remove()">Fechar</button></div></div>';
-  document.body.appendChild(m);pbCalRender(sid);
+  document.body.appendChild(m);pbCalRender(sid);mbCalSync(function(){pbCalRender(sid);});
 }
 function kbCalSet(k,v,sid){
   if(!v)return;
