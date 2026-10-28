@@ -1,4 +1,4 @@
-# MOVH — Contexto v54.7 (28/10/2026)
+# MOVH — Contexto v54.8 (28/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -173,6 +173,8 @@ v54.5 (28/10): CALENDÁRIO DO TREINO NO QUADRO + CENTRAL AGRUPADA + REATIVAR (s�
 v54.6 (28/10): o `<details>` do calendário NÃO abria no navegador do usuário (clicar no resumo não expandia). Agora é botão `📅 Calendário` na barra do protocolo (`pbarHTML`, ao lado de 🗂️ Quadro e 📱 Como aluno) que abre painel/modal `#pb-cal` (`pbCalAbrir`/`pbCalRender`; mesmo conteúdo de `kbCalHTML`, agora um `<div>`). Editar início/fim/+1 dia/↺ re-renderiza o painel (`kbCalRefresh`). O início/fim só afetam datas de fases e alertas; os dias da semana do treino seguem como antes. Lição: evitar `<details>` com re-render do Quadro; preferir botão + modal (padrão do `pb-saveas`). Só Gerador, `[skip netlify]`.
 
 v54.7 (28/10): protocolos SEM `data_inicio` existem no banco (ex.: o da Izabella): o painel 📅 mostrava só o aviso. Agora o painel funciona sem início (inputs de início e fim, +1 dia/+1 sem.; sem lista de fases até haver início) e o aviso explica que sem início o app mostra a 1ª fase como sempre. `mbPrevisaoFim` aceita `conteudo.fimPrevisto` mesmo sem `data_inicio` (alertas); sem fim manual e sem início segue sem previsão. ATENÇÃO: definir o início faz o app passar a seguir as fases por data (muda o comportamento de quem estava sem data). Rótulo v54.7 · 28/10.
+
+v54.8 (28/10): CORREÇÃO da v54.7 — o treino da Izabella TEM `data_inicio` no banco (o gerenciador mostrava "faltam 3 dias"), mas o editor ficava com `mbProtoDataInicio=null`: `pbRestaurar` (rascunho local) restaura `mbProtoCarregadoId` e NÃO o início/fim. Agora `mbCalSync(cb)` recupera início e `fimPrevisto` do treino carregado (primeiro de `mbPainelAlunos[].protocoloAtivo`, senão `select` em `protocolos` por id), sem marcar ● de não salvo; roda ao abrir o painel 📅 e 2,5 s depois de restaurar rascunho. Lição: ao restaurar estado do editor, derivar datas do banco, não confiar só no rascunho. Rótulo v54.8 · 28/10.
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
