@@ -1,4 +1,4 @@
-# MOVH — Contexto v55 (02/11/2026; seção 13 de marca atualizada em 31/10/2026)
+# MOVH — Contexto v56 (02/11/2026; seção 13 de marca atualizada em 31/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -183,6 +183,14 @@ v55 (02/11): COBRAR + PLANOS COM VALORES DEFINIDOS + AVISO DO TELEGRAM (só Gera
 - Telegram: função `tools/supabase/notify-pix/index.ts` + `tools/supabase/README-notify-pix.md` (deploy e Database Webhook no INSERT de `pagamentos_pix` ficam com o usuário; nomes dos secrets do bot a conferir).
 - Testes: reg_all/bulk/kbm sem FAIL; teste próprio (3 situações, troca de plano, CRC) OK. Rótulo do Gerador: v55 · 02/11.
 - Próximos (ordem combinada): 3) banner/oferta de renovação e reativação no app do aluno (filtrar por situação; precisa deploy Netlify, créditos renovam na semana seguinte); depois bloqueio com tolerância de 7 dias e WHATSAPP do MOVH_CONFIG a preencher.
+
+v56 (02/11, noite): COBRAR INTEGRADO AO APP + VALORES DEFINIDOS AUTOMÁTICOS (Gerador + app; ambos `[skip netlify]`, app SEM deploy: créditos renovam na semana seguinte).
+- Pedido do usuário: o Cobrar não pode ser só mensagem; tem que funcionar como o "renovar plano" do app, conforme a situação, integrado ao app, mantendo a opção da mensagem. E os valores têm de estar os definidos.
+- Valores: `plMigrarLegado` troca automaticamente planos salvos sem `tipo` (pré-v55) por `PL_DEFAULT` (180/420/780/150/165), grava no localStorage e marca `movh_planos_pub_pend`; no próximo login do professor `plPlanosPublicar` publica em `landing_config.planos` (é de lá que o app lê). Sem login, o app continua vendo os valores antigos.
+- Oferta: coluna nova `alunos.cobranca jsonb` ({status:'aberta', tipo, plano_id, plano_nome, dias, valor, criado_em}); SQL `ALTER TABLE alunos ADD COLUMN IF NOT EXISTS cobranca jsonb;` está no script de configuração do Gerador e PRECISA rodar no Supabase. No modal Cobrar: caixa "📲 Deixar a oferta no app" (marcada), botão "📲 Só no app", copiar mensagem/abrir WhatsApp também gravam a oferta (`mbCobrarOferta`; não regrava se plano/valor iguais); a mensagem ganha a linha com o link do app. Cartão do aluno mostra badge "📲 Oferta no app" com ✖ (`mbCobrarCancelar`). `mbConfirmarPix` e "✓ Recebi" limpam `cobranca` (só se existir, para não quebrar sem a coluna).
+- App do aluno: `aOfertaSituacao()` (sem `acesso_fim` = novo; vencido > 7 dias = reativação; senão renovação), `aOfertaAtiva()`, `aPixPlanosSituacao()`: o modal de renovar lista só os planos da situação (novo: Mensal/Trimestral/Semestral; renovação/reativação: o plano da situação + trimestral/semestral), com o da situação ou o da oferta (valor combinado) pré-selecionado; título Ativar/Renovar/Reativar; aviso "Oferta do seu professor"; notificação na home (`aMontarNotifs`, chave `oferta`, X some por 1 dia) abre o fluxo; ao tocar "Já paguei" grava `movh-oferta-paga-<criado_em>` no aparelho para esconder a oferta até o professor confirmar. Linha de `pagamentos_pix` pendente continua disparando o aviso do Telegram (função `tools/supabase/notify-pix`).
+- Testes: reg_all/bulk/kbm 0 FAIL; t.py/reg.py do app iguais ao baseline; teste próprio do app (4 cenários: novo, renovação, reativação, oferta com valor combinado; notificação) e do Gerador (migração, mensagem com/sem oferta, gravação) OK. NÃO testado no banco real. Rótulo do Gerador: v56 · 02/11.
+- Próximo: deploy do app quando os créditos renovarem (Netlify → Trigger deploy); depois bloqueio com tolerância de 7 dias e número do WhatsApp (constante `A_WHATSAPP_NUM` do app hoje é 5527988225340).
 
 v53 (25/10): prévia no seletor em massa + colar inteligente em splits + 3 ajustes do app (1 deploy do app).
 - Seletor em massa (`mvAbrir({onMulti,base,pos})`): 4ª coluna "Neste bloco · N" com o que já existe + o marcado (destaque, × para tirar) na posição real de inserção. Também em "📂 vários" (editor do dia, Quadro e Aulas Coletivas: `addExVarios`, `coletivasAddVarios`).
