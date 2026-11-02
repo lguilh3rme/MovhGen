@@ -737,7 +737,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v55 · 02/11</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v56 · 02/11</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -1472,8 +1472,10 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
       <select class="ie" id="cob-chave" style="min-width:110px" onchange="mbCobrarAtualizar()"></select>
     </div>
     <div id="cob-aviso" style="display:none;font-size:11px;color:#701B10;background:#FCEBEB;border-radius:8px;padding:6px 10px;margin-bottom:8px"></div>
-    <textarea id="cob-msg" class="ie" rows="11" style="width:100%;font-size:12px;line-height:1.4"></textarea>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;margin-bottom:6px;color:var(--tx)"><input type="checkbox" id="cob-app" checked onchange="mbCobrarAtualizar()"/> 📲 Deixar a oferta no app do aluno (plano e valor acima, com Pix e "Já paguei")</label>
+    <textarea id="cob-msg" class="ie" rows="10" style="width:100%;font-size:12px;line-height:1.4"></textarea>
     <div class="mfoot" style="flex-wrap:wrap;gap:6px">
+      <button class="btn bp" onclick="mbCobrarSoApp()" title="Grava a oferta no app do aluno sem enviar mensagem">📲 Só no app</button>
       <button class="btn bs" onclick="mbCobrarCopiar('msg')">📋 Copiar mensagem</button>
       <button class="btn bs" onclick="mbCobrarCopiar('pix')">💠 Só o código Pix</button>
       <button class="btn bp" id="cob-wa" onclick="mbCobrarWhats()">💬 Abrir no WhatsApp</button>
@@ -7251,6 +7253,7 @@ async function mbRefresh() {
 
   const { data: prof } = await mbClient.from('professores').select('*').eq('id', session.user.id).maybeSingle();
   mbProfessor = prof || { id: session.user.id, nome: session.user.email, email: session.user.email };
+  try { if (localStorage.getItem('movh_planos_pub_pend') === '1') setTimeout(plPlanosPublicar, 2500); } catch (e) {}
   document.getElementById('mb-prof-name').textContent = mbProfessor.nome;
   document.getElementById('mb-logged-in').style.display = 'block';
 
@@ -7914,6 +7917,8 @@ function renderPainelAlunos() {
       ? `<span style="font-size:9px;background:var(--P);color:#fff;padding:2px 8px;border-radius:99px;font-weight:800" title="Pendente: ${escAttr(demandasPendentes.join(', '))}">🆕 Novo · ${escAttr(demandasPendentes.join(' · '))}</span>`
       : '';
 
+    const cbOf = a.cobranca && a.cobranca.status === 'aberta' ? a.cobranca : null;
+    const cobrancaBadge = cbOf ? `<span style="font-size:9px;background:#FFF1D6;color:#7A4A00;padding:2px 8px;border-radius:99px;font-weight:700" title="Oferta visível no app do aluno até o pagamento ser confirmado">📲 Oferta no app · ${escAttr(cbOf.plano_nome||'')} ${mbCobrarFmt(cbOf.valor)}<button type="button" data-id="${a.id}" onclick="mbCobrarCancelar(this.dataset.id)" title="Retirar oferta do app" style="border:none;background:none;cursor:pointer;font-size:9px;color:#7A4A00;padding:0 0 0 4px">✖</button></span>` : '';
     const pixBox = a.pixPendente
       ? `<span class="al-pix">💠 Pix R$${Number(a.pixPendente.valor).toFixed(2).replace('.', ',')} · ${escAttr(a.pixPendente.plano_nome||'')}<button class="btn bp" data-id="${a.pixPendente.id}" onclick="mbConfirmarPix(this.dataset.id)" title="Confirmar recebimento e liberar +${a.pixPendente.dias} dias">✓ Confirmar</button><button class="btn bs" data-id="${a.pixPendente.id}" onclick="mbRecusarPix(this.dataset.id)" title="Não recebi / recusar">✖</button></span>` : '';
 
@@ -7983,7 +7988,7 @@ function renderPainelAlunos() {
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:1px">
             <span style="font-size:12px;font-weight:700;color:var(--tx)">${escAttr(a.nome)}</span>
             <button type="button" onclick="mbEditarNomeAluno('${a.id}')" title="Editar nome" style="border:none;background:none;cursor:pointer;font-size:10px;padding:0 2px;opacity:.55;line-height:1">✏️</button>
-            ${statusBadge}${fimBadges}${linkAvulsoBadge}${alertaDorBadge}${solicMudancaBadge}${novoComDemandaBadge}${pixBox}
+            ${statusBadge}${fimBadges}${linkAvulsoBadge}${alertaDorBadge}${solicMudancaBadge}${novoComDemandaBadge}${cobrancaBadge}${pixBox}
           </div>
           <div class="al-meta" style="font-size:10px;color:var(--t3);display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap">${a.email ? `<span>${escAttr(a.email)}</span>` : ''}${waTxt ? `<a href="${waHref}" target="_blank" rel="noopener" title="Abrir conversa no WhatsApp" style="color:#128C4A;font-weight:700;text-decoration:none">💬 ${escAttr(waTxt)}</a>` : ''}${acessoLabel ? `<span>🗓 ${acessoLabel}</span>` : ''}${acessoBadge}${sessoesBadge}${anamBadge}${parqBadge}${cargasBadge}</div>
           <div style="font-size:10px;color:var(--t2);margin-top:1px">📋 ${protoLinha}</div>
@@ -8013,6 +8018,7 @@ async function mbConfirmarPix(pid){
   const { data: upd, error: e1 } = await mbClient.from('pagamentos_pix').update({ status: 'confirmado', confirmado_em: new Date().toISOString() }).eq('id', pid).eq('status', 'pendente').select('id');
   if (e1 || !upd || !upd.length) { notify('Não foi possível confirmar (já tratado?).'); mbCarregarPainelAlunos(); return; }
   const novo = { acesso_fim: mbIsoLocal(fim), ativo: true };
+  if (a.cobranca) novo.cobranca = null;
   if (!a.acesso_inicio || base === hoje) novo.acesso_inicio = mbIsoLocal(hoje);
   const { error: e2 } = await mbClient.from('alunos').update(novo).eq('id', a.id);
   if (e2) { await mbClient.from('pagamentos_pix').update({ status: 'pendente', confirmado_em: null }).eq('id', pid); notify('Erro ao liberar o acesso: ' + e2.message); return; }
@@ -8091,10 +8097,35 @@ function mbCobrarAtualizar(trocouPlano){
   else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
   else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   if (code) t += `\n\nPix copia e cola 👇\n${code}`;
+  if (document.getElementById('cob-app').checked) t += `\n\nTambém deixei a oferta no seu app (${mbCobrarAppUrl()}): é só abrir e tocar em pagar.`;
   t += `\n\nDepois de pagar, é só me mandar o comprovante por aqui que eu libero na hora. Qualquer dúvida, estou à disposição! 🙌`;
   document.getElementById('cob-msg').value = t;
   const waDig = mbCobrarWaDigitos(a);
   const wa = document.getElementById('cob-wa'); wa.disabled = !waDig; wa.title = waDig ? '' : 'Aluno sem WhatsApp cadastrado';
+}
+function mbCobrarAppUrl(){ return (typeof plLand !== 'undefined' && plLand && plLand.appUrl) ? plLand.appUrl : 'https://movh.netlify.app/'; }
+// Grava a oferta em alunos.cobranca (jsonb): o app do aluno lê e abre o fluxo de renovar com este plano/valor
+async function mbCobrarOferta(){
+  if (!_cob) return false;
+  const pl = mbCobrarPlano(); if (!pl) return false;
+  const a = _cob.a, valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
+  const ex = a.cobranca;
+  if (ex && ex.status === 'aberta' && ex.plano_id === pl.id && Number(ex.valor) === Number(valor)) return true;
+  const c = { status: 'aberta', tipo: pl.tipo || 'novo', plano_id: pl.id, plano_nome: pl.nome, dias: pl.dias, valor: valor, criado_em: new Date().toISOString() };
+  const { error } = await mbClient.from('alunos').update({ cobranca: c }).eq('id', a.id);
+  if (error) { notify(/cobranca/i.test(error.message || '') ? 'Falta rodar no Supabase: ALTER TABLE alunos ADD COLUMN IF NOT EXISTS cobranca jsonb;' : 'Erro ao deixar a oferta no app: ' + error.message); return false; }
+  a.cobranca = c;
+  return true;
+}
+async function mbCobrarSoApp(){
+  if (!_cob) return;
+  if (await mbCobrarOferta()) { notify('📲 Oferta no app de ' + _cob.a.nome + ' (aparece no próximo acesso)'); closeM('modal-cobrar'); mbCarregarPainelAlunos(); }
+}
+async function mbCobrarCancelar(alunoId){
+  if (!confirm('Retirar a oferta do app deste aluno?')) return;
+  const { error } = await mbClient.from('alunos').update({ cobranca: null }).eq('id', alunoId);
+  if (error) { notify('Erro: ' + error.message); return; }
+  mbCarregarPainelAlunos();
 }
 function mbCobrarWaDigitos(a){
   const an = a.anamnese && a.anamnese.respostas;
@@ -8105,6 +8136,7 @@ function mbCobrarWaDigitos(a){
 async function mbCobrarCopiar(oque){
   if (!_cob) return;
   const txt = oque === 'pix' ? _cob.code : document.getElementById('cob-msg').value;
+  if (oque !== 'pix' && document.getElementById('cob-app').checked) mbCobrarOferta();
   if (!txt) { notify('Sem código Pix: configure a chave em Planos.'); return; }
   try { await navigator.clipboard.writeText(txt); notify(oque === 'pix' ? 'Código Pix copiado.' : 'Mensagem copiada.'); }
   catch (e) { const t = document.getElementById('cob-msg'); t.focus(); t.select(); notify('Copie manualmente (Ctrl+C).'); }
@@ -8112,6 +8144,7 @@ async function mbCobrarCopiar(oque){
 function mbCobrarWhats(){
   if (!_cob) return;
   const d = mbCobrarWaDigitos(_cob.a); if (!d) { notify('Aluno sem WhatsApp cadastrado.'); return; }
+  if (document.getElementById('cob-app').checked) mbCobrarOferta();
   window.open('https://wa.me/' + d + '?text=' + encodeURIComponent(document.getElementById('cob-msg').value), '_blank', 'noopener');
 }
 // Recebi (fora do app): estende o acesso como em mbConfirmarPix e registra o pagamento como confirmado
@@ -8125,6 +8158,7 @@ async function mbCobrarRecebi(){
   if (a.acesso_fim) { const f = new Date(a.acesso_fim + 'T12:00:00'); if (f > hoje) base = f; }
   const fim = new Date(base.getTime() + pl.dias * 86400000);
   const novo = { acesso_fim: mbIsoLocal(fim), ativo: true };
+  if (a.cobranca) novo.cobranca = null;
   if (!a.acesso_inicio || base === hoje) novo.acesso_inicio = mbIsoLocal(hoje);
   const { error } = await mbClient.from('alunos').update(novo).eq('id', a.id);
   if (error) { notify('Erro ao liberar o acesso: ' + error.message); return; }
@@ -11548,9 +11582,38 @@ async function aPixCarregar(){
   window._aPixCfg = cfg;
   return cfg;
 }
+function aOfertaSituacao(){
+  var f = aAlunoRow && aAlunoRow.acesso_fim; if (!f) return 'novo';
+  var hoje = new Date(); hoje.setHours(12, 0, 0, 0);
+  var d = Math.round((hoje - new Date(f + 'T12:00:00')) / 86400000);
+  return d > 7 ? 'reativacao' : 'renovacao';
+}
+function aOfertaAtiva(){
+  var c = aAlunoRow && aAlunoRow.cobranca;
+  if (!c || typeof c !== 'object' || c.status !== 'aberta' || !(Number(c.valor) > 0)) return null;
+  try { if (localStorage.getItem('movh-oferta-paga-' + (c.criado_em || ''))) return null; } catch(e) {}
+  return c;
+}
+// Planos mostrados no fluxo de renovar, conforme a situação do aluno; a oferta do professor (plano e valor combinados) vem primeiro
+function aPixPlanosSituacao(todos){
+  var sit = aOfertaSituacao(), of = aOfertaAtiva();
+  var tp = function(p){ return p.tipo || 'novo'; };
+  var lista = sit === 'novo' ? todos.filter(function(p){ return tp(p) === 'novo'; }) : todos.filter(function(p){ return tp(p) === sit || (tp(p) === 'novo' && p.dias > 30); });
+  if (!lista.length) lista = todos;
+  lista = lista.filter(function(p){ return tp(p) === sit; }).concat(lista.filter(function(p){ return tp(p) !== sit; }));
+  if (of) {
+    var base = null; todos.forEach(function(p){ if (p.id === of.plano_id) base = p; });
+    var op = { id: of.plano_id || 'oferta', nome: of.plano_nome || (base && base.nome) || 'Plano', dias: of.dias || (base && base.dias) || 30, precoBR: Number(of.valor), precoUK: (base && base.precoUK) || 0, tipo: of.tipo || sit, oferta: true };
+    lista = [op].concat(lista.filter(function(p){ return p.id !== op.id; }));
+  }
+  return lista;
+}
 async function aAbrirRenovar(){
   var cfg = await aPixCarregar();
-  aPixEst = { etapa:'escolha', plano:(cfg.planos.length === 1 ? cfg.planos[0].id : null), item:0, txid:'', msg:'', pend:null };
+  if (!cfg.todos) cfg.todos = cfg.planos;
+  cfg.planos = aPixPlanosSituacao(cfg.todos);
+  var ofAtiva = aOfertaAtiva();
+  aPixEst = { etapa:'escolha', plano:((ofAtiva || aOfertaSituacao() !== 'novo') ? cfg.planos[0].id : (cfg.planos.length === 1 ? cfg.planos[0].id : null)), item:0, txid:'', msg:'', pend:null };
   var old = document.getElementById('movh-renovar-overlay'); if (old) old.remove();
   var ov = document.createElement('div'); ov.id = 'movh-renovar-overlay'; ov.className = 'sessao-concluida-overlay';
   ov.innerHTML = '<div class="sessao-concluida-card rn-card" id="rn-card"></div>';
@@ -11573,7 +11636,10 @@ function aPixDesenhar(){
   var pix = cfg.pix && cfg.pix.ativo ? cfg.pix : null;
   var itens = pix ? (pix.itens || []).filter(function(i){ return i && i.chave; }) : [];
   var pl = null; cfg.planos.forEach(function(p){ if (p.id === aPixEst.plano) pl = p; });
-  var h = '<div class="rn-x" data-rn="fechar">×</div><div class="sc-emoji">💳</div><div class="sc-titulo">' + (en ? 'Renew access' : 'Renovar acesso') + '</div>';
+  var sitR = aOfertaSituacao();
+  var tituloR = sitR === 'novo' ? (en ? 'Activate access' : 'Ativar acesso') : sitR === 'reativacao' ? (en ? 'Reactivate access' : 'Reativar acesso') : (en ? 'Renew access' : 'Renovar acesso');
+  var h = '<div class="rn-x" data-rn="fechar">×</div><div class="sc-emoji">💳</div><div class="sc-titulo">' + tituloR + '</div>';
+  if (aOfertaAtiva() && aPixEst.etapa !== 'aguardando') h += '<div class="rn-pend">💬 ' + (en ? 'Offer from your coach' : 'Oferta do seu professor') + '</div>';
   if (aPixEst.etapa === 'aguardando') {
     h += '<div class="sc-sub">' + (en ? 'Thanks! Your coach was notified and will release your access as soon as the payment is confirmed.' : 'Obrigado! Avisei o professor. Seu acesso é liberado assim que ele confirmar o pagamento.') + '</div>';
     h += '<button class="rpe-enviar" data-rn="zap">' + (en ? '💬 Send receipt on WhatsApp' : '💬 Enviar comprovante no WhatsApp') + '</button>';
@@ -11649,6 +11715,7 @@ async function aPixAcao(acao, v){
     if (!pl) return;
     var btn = document.querySelector('#rn-card [data-rn=paguei]'); if (btn) btn.disabled = true;
     var r = await aClient.from('pagamentos_pix').insert({ aluno_id: aAlunoRow.id, professor_id: aAlunoRow.professor_id, plano_id: pl.id, plano_nome: pl.nome, dias: pl.dias, valor: pl.precoBR, txid: aPixEst.txid, status: 'pendente' });
+    try { var ofP = aOfertaAtiva(); if (ofP && !r.error) localStorage.setItem('movh-oferta-paga-' + (ofP.criado_em || ''), '1'); } catch(e) {}
     if (r && r.error) { aPixEst.msg = (aLang === 'en' ? 'Could not notify your coach. Send the receipt on WhatsApp.' : 'Não consegui avisar o professor. Envie o comprovante pelo WhatsApp.'); aPixDesenhar(); return; }
     aPixEst.etapa = 'aguardando'; aPixDesenhar();
   }
@@ -14037,12 +14104,14 @@ function aNotifFechar(id){
 function aMontarNotifs(){
   const box = document.getElementById('tNotifs'); if (!box) return;
   const en = aLang === 'en', it = [];
+  const ofN = aOfertaAtiva();
+  if (ofN && !aNotifFechada('oferta', 1)) it.push({ k:'oferta', i:'💬', go:'aAbrirRenovar()', t: en ? 'Offer from your coach' : 'Oferta do seu professor', s: aEsc(ofN.plano_nome || '') + ' · ' + aPixMoeda(ofN.valor) + (en ? ' — tap to pay' : ' — toque para pagar') });
   const sol = (aAvaliacoesFisicas || []).find(function(v){ return v.status === 'solicitada'; });
   if (sol && !aNotifFechada('aval', 1)) it.push({ k:'aval', i:'📸', t: en ? 'Physical assessment requested' : 'Avaliação física solicitada', s: en ? 'Send your photos' : 'Toque para enviar suas fotos' });
   let re = ''; try { re = aMontarAvisoReteste(); } catch(e) {}
   if (re && !aNotifFechada('cond', 7)) it.push({ k:'cond', i:'🏃', t: en ? 'Conditioning test' : 'Teste de condicionamento', s: en ? 'Tap to see the details' : 'Toque para ver os detalhes' });
   box.innerHTML = it.map(function(n){
-    return '<div class="nt-wrap"><button type="button" class="nt-it" onclick="aVerProgresso();window.scrollTo(0,0)"><span class="nt-i">' + n.i + '</span><span class="nt-tx"><b>' + n.t + '</b><i>' + n.s + '</i></span><span class="nt-go">›</span></button>' +
+    return '<div class="nt-wrap"><button type="button" class="nt-it" onclick="' + (n.go || 'aVerProgresso();window.scrollTo(0,0)') + '"><span class="nt-i">' + n.i + '</span><span class="nt-tx"><b>' + n.t + '</b><i>' + n.s + '</i></span><span class="nt-go">›</span></button>' +
       '<button type="button" class="nt-x" data-k="' + n.k + '" onclick="aNotifFechar(this.dataset.k)" aria-label="' + (en ? 'Dismiss' : 'Dispensar') + '">×</button></div>';
   }).join('');
 }
@@ -15099,6 +15168,8 @@ function copiarSQLRLS(){
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS ultimo_acesso timestamptz;',
     '-- ÚLTIMA VEZ que o aluno VIU o treino (mesmo sem registrar nada)',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS treino_visto_em timestamptz;',
+    '-- OFERTA DE COBRANÇA mostrada no app do aluno (botão 💰 Cobrar)',
+    'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS cobranca jsonb;',
     '',
     '-- PIX próprio: aluno avisa "já paguei", professor confirma e o acesso é liberado',
     'CREATE TABLE IF NOT EXISTS pagamentos_pix (',
@@ -15186,6 +15257,14 @@ const PL_DEFAULT = [
 ];
 const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação' };
 const plEhNovo = p => !p.tipo || p.tipo === 'novo';
+// Planos salvos antes da v55 (sem campo `tipo`) são substituídos pelos valores definidos; publica no próximo login
+function plMigrarLegado(l){
+  if (Array.isArray(l) && l.length && !l.some(p => p && p.tipo)) {
+    l = JSON.parse(JSON.stringify(PL_DEFAULT));
+    try { localStorage.setItem('movh_planos', JSON.stringify(l)); localStorage.setItem('movh_planos_pub_pend', '1'); } catch (e) {}
+  }
+  return l;
+}
 const PL_PROTO_DEFAULT = [
   { id:'hipertrofia', icon:'💪', nome:'Hipertrofia', desc:'Ganho de massa muscular com periodização inteligente e progressão de carga semana a semana.', tags:'Intermediário, 3-5x/semana, Academia', nomeEn:'Hypertrophy', descEn:'Muscle gain with intelligent periodisation and progressive overload week by week.', tagsEn:'Intermediate, 3-5x/week, Gym' },
   { id:'emagrecimento', icon:'🔥', nome:'Emagrecimento', desc:'Combinação de treino resistido e metabólico para perda de gordura com preservação muscular.', tags:'Iniciante, 3-4x/semana, Academia / Casa', nomeEn:'Fat Loss', descEn:'Resistance and metabolic training combined for fat loss with muscle preservation.', tagsEn:'Beginner, 3-4x/week, Gym / Home' },
@@ -15205,7 +15284,7 @@ const PL_LAND_DEFAULT = {
   netlifyUrl: '',
 };
 
-let plPlanos  = JSON.parse(localStorage.getItem(PL_KEY)      || 'null') || JSON.parse(JSON.stringify(PL_DEFAULT));
+let plPlanos  = plMigrarLegado(JSON.parse(localStorage.getItem(PL_KEY)      || 'null') || JSON.parse(JSON.stringify(PL_DEFAULT)));
 let plProtos  = JSON.parse(localStorage.getItem('movh_protos')|| 'null') || JSON.parse(JSON.stringify(PL_PROTO_DEFAULT));
 let plLand    = JSON.parse(localStorage.getItem(PL_LAND_KEY) || 'null') || JSON.parse(JSON.stringify(PL_LAND_DEFAULT));
 // Flag de rascunho não sincronizado — plPlanos/plProtos/plLand só vão pro Supabase
@@ -15240,7 +15319,7 @@ async function plPuxarRascunhoSeNecessario(){
     const lastLocalSync = localStorage.getItem('movh_pl_last_sync');
     if (!lastLocalSync || (data.updated_at && new Date(data.updated_at) > new Date(lastLocalSync))) {
       const st = data.editor_state;
-      if (st.planos) plPlanos = st.planos;
+      if (st.planos) plPlanos = plMigrarLegado(st.planos);
       if (st.protos) plProtos = st.protos;
       if (st.land)   plLand   = st.land;
       localStorage.setItem(PL_KEY, JSON.stringify(plPlanos));
@@ -15297,6 +15376,7 @@ async function plPlanosPublicar(){
     if (data && data.config) row.config = data.config;
     const { error } = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
     if (error) throw error;
+    try { localStorage.removeItem('movh_planos_pub_pend'); } catch (e) {}
     if (st) st.textContent = '✅ Planos publicados às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '.';
   } catch (e) { if (st) st.textContent = '❌ Não publicou: ' + (e.message || e); }
 }
