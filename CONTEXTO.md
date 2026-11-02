@@ -1,4 +1,4 @@
-# MOVH — Contexto v57 (02/11/2026; seção 13 de marca atualizada em 31/10/2026)
+# MOVH — Contexto v57.1 (02/11/2026; seção 13 de marca atualizada em 31/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -184,6 +184,7 @@ v55 (02/11): COBRAR + PLANOS COM VALORES DEFINIDOS + AVISO DO TELEGRAM (só Gera
 - Testes: reg_all/bulk/kbm sem FAIL; teste próprio (3 situações, troca de plano, CRC) OK. Rótulo do Gerador: v55 · 02/11.
 - Próximos (ordem combinada): 3) banner/oferta de renovação e reativação no app do aluno (filtrar por situação; precisa deploy Netlify, créditos renovam na semana seguinte); depois bloqueio com tolerância de 7 dias e WHATSAPP do MOVH_CONFIG a preencher.
 
+v57.1 (02/11, noite): "Colar plano da semana" agora pinta os blocos pela seção (Ativação verde #1A9E72, Força azul #3580D8, Localizada roxo #8A5CD0, C. Funcional amarelo #D9A21B, Endurance/Condicionamento laranja #D45828) via `cor` em `COL_SEC`; só Gerador, `[skip netlify]`. Editável depois na paleta do bloco.
 v57 (02/11, noite): COR POR BLOCO NAS AULAS COLETIVAS (Gerador + app/link público; ambos `[skip netlify]`, app SEM deploy). Cada bloco ganha `cor` (hex, opcional) em `aulas_coletivas.dados` (jsonb: sem SQL novo). Editor: botão-bolinha no cabeçalho do bloco abre paleta de 8 cores + "sem cor" (`coletivasPaleta/coletivasSetCor`, estado `coletivasPalAberta` por `b.id`); bloco ganha borda esquerda, fundo suave e número na cor. App/link público (`aMontarColetivas`): `cor` validada por regex `#RRGGBB` (sem aspas/crases/barras: seguro no template), borda esquerda, bolinha do título e fundo suave do corpo. Sem cor = visual de antes (condicionamento continua laranja). Testes: node --check nos dois; teste próprio (editor: abrir paleta, colorir, limpar; app: cor, sem cor, valor malicioso ignorado). Ideia futura (não feita): cor automática ao colar plano (Ativação verde, Força azul, Condicionamento laranja).
 
 v56 (02/11, noite): COBRAR INTEGRADO AO APP + VALORES DEFINIDOS AUTOMÁTICOS (Gerador + app; ambos `[skip netlify]`, app SEM deploy: créditos renovam na semana seguinte).
