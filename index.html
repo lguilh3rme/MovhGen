@@ -2911,11 +2911,11 @@ const COL_RE_DIA=/^(segunda|terca|quarta|quinta|sexta|sabado|domingo|seg|ter|qua
 const COL_RE_FMT=/^(emom|e2mom|amrap|for time|tabata|circuito|\d+\s*r(?:ounds?)?(?![a-z])|\d+\s*['′’"”]\s*$|\d+\s*min\s*$)/;
 function colNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim();}
 const COL_SEC=[
-  {re:/^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/, tipo:'normal', nome:'Ativação'},
-  {re:/^(forca|hipertrofia|acessorios?)(?![a-z])/, tipo:'normal', nome:'Força', forca:true},
-  {re:/^(localizada)(?![a-z])/, tipo:'normal', nome:'Localizada'},
-  {re:/^(c\.?\s*funcional|funcional|metabolico|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional'},
-  {re:/^(endurance|condicionamento|cardio)(?![a-z])/, tipo:'condicionamento', nome:''}
+  {re:/^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/, tipo:'normal', nome:'Ativação', cor:'#1A9E72'},
+  {re:/^(forca|hipertrofia|acessorios?)(?![a-z])/, tipo:'normal', nome:'Força', forca:true, cor:'#3580D8'},
+  {re:/^(localizada)(?![a-z])/, tipo:'normal', nome:'Localizada', cor:'#8A5CD0'},
+  {re:/^(c\.?\s*funcional|funcional|metabolico|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional', cor:'#D9A21B'},
+  {re:/^(endurance|condicionamento|cardio)(?![a-z])/, tipo:'condicionamento', nome:'', cor:'#D45828'}
 ];
 let _colStats=null;
 function colDia(linha){
@@ -3010,6 +3010,7 @@ function coletivasParsearDia(linhas){
   return blocos.filter(function(b){return b.tipo==='condicionamento'||b.exercicios.length||b.detalhes;}).map(function(b){
     if(b._ser)b.exercicios.forEach(function(e){if(!e.series&&!b.conjugado)e.series=b._ser;});
     if(b.conjugado&&!b.series&&b._ser)b.series=b._ser;
+    if(b._sec&&b._sec.cor)b.cor=b._sec.cor;
     delete b._sec;delete b._ser;
     if(!b.exercicios.length&&b.tipo==='normal')b.exercicios=[{nome:'',series:'',reps:''}];
     return b;
