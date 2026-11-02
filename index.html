@@ -737,7 +737,7 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
   <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v54.9 · 31/10</div>
+  <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v55 · 02/11</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
 
@@ -1067,9 +1067,10 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
     <div class="card" style="margin-bottom:.75rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Planos disponíveis</div>
-        <button class="btn bp" style="font-size:10px;padding:4px 10px" onclick="plAddPlano()">+ Plano</button>
+        <span style="display:flex;gap:6px"><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="plAplicarValores()" title="Mensal 180 · Trimestral 420 · Semestral 780 · Renovação 150 · Reativação 165">↺ Valores definidos</button><button class="btn bp" style="font-size:10px;padding:4px 10px" onclick="plAddPlano()">+ Plano</button></span>
       </div>
       <div id="pl-tabela"></div>
+      <div id="pl-planos-status" style="font-size:10.5px;color:var(--t3);margin-top:8px"></div>
       <div style="font-size:10px;color:var(--t3);margin-top:10px">💡 O plano do meio é destacado como "Mais popular" na landing page automaticamente.</div>
     </div>
     <div class="card" id="pl-pix-card" style="margin-bottom:.75rem">
@@ -1457,6 +1458,28 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
     <div id="mb-parq-alerta" style="display:none;background:#FCEBEB;color:#701B10;border:1px solid #f0b0b0;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;font-weight:700">⚠️ Atenção: este aluno respondeu SIM a uma ou mais perguntas. Recomenda-se avaliação médica antes de iniciar o treino.</div>
     <div id="mb-parq-body"></div>
     <div class="mfoot"><button class="btn bp" onclick="closeM('modal-parq-view')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- Modal: Cobrar aluno (Pix + WhatsApp) -->
+<div class="mbg" id="modal-cobrar">
+  <div class="modal" style="max-width:520px">
+    <h3 id="cob-titulo">💰 Cobrar</h3>
+    <div id="cob-ctx" style="font-size:11px;color:var(--t3);margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <select class="ie" id="cob-plano" style="flex:1;min-width:150px" onchange="mbCobrarAtualizar(true)"></select>
+      <input class="ie" id="cob-valor" type="number" step="0.01" style="width:90px" title="Valor (R$) — ajuste se precisar" oninput="mbCobrarAtualizar()"/>
+      <select class="ie" id="cob-chave" style="min-width:110px" onchange="mbCobrarAtualizar()"></select>
+    </div>
+    <div id="cob-aviso" style="display:none;font-size:11px;color:#701B10;background:#FCEBEB;border-radius:8px;padding:6px 10px;margin-bottom:8px"></div>
+    <textarea id="cob-msg" class="ie" rows="11" style="width:100%;font-size:12px;line-height:1.4"></textarea>
+    <div class="mfoot" style="flex-wrap:wrap;gap:6px">
+      <button class="btn bs" onclick="mbCobrarCopiar('msg')">📋 Copiar mensagem</button>
+      <button class="btn bs" onclick="mbCobrarCopiar('pix')">💠 Só o código Pix</button>
+      <button class="btn bp" id="cob-wa" onclick="mbCobrarWhats()">💬 Abrir no WhatsApp</button>
+      <button class="btn bs" id="cob-recebi" onclick="mbCobrarRecebi()" style="border-color:var(--G);color:var(--G)">✓ Recebi</button>
+      <button class="btn bs" onclick="closeM('modal-cobrar')">Fechar</button>
+    </div>
   </div>
 </div>
 
@@ -7925,6 +7948,7 @@ function renderPainelAlunos() {
         <input type="date" id="af-${a.id}" value="${escAttr(fimAtual)}"
           style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Fim"/>
         <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbSalvarPeriodo(this.dataset.id)">💾</button>
+        <button class="btn bp" style="font-size:9px;padding:2px 9px;font-weight:700" data-id="${a.id}" onclick="mbCobrar(this.dataset.id)" title="Cobrar por Pix e WhatsApp com os valores da aba Planos">💰 Cobrar</button>
         <span style="flex:1"></span>
         ${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese respondida">📋 Anamnese</button>` : ''}
         ${parq && parq.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px${Object.values(parq.respostas||{}).some(v=>v===true||v==='sim')?';border-color:#e44;color:#c03030':''}" data-id="${a.id}" onclick="mbVerParq(this.dataset.id)" title="Ver PAR-Q respondido">🩺 PAR-Q</button>` : ''}
@@ -7993,6 +8017,120 @@ async function mbConfirmarPix(pid){
   const { error: e2 } = await mbClient.from('alunos').update(novo).eq('id', a.id);
   if (e2) { await mbClient.from('pagamentos_pix').update({ status: 'pendente', confirmado_em: null }).eq('id', pid); notify('Erro ao liberar o acesso: ' + e2.message); return; }
   notify('✅ Pix confirmado. Acesso de ' + a.nome + ' até ' + novo.acesso_fim.split('-').reverse().join('/'));
+  mbCarregarPainelAlunos();
+}
+
+// ── Cobrança (v55): Pix copia-e-cola + mensagem de WhatsApp com os valores da aba Planos ──
+function mbPixCRC(str){ let crc = 0xFFFF; for (let i = 0; i < str.length; i++) { crc ^= str.charCodeAt(i) << 8; for (let j = 0; j < 8; j++) { crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1); crc &= 0xFFFF; } } return crc.toString(16).toUpperCase().padStart(4, '0'); }
+function mbPixTLV(id, v){ return id + String(v.length).padStart(2, '0') + v; }
+function mbPixPayload(chave, nome, cidade, valor, txid){
+  const limpa = (t, n) => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9 ]/g, '').toUpperCase().trim().slice(0, n);
+  const conta = mbPixTLV('00', 'br.gov.bcb.pix') + mbPixTLV('01', String(chave || '').trim());
+  const tx = String(txid || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 25) || '***';
+  let p = mbPixTLV('00', '01') + mbPixTLV('01', '11') + mbPixTLV('26', conta) + mbPixTLV('52', '0000') + mbPixTLV('53', '986') + mbPixTLV('54', Number(valor).toFixed(2)) + mbPixTLV('58', 'BR') + mbPixTLV('59', limpa(nome, 25) || 'MOVH') + mbPixTLV('60', limpa(cidade, 15) || 'BRASIL') + mbPixTLV('62', mbPixTLV('05', tx));
+  p += '6304'; return p + mbPixCRC(p);
+}
+let _cob = null;
+function mbCobrarFmt(v){ return 'R$ ' + Number(v).toFixed(2).replace('.', ','); }
+function mbCobrarDataBR(iso){ return String(iso || '').split('-').reverse().join('/'); }
+// Situação do aluno → tipo de plano sugerido. Sem fim de acesso = cadastrou e aguarda treino (novo);
+// vencido há mais de 7 dias (tolerância) = reativação; senão renovação.
+function mbCobrarSituacao(a){
+  if (!a.acesso_fim) return 'novo';
+  const hoje = new Date(); hoje.setHours(12, 0, 0, 0);
+  const dias = Math.round((hoje - new Date(a.acesso_fim + 'T12:00:00')) / 86400000);
+  return dias > 7 ? 'reativacao' : 'renovacao';
+}
+async function mbCobrarPixCfg(){
+  const p = plPixObj(); const itens = (p.itens || []).filter(x => x && x.chave);
+  if (itens.length) return { nome: p.nome || '', cidade: p.cidade || '', itens: itens };
+  try {
+    if (mbProfessor && mbProfessor.id) {
+      const { data } = await mbClient.from('landing_config').select('config').eq('professor_id', mbProfessor.id).maybeSingle();
+      const x = data && data.config && data.config.pix;
+      if (x && Array.isArray(x.itens) && x.itens.some(i => i && i.chave)) return { nome: x.nome || '', cidade: x.cidade || '', itens: x.itens.filter(i => i && i.chave) };
+    }
+  } catch (e) {}
+  return null;
+}
+async function mbCobrar(alunoId){
+  const a = (mbPainelAlunos || []).find(x => x.id === alunoId); if (!a) return;
+  const ativos = plPlanos.filter(p => p.ativo);
+  if (!ativos.length) { notify('Cadastre um plano ativo na aba Planos.'); return; }
+  const sit = mbCobrarSituacao(a);
+  const sug = ativos.find(p => (p.tipo || 'novo') === sit) || ativos.find(plEhNovo) || ativos[0];
+  const pix = await mbCobrarPixCfg();
+  _cob = { a: a, sit: sit, pix: pix, txid: 'MV' + Date.now().toString(36).toUpperCase(), code: '' };
+  document.getElementById('cob-titulo').textContent = '💰 Cobrar — ' + a.nome;
+  const ctxTxt = { novo: 'Cadastrou e ainda não tem acesso pago: plano novo.', renovacao: 'Acesso ' + (a.acesso_fim ? 'até ' + mbCobrarDataBR(a.acesso_fim) : '') + ': renovação.', reativacao: 'Acesso venceu em ' + mbCobrarDataBR(a.acesso_fim) + ' (mais de 7 dias): reativação.' }[sit];
+  document.getElementById('cob-ctx').textContent = ctxTxt + ' Valores vêm da aba Planos.';
+  document.getElementById('cob-plano').innerHTML = ativos.map(p => `<option value="${escAttr(p.id)}"${p.id === sug.id ? ' selected' : ''}>${escAttr(p.nome)} · ${p.dias}d · ${mbCobrarFmt(p.precoBR)}</option>`).join('');
+  document.getElementById('cob-chave').innerHTML = pix ? pix.itens.map((x, i) => `<option value="${i}">${escAttr(x.banco || ('Pix ' + (i + 1)))}</option>`).join('') : '<option value="">sem Pix</option>';
+  document.getElementById('cob-chave').style.display = (pix && pix.itens.length > 1) ? '' : 'none';
+  const av = document.getElementById('cob-aviso');
+  av.style.display = pix ? 'none' : 'block';
+  av.textContent = 'Pix não configurado: cadastre a chave em Planos → 💠 Pix. A mensagem sai sem o código.';
+  document.getElementById('cob-valor').value = sug.precoBR;
+  document.getElementById('cob-recebi').style.display = '';
+  mbCobrarAtualizar(false);
+  openM('modal-cobrar');
+}
+function mbCobrarPlano(){ const id = document.getElementById('cob-plano').value; return plPlanos.find(p => p.id === id); }
+function mbCobrarAtualizar(trocouPlano){
+  if (!_cob) return;
+  const pl = mbCobrarPlano(); if (!pl) return;
+  if (trocouPlano) document.getElementById('cob-valor').value = pl.precoBR;
+  const valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
+  const a = _cob.a, nome = String(a.nome || '').trim().split(/\s+/)[0] || 'tudo bem';
+  let code = '';
+  if (_cob.pix) { const it = _cob.pix.itens[Number(document.getElementById('cob-chave').value) || 0] || _cob.pix.itens[0]; code = mbPixPayload(it.chave, _cob.pix.nome, _cob.pix.cidade, valor, _cob.txid); }
+  _cob.code = code;
+  const val = mbCobrarFmt(valor);
+  let t;
+  if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
+  else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
+  else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
+  if (code) t += `\n\nPix copia e cola 👇\n${code}`;
+  t += `\n\nDepois de pagar, é só me mandar o comprovante por aqui que eu libero na hora. Qualquer dúvida, estou à disposição! 🙌`;
+  document.getElementById('cob-msg').value = t;
+  const waDig = mbCobrarWaDigitos(a);
+  const wa = document.getElementById('cob-wa'); wa.disabled = !waDig; wa.title = waDig ? '' : 'Aluno sem WhatsApp cadastrado';
+}
+function mbCobrarWaDigitos(a){
+  const an = a.anamnese && a.anamnese.respostas;
+  let d = String(a.whatsapp || (an && an.whatsapp) || '').replace(/\D/g, '');
+  if (d && d.length <= 11) d = '55' + d;
+  return d;
+}
+async function mbCobrarCopiar(oque){
+  if (!_cob) return;
+  const txt = oque === 'pix' ? _cob.code : document.getElementById('cob-msg').value;
+  if (!txt) { notify('Sem código Pix: configure a chave em Planos.'); return; }
+  try { await navigator.clipboard.writeText(txt); notify(oque === 'pix' ? 'Código Pix copiado.' : 'Mensagem copiada.'); }
+  catch (e) { const t = document.getElementById('cob-msg'); t.focus(); t.select(); notify('Copie manualmente (Ctrl+C).'); }
+}
+function mbCobrarWhats(){
+  if (!_cob) return;
+  const d = mbCobrarWaDigitos(_cob.a); if (!d) { notify('Aluno sem WhatsApp cadastrado.'); return; }
+  window.open('https://wa.me/' + d + '?text=' + encodeURIComponent(document.getElementById('cob-msg').value), '_blank', 'noopener');
+}
+// Recebi (fora do app): estende o acesso como em mbConfirmarPix e registra o pagamento como confirmado
+async function mbCobrarRecebi(){
+  if (!_cob) return;
+  const pl = mbCobrarPlano(); if (!pl) return;
+  const a = _cob.a, valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
+  if (!confirm('Confirmar o recebimento de ' + mbCobrarFmt(valor) + ' de ' + a.nome + '? O acesso será estendido em ' + pl.dias + ' dias.')) return;
+  const hoje = new Date(); hoje.setHours(12, 0, 0, 0);
+  let base = hoje;
+  if (a.acesso_fim) { const f = new Date(a.acesso_fim + 'T12:00:00'); if (f > hoje) base = f; }
+  const fim = new Date(base.getTime() + pl.dias * 86400000);
+  const novo = { acesso_fim: mbIsoLocal(fim), ativo: true };
+  if (!a.acesso_inicio || base === hoje) novo.acesso_inicio = mbIsoLocal(hoje);
+  const { error } = await mbClient.from('alunos').update(novo).eq('id', a.id);
+  if (error) { notify('Erro ao liberar o acesso: ' + error.message); return; }
+  try { await mbClient.from('pagamentos_pix').insert({ aluno_id: a.id, professor_id: mbProfessor.id, plano_id: pl.id, plano_nome: pl.nome, dias: pl.dias, valor: valor, txid: _cob.txid, status: 'confirmado', confirmado_em: new Date().toISOString() }); } catch (e) {}
+  closeM('modal-cobrar');
+  notify('✅ Recebido. Acesso de ' + a.nome + ' até ' + mbCobrarDataBR(novo.acesso_fim));
   mbCarregarPainelAlunos();
 }
 async function mbRecusarPix(pid){
@@ -15040,10 +15178,14 @@ const PL_KEYS_KEY = 'movh_pl_keys';
 const PL_LAND_KEY = 'movh_landing_cfg';
 
 const PL_DEFAULT = [
-  { id:'pl1', nome:'1 Mês',   dias:30,  precoBR:149, precoUK:39,  ativo:true },
-  { id:'pl2', nome:'3 Meses', dias:90,  precoBR:399, precoUK:99,  ativo:true },
-  { id:'pl3', nome:'6 Meses', dias:180, precoBR:699, precoUK:169, ativo:true },
+  { id:'pl1', nome:'Mensal',     dias:30,  precoBR:180, precoUK:39,  ativo:true, tipo:'novo' },
+  { id:'pl2', nome:'Trimestral', dias:90,  precoBR:420, precoUK:99,  ativo:true, tipo:'novo' },
+  { id:'pl3', nome:'Semestral',  dias:180, precoBR:780, precoUK:169, ativo:true, tipo:'novo' },
+  { id:'pl4', nome:'Renovação',  dias:30,  precoBR:150, precoUK:0,   ativo:true, tipo:'renovacao' },
+  { id:'pl5', nome:'Reativação', dias:30,  precoBR:165, precoUK:0,   ativo:true, tipo:'reativacao' },
 ];
+const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação' };
+const plEhNovo = p => !p.tipo || p.tipo === 'novo';
 const PL_PROTO_DEFAULT = [
   { id:'hipertrofia', icon:'💪', nome:'Hipertrofia', desc:'Ganho de massa muscular com periodização inteligente e progressão de carga semana a semana.', tags:'Intermediário, 3-5x/semana, Academia', nomeEn:'Hypertrophy', descEn:'Muscle gain with intelligent periodisation and progressive overload week by week.', tagsEn:'Intermediate, 3-5x/week, Gym' },
   { id:'emagrecimento', icon:'🔥', nome:'Emagrecimento', desc:'Combinação de treino resistido e metabólico para perda de gordura com preservação muscular.', tags:'Iniciante, 3-4x/semana, Academia / Casa', nomeEn:'Fat Loss', descEn:'Resistance and metabolic training combined for fat loss with muscle preservation.', tagsEn:'Beginner, 3-4x/week, Gym / Home' },
@@ -15141,7 +15283,27 @@ function plTab(t){
 }
 
 // ── Planos ──
-function plSavePlanos(){ localStorage.setItem(PL_KEY, JSON.stringify(plPlanos)); plMarcarDirty(); }
+function plSavePlanos(){ localStorage.setItem(PL_KEY, JSON.stringify(plPlanos)); plMarcarDirty(); plPlanosPublicarSoon(); }
+let _plPlT = null;
+function plPlanosPublicarSoon(){ clearTimeout(_plPlT); _plPlT = setTimeout(plPlanosPublicar, 1500); const st = document.getElementById('pl-planos-status'); if (st) st.textContent = '⏳ Publicando…'; }
+// Publica os planos ativos em landing_config.planos (o app do aluno e a landing leem de lá); mantém o resto do config
+async function plPlanosPublicar(){
+  const st = document.getElementById('pl-planos-status');
+  if (!mbProfessor || !mbProfessor.id) { if (st) st.textContent = 'ℹ️ Salvo neste navegador. Entre na conta (Configuração) para publicar aos alunos.'; return; }
+  try {
+    const { data, error: e0 } = await mbClient.from('landing_config').select('config').eq('professor_id', mbProfessor.id).maybeSingle();
+    if (e0) throw e0;
+    const row = { professor_id: mbProfessor.id, planos: plPlanos.filter(x => x.ativo).map(x => ({ id: x.id, nome: x.nome, dias: x.dias, precoBR: x.precoBR, precoUK: x.precoUK, tipo: x.tipo || 'novo' })), updated_at: new Date().toISOString() };
+    if (data && data.config) row.config = data.config;
+    const { error } = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
+    if (error) throw error;
+    if (st) st.textContent = '✅ Planos publicados às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '.';
+  } catch (e) { if (st) st.textContent = '❌ Não publicou: ' + (e.message || e); }
+}
+function plAplicarValores(){
+  if (!confirm('Substituir a lista de planos pelos valores definidos (Mensal 180, Trimestral 420, Semestral 780, Renovação 150, Reativação 165)?')) return;
+  plPlanos = JSON.parse(JSON.stringify(PL_DEFAULT)); plSavePlanos(); plRender();
+}
 
 function plRender(){
   const el = document.getElementById('pl-tabela');
@@ -15150,6 +15312,7 @@ function plRender(){
   el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="border-bottom:1px solid var(--bd)">
       <th style="text-align:left;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">Nome</th>
+      <th style="text-align:left;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">Tipo</th>
       <th style="text-align:right;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">Dias</th>
       <th style="text-align:right;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">R$</th>
       <th style="text-align:right;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">£</th>
@@ -15160,23 +15323,24 @@ function plRender(){
     <tbody>${plPlanos.map((p,i)=>`
       <tr style="border-bottom:1px solid var(--bd2)">
         <td style="padding:6px 8px"><input class="ie" value="${escAttr(p.nome)}" style="width:110px" onchange="plPlanos[${i}].nome=this.value;plSavePlanos()"/></td>
+        <td style="padding:6px 8px"><select class="ie" style="width:104px" onchange="plPlanos[${i}].tipo=this.value;plSavePlanos();plRender()">${Object.keys(PL_TIPOS).map(k=>`<option value="${k}"${(p.tipo||'novo')===k?' selected':''}>${PL_TIPOS[k]}</option>`).join('')}</select></td>
         <td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="${p.dias}" style="width:54px;text-align:right" onchange="plPlanos[${i}].dias=+this.value;plSavePlanos()"/></td>
         <td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="${p.precoBR}" style="width:64px;text-align:right" onchange="plPlanos[${i}].precoBR=+this.value;plSavePlanos()"/></td>
         <td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="${p.precoUK}" style="width:54px;text-align:right" onchange="plPlanos[${i}].precoUK=+this.value;plSavePlanos()"/></td>
         <td style="padding:6px 8px;text-align:center"><label class="toggle-sw"><input type="checkbox" ${p.ativo?'checked':''} onchange="plPlanos[${i}].ativo=this.checked;plSavePlanos()"><span class="toggle-sw-slider"></span></label></td>
-        <td style="padding:6px 8px;text-align:center"><span style="font-size:11px;color:${i===1?'var(--P)':'var(--t3)'}">${i===1?'⭐ Sim':'—'}</span></td>
+        <td style="padding:6px 8px;text-align:center"><span style="font-size:11px;color:${i===1?'var(--P)':'var(--t3)'}">${i===1&&plEhNovo(p)?'⭐ Sim':'—'}</span></td>
         <td style="padding:6px 8px;text-align:right"><button class="bic" onclick="plRemovePlano(${i})" title="Remover">×</button></td>
       </tr>`).join('')}
     </tbody></table>
-    <div style="font-size:10px;color:var(--t3);margin-top:6px">Para mudar qual é "Mais popular", reordene os planos deixando o desejado no meio.</div>`;
+    <div style="font-size:10px;color:var(--t3);margin-top:6px">Para mudar qual é "Mais popular", reordene os planos deixando o desejado no meio. Só os planos "Novo" aparecem na landing; Renovação e Reativação são usados na cobrança e no app do aluno.</div>`;
 
   const sel = document.getElementById('pl-link-plano');
   if(sel) sel.innerHTML = '<option value="">— selecione —</option>' +
-    plPlanos.filter(p=>p.ativo).map(p=>`<option value="${p.id}">${escAttr(p.nome)} — R$${p.precoBR} / £${p.precoUK}</option>`).join('');
+    plPlanos.filter(p=>p.ativo&&plEhNovo(p)).map(p=>`<option value="${p.id}">${escAttr(p.nome)} — R$${p.precoBR} / £${p.precoUK}</option>`).join('');
 }
 
 function plAddPlano(){
-  plPlanos.push({ id:'pl'+Date.now(), nome:'Novo Plano', dias:30, precoBR:149, precoUK:39, ativo:true });
+  plPlanos.push({ id:'pl'+Date.now(), nome:'Novo Plano', dias:30, precoBR:180, precoUK:39, ativo:true, tipo:'novo' });
   plSavePlanos(); plRender();
 }
 function plRemovePlano(i){
@@ -15208,7 +15372,7 @@ async function plPixPublicar(){
     const p = plPixObj();
     const pix = { ativo: !!p.ativo, nome: p.nome || '', cidade: p.cidade || '', msg: p.msg || '', itens: (p.itens || []).filter(x => x && x.chave).map(x => ({ banco: x.banco || '', chave: String(x.chave).trim() })) };
     const row = { professor_id: mbProfessor.id, config: Object.assign({}, (data && data.config) || {}, { pix: pix }), updated_at: new Date().toISOString() };
-    if (!data || !Array.isArray(data.planos) || !data.planos.length) row.planos = plPlanos.filter(x => x.ativo).map(x => ({ id: x.id, nome: x.nome, dias: x.dias, precoBR: x.precoBR, precoUK: x.precoUK }));
+    if (!data || !Array.isArray(data.planos) || !data.planos.length) row.planos = plPlanos.filter(x => x.ativo).map(x => ({ id: x.id, nome: x.nome, dias: x.dias, precoBR: x.precoBR, precoUK: x.precoUK, tipo: x.tipo || 'novo' }));
     const { error } = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
     if (error) throw error;
     if (st) st.textContent = '✅ Pix ' + (pix.ativo ? 'ativo' : 'desativado') + ' e publicado para os alunos às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + '.';
@@ -15430,7 +15594,7 @@ async function plSincronizarLanding(){
       nomeEn:p.nomeEn||p.nome, descEn:p.descEn||p.desc, tagsEn:(p.tagsEn||p.tags).split(',').map(t=>t.trim()).filter(Boolean)
     }));
     const planosData = plPlanos.filter(p=>p.ativo).map(p=>({
-      id:p.id, nome:p.nome, dias:p.dias, precoBR:p.precoBR, precoUK:p.precoUK
+      id:p.id, nome:p.nome, dias:p.dias, precoBR:p.precoBR, precoUK:p.precoUK, tipo:p.tipo||'novo'
     }));
     const configData = {
       badge: plLand.badge||'', titulo: plLand.titulo||'', sub: plLand.sub||'',
@@ -15476,7 +15640,7 @@ async function plExportarLanding(){
     nome:p.nome, desc:p.desc, tags:p.tags.split(',').map(t=>t.trim()).filter(Boolean),
     nomeEn:p.nomeEn||p.nome, descEn:p.descEn||p.desc, tagsEn:(p.tagsEn||p.tags).split(',').map(t=>t.trim()).filter(Boolean)
   })));
-  const planosJson = JSON.stringify(plPlanos.filter(p=>p.ativo).map(p=>({
+  const planosJson = JSON.stringify(plPlanos.filter(p=>p.ativo&&plEhNovo(p)).map(p=>({
     id:p.id, nome:p.nome, dias:p.dias, precoBR:p.precoBR, precoUK:p.precoUK
   })));
   let profId = '';
@@ -15982,7 +16146,7 @@ async function plInitLanding(){
         const rows = await res.json();
         const row = rows && rows[0];
         if (row) {
-          if (Array.isArray(row.planos) && row.planos.length) MOVH_CONFIG.planos = row.planos;
+          if (Array.isArray(row.planos) && row.planos.length) { var _pn = row.planos.filter(function(p){ return !p.tipo || p.tipo === 'novo'; }); if (_pn.length) MOVH_CONFIG.planos = _pn; }
           if (Array.isArray(row.protocolos) && row.protocolos.length) MOVH_CONFIG.protocolos = row.protocolos;
           const cfg = row.config;
           if (cfg) {
