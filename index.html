@@ -582,6 +582,14 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-vazio{padding:22px;text-align:center;color:var(--t3);border:1px dashed var(--bd);border-radius:12px;margin-bottom:8px;font-size:12px}
 .cl-bloco{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--P);border-radius:12px;padding:10px 12px;margin-bottom:10px}
 .cl-bloco.cond{border-left-color:#D45828}
+.cl-bloco[data-cor]{border-left-color:var(--cc);background:color-mix(in srgb,var(--cc) 8%,var(--card))}
+.cl-bloco[data-cor] .cl-n{background:var(--cc);color:#fff}
+.cl-cor{border-radius:50%!important;width:22px;height:22px;padding:0!important;border:2px solid var(--bd)!important;background:var(--cc,var(--cl))!important}
+.cl-pal{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:-2px 0 8px}
+.cl-pal i{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;background:var(--cc);display:inline-block}
+.cl-pal i.on{border-color:var(--tx);box-shadow:0 0 0 2px var(--card) inset}
+.cl-pal i.auto{background:var(--cl);border:2px dashed var(--bd);font-size:0}
+.cl-pal span{font-size:10px;color:var(--t3)}
 .cl-bhd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .cl-bhd select{width:auto;font-size:12px;padding:4px 6px}
 .cl-n{width:20px;height:20px;border-radius:50%;background:var(--cl);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--t2);flex:0 0 auto}
@@ -662,6 +670,7 @@ textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;p
 body.clean{--bd:color-mix(in srgb,var(--tx) 11%,transparent);--bd2:color-mix(in srgb,var(--tx) 6%,transparent);--shadow:none}
 body.clean .main{background:radial-gradient(900px 420px at 12% -8%,color-mix(in srgb,var(--P) 8%,transparent),transparent 70%),var(--bg)}
 body.clean .card,body.clean .cl-bloco{background:color-mix(in srgb,var(--card) 55%,transparent);border-color:var(--bd);box-shadow:none;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+body.clean .cl-bloco[data-cor]{background:color-mix(in srgb,var(--cc) 8%,color-mix(in srgb,var(--card) 55%,transparent))}
 body.clean .exi{background:transparent;border-color:var(--bd2)}
 body.clean .modal,body.clean .mv-sheet{background:color-mix(in srgb,var(--card) 90%,transparent);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--bd);box-shadow:0 24px 70px rgba(0,0,0,.28)}
 body.clean .mbg,body.clean .mv-ov{background:rgba(8,10,16,.38);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
@@ -2778,6 +2787,8 @@ function coletivasRenderEditor(el, datas){
 function renderColetivasBloco(dia, i, b, total){
   const isC = b.tipo === 'condicionamento';
   const q = "'" + dia + "'," + i;
+  const cor = /^#[0-9a-fA-F]{6}$/.test(b.cor || '') ? b.cor : '';
+  const pal = coletivasPalAberta === b.id ? '<div class="cl-pal"><span>Cor:</span>' + COLETIVAS_CORES.map(c => '<i data-c="' + c + '" style="--cc:' + c + '" class="' + (c.toLowerCase() === cor.toLowerCase() ? 'on' : '') + '" onclick="coletivasSetCor(' + q + ',this.dataset.c)"></i>').join('') + '<i class="auto' + (cor ? '' : ' on') + '" data-c="" title="Sem cor" onclick="coletivasSetCor(' + q + ',\'\')">·</i></div>' : '';
   const exs = (b.exercicios || []).map((ex, j) => '<div class="cl-ex">' +
     '<input type="text" list="ex-datalist" class="cl-exn" placeholder="Exercício (banco ou livre)" value="' + escAttr(ex.nome || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'nome\',this.value)"/>' +
     '<button type="button" class="cl-ib" onclick="mvAbrirParaInput(this.previousElementSibling)" title="Escolher: grupo › categoria › exercício">📂</button>' +
@@ -2787,16 +2798,21 @@ function renderColetivasBloco(dia, i, b, total){
     '<button type="button" class="cl-ib cl-pl' + ((ex.url || getUrl(ex.nome || '')) ? '' : ' sem') + '" onclick="coletivasVideo(' + q + ',' + j + ')" title="Ver vídeo · editar nome/link">▶</button>' +
     '<button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',-1)" title="Subir">↑</button><button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',1)" title="Descer">↓</button>' +
     '<button type="button" class="cl-ib x" onclick="coletivasRemoverEx(' + q + ',' + j + ')" title="Remover">×</button></div>').join('');
-  return '<div class="cl-bloco' + (isC ? ' cond' : '') + '">' +
+  return '<div class="cl-bloco' + (isC ? ' cond' : '') + '"' + (cor ? ' data-cor style="--cc:' + cor + '"' : '') + '>' +
     '<div class="cl-bhd"><span class="cl-n">' + (i + 1) + '</span>' +
     '<select onchange="coletivasSetBloco(' + q + ',\'tipo\',this.value)"><option value="normal"' + (!isC ? ' selected' : '') + '>🏋️ Normal</option><option value="condicionamento"' + (isC ? ' selected' : '') + '>🔥 Condicionamento</option></select>' +
     (!isC ? '<input type="text" class="cl-nome" placeholder="Nome do bloco (Aquecimento, Parte principal, Finisher…)" value="' + escAttr(b.nome || '') + '" oninput="coletivasSetBloco(' + q + ',\'nome\',this.value)"/>' : '<span style="flex:1"></span>') +
     (!isC ? '<label class="cl-conj"><input type="checkbox"' + (b.conjugado ? ' checked' : '') + ' onchange="coletivasSetBloco(' + q + ',\'conjugado\',this.checked)"/>Conj.</label>' + (b.conjugado ? '<input type="text" class="cl-exs" placeholder="Séries" title="Séries do conjugado" value="' + escAttr(b.series || '') + '" oninput="coletivasSetBloco(' + q + ',\'series\',this.value)"/>' : '') : '') +
+    '<button type="button" class="cl-ib cl-cor"' + (cor ? ' style="--cc:' + cor + '"' : '') + ' onclick="coletivasPaleta(' + q + ')" title="Cor do bloco"></button>' +
     '<button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',-1)" title="Subir bloco"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',1)" title="Descer bloco"' + (i === total - 1 ? ' disabled' : '') + '>↓</button>' +
-    '<button type="button" class="cl-ib" onclick="coletivasDupBloco(' + q + ')" title="Duplicar bloco">⧉</button><button type="button" class="cl-ib x" onclick="coletivasRemoverBloco(' + q + ')" title="Remover bloco">×</button></div>' +
+    '<button type="button" class="cl-ib" onclick="coletivasDupBloco(' + q + ')" title="Duplicar bloco">⧉</button><button type="button" class="cl-ib x" onclick="coletivasRemoverBloco(' + q + ')" title="Remover bloco">×</button></div>' + pal +
     (isC ? '<div class="cl-row2"><input type="text" placeholder="Formato (ex.: AMRAP 15min, EMOM 12min)" value="' + escAttr(b.formato || '') + '" oninput="coletivasSetBloco(' + q + ',\'formato\',this.value)"/><input type="text" placeholder="Materiais" value="' + escAttr(b.materiais || '') + '" oninput="coletivasSetBloco(' + q + ',\'materiais\',this.value)"/></div>' : exs + '<button type="button" class="cl-addex" onclick="coletivasAddEx(' + q + ')">＋ exercício</button><button type="button" class="cl-addex" onclick="coletivasAddVarios(' + q + ')">📂 vários</button>') +
     '<textarea class="cl-ta" data-min="' + (isC ? 170 : 70) + '" placeholder="' + (isC ? 'Descreva o treino completo: rounds, movimentos, cargas, tempos, variações, escalas…' : 'Descrição, instruções, cargas, observações do bloco (aparece para o aluno)…') + '" oninput="coletivasAuto(this);coletivasSetBloco(' + q + ',\'detalhes\',this.value)">' + escAttr(b.detalhes || '') + '</textarea></div>';
 }
+const COLETIVAS_CORES = ['#1A9E72','#3580D8','#D45828','#C23B5A','#8A5CD0','#D9A21B','#2A9DB5','#6B7280'];
+let coletivasPalAberta = null;
+function coletivasPaleta(dia, i){ const b = coletivasData[dia][i]; coletivasPalAberta = (coletivasPalAberta === b.id) ? null : b.id; renderColetivas(); }
+function coletivasSetCor(dia, i, cor){ const b = coletivasData[dia][i]; if (cor) b.cor = cor; else delete b.cor; coletivasPalAberta = null; renderColetivas(); coletivasMarcarSujo(); }
 function coletivasMoverBloco(dia, i, dir){ const a = coletivasData[dia], j = i + dir; if (j < 0 || j >= a.length) return; const t = a[i]; a[i] = a[j]; a[j] = t; renderColetivas(); coletivasMarcarSujo(); }
 function coletivasMoverEx(dia, i, j, dir){ const a = coletivasData[dia][i].exercicios, k = j + dir; if (k < 0 || k >= a.length) return; const t = a[j]; a[j] = a[k]; a[k] = t; renderColetivas(); coletivasMarcarSujo(); }
 function coletivasDupBloco(dia, i){ const c = JSON.parse(JSON.stringify(coletivasData[dia][i])); c.id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); coletivasData[dia].splice(i + 1, 0, c); renderColetivas(); coletivasMarcarSujo(); }
@@ -14208,6 +14224,7 @@ function aMontarColetivas(dados){
     var isC = b.tipo === 'condicionamento';
     var titulo = isC ? ('🔥 ' + (en ? 'Conditioning' : 'Condicionamento')) : ('🏋️ ' + (b.nome ? aEsc(b.nome) : (en ? 'Block' : 'Bloco')));
     var meta = (!isC && b.conjugado) ? (en ? 'Superset' : 'Conjugado') + (b.series ? (' · ' + aEsc(b.series) + (en ? ' sets' : ' séries')) : '') : '';
+    var cor = (b.cor && /^#[0-9a-fA-F]{6}$/.test(b.cor)) ? b.cor : '';
     var corpo = '';
     if (isC) {
       if (b.formato) corpo += '<div class="cl-meta"><b>' + (en ? 'Format' : 'Formato') + ':</b> ' + aEsc(b.formato) + '</div>';
@@ -14220,7 +14237,7 @@ function aMontarColetivas(dados){
       corpo += '<div class="cl-ex-r"><span class="cl-ex-n">' + pl + '<span>' + aEsc(ex.nome) + '</span></span><span class="cl-ex-c">' + sr + '</span></div>';
     });
     if (b.detalhes) corpo += '<div class="cl-det">' + aEsc(b.detalhes) + '</div>';
-    html += '<div class="bloco"><div class="bh" onclick="aColToggle(this)"><div class="dot" style="border-left-color:' + (isC ? '#D45828' : 'var(--P)') + '"></div><span class="bt">' + titulo + '</span>' + (meta ? '<span class="bm">' + meta + '</span>' : '') + '<span class="bt-arr">▾</span></div><div class="exl" style="padding:6px 12px 10px">' + corpo + '</div></div>';
+    html += '<div class="bloco"' + (cor ? ' style="border-left:4px solid ' + cor + '"' : '') + '><div class="bh" onclick="aColToggle(this)"><div class="dot" style="border-left-color:' + (cor || (isC ? '#D45828' : 'var(--P)')) + '"></div><span class="bt">' + titulo + '</span>' + (meta ? '<span class="bm">' + meta + '</span>' : '') + '<span class="bt-arr">▾</span></div><div class="exl" style="padding:6px 12px 10px' + (cor ? ';background:color-mix(in srgb,' + cor + ' 7%,transparent)' : '') + '">' + corpo + '</div></div>';
   });
   return html + aColLogo();
 }
