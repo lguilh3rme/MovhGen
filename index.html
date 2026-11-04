@@ -582,6 +582,24 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-vazio{padding:22px;text-align:center;color:var(--t3);border:1px dashed var(--bd);border-radius:12px;margin-bottom:8px;font-size:12px}
 .cl-bloco{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--P);border-radius:12px;padding:10px 12px;margin-bottom:10px}
 .cl-bloco.cond{border-left-color:#D45828}
+.personal-pub .app{display:none!important}
+#personal-pub{position:fixed;inset:0;z-index:99999;overflow:auto;background:var(--bg);color:var(--tx);padding:14px 14px 40px}
+#personal-pub .pp-w{max-width:620px;margin:0 auto}
+#personal-pub .pp-t{font-size:20px;font-weight:800;margin:4px 0 2px}
+#personal-pub .pp-s{font-size:12px;color:var(--t3);margin-bottom:12px}
+#personal-pub .pp-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+#personal-pub .pp-nav b{flex:1;text-align:center;font-size:13px}
+#personal-pub .pp-b{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 12px;font-size:13px;cursor:pointer}
+#personal-pub .cl-tabs{margin-bottom:12px}
+#personal-pub .pp-bl{background:color-mix(in srgb,var(--cc,var(--P)) 9%,var(--card));border:1px solid var(--bd);border-left:5px solid var(--cc,var(--P));border-radius:12px;padding:10px 12px;margin-bottom:10px}
+#personal-pub .pp-bh{display:flex;align-items:baseline;gap:8px;font-weight:800;font-size:14px;margin-bottom:6px}
+#personal-pub .pp-bh small{font-weight:600;font-size:11px;color:var(--t3)}
+#personal-pub .pp-ex{display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--bd);font-size:14px}
+#personal-pub .pp-ex:first-of-type{border-top:0}
+#personal-pub .pp-ex span{flex:1}#personal-pub .pp-ex em{font-style:normal;font-weight:700;color:var(--t2);white-space:nowrap}
+#personal-pub .pp-pl{border:0;border-radius:50%;width:26px;height:26px;background:var(--P);color:#fff;font-size:11px;cursor:pointer;flex:0 0 auto}
+#personal-pub .pp-d{white-space:pre-wrap;font-size:13px;color:var(--t2);margin-top:6px;line-height:1.45}
+#personal-pub .pp-v{text-align:center;color:var(--t3);padding:30px 0;font-size:13px}
 .cl-bloco[data-cor]{border-left-color:var(--cc);background:color-mix(in srgb,var(--cc) 8%,var(--card))}
 .cl-bloco[data-cor] .cl-n{background:var(--cc);color:#fff}
 .cl-cor{border-radius:50%!important;width:22px;height:22px;padding:0!important;border:2px solid var(--bd)!important;background:var(--cc,var(--cl))!important}
@@ -745,7 +763,8 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
   <div class="ni" onclick="nav('planos')" id="nav-planos"><span class="ic">💳</span><span class="ni-name">Planos</span></div>
   <div class="ni" onclick="nav('export')" id="nav-export"><span class="ic">📦</span><span class="ni-name">Publicar app</span></div>
   <div class="ni" onclick="nav('branding')" id="nav-branding"><span class="ic">🖼️</span><span class="ni-name">Logo do login</span></div>
-  <div class="ni" onclick="nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
+  <div class="ni" onclick="coletivasModo='coletivas';nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
+  <div class="ni" onclick="personalAbrir()" id="nav-personal"><span class="ic">🏋️</span><span class="ni-name">Personal</span></div>
   <div class="sb-ver" title="Se esta etiqueta não aparece, você está numa versão antiga: Ctrl+F5">v56 · 02/11</div>
   <button type="button" class="sb-vis" id="sb-vis" onclick="visualToggle()" title="Alterna entre o visual clean e o clássico">🎨 Visual clean</button>
 </div>
@@ -1289,13 +1308,14 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
 </div>
 <div class="page" id="page-coletivas">
   <div class="pg-head">
-    <div><div class="pg-title">🤸 Aulas Coletivas</div><div class="pg-sub">Cada dia é independente — defina o treino de uma data específica, sem repetir automaticamente nas outras semanas. Sem vídeo, só a lista de blocos/exercícios pra quem vai dar a aula. Fica salvo no banco e pode ser mostrado no app pra alunos específicos (aba Alunos → botão 🤸).</div></div>
+    <div><div class="pg-title" id="coletivas-titulo">🤸 Aulas Coletivas</div><div class="pg-sub" id="coletivas-sub">Cada dia é independente — defina o treino de uma data específica, sem repetir automaticamente nas outras semanas. Sem vídeo, só a lista de blocos/exercícios pra quem vai dar a aula. Fica salvo no banco e pode ser mostrado no app pra alunos específicos (aba Alunos → botão 🤸).</div></div>
     <div style="display:flex;gap:6px;align-self:flex-start">
-      <button class="btn bs" onclick="coletivasCopiarLinkPublico()" title="Link público das aulas coletivas (sem login)">🔗 Copiar link</button>
+      <button class="btn bs" id="coletivas-link-btn" onclick="coletivasCopiarLinkPublico()" title="Link público das aulas coletivas (sem login)">🔗 Copiar link</button>
       <button class="btn bs" onclick="coletivasAbrirColar()">📋 Colar plano da semana</button>
       <button class="btn bp" id="coletivas-save-btn" onclick="mbSalvarAulasColetivas()">💾 Salvar aulas coletivas</button>
     </div>
   </div>
+  <div id="coletivas-modo" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px"></div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
     <button class="btn bs" id="coletivas-agenda-badge" style="font-size:10.5px;padding:4px 10px" onclick="coletivasToggleAgenda()">🗓️ Agenda ▼</button>
     <div id="coletivas-semana-nav" style="display:flex;align-items:center"></div>
@@ -2654,6 +2674,7 @@ function coletivasSemanaDatas(segunda){
 async function mbCarregarAulasColetivas(){
   const el = document.getElementById('coletivas-wrap');
   if (!el) return;
+  if (coletivasModo === 'personal') { personalCarregar(); return; }
   el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3)">Carregando…</div>';
   try {
     const { data, error } = await mbClient.from('aulas_coletivas').select('dados').eq('professor_id', mbProfessor.id).maybeSingle();
@@ -2667,6 +2688,64 @@ async function mbCarregarAulasColetivas(){
   coletivasSujo = false;
   renderColetivas();
 }
+
+// ══ PERSONAL (presencial): mesmo editor das coletivas, mas os dados são por aluno (tabela treinos_personal)
+// e o link público é <Gerador>?personal=TOKEN (página só de leitura, hospedada junto do Gerador).
+let coletivasModo = 'coletivas';
+let personalAlunoId = null;
+let personalTokens = {};
+function personalMsgSql(e){
+  const m = ((e && e.message) || '').toLowerCase();
+  if (m.includes('treinos_personal') || m.includes('get_treino_personal_publico') || m.includes('schema cache') || m.includes('does not exist')) return '⚠️ O banco ainda não tem a tabela de Treinos Personal. Menu lateral → "Gerar Protocolo" → "🔐 Login não funciona?" → "Copiar SQL das policies RLS" → rode no Supabase (SQL Editor).';
+  return null;
+}
+function personalAbrir(){ coletivasModo = 'personal'; nav('coletivas'); }
+async function personalCarregar(){
+  const el = document.getElementById('coletivas-wrap');
+  if (!personalAlunoId) { try { personalAlunoId = localStorage.getItem('movh_personal_aluno') || null; } catch(e){} }
+  if (!(mbAlunos || []).some(a => a.id === personalAlunoId)) personalAlunoId = (mbAlunos && mbAlunos[0]) ? mbAlunos[0].id : null;
+  coletivasSujo = false; coletivasSemanaAtual = coletivasSegundaDaSemana(new Date()); coletivasDiaSel = null;
+  if (!personalAlunoId) { coletivasData = {}; renderColetivas(); if (el) el.innerHTML = '<div class="cl-vazio">Nenhum aluno ativo. Cadastre um aluno na aba Alunos.</div>'; return; }
+  if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3)">Carregando…</div>';
+  try {
+    const { data, error } = await mbClient.from('treinos_personal').select('token,dados').eq('professor_id', mbProfessor.id).eq('aluno_id', personalAlunoId).maybeSingle();
+    if (error) throw error;
+    coletivasData = (data && data.dados && typeof data.dados === 'object') ? data.dados : {};
+    if (data && data.token) personalTokens[personalAlunoId] = data.token; else delete personalTokens[personalAlunoId];
+  } catch(e) {
+    coletivasData = {};
+    notify(personalMsgSql(e) || ('Erro ao carregar treinos do aluno: ' + e.message));
+  }
+  renderColetivas();
+}
+function coletivasTrocarModo(modo){
+  if (modo === coletivasModo) return;
+  if (coletivasSujo && !confirm('Há alterações não salvas. Descartar e trocar?')) { renderColetivas(); return; }
+  coletivasModo = modo; coletivasSujo = false;
+  mbCarregarAulasColetivas();
+}
+function personalTrocarAluno(id){
+  if (coletivasSujo && !confirm('Há alterações não salvas. Descartar e trocar de aluno?')) { renderColetivas(); return; }
+  personalAlunoId = id; try { localStorage.setItem('movh_personal_aluno', id); } catch(e){}
+  personalCarregar();
+}
+function coletivasRenderModo(){
+  const box = document.getElementById('coletivas-modo'); if (!box) return;
+  const per = coletivasModo === 'personal';
+  const al = (mbAlunos || []).find(a => a.id === personalAlunoId);
+  box.innerHTML = '<button type="button" class="btn ' + (per ? 'bs' : 'bp') + '" style="font-size:11px;padding:4px 10px" onclick="coletivasTrocarModo(\'coletivas\')">🤸 Coletivas</button>' +
+    '<button type="button" class="btn ' + (per ? 'bp' : 'bs') + '" style="font-size:11px;padding:4px 10px" onclick="coletivasTrocarModo(\'personal\')">🏋️ Personal</button>' +
+    (per ? '<select style="width:auto;max-width:220px;font-size:12px;padding:5px 8px" onchange="personalTrocarAluno(this.value)">' + (mbAlunos || []).map(a => '<option value="' + escAttr(a.id) + '"' + (a.id === personalAlunoId ? ' selected' : '') + '>' + escAttr(a.nome || '') + '</option>').join('') + '</select>' : '');
+  const t = document.getElementById('coletivas-titulo'), sb = document.getElementById('coletivas-sub'), lk = document.getElementById('coletivas-link-btn');
+  if (t) t.textContent = per ? ('🏋️ Personal' + (al ? ' — ' + al.nome : '')) : '🤸 Aulas Coletivas';
+  if (sb && per) sb.textContent = 'Treinos por data deste aluno (presencial). Salve e copie o link: é uma página só de leitura, sem login, para você consultar na hora do treino.';
+  if (sb && !per && sb.dataset.orig) sb.textContent = sb.dataset.orig;
+  if (sb && !sb.dataset.orig && !per) sb.dataset.orig = sb.textContent;
+  if (lk) lk.textContent = per ? '🔗 Link do aluno' : '🔗 Copiar link';
+  const nv = document.getElementById('nav-personal'); if (nv) nv.classList.toggle('active', per);
+  const nc = document.getElementById('nav-coletivas'); if (nc && per) nc.classList.remove('active');
+}
+function coletivasRotuloSalvar(sujo){ return (coletivasModo === 'personal' ? '💾 Salvar treinos do aluno' : '💾 Salvar aulas coletivas') + (sujo ? ' ●' : ''); }
 
 function coletivasNovoBloco(){
   return { id: 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,6), tipo: 'normal', nome: '', conjugado: false, series: '', exercicios: [{nome:'', series:'', reps:''}], formato:'', materiais:'', detalhes:'' };
@@ -2682,6 +2761,7 @@ function coletivasToggleAgenda(){
 }
 
 function renderColetivas(){
+  coletivasRenderModo();
   if (!coletivasSemanaAtual) coletivasSemanaAtual = coletivasSegundaDaSemana(new Date());
   const badge = document.getElementById('coletivas-agenda-badge');
   if (badge) badge.textContent = coletivasAgendaAberta ? '🗓️ Agenda ▲' : '🗓️ Agenda ▼';
@@ -2756,7 +2836,21 @@ let coletivasDiaSel = null;
 function coletivasAuto(el){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight + 2, parseInt(el.dataset.min || '60', 10)) + 'px'; }
 function coletivasSelDia(key){ coletivasDiaSel = key; renderColetivas(); }
 // Link público das coletivas (sem login): <URL do app>/coletivas — lido pela função get_coletivas_publico.
+function personalBaseUrl(){
+  const l = window.location;
+  if (/github\.io$/i.test(l.hostname)) return l.origin + l.pathname.replace(/index\.html$/i,'');
+  return 'https://lguilh3rme.github.io/MovhGen/';
+}
 function coletivasCopiarLinkPublico(){
+  if (coletivasModo === 'personal') {
+    const tk = personalTokens[personalAlunoId];
+    if (!tk) { notify('Salve os treinos do aluno primeiro: o link é gerado no primeiro salvamento.'); return; }
+    const lk = personalBaseUrl() + '?personal=' + tk;
+    const ok2 = function(){ notify('Link do aluno copiado.'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lk).then(ok2).catch(function(){ prompt('Copie o link:', lk); });
+    else prompt('Copie o link:', lk);
+    return;
+  }
   const base = ((plLand && plLand.appUrl) || 'https://movh.netlify.app').trim().split('?')[0].split('#')[0].replace(/\/index\.html$/i,'').replace(/\/+$/,'');
   const link = base + '/coletivas';
   const ok = function(){ notify('Link copiado: ' + link); };
@@ -2832,7 +2926,7 @@ window.addEventListener('beforeunload', function(e){ if (typeof coletivasSujo !=
 function coletivasMarcarSujo(){
   coletivasSujo = true;
   const btn = document.getElementById('coletivas-save-btn');
-  if (btn) btn.textContent = '💾 Salvar aulas coletivas ●';
+  if (btn) btn.textContent = coletivasRotuloSalvar(true);
 }
 function coletivasSetBloco(dia,i,campo,val){
   coletivasData[dia][i][campo] = val;
@@ -3109,6 +3203,16 @@ async function mbSalvarAulasColetivas(){
   if (btn) { btn.disabled = true; btn.textContent = 'Salvando…'; }
   try {
     Object.keys(coletivasData).forEach(k => (coletivasData[k] || []).forEach(b => (b.exercicios || []).forEach(e => { if (e && e.nome && !e.url) { const u = getUrl(e.nome); if (u) e.url = u; } })));
+    if (coletivasModo === 'personal') {
+      if (!personalAlunoId) throw new Error('Escolha um aluno.');
+      const { data: sv, error: e2 } = await mbClient.from('treinos_personal').upsert({
+        professor_id: mbProfessor.id, aluno_id: personalAlunoId, dados: coletivasData, atualizado_em: new Date().toISOString()
+      }, { onConflict: 'professor_id,aluno_id' }).select('token').single();
+      if (e2) throw e2;
+      if (sv && sv.token) personalTokens[personalAlunoId] = sv.token;
+      coletivasSujo = false;
+      notify('✅ Treinos do aluno salvos.');
+    } else {
     const { error } = await mbClient.from('aulas_coletivas').upsert({
       professor_id: mbProfessor.id,
       dados: coletivasData,
@@ -3117,10 +3221,11 @@ async function mbSalvarAulasColetivas(){
     if (error) throw error;
     coletivasSujo = false;
     notify('✅ Aulas coletivas salvas.');
+    }
   } catch(e) {
-    notify(coletivasMsgSqlPendente(e) || ('Erro ao salvar aulas coletivas: ' + e.message));
+    notify((coletivasModo === 'personal' ? personalMsgSql(e) : coletivasMsgSqlPendente(e)) || ('Erro ao salvar: ' + e.message));
   }
-  if (btn) { btn.disabled = false; btn.textContent = '💾 Salvar aulas coletivas'; }
+  if (btn) { btn.disabled = false; btn.textContent = coletivasRotuloSalvar(false); }
 }
 // Detecta o erro típico de "tabela/coluna ainda não existe" (SQL pendente
 // não rodado no Supabase) e devolve uma mensagem amigável — ou null se for
@@ -3144,6 +3249,64 @@ async function mbToggleAulasColetivasAluno(alunoId, checked){
     notify(coletivasMsgSqlPendente(e) || ('Erro: ' + e.message));
     mbCarregarPainelAlunos();
   }
+}
+
+// ══ PÁGINA PÚBLICA DO PERSONAL (?personal=TOKEN): só leitura, sem login. Lê pela função get_treino_personal_publico.
+(function(){
+  let tk = null; try { tk = new URLSearchParams(window.location.search).get('personal'); } catch(e){}
+  if (!tk) return;
+  document.documentElement.classList.add('personal-pub');
+  const go = function(){ setTimeout(function(){ personalPubBoot(tk); }, 0); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+})();
+let ppDados = {}, ppSemana = null, ppDia = null, ppNome = '';
+function ppEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+async function personalPubBoot(tk){
+  let ov = document.getElementById('personal-pub');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'personal-pub'; document.body.appendChild(ov); }
+  ov.innerHTML = '<div class="pp-w"><div class="pp-v">Carregando…</div></div>';
+  try {
+    const r = await mbClientAvulso.rpc('get_treino_personal_publico', { p_token: tk });
+    if (r.error) throw r.error;
+    if (!r.data) { ov.innerHTML = '<div class="pp-w"><div class="pp-v">Link inválido ou treino não encontrado.</div></div>'; return; }
+    ppDados = (r.data.dados && typeof r.data.dados === 'object') ? r.data.dados : {};
+    ppNome = r.data.nome || '';
+    ppSemana = coletivasSegundaDaSemana(new Date()); ppDia = null;
+    personalPubRender();
+  } catch(e) {
+    ov.innerHTML = '<div class="pp-w"><div class="pp-v">Não foi possível carregar. Tente de novo em instantes.<br><button class="pp-b" style="margin-top:12px" onclick="personalPubBoot(new URLSearchParams(location.search).get(\'personal\'))">Tentar de novo</button></div></div>';
+  }
+}
+function personalPubSemana(delta){ const d = new Date(ppSemana); d.setDate(d.getDate() + 7 * delta); ppSemana = d; ppDia = null; personalPubRender(); }
+function personalPubHoje(){ ppSemana = coletivasSegundaDaSemana(new Date()); ppDia = null; personalPubRender(); }
+function personalPubSel(k){ ppDia = k; personalPubRender(); }
+function personalPubPlay(btn){ const u = btn.getAttribute('data-u') || ''; if (/^https?:\/\//i.test(u)) window.open(u, '_blank', 'noopener'); }
+function personalPubRender(){
+  const ov = document.getElementById('personal-pub'); if (!ov) return;
+  const datas = coletivasSemanaDatas(ppSemana), keys = datas.map(coletivasDateKey), hoje = coletivasDateKey(new Date());
+  if (!ppDia || keys.indexOf(ppDia) < 0) ppDia = keys.indexOf(hoje) >= 0 ? hoje : (keys.find(function(k){ return (ppDados[k] || []).length; }) || keys[0]);
+  const d0 = datas[0], d6 = datas[6], f = function(d){ return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0'); };
+  const tabs = datas.map(function(d){ const k = coletivasDateKey(d), n = (ppDados[k] || []).length;
+    return '<button type="button" class="cl-tab' + (k === ppDia ? ' on' : '') + (k === hoje ? ' hoje' : '') + '" onclick="personalPubSel(\'' + k + '\')"><b>' + COLETIVAS_DOW_LABEL[d.getDay()].slice(0,3) + '</b><span>' + f(d) + '</span>' + (n ? '<i>' + n + '</i>' : '') + '</button>'; }).join('');
+  const blocos = ppDados[ppDia] || [];
+  const corpo = blocos.length ? blocos.map(function(b){
+    const isC = b.tipo === 'condicionamento';
+    const cor = /^#[0-9a-fA-F]{6}$/.test(b.cor || '') ? b.cor : (isC ? '#D45828' : '');
+    const tit = isC ? '🔥 Condicionamento' : (b.nome ? ppEsc(b.nome) : 'Bloco');
+    const meta = (!isC && b.conjugado) ? 'Conjugado' + (b.series ? ' · ' + ppEsc(b.series) + ' séries' : '') : '';
+    let h = '<div class="pp-bl"' + (cor ? ' style="--cc:' + cor + '"' : '') + '><div class="pp-bh">' + tit + (meta ? '<small>' + meta + '</small>' : '') + '</div>';
+    if (isC && b.formato) h += '<div class="pp-d"><b>Formato:</b> ' + ppEsc(b.formato) + '</div>';
+    if (isC && b.materiais) h += '<div class="pp-d"><b>Materiais:</b> ' + ppEsc(b.materiais) + '</div>';
+    (b.exercicios || []).forEach(function(ex){ if (!ex.nome) return;
+      const sr = b.conjugado ? (ex.reps ? ppEsc(ex.reps) + ' reps' : '') : ((ex.series || ex.reps) ? ppEsc(ex.series || '') + (ex.series && ex.reps ? '×' : '') + ppEsc(ex.reps || '') : '');
+      const pl = (ex.url && /^https?:\/\//i.test(ex.url)) ? '<button type="button" class="pp-pl" data-u="' + ppEsc(ex.url) + '" onclick="personalPubPlay(this)" aria-label="Vídeo">▶</button>' : '';
+      h += '<div class="pp-ex">' + pl + '<span>' + ppEsc(ex.nome) + '</span><em>' + sr + '</em></div>'; });
+    if (b.detalhes) h += '<div class="pp-d">' + ppEsc(b.detalhes) + '</div>';
+    return h + '</div>';
+  }).join('') : '<div class="pp-v">Sem treino neste dia.</div>';
+  ov.innerHTML = '<div class="pp-w"><div class="pp-t">🏋️ Treino' + (ppNome ? ' de ' + ppEsc(ppNome) : '') + '</div><div class="pp-s">Programado pelo professor · só leitura</div>' +
+    '<div class="pp-nav"><button class="pp-b" onclick="personalPubSemana(-1)">‹</button><b>' + f(d0) + ' – ' + f(d6) + '</b><button class="pp-b" onclick="personalPubSemana(1)">›</button><button class="pp-b" onclick="personalPubHoje()">Hoje</button></div>' +
+    '<div class="cl-tabs">' + tabs + '</div>' + corpo + '</div>';
 }
 
 // ══ VISÃO KANBAN (colunas por dia, todos os treinos da semana lado a
@@ -15242,6 +15405,28 @@ function copiarSQLRLS(){
     '$fn$;',
     'REVOKE ALL ON FUNCTION get_coletivas_publico() FROM public;',
     'GRANT EXECUTE ON FUNCTION get_coletivas_publico() TO anon, authenticated;',
+    '',
+    '-- TREINOS PERSONAL (presencial): um registro por aluno (dados por data) + link público por token',
+    'CREATE TABLE IF NOT EXISTS treinos_personal (',
+    '  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),',
+    '  professor_id uuid NOT NULL REFERENCES professores(id),',
+    '  aluno_id uuid NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,',
+    '  token text NOT NULL UNIQUE DEFAULT replace(gen_random_uuid()::text, \'-\', \'\'),',
+    '  dados jsonb NOT NULL DEFAULT \'{}\'::jsonb,',
+    '  atualizado_em timestamptz DEFAULT now(),',
+    '  UNIQUE (professor_id, aluno_id)',
+    ');',
+    'ALTER TABLE treinos_personal ENABLE ROW LEVEL SECURITY;',
+    'DROP POLICY IF EXISTS "professor gerencia treinos personal" ON treinos_personal;',
+    'CREATE POLICY "professor gerencia treinos personal" ON treinos_personal FOR ALL',
+    '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
+    'CREATE OR REPLACE FUNCTION get_treino_personal_publico(p_token text)',
+    'RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$',
+    '  SELECT jsonb_build_object(\'nome\', split_part(a.nome, \' \', 1), \'dados\', t.dados)',
+    '  FROM treinos_personal t JOIN alunos a ON a.id = t.aluno_id WHERE t.token = p_token LIMIT 1',
+    '$fn$;',
+    'REVOKE ALL ON FUNCTION get_treino_personal_publico(text) FROM public;',
+    'GRANT EXECUTE ON FUNCTION get_treino_personal_publico(text) TO anon, authenticated;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
