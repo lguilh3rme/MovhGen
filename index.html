@@ -587,6 +587,14 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 #personal-pub .pp-w{max-width:620px;margin:0 auto}
 #personal-pub .pp-t{font-size:20px;font-weight:800;margin:4px 0 2px}
 #personal-pub .pp-s{font-size:12px;color:var(--t3);margin-bottom:12px}
+#personal-pub .pp-ex{flex-wrap:wrap}
+#personal-pub .pp-r2{flex-basis:100%;display:flex;gap:6px;align-items:center;padding-left:34px}
+#personal-pub .pp-in{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:8px;padding:5px 8px;font-size:13px;min-width:0}
+#personal-pub .pp-carga{width:84px;flex:0 0 auto}#personal-pub .pp-obs{flex:1}
+#personal-pub .pp-ckl{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--t2)}#personal-pub .pp-ck{width:20px;height:20px}
+#personal-pub .pp-st{font-style:normal;font-size:12px;width:14px;text-align:center;color:var(--G,#1A9E72)}
+#personal-pub .pp-hint{flex-basis:100%;text-align:left;background:none;border:0;color:var(--t3);font-size:11.5px;padding:2px 0 0 34px;cursor:pointer}
+#personal-pub .pp-hl{flex-basis:100%;font-size:11.5px;color:var(--t2);padding:2px 0 4px 34px;line-height:1.5}
 #personal-pub .pp-pick{width:100%;margin:0 0 10px;font-size:14px;padding:8px 10px;border-radius:10px;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
 #personal-pub .pp-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 #personal-pub .pp-nav b{flex:1;text-align:center;font-size:13px}
@@ -2746,7 +2754,7 @@ function coletivasRenderModo(){
       personalPainelHtml(al) : '');
   const t = document.getElementById('coletivas-titulo'), sb = document.getElementById('coletivas-sub'), lk = document.getElementById('coletivas-link-btn');
   if (t) t.textContent = per ? ('🏋️ Personal' + (al ? ' — ' + al.nome : '')) : '🤸 Aulas Coletivas';
-  if (sb && per) sb.textContent = 'Treinos por data deste aluno (presencial). Use "🔗 Link de leitura": um link único, só leitura, sem login, onde você escolhe o aluno na hora do treino. Não envie a alunos (mostra todos).';
+  if (sb && per) sb.textContent = 'Treinos por data deste aluno (presencial). Use "🔗 Link de leitura": um link único, sem login, onde você escolhe o aluno na hora do atendimento, segue o roteiro e registra cargas/obs. Não envie a alunos (mostra todos).';
   if (sb && !per && sb.dataset.orig) sb.textContent = sb.dataset.orig;
   if (sb && !sb.dataset.orig && !per) sb.dataset.orig = sb.textContent;
   if (lk) lk.textContent = per ? '🔗 Link de leitura' : '🔗 Copiar link';
@@ -2788,6 +2796,8 @@ async function personalUnificar(){
   try {
     const pr = await mbClient.from('protocolos').select('id').eq('aluno_id', src.id).limit(1);
     if (pr.data && pr.data.length) { notify('"' + src.nome + '" já tem protocolo no Gerador; não dá para unificar automaticamente.'); return; }
+    const rg = await mbClient.from('personal_registros').update({ aluno_id: dst.id }).eq('aluno_id', src.id);
+    if (rg.error) throw rg.error;
     const r = await mbClient.from('treinos_personal').select('aluno_id,dados').eq('professor_id', mbProfessor.id).in('aluno_id', [src.id, dst.id]);
     if (r.error) throw r.error;
     const a = (r.data || []).find(x => x.aluno_id === src.id), b = (r.data || []).find(x => x.aluno_id === dst.id);
@@ -2815,7 +2825,7 @@ async function personalLinkProfessor(){
   return personalBaseUrl() + '?personal=' + personalTokenProf + (personalAlunoId ? '&a=' + personalAlunoId : '');
 }
 function personalCopiar(lk){
-  const ok2 = function(){ notify('Link copiado.'); };
+  const ok2 = function(){ notify('Link copiado. Depois de abrir uma vez, .../MovhGen/personal/ abre direto nesse aparelho.'); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lk).then(ok2).catch(function(){ prompt('Copie o link:', lk); });
   else prompt('Copie o link:', lk);
 }
@@ -3331,17 +3341,27 @@ async function mbToggleAulasColetivasAluno(alunoId, checked){
 
 // ══ PÁGINA PÚBLICA DO PERSONAL (?personal=TOKEN): só leitura, sem login. Lê pela função get_treino_personal_publico.
 (function(){
-  let tk = null; try { tk = new URLSearchParams(window.location.search).get('personal'); } catch(e){}
-  if (!tk) return;
+  let has = false, tk = '';
+  try { const p = new URLSearchParams(window.location.search); has = p.has('personal'); tk = p.get('personal') || ''; } catch(e){}
+  if (!has) return;
+  if (tk && tk !== 'me') { try { localStorage.setItem('movh_pp_token', tk); } catch(e){} }
+  else { try { tk = localStorage.getItem('movh_pp_token') || ''; } catch(e){ tk = ''; } }
   document.documentElement.classList.add('personal-pub');
   const go = function(){ setTimeout(function(){ personalPubBoot(tk); }, 0); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState !== 'visible' || !ppTk) return;
+    const ae = document.activeElement;
+    if (Date.now() - ppUlt > 60000 && !(ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName))) personalPubRecarregar();
+  });
 })();
-let ppDados = {}, ppSemana = null, ppDia = null, ppNome = '', ppAlunos = [], ppAlunoId = null;
+let ppDados = {}, ppSemana = null, ppDia = null, ppNome = '', ppAlunos = [], ppAlunoId = null, ppTk = '', ppReg = {}, ppHist = [], ppUlt = 0;
 function ppEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function personalPubBoot(tk){
   let ov = document.getElementById('personal-pub');
   if (!ov) { ov = document.createElement('div'); ov.id = 'personal-pub'; document.body.appendChild(ov); }
+  ppTk = tk || '';
+  if (!ppTk) { ov.innerHTML = '<div class="pp-w"><div class="pp-v">Abra uma vez o link completo (Gerador → Personal → 🔗 Link de leitura) neste aparelho. Depois, esta página abre direto.</div></div>'; return; }
   ov.innerHTML = '<div class="pp-w"><div class="pp-v">Carregando…</div></div>';
   try {
     let r = await mbClientAvulso.rpc('get_personal_painel', { p_token: tk });
@@ -3360,12 +3380,53 @@ async function personalPubBoot(tk){
     const sel = lista.find(function(x){ return x.id === ppAlunoId; });
     ppDados = (sel.dados && typeof sel.dados === 'object') ? sel.dados : {}; ppNome = sel.nome || '';
     ppSemana = coletivasSegundaDaSemana(new Date()); ppDia = null;
+    await personalPubCarregarReg(); ppUlt = Date.now();
     personalPubRender();
   } catch(e) {
-    ov.innerHTML = '<div class="pp-w"><div class="pp-v">Não foi possível carregar. Tente de novo em instantes.<br><button class="pp-b" style="margin-top:12px" onclick="personalPubBoot(new URLSearchParams(location.search).get(\'personal\'))">Tentar de novo</button></div></div>';
+    ov.innerHTML = '<div class="pp-w"><div class="pp-v">Não foi possível carregar. Tente de novo em instantes.<br><button class="pp-b" style="margin-top:12px" onclick="personalPubBoot(ppTk)">Tentar de novo</button></div></div>';
   }
 }
-function personalPubAluno(id){ const x = ppAlunos.find(function(y){ return y.id === id; }); if (!x) return; ppAlunoId = id; ppDados = (x.dados && typeof x.dados === 'object') ? x.dados : {}; ppNome = x.nome || ''; ppDia = null; try { localStorage.setItem('movh_pp_aluno', id); } catch(e){} personalPubRender(); }
+async function personalPubAluno(id){ const x = ppAlunos.find(function(y){ return y.id === id; }); if (!x) return; ppAlunoId = id; ppDados = (x.dados && typeof x.dados === 'object') ? x.dados : {}; ppNome = x.nome || ''; ppDia = null; try { localStorage.setItem('movh_pp_aluno', id); } catch(e){} await personalPubCarregarReg(); personalPubRender(); }
+async function personalPubCarregarReg(){
+  ppReg = {}; ppHist = [];
+  if (!ppAlunoId || ppAlunoId === 'x') return;
+  try {
+    const r = await mbClientAvulso.rpc('get_personal_registros', { p_token: ppTk, p_aluno: ppAlunoId });
+    if (r.error || !Array.isArray(r.data)) return;
+    ppHist = r.data;
+    r.data.forEach(function(x){ ppReg[x.data + '|' + x.chave] = { carga: x.carga || '', obs: x.obs || '', feito: !!x.feito }; });
+  } catch(e){}
+}
+async function personalPubRecarregar(){
+  if (!ppTk) return;
+  try {
+    const r = await mbClientAvulso.rpc('get_personal_painel', { p_token: ppTk });
+    if (r.error || !r.data || !Array.isArray(r.data.alunos) || !r.data.alunos.length) return;
+    ppAlunos = r.data.alunos;
+    const x = ppAlunos.find(function(y){ return y.id === ppAlunoId; }) || ppAlunos[0];
+    ppAlunoId = x.id; ppDados = (x.dados && typeof x.dados === 'object') ? x.dados : {}; ppNome = x.nome || '';
+    await personalPubCarregarReg(); ppUlt = Date.now(); personalPubRender();
+  } catch(e){}
+}
+function ppDataBR(iso){ const p = String(iso || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] : ''; }
+function personalPubHistToggle(btn){ const d = btn.nextElementSibling; if (d) d.style.display = d.style.display === 'none' ? 'block' : 'none'; }
+async function personalPubSalvar(el){
+  const row = el.closest('.pp-ex'); if (!row) return;
+  const ch = row.dataset.ch, nome = row.dataset.ex, dia = ppDia, aluno = ppAlunoId;
+  const carga = row.querySelector('.pp-carga').value.trim(), obs = row.querySelector('.pp-obs').value.trim(), feito = row.querySelector('.pp-ck').checked;
+  const st = row.querySelector('.pp-st'); st.textContent = '…';
+  ppReg[dia + '|' + ch] = { carga: carga, obs: obs, feito: feito };
+  try {
+    const r = await mbClientAvulso.rpc('salvar_personal_registro', { p_token: ppTk, p_aluno: aluno, p_data: dia, p_chave: ch, p_exercicio: nome, p_carga: carga, p_obs: obs, p_feito: feito });
+    if (r.error || r.data !== true) throw (r.error || new Error('nao salvou'));
+    st.textContent = '✓';
+    if (ppAlunoId === aluno) {
+      ppHist = ppHist.filter(function(h){ return !(h.data === dia && h.chave === ch); });
+      ppHist.unshift({ data: dia, chave: ch, exercicio: nome, carga: carga, obs: obs, feito: feito });
+      ppHist.sort(function(a, b){ return a.data < b.data ? 1 : (a.data > b.data ? -1 : 0); });
+    }
+  } catch(e) { st.textContent = '⚠'; st.title = 'Não salvou. Mexa no campo de novo para tentar outra vez.'; st.style.color = '#d44'; }
+}
 function personalPubSemana(delta){ const d = new Date(ppSemana); d.setDate(d.getDate() + 7 * delta); ppSemana = d; ppDia = null; personalPubRender(); }
 function personalPubHoje(){ ppSemana = coletivasSegundaDaSemana(new Date()); ppDia = null; personalPubRender(); }
 function personalPubSel(k){ ppDia = k; personalPubRender(); }
@@ -3389,13 +3450,23 @@ function personalPubRender(){
     (b.exercicios || []).forEach(function(ex){ if (!ex.nome) return;
       const sr = b.conjugado ? (ex.reps ? ppEsc(ex.reps) + ' reps' : '') : ((ex.series || ex.reps) ? ppEsc(ex.series || '') + (ex.series && ex.reps ? '×' : '') + ppEsc(ex.reps || '') : '');
       const pl = (ex.url && /^https?:\/\//i.test(ex.url)) ? '<button type="button" class="pp-pl" data-u="' + ppEsc(ex.url) + '" onclick="personalPubPlay(this)" aria-label="Vídeo">▶</button>' : '';
-      h += '<div class="pp-ex">' + pl + '<span>' + ppEsc(ex.nome) + '</span><em>' + sr + '</em></div>'; });
+      let reg = '';
+      if (ppAlunoId && ppAlunoId !== 'x') {
+        const ch = (b.id || 'b') + '|' + mvKey(ex.nome), v = ppReg[ppDia + '|' + ch] || { carga: '', obs: '', feito: false };
+        const kn = mvKey(ex.nome), hs = ppHist.filter(function(x){ return mvKey(x.exercicio || '') === kn && x.data < ppDia && ((x.carga || '').trim() || (x.obs || '').trim()); }).slice(0, 6);
+        reg = '<div class="pp-r2"><input class="pp-in pp-carga" type="text" placeholder="carga" value="' + ppEsc(v.carga) + '" onchange="personalPubSalvar(this)"/><input class="pp-in pp-obs" type="text" placeholder="obs" value="' + ppEsc(v.obs) + '" onchange="personalPubSalvar(this)"/><label class="pp-ckl"><input class="pp-ck" type="checkbox"' + (v.feito ? ' checked' : '') + ' onchange="personalPubSalvar(this)"/>feito</label><i class="pp-st"></i></div>' +
+          (hs.length ? '<button type="button" class="pp-hint" onclick="personalPubHistToggle(this)">Última: ' + ppEsc(hs[0].carga || hs[0].obs) + ' · ' + ppDataBR(hs[0].data) + ' ▾</button><div class="pp-hl" style="display:none">' + hs.map(function(x){ return ppDataBR(x.data) + ' · ' + ppEsc(x.carga || '–') + (x.obs ? ' · ' + ppEsc(x.obs) : ''); }).join('<br>') + '</div>' : '');
+        h += '<div class="pp-ex" data-ch="' + ppEsc(ch) + '" data-ex="' + ppEsc(ex.nome) + '">' + pl + '<span>' + ppEsc(ex.nome) + '</span><em>' + sr + '</em>' + reg + '</div>';
+      } else {
+        h += '<div class="pp-ex">' + pl + '<span>' + ppEsc(ex.nome) + '</span><em>' + sr + '</em></div>';
+      }
+    });
     if (b.detalhes) h += '<div class="pp-d">' + ppEsc(b.detalhes) + '</div>';
     return h + '</div>';
   }).join('') : '<div class="pp-v">Sem treino neste dia.</div>';
-  ov.innerHTML = '<div class="pp-w"><div class="pp-t">🏋️ Treino' + (ppNome ? ' de ' + ppEsc(ppNome) : '') + '</div><div class="pp-s">Programado pelo professor · só leitura</div>' +
+  ov.innerHTML = '<div class="pp-w"><div class="pp-t">🏋️ Treino' + (ppNome ? ' de ' + ppEsc(ppNome) : '') + '</div><div class="pp-s">Roteiro do atendimento · registre cargas e obs</div>' +
     (ppAlunos.length > 1 ? '<select class="pp-pick" onchange="personalPubAluno(this.value)">' + ppAlunos.map(function(x){ return '<option value="' + ppEsc(x.id) + '"' + (x.id === ppAlunoId ? ' selected' : '') + '>' + ppEsc(x.nome || '') + '</option>'; }).join('') + '</select>' : '') +
-    '<div class="pp-nav"><button class="pp-b" onclick="personalPubSemana(-1)">‹</button><b>' + f(d0) + ' – ' + f(d6) + '</b><button class="pp-b" onclick="personalPubSemana(1)">›</button><button class="pp-b" onclick="personalPubHoje()">Hoje</button></div>' +
+    '<div class="pp-nav"><button class="pp-b" onclick="personalPubSemana(-1)">‹</button><b>' + f(d0) + ' – ' + f(d6) + '</b><button class="pp-b" onclick="personalPubSemana(1)">›</button><button class="pp-b" onclick="personalPubHoje()">Hoje</button><button class="pp-b" onclick="personalPubRecarregar()" title="Atualizar">↻</button></div>' +
     '<div class="cl-tabs">' + tabs + '</div>' + corpo + '</div>';
 }
 
@@ -15538,6 +15609,49 @@ function copiarSQLRLS(){
     '$fn$;',
     'REVOKE ALL ON FUNCTION get_personal_painel(text) FROM public;',
     'GRANT EXECUTE ON FUNCTION get_personal_painel(text) TO anon, authenticated;',
+    '',
+    '-- REGISTROS DO PERSONAL (cargas/obs/feito por aluno, data e exercício) — gravados pela página de leitura via token',
+    'CREATE TABLE IF NOT EXISTS personal_registros (',
+    '  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),',
+    '  professor_id uuid NOT NULL REFERENCES professores(id),',
+    '  aluno_id uuid NOT NULL REFERENCES alunos(id) ON DELETE CASCADE,',
+    '  data date NOT NULL,',
+    '  chave text NOT NULL,',
+    '  exercicio text,',
+    '  carga text,',
+    '  obs text,',
+    '  feito boolean NOT NULL DEFAULT false,',
+    '  atualizado_em timestamptz DEFAULT now(),',
+    '  UNIQUE (aluno_id, data, chave)',
+    ');',
+    'ALTER TABLE personal_registros ENABLE ROW LEVEL SECURITY;',
+    'DROP POLICY IF EXISTS "professor gerencia personal registros" ON personal_registros;',
+    'CREATE POLICY "professor gerencia personal registros" ON personal_registros FOR ALL',
+    '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
+    'CREATE OR REPLACE FUNCTION get_personal_registros(p_token text, p_aluno uuid)',
+    'RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$',
+    '  SELECT COALESCE(jsonb_agg(jsonb_build_object(\'data\', r.data, \'chave\', r.chave, \'exercicio\', r.exercicio, \'carga\', r.carga, \'obs\', r.obs, \'feito\', r.feito) ORDER BY r.data DESC), \'[]\'::jsonb)',
+    '  FROM (SELECT * FROM personal_registros x',
+    '    WHERE x.aluno_id = p_aluno AND x.professor_id = (SELECT professor_id FROM personal_acesso WHERE token = p_token)',
+    '    ORDER BY x.data DESC LIMIT 400) r',
+    '$fn$;',
+    'CREATE OR REPLACE FUNCTION salvar_personal_registro(p_token text, p_aluno uuid, p_data date, p_chave text, p_exercicio text, p_carga text, p_obs text, p_feito boolean)',
+    'RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $fn$',
+    'DECLARE prof uuid;',
+    'BEGIN',
+    '  SELECT professor_id INTO prof FROM personal_acesso WHERE token = p_token;',
+    '  IF prof IS NULL THEN RETURN false; END IF;',
+    '  IF NOT EXISTS (SELECT 1 FROM alunos WHERE id = p_aluno AND professor_id = prof) THEN RETURN false; END IF;',
+    '  INSERT INTO personal_registros (professor_id, aluno_id, data, chave, exercicio, carga, obs, feito, atualizado_em)',
+    '  VALUES (prof, p_aluno, p_data, left(p_chave, 200), left(p_exercicio, 200), left(p_carga, 60), left(p_obs, 500), COALESCE(p_feito, false), now())',
+    '  ON CONFLICT (aluno_id, data, chave) DO UPDATE SET exercicio = EXCLUDED.exercicio, carga = EXCLUDED.carga, obs = EXCLUDED.obs, feito = EXCLUDED.feito, atualizado_em = now();',
+    '  RETURN true;',
+    'END',
+    '$fn$;',
+    'REVOKE ALL ON FUNCTION get_personal_registros(text, uuid) FROM public;',
+    'REVOKE ALL ON FUNCTION salvar_personal_registro(text, uuid, date, text, text, text, text, boolean) FROM public;',
+    'GRANT EXECUTE ON FUNCTION get_personal_registros(text, uuid) TO anon, authenticated;',
+    'GRANT EXECUTE ON FUNCTION salvar_personal_registro(text, uuid, date, text, text, text, text, boolean) TO anon, authenticated;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
