@@ -587,6 +587,7 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 #personal-pub .pp-w{max-width:620px;margin:0 auto}
 #personal-pub .pp-t{font-size:20px;font-weight:800;margin:4px 0 2px}
 #personal-pub .pp-s{font-size:12px;color:var(--t3);margin-bottom:12px}
+#personal-pub .pp-pick{width:100%;margin:0 0 10px;font-size:14px;padding:8px 10px;border-radius:10px;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
 #personal-pub .pp-nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
 #personal-pub .pp-nav b{flex:1;text-align:center;font-size:13px}
 #personal-pub .pp-b{background:var(--card);border:1px solid var(--bd);color:var(--tx);border-radius:9px;padding:6px 12px;font-size:13px;cursor:pointer}
@@ -2694,6 +2695,8 @@ async function mbCarregarAulasColetivas(){
 let coletivasModo = 'coletivas';
 let personalAlunoId = null;
 let personalTokens = {};
+let personalTokenProf = null;
+let personalPainel = null;
 function personalMsgSql(e){
   const m = ((e && e.message) || '').toLowerCase();
   if (m.includes('treinos_personal') || m.includes('get_treino_personal_publico') || m.includes('schema cache') || m.includes('does not exist')) return '⚠️ O banco ainda não tem a tabela de Treinos Personal. Menu lateral → "Gerar Protocolo" → "🔐 Login não funciona?" → "Copiar SQL das policies RLS" → rode no Supabase (SQL Editor).';
@@ -2704,8 +2707,9 @@ async function personalCarregar(){
   const el = document.getElementById('coletivas-wrap');
   if (!personalAlunoId) { try { personalAlunoId = localStorage.getItem('movh_personal_aluno') || null; } catch(e){} }
   if (!(mbAlunos || []).some(a => a.id === personalAlunoId)) personalAlunoId = (mbAlunos && mbAlunos[0]) ? mbAlunos[0].id : null;
+  personalPainel = null;
   coletivasSujo = false; coletivasSemanaAtual = coletivasSegundaDaSemana(new Date()); coletivasDiaSel = null;
-  if (!personalAlunoId) { coletivasData = {}; renderColetivas(); if (el) el.innerHTML = '<div class="cl-vazio">Nenhum aluno ativo. Cadastre um aluno na aba Alunos.</div>'; return; }
+  if (!personalAlunoId) { coletivasData = {}; personalPainel = 'novo'; renderColetivas(); if (el) el.innerHTML = '<div class="cl-vazio">Nenhum aluno ainda. Use "＋ Novo aluno" acima.</div>'; return; }
   if (el) el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--t3)">Carregando…</div>';
   try {
     const { data, error } = await mbClient.from('treinos_personal').select('token,dados').eq('professor_id', mbProfessor.id).eq('aluno_id', personalAlunoId).maybeSingle();
@@ -2735,15 +2739,94 @@ function coletivasRenderModo(){
   const al = (mbAlunos || []).find(a => a.id === personalAlunoId);
   box.innerHTML = '<button type="button" class="btn ' + (per ? 'bs' : 'bp') + '" style="font-size:11px;padding:4px 10px" onclick="coletivasTrocarModo(\'coletivas\')">🤸 Coletivas</button>' +
     '<button type="button" class="btn ' + (per ? 'bp' : 'bs') + '" style="font-size:11px;padding:4px 10px" onclick="coletivasTrocarModo(\'personal\')">🏋️ Personal</button>' +
-    (per ? '<select style="width:auto;max-width:220px;font-size:12px;padding:5px 8px" onchange="personalTrocarAluno(this.value)">' + (mbAlunos || []).map(a => '<option value="' + escAttr(a.id) + '"' + (a.id === personalAlunoId ? ' selected' : '') + '>' + escAttr(a.nome || '') + '</option>').join('') + '</select>' : '');
+    (per ? '<select style="width:auto;max-width:220px;font-size:12px;padding:5px 8px" onchange="personalTrocarAluno(this.value)">' + (mbAlunos || []).map(a => '<option value="' + escAttr(a.id) + '"' + (a.id === personalAlunoId ? ' selected' : '') + '>' + escAttr(a.nome || '') + (a.auth_id ? '' : ' ·') + '</option>').join('') + '</select>' +
+      '<button type="button" class="btn bs" style="font-size:11px;padding:4px 10px" onclick="personalPainelToggle(\'novo\')">＋ Novo aluno</button>' +
+      ((al && !al.auth_id) ? '<button type="button" class="btn bs" style="font-size:11px;padding:4px 10px" title="Juntar este cadastro ao aluno que se cadastrou no app" onclick="personalPainelToggle(\'unificar\')">🔗 Unificar com cadastro do app</button>' : '') +
+      '<button type="button" class="btn bs" style="font-size:11px;padding:4px 10px" title="Gera outro link e invalida o antigo" onclick="personalRegerarLink()">↻ Novo link</button>' +
+      personalPainelHtml(al) : '');
   const t = document.getElementById('coletivas-titulo'), sb = document.getElementById('coletivas-sub'), lk = document.getElementById('coletivas-link-btn');
   if (t) t.textContent = per ? ('🏋️ Personal' + (al ? ' — ' + al.nome : '')) : '🤸 Aulas Coletivas';
-  if (sb && per) sb.textContent = 'Treinos por data deste aluno (presencial). Salve e copie o link: é uma página só de leitura, sem login, para você consultar na hora do treino.';
+  if (sb && per) sb.textContent = 'Treinos por data deste aluno (presencial). Use "🔗 Link de leitura": um link único, só leitura, sem login, onde você escolhe o aluno na hora do treino. Não envie a alunos (mostra todos).';
   if (sb && !per && sb.dataset.orig) sb.textContent = sb.dataset.orig;
   if (sb && !sb.dataset.orig && !per) sb.dataset.orig = sb.textContent;
-  if (lk) lk.textContent = per ? '🔗 Link do aluno' : '🔗 Copiar link';
+  if (lk) lk.textContent = per ? '🔗 Link de leitura' : '🔗 Copiar link';
   const nv = document.getElementById('nav-personal'); if (nv) nv.classList.toggle('active', per);
   const nc = document.getElementById('nav-coletivas'); if (nc && per) nc.classList.remove('active');
+}
+function personalPainelToggle(p){ personalPainel = (personalPainel === p) ? null : p; coletivasRenderModo(); }
+function personalPainelHtml(al){
+  if (personalPainel === 'novo') return '<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--cl);border-radius:10px;padding:8px"><input id="pn-nome" type="text" placeholder="Nome do aluno" style="flex:1 1 150px;font-size:12px"/><input id="pn-email" type="email" placeholder="E-mail (opcional)" style="flex:1 1 170px;font-size:12px"/><button type="button" class="btn bp" style="font-size:11px;padding:4px 10px" onclick="personalCriarAluno()">Criar</button><span style="flex-basis:100%;font-size:10.5px;color:var(--t3)">Só o nome já basta. Se informar o e-mail e o aluno se cadastrar no app com ele, o cadastro se junta sozinho.</span></div>';
+  if (personalPainel === 'unificar' && al) {
+    const cand = (mbAlunos || []).filter(a => a.auth_id && a.id !== al.id);
+    if (!cand.length) return '<div style="flex-basis:100%;font-size:11.5px;color:var(--t3);background:var(--cl);border-radius:10px;padding:8px">Ainda não há aluno com conta no app para juntar a "' + escAttr(al.nome || '') + '".</div>';
+    return '<div style="flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:var(--cl);border-radius:10px;padding:8px"><span style="font-size:11.5px">Juntar "' + escAttr(al.nome || '') + '" ao cadastro do app de:</span><select id="pu-destino" style="font-size:12px;max-width:220px">' + cand.map(a => '<option value="' + escAttr(a.id) + '">' + escAttr(a.nome || a.email || '') + '</option>').join('') + '</select><button type="button" class="btn bp" style="font-size:11px;padding:4px 10px" onclick="personalUnificar()">Unificar</button></div>';
+  }
+  return '';
+}
+async function personalCriarAluno(){
+  if (coletivasSujo && !confirm('Há alterações não salvas. Descartar e criar o aluno?')) return;
+  const nome = ((document.getElementById('pn-nome') || {}).value || '').trim();
+  const email = ((document.getElementById('pn-email') || {}).value || '').trim().toLowerCase() || null;
+  if (!nome) { notify('Digite o nome do aluno.'); return; }
+  try {
+    const { data, error } = await mbClient.from('alunos').insert({ professor_id: mbProfessor.id, nome: nome, email: email }).select('id').maybeSingle();
+    if (error) throw error;
+    await mbCarregarAlunos();
+    if (data && data.id) { personalAlunoId = data.id; try { localStorage.setItem('movh_personal_aluno', data.id); } catch(e){} }
+    coletivasSujo = false; personalPainel = null;
+    notify('✅ Aluno criado. Já pode montar o treino.');
+    personalCarregar();
+  } catch(e) { notify('Erro ao criar aluno: ' + (e.message || e)); }
+}
+async function personalUnificar(){
+  const src = (mbAlunos || []).find(a => a.id === personalAlunoId);
+  const dst = (mbAlunos || []).find(a => a.id === ((document.getElementById('pu-destino') || {}).value));
+  if (!src || !dst || src.id === dst.id) { notify('Escolha o cadastro do app.'); return; }
+  if (src.auth_id) { notify('Este aluno já tem conta no app.'); return; }
+  if (coletivasSujo) { notify('Salve os treinos antes de unificar.'); return; }
+  if (!confirm('Mover os treinos de "' + src.nome + '" para "' + dst.nome + '" e remover o cadastro presencial "' + src.nome + '"?')) return;
+  try {
+    const pr = await mbClient.from('protocolos').select('id').eq('aluno_id', src.id).limit(1);
+    if (pr.data && pr.data.length) { notify('"' + src.nome + '" já tem protocolo no Gerador; não dá para unificar automaticamente.'); return; }
+    const r = await mbClient.from('treinos_personal').select('aluno_id,dados').eq('professor_id', mbProfessor.id).in('aluno_id', [src.id, dst.id]);
+    if (r.error) throw r.error;
+    const a = (r.data || []).find(x => x.aluno_id === src.id), b = (r.data || []).find(x => x.aluno_id === dst.id);
+    const merged = Object.assign({}, (b && b.dados) || {});
+    Object.keys((a && a.dados) || {}).forEach(k => { merged[k] = (merged[k] || []).concat(a.dados[k]); });
+    const up = await mbClient.from('treinos_personal').upsert({ professor_id: mbProfessor.id, aluno_id: dst.id, dados: merged, atualizado_em: new Date().toISOString() }, { onConflict: 'professor_id,aluno_id' });
+    if (up.error) throw up.error;
+    const dl = await mbClient.from('treinos_personal').delete().eq('professor_id', mbProfessor.id).eq('aluno_id', src.id);
+    if (dl.error) throw dl.error;
+    const d2 = await mbClient.from('alunos').delete().eq('id', src.id);
+    if (d2.error) await mbClient.from('alunos').update({ ativo: false }).eq('id', src.id);
+    await mbCarregarAlunos();
+    personalAlunoId = dst.id; try { localStorage.setItem('movh_personal_aluno', dst.id); } catch(e){}
+    personalPainel = null; notify('✅ Unificado em "' + dst.nome + '".');
+    personalCarregar();
+  } catch(e) { notify(personalMsgSql(e) || ('Erro ao unificar: ' + (e.message || e))); }
+}
+async function personalLinkProfessor(){
+  if (!personalTokenProf) {
+    let r = await mbClient.from('personal_acesso').select('token').eq('professor_id', mbProfessor.id).maybeSingle();
+    if (r.error) throw r.error;
+    if (!r.data) { r = await mbClient.from('personal_acesso').insert({ professor_id: mbProfessor.id }).select('token').single(); if (r.error) throw r.error; }
+    personalTokenProf = r.data.token;
+  }
+  return personalBaseUrl() + '?personal=' + personalTokenProf + (personalAlunoId ? '&a=' + personalAlunoId : '');
+}
+function personalCopiar(lk){
+  const ok2 = function(){ notify('Link copiado.'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lk).then(ok2).catch(function(){ prompt('Copie o link:', lk); });
+  else prompt('Copie o link:', lk);
+}
+async function personalRegerarLink(){
+  if (!confirm('Gerar um link novo? O link antigo deixa de funcionar.')) return;
+  try {
+    const t = (window.crypto && crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(16) + Math.random().toString(16).slice(2))).replace(/-/g, '');
+    const { error } = await mbClient.from('personal_acesso').upsert({ professor_id: mbProfessor.id, token: t, atualizado_em: new Date().toISOString() }, { onConflict: 'professor_id' });
+    if (error) throw error;
+    personalTokenProf = t; personalCopiar(await personalLinkProfessor());
+  } catch(e) { notify(personalMsgSql(e) || ('Erro: ' + (e.message || e))); }
 }
 function coletivasRotuloSalvar(sujo){ return (coletivasModo === 'personal' ? '💾 Salvar treinos do aluno' : '💾 Salvar aulas coletivas') + (sujo ? ' ●' : ''); }
 
@@ -2843,12 +2926,7 @@ function personalBaseUrl(){
 }
 function coletivasCopiarLinkPublico(){
   if (coletivasModo === 'personal') {
-    const tk = personalTokens[personalAlunoId];
-    if (!tk) { notify('Salve os treinos do aluno primeiro: o link é gerado no primeiro salvamento.'); return; }
-    const lk = personalBaseUrl() + '?personal=' + tk;
-    const ok2 = function(){ notify('Link do aluno copiado.'); };
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(lk).then(ok2).catch(function(){ prompt('Copie o link:', lk); });
-    else prompt('Copie o link:', lk);
+    personalLinkProfessor().then(personalCopiar).catch(function(e){ notify(personalMsgSql(e) || ('Erro ao gerar o link: ' + (e.message || e))); });
     return;
   }
   const base = ((plLand && plLand.appUrl) || 'https://movh.netlify.app').trim().split('?')[0].split('#')[0].replace(/\/index\.html$/i,'').replace(/\/+$/,'');
@@ -3259,24 +3337,35 @@ async function mbToggleAulasColetivasAluno(alunoId, checked){
   const go = function(){ setTimeout(function(){ personalPubBoot(tk); }, 0); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();
-let ppDados = {}, ppSemana = null, ppDia = null, ppNome = '';
+let ppDados = {}, ppSemana = null, ppDia = null, ppNome = '', ppAlunos = [], ppAlunoId = null;
 function ppEsc(x){ return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 async function personalPubBoot(tk){
   let ov = document.getElementById('personal-pub');
   if (!ov) { ov = document.createElement('div'); ov.id = 'personal-pub'; document.body.appendChild(ov); }
   ov.innerHTML = '<div class="pp-w"><div class="pp-v">Carregando…</div></div>';
   try {
-    const r = await mbClientAvulso.rpc('get_treino_personal_publico', { p_token: tk });
+    let r = await mbClientAvulso.rpc('get_personal_painel', { p_token: tk });
     if (r.error) throw r.error;
-    if (!r.data) { ov.innerHTML = '<div class="pp-w"><div class="pp-v">Link inválido ou treino não encontrado.</div></div>'; return; }
-    ppDados = (r.data.dados && typeof r.data.dados === 'object') ? r.data.dados : {};
-    ppNome = r.data.nome || '';
+    let lista = (r.data && Array.isArray(r.data.alunos)) ? r.data.alunos : null;
+    if (!lista) { // link antigo (um aluno só)
+      const r2 = await mbClientAvulso.rpc('get_treino_personal_publico', { p_token: tk });
+      if (r2.error) throw r2.error;
+      if (r2.data) lista = [{ id: 'x', nome: r2.data.nome || '', dados: r2.data.dados }];
+    }
+    if (!lista) { ov.innerHTML = '<div class="pp-w"><div class="pp-v">Link inválido ou treino não encontrado.</div></div>'; return; }
+    if (!lista.length) { ov.innerHTML = '<div class="pp-w"><div class="pp-v">Nenhum aluno com treino salvo ainda.</div></div>'; return; }
+    ppAlunos = lista;
+    let want = null; try { want = new URLSearchParams(window.location.search).get('a') || localStorage.getItem('movh_pp_aluno'); } catch(e){}
+    ppAlunoId = (lista.some(function(x){ return x.id === want; }) ? want : lista[0].id);
+    const sel = lista.find(function(x){ return x.id === ppAlunoId; });
+    ppDados = (sel.dados && typeof sel.dados === 'object') ? sel.dados : {}; ppNome = sel.nome || '';
     ppSemana = coletivasSegundaDaSemana(new Date()); ppDia = null;
     personalPubRender();
   } catch(e) {
     ov.innerHTML = '<div class="pp-w"><div class="pp-v">Não foi possível carregar. Tente de novo em instantes.<br><button class="pp-b" style="margin-top:12px" onclick="personalPubBoot(new URLSearchParams(location.search).get(\'personal\'))">Tentar de novo</button></div></div>';
   }
 }
+function personalPubAluno(id){ const x = ppAlunos.find(function(y){ return y.id === id; }); if (!x) return; ppAlunoId = id; ppDados = (x.dados && typeof x.dados === 'object') ? x.dados : {}; ppNome = x.nome || ''; ppDia = null; try { localStorage.setItem('movh_pp_aluno', id); } catch(e){} personalPubRender(); }
 function personalPubSemana(delta){ const d = new Date(ppSemana); d.setDate(d.getDate() + 7 * delta); ppSemana = d; ppDia = null; personalPubRender(); }
 function personalPubHoje(){ ppSemana = coletivasSegundaDaSemana(new Date()); ppDia = null; personalPubRender(); }
 function personalPubSel(k){ ppDia = k; personalPubRender(); }
@@ -3305,6 +3394,7 @@ function personalPubRender(){
     return h + '</div>';
   }).join('') : '<div class="pp-v">Sem treino neste dia.</div>';
   ov.innerHTML = '<div class="pp-w"><div class="pp-t">🏋️ Treino' + (ppNome ? ' de ' + ppEsc(ppNome) : '') + '</div><div class="pp-s">Programado pelo professor · só leitura</div>' +
+    (ppAlunos.length > 1 ? '<select class="pp-pick" onchange="personalPubAluno(this.value)">' + ppAlunos.map(function(x){ return '<option value="' + ppEsc(x.id) + '"' + (x.id === ppAlunoId ? ' selected' : '') + '>' + ppEsc(x.nome || '') + '</option>'; }).join('') + '</select>' : '') +
     '<div class="pp-nav"><button class="pp-b" onclick="personalPubSemana(-1)">‹</button><b>' + f(d0) + ' – ' + f(d6) + '</b><button class="pp-b" onclick="personalPubSemana(1)">›</button><button class="pp-b" onclick="personalPubHoje()">Hoje</button></div>' +
     '<div class="cl-tabs">' + tabs + '</div>' + corpo + '</div>';
 }
@@ -15427,6 +15517,27 @@ function copiarSQLRLS(){
     '$fn$;',
     'REVOKE ALL ON FUNCTION get_treino_personal_publico(text) FROM public;',
     'GRANT EXECUTE ON FUNCTION get_treino_personal_publico(text) TO anon, authenticated;',
+    '',
+    '-- LINK ÚNICO DO PERSONAL (leitura de todos os alunos pelo professor; token regenerável)',
+    'CREATE TABLE IF NOT EXISTS personal_acesso (',
+    '  professor_id uuid PRIMARY KEY REFERENCES professores(id),',
+    '  token text NOT NULL UNIQUE DEFAULT replace(gen_random_uuid()::text, \'-\', \'\'),',
+    '  atualizado_em timestamptz DEFAULT now()',
+    ');',
+    'ALTER TABLE personal_acesso ENABLE ROW LEVEL SECURITY;',
+    'DROP POLICY IF EXISTS "professor gerencia personal acesso" ON personal_acesso;',
+    'CREATE POLICY "professor gerencia personal acesso" ON personal_acesso FOR ALL',
+    '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
+    'CREATE OR REPLACE FUNCTION get_personal_painel(p_token text)',
+    'RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $fn$',
+    '  SELECT CASE WHEN EXISTS (SELECT 1 FROM personal_acesso WHERE token = p_token) THEN',
+    '    jsonb_build_object(\'alunos\', COALESCE((SELECT jsonb_agg(jsonb_build_object(\'id\', a.id, \'nome\', a.nome, \'dados\', t.dados) ORDER BY a.nome)',
+    '      FROM personal_acesso p JOIN treinos_personal t ON t.professor_id = p.professor_id',
+    '      JOIN alunos a ON a.id = t.aluno_id AND a.ativo IS NOT FALSE WHERE p.token = p_token), \'[]\'::jsonb))',
+    '  END',
+    '$fn$;',
+    'REVOKE ALL ON FUNCTION get_personal_painel(text) FROM public;',
+    'GRANT EXECUTE ON FUNCTION get_personal_painel(text) TO anon, authenticated;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
