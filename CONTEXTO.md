@@ -261,3 +261,7 @@ Proposta (uma rodada, baixo risco): coluna `professores.config jsonb` (SQL: `ALT
 - Notas: tabela `notas` (ctx/ref: geral, aluno, dia, exercicio), RLS no script SQL (reexecutar; idempotente). Botão 📝 em Alunos, Personal, dia das coletivas/personal e Biblioteca. Google Keep: sem API para Gmail pessoal (só Workspace) → link keep.google.com + botão copiar.
 - Testado só com Supabase simulado (Playwright); Supabase real e bateria completa não rodados.
 - Netlify: auto-deploy roda mesmo com `[skip netlify]`; por isso o que é só do Gerador fica no GitHub Pages.
+
+### Pendências da v59 → próxima rodada (pedido de 05/11)
+- Início: REMOVER card "Atualizações/novidades" (versão já está no GitHub); "Atividade recente" = alunos recentes (mesmo formato da gestão de alunos); KPIs do topo MENORES.
+- RODADA DE LIMPEZA (prioridade): auditar o Gerador e remover duplicados, código/UI sem uso, itens legados (Gestão antiga, visualToggle antigo, CSS morto), deixar mais leve/direto/moderno. Fazer inventário primeiro, listar o que sai, rodar a bateria de regressão completa (reg_all/bulk/kbm) + Supabase real se possível. Depois limpar CONTEXTO.md (seções 10 e antigas obsoletas, conflitos) e a memória (/areas/movh-platform.md) em um resumo enxuto e consistente.
