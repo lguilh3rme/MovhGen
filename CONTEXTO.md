@@ -1,4 +1,4 @@
-# MOVH — Contexto v58.2 (02/11/2026; seção 13 de marca atualizada em 31/10/2026)
+# MOVH — Contexto v59 (04/11/2026; v59 = menu/Início/Config em abas/visual rubro-negro/Notas; seção 13 de marca atualizada em 31/10/2026)
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Ele tem pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por rodada.
 
@@ -251,3 +251,17 @@ Proposta (uma rodada, baixo risco): coluna `professores.config jsonb` (SQL: `ALT
 - LIMITES DO AMBIENTE: a sandbox não baixa nem sobe arquivos no Canva (403 do proxy); o usuário precisa anexar PNG com fundo transparente e importar o SVG. Um chat que usa conector (Canva) fica BLOQUEADO para gravar memória até o fim: registrar a memória antes de usar conectores, ou em chat novo.
 - PROPOSTAS (minhas; só as logos `lgv`/`movhv` e o rodapé foram aplicados em 31/10, o resto segue NÃO aprovado): paleta só vermelho/creme/preto, com um vermelho mais claro (~`#e03a3a`, contraste ≈4,8:1 sobre preto contra ≈2,9:1 do `#b10000`; conta aproximada) para texto/ícone em fundo escuro; verde só como cor funcional (o app já usa `#1A9E72`); MOVH sem o LG dentro do logo (LG como selo/assinatura pequena); VOLT como submarca "VOLT · by MOVH" sem o gráfico (o gráfico é símbolo do MOVH); um slogan único (hoje há "Assessoria de Treinos e Performance Integrada" e "Assessoria em Performance Integrada"). Ideias de slogan: MOVH "Da base à performance." (já existe na pág. 12), LG "Força funcional", VOLT "Intensidade com método." Fontes: Tomorrow nos títulos e sans neutra (Inter/Manrope) no texto, no lugar da Comfortaa. Formatos que faltam: horizontal, ícone quadrado, uma cor, claro/escuro. Checar INPI (VOLT é nome comum; o LG foi desenhado por IA).
 - REGRA: em 30/10 o usuário PEDIU melhorar/modernizar a identidade para converter vendas e em 31/10 disse que precisa de PROTÓTIPOS e autorizou ficar à vontade. Isso relaxa a regra de 25/10 ("não mudar logo nem paleta sem pedido") para propostas de marca (as logos antigas continuam disponíveis); a logo atual (barra curva + gráfico) continua a preferida e qualquer mudança no app/Gerador exige aprovação.
+
+
+## 14. Rodada v59 (04/11/2026) — só Gerador (app do aluno NÃO muda, sem deploy no Netlify)
+- Menu lateral: Início → Alunos → Aulas Coletivas → Personal → Treino (compacto, `#treino-grp` com semanas) → Configuração → Biblioteca (Exercícios/Presets/Splits). "Gestão" virou abas da Configuração.
+- Configuração com abas (`#cfg-tabs`, `CFG_MAP` em `nav()`): Geral, Planos e cobrança, App do aluno (publicar+logo), Aparência (`#page-aparencia`: tema, visual, idioma).
+- Início (`#page-home`, `homeCarregar`): resumo (ativos, vencendo 7/14d, sem treino), demandas, agenda de hoje (coletivas+personal), atividade, notas fixadas, novidades (`MOVH_VER`/`MOVH_NOVIDADES`).
+- Visual: tema rubro-negro translúcido (`body.rn`, padrão; localStorage `movh-visual2`), barra superior `#tb` com busca, 🔔, 📝, 🎨.
+- Notas: tabela `notas` (ctx/ref: geral, aluno, dia, exercicio), RLS no script SQL (reexecutar; idempotente). Botão 📝 em Alunos, Personal, dia das coletivas/personal e Biblioteca. Google Keep: sem API para Gmail pessoal (só Workspace) → link keep.google.com + botão copiar.
+- Testado só com Supabase simulado (Playwright); Supabase real e bateria completa não rodados.
+- Netlify: auto-deploy roda mesmo com `[skip netlify]`; por isso o que é só do Gerador fica no GitHub Pages.
+
+### Pendências da v59 → próxima rodada (pedido de 05/11)
+- Início: REMOVER card "Atualizações/novidades" (versão já está no GitHub); "Atividade recente" = alunos recentes (mesmo formato da gestão de alunos); KPIs do topo MENORES.
+- RODADA DE LIMPEZA (prioridade): auditar o Gerador e remover duplicados, código/UI sem uso, itens legados (Gestão antiga, visualToggle antigo, CSS morto), deixar mais leve/direto/moderno. Fazer inventário primeiro, listar o que sai, rodar a bateria de regressão completa (reg_all/bulk/kbm) + Supabase real se possível. Depois limpar CONTEXTO.md (seções 10 e antigas obsoletas, conflitos) e a memória (/areas/movh-platform.md) em um resumo enxuto e consistente.
