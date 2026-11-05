@@ -1,4 +1,4 @@
-# MOVH — Contexto v59.1 (05/11/2026) — consolidado
+# MOVH — Contexto v59.2 (05/11/2026) — consolidado
 
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por repo por rodada. Registrar aprendizado e progresso a cada rodada (este arquivo + memória).
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
@@ -52,7 +52,7 @@ Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO 
 
 ## 7. Gerador — o que existe
 - Menu (v59): Início, Alunos, Aulas Coletivas, Personal, Treino (compacto, semanas), Configuração (abas Geral, App do aluno, Planos e cobrança, Aparência; `CFG_MAP` em `nav()`), Biblioteca (Exercícios, Presets, Splits). Visual rubro-negro translúcido (`body.rn`, `movh-visual2`), barra superior `#tb` (busca, 🔔, 📝, 🎨). Rótulo de versão: `MOVH_VER` (rodapé do menu); atualizar a cada merge.
-- Início (`homeCarregar`): resumo (ativos, vencendo 7/14 d, sem treino), demandas, agenda de hoje, atividade, notas fixadas.
+- Início (`homeCarregar`): KPIs compactos (ativos, vencendo 7/14 d, sem treino, demandas, treinos no mês), demandas, vencimentos, agenda de hoje, "Alunos recentes" (mesmo agrupamento da gestão de alunos via `mbFeedGrupos`: uma linha por aluno/dia, hora de cada ação; clique abre o aluno), notas fixadas.
 - Barra do protocolo (`pbarHTML`): chips de semana/dia, ☑ Em massa, 💾 Salvar/Atualizar aluno (destino explícito `_dest`), 🗂️ Quadro, 📅 Calendário, 📱 Como aluno. Rascunho local `movh-rascunho-v1`.
 - Quadro (kanban): tempo previsto por dia (`kbEstimarDia`: séries × (execução + descanso) + 15 s; `KB_SEG_REP=3`); edição em massa (`_bkSel`); gaveta/seletor.
 - Seletor em cascata (`mv*`: Grupo › Subgrupo › Exercício, modo em massa com prévia "Neste bloco · N"); `mvAcharEx` casa nomes sem acento/plural; `mvCadastrar` abre a Biblioteca. Vídeo editável (`mvVideo`) com 3 modos (só neste treino / atualizar no banco / salvar novo).
@@ -83,7 +83,6 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 
 ## 11. Pendências
 - AÇÃO DO USUÁRIO: reexecutar o script SQL idempotente do Gerador (Publicar app → SQL) para garantir `notas`, `personal_*`, `treinos_personal`, `pagamentos_pix`, colunas de `alunos`; conferir "Allow anonymous sign-ins" e policy SELECT de `rpe_sessoes`; deploy e webhook do `notify-pix`; parar builds do Netlify do Gerador; confirmar créditos Netlify no Billing e acionar deploy do app quando renovarem (se houver mudança no app).
-- Início: "Atividade recente" = alunos recentes (como na gestão de alunos); KPIs do topo menores.
 - Bloqueio de acesso com tolerância de 7 dias após o fim; avisar o aluno 14 dias antes (hoje só ≤ 7 dias no app). Conferir `A_WHATSAPP_NUM` do app.
 - Histórico de cargas do Personal dentro do editor do Gerador (hoje só na página de atendimento); "Repetir semana anterior".
 - Limpeza do TEMPLATE do app (funções/CSS sem uso dentro de `exportarComLogin()`): não feita, exige regenerar `movh/index.html` e deploy; juntar com a próxima mudança do app. Ex.: `aMontarBadgeTimeline` sem uso.
@@ -99,3 +98,6 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Antes de afirmar "o app mostra X", considerar a progressão automática por fase (`progressaoAuto`) e o piso de séries (`Math.min(2, p.sets)`).
 - Estado/versão: o rótulo `MOVH_VER` é a prova do que está no ar (Ctrl+F5 no GitHub Pages leva ~1 min).
 - Segurança: chaves secretas só em Supabase secrets/Edge Functions, nunca em HTML público.
+
+## 14. v59.2 (05/11/2026) — só Gerador
+- Início: "Atividade recente" virou "Alunos recentes" (helper `mbFeedGrupos`/`mbFeedHH`, compartilhado com `mbRenderFeed`); KPIs menores (`.hm-k` 18 px). Testes: reg_all 38, bulk 26, kbm 20, 0 FAIL; Início testado com eventos simulados (desktop e 390 px). App inalterado, sem deploy.
