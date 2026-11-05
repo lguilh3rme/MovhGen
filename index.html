@@ -772,10 +772,10 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 #treino-grp{display:none}#treino-grp.open{display:block}
 .ni .car{margin-left:auto;opacity:.55;transition:transform .15s;font-size:10px}.ni.open .car{transform:rotate(180deg)}
 /* Início */
-.hm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
-.hm-k{padding:12px 14px;border:1px solid var(--bd);background:var(--card);border-radius:14px;cursor:pointer;text-align:left;font:inherit;color:var(--tx)}
-.hm-k b{display:block;font-size:26px;font-weight:700;line-height:1.1;font-family:var(--font-d)}
-.hm-k span{font-size:11px;color:var(--t2)}
+.hm-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:6px;margin-bottom:10px}
+.hm-k{padding:6px 10px;border:1px solid var(--bd);background:var(--card);border-radius:10px;cursor:pointer;text-align:left;font:inherit;color:var(--tx)}
+.hm-k b{display:block;font-size:18px;font-weight:700;line-height:1.1;font-family:var(--font-d)}
+.hm-k span{font-size:10px;color:var(--t2);line-height:1.2}
 .hm-k.r b{color:#FF5A66}.hm-k.o b{color:#FFA35A}.hm-k.g b{color:#4DCBA0}
 .hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
 .hm-c{margin:0!important}
@@ -3545,7 +3545,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v59.1 · 05/11';
+var MOVH_VER = 'v59.2 · 05/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3658,8 +3658,8 @@ function homeRender(){
     return s;
   };
   const cAg = '<section class="card hm-c"><h3>🗓️ Agenda</h3>' + dia(0, 'Hoje') + dia(1, 'Amanhã') + '</section>';
-  const ev = (window._mbEv || []).slice(0, 8);
-  const cAc = '<section class="card hm-c"><h3>🔔 Atividade recente</h3>' + (ev.length ? ev.map(e => '<button type="button" class="hm-it" data-id="' + escAttr(e.id || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>' + e.i + '</span><span><b>' + escAttr(String(e.a || '').split(' ')[0]) + '</b> ' + escAttr(e.x || e.s || '') + '</span><span class="t">' + mbTempoC(e.t) + '</span></button>').join('') : '<div class="hm-vz">Sem atividade nos últimos dias.</div>') + '</section>';
+  const gr = mbFeedGrupos('todos').slice(0, 10), hh = mbFeedHH;
+  const cAc = '<section class="card hm-c"><h3>🔔 Alunos recentes <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + gr.length + '</small></h3>' + (gr.length ? '<div class="al-feed-list">' + gr.map(g => '<button type="button" class="al-feed-it al-grp" data-id="' + escAttr(g.id || '') + '" onclick="homeIrAluno(this.dataset.id)" title="' + escAttr(g.evs.map(e => hh(e.t) + ' ' + e.a + ' ' + e.x).join('\n')) + '"><span class="al-feed-t">' + mbTempoC(g.t) + '</span><b class="al-g-n">' + escAttr(g.a) + '</b><span class="al-g-ev">' + g.evs.map(e => '<span class="al-g-i">' + e.i + ' ' + escAttr(g.evs.length === 1 ? e.x : e.s) + ' <i>' + hh(e.t) + '</i></span>').join('') + '</span></button>').join('') + '</div>' : '<div class="hm-vz">Sem atividade nos últimos dias.</div>') + '</section>';
   const fix = (notasCache || []).filter(n => n.fixada).slice(0, 5);
   const cNo = '<section class="card hm-c"><h3>📝 Notas fixadas <span class="sp"></span>' + notasBtn('geral', '', 'Geral') + '</h3>' + (!notasOk ? '<div class="hm-vz">⚠️ Falta rodar o SQL de Notas (Configuração › Geral › Copiar SQL das policies RLS).</div>' : (fix.length ? fix.map(n => '<button type="button" class="hm-it" data-i="' + escAttr(n.id) + '" onclick="notasAbrirNota(this.dataset.i)"><span style="width:4px;align-self:stretch;border-radius:3px;background:' + (n.cor || 'var(--bd)') + '"></span><span><b>' + escAttr(n.titulo || '') + '</b> ' + escAttr(String(n.texto || '').split('\n')[0].slice(0, 80)) + '</span></button>').join('') : '<div class="hm-vz">Fixe uma nota (📌) para ela aparecer aqui.</div>')) + '</section>';
   G.innerHTML = cDem + cAt + cAg + cAc + cNo;
@@ -8317,18 +8317,22 @@ function mbAlertas(){
 }
 let _mbFeedF = 'todos';
 function mbFeedFiltro(f){ _mbFeedF = f; mbRenderFeed(); }
-function mbRenderFeed(){
-  const box = document.getElementById('alunos-atividade'); if (!box) return;
-  const ev = window._mbEv || [], al = mbAlertas();
-  // Agrupa por aluno + dia: uma linha por aluno, cada ação com a hora.
+// Agrupa a atividade por aluno + dia (uma linha por aluno, cada ação com a hora). Usado na gestão de alunos e no Início.
+function mbFeedGrupos(f){
   const grupos = [], gmap = {};
-  ev.filter(e => _mbFeedF === 'todos' || e.k === _mbFeedF).forEach(e => {
+  (window._mbEv || []).filter(e => !f || f === 'todos' || e.k === f).forEach(e => {
     const k = (e.id || e.a) + '|' + new Date(e.t).toDateString();
     let g = gmap[k]; if (!g) { g = gmap[k] = { id: e.id, a: e.a, t: e.t, evs: [] }; grupos.push(g); }
     g.evs.push(e);
   });
-  const hh = t => new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   grupos.forEach(g => g.evs.sort((x, y) => new Date(x.t) - new Date(y.t)));
+  return grupos;
+}
+function mbFeedHH(t){ return new Date(t).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); }
+function mbRenderFeed(){
+  const box = document.getElementById('alunos-atividade'); if (!box) return;
+  const al = mbAlertas();
+  const grupos = mbFeedGrupos(_mbFeedF), hh = mbFeedHH;
   const lista = grupos.slice(0, 30);
   const chip = (f, l) => '<button type="button" class="al-fch' + (_mbFeedF === f ? ' on' : '') + '" onclick="event.stopPropagation();event.preventDefault();mbFeedFiltro(\'' + f + '\')">' + l + '</button>';
   if (!window._mbFimToast) {
