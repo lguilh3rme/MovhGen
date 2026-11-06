@@ -473,6 +473,33 @@ body.dock-open #aluno-dock{display:flex}
 .kb-card{padding:5px 7px}
 .kb-add{padding:3px!important;font-size:9.5px!important}
 .kb-grupo{margin-bottom:6px}
+/* v59.3 — Quadro e editor mais compactos */
+.kb-col-head{flex-wrap:wrap;row-gap:1px}
+.kb-col-head .kb-col-foot{flex:0 0 100%;border:none;padding:0 3px 1px;text-align:left;font-size:10px}
+.kb-card{align-items:center;padding:4px 7px;margin-bottom:3px}
+.kb-card-txt{display:flex;align-items:center;gap:6px}
+.kb-card-n{flex:1;min-width:0}
+.kb-card-b{margin:0;flex-shrink:0;white-space:nowrap}
+.kb-cond-d{margin-bottom:6px}
+.kb-cond-d>summary{cursor:pointer;list-style:none;font-size:10.5px;font-weight:600;color:var(--tx);background:var(--cl);border:1px solid var(--bd2);border-radius:8px;padding:6px 8px}
+.kb-cond-d>summary::-webkit-details-marker{display:none}
+.kb-cond-d>summary::after{content:' ▾';color:var(--t3)}
+.kb-cond-d[open]>summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.kb-cond-d[open]>summary::after{content:' ▴'}
+.kb-cond-d>.kb-cond{border-top:none;border-top-left-radius:0;border-top-right-radius:0;margin-bottom:0}
+.dia-det{margin-top:8px}
+.dia-det>summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;color:var(--t3);padding:3px 10px;border:1px solid var(--bd);border-radius:99px}
+.dia-det>summary::-webkit-details-marker{display:none}
+.dia-det[open]>summary{color:var(--tx);border-color:var(--P)}
+@media(hover:hover){.kb-add-sec{display:none!important}.kb-grupo:hover .kb-add-sec,.kb-grupo:focus-within .kb-add-sec{display:block!important}}
+@media(max-width:700px){.kb-foco-btn{display:none}}
+@media(min-width:701px){
+.kb-board{grid-template-columns:repeat(var(--kbn,3),minmax(250px,1fr)) 46px!important}
+.kb-col-novo{min-height:120px;align-self:stretch}
+.kb-col-novo span:last-child{writing-mode:vertical-rl}
+.app.foco{grid-template-columns:1fr}
+.app.foco .sb{display:none}
+}
 @media(max-width:700px){
   .kb-board{grid-auto-columns:86vw;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -1rem;padding:0 1rem 12px}
   .kb-col{scroll-snap-align:center;max-height:none}
@@ -2165,6 +2192,7 @@ let testesAgendados=[];
 let calendarioOverrides = {};
 let mbProtoFim = null;        // fim previsto manual (AAAA-MM-DD, último dia) do protocolo carregado; null = pelas fases
 let _kbCalAberto = false;
+let _diaDetAb = false;
 let mbProtoDataInicio = null; // data_inicio do protocolo carregado — base pra mapear data real -> semana/dia do template
 let calEditDia = null;        // clone temporário do dia em edição via calendário (não faz parte de `semanas`)
 let calEditDataAlvo = null;   // 'AAAA-MM-DD' sendo editada no momento
@@ -2233,6 +2261,7 @@ function sincronizarExerciciosComBanco(){
 // ══ NAV ══
 function sbToggle(on){const sb=document.getElementById('sb'),bd=document.getElementById('sb-bd');const o=(typeof on==='boolean')?on:!sb.classList.contains('open');sb.classList.toggle('open',o);if(bd)bd.classList.toggle('open',o);}
 function nav(id){
+  {const _a=document.querySelector('.app');if(_a){let f=false;try{f=id.indexOf('kb-')===0&&localStorage.getItem('movh_kb_foco')==='1';}catch(e){}_a.classList.toggle('foco',f);}}
   if(id.indexOf('kb-')===0)renderKanbanSemana(id.slice(3));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
@@ -3545,7 +3574,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v59.2 · 05/11';
+var MOVH_VER = 'v59.3 · 05/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3750,6 +3779,7 @@ visualAplicar();verAplicar();
 // dias/blocos/exercícios já existentes. Editar estrutura (renomear bloco,
 // trocar tipo etc.) continua na visão de dia completo — o pencil de cada
 // coluna e cada card leva direto pra lá.
+function kbToggleFoco(){const a=document.querySelector('.app');if(!a)return;const on=a.classList.toggle('foco');try{localStorage.setItem('movh_kb_foco',on?'1':'0');}catch(e){}}
 function renderKanbanSemana(sid){
   const sem=semanas.find(s=>s.id===sid);if(!sem)return;
   let pg=document.getElementById('page-kb-'+sid);
@@ -3771,8 +3801,8 @@ function renderKanbanSemana(sid){
         ${exs.length?kbRenderExGrupo(d.id,bi,exs,b.conjGroups):(isCon?'':'<div class="kb-vazio">Sem exercícios ainda.</div>')}
         <div style="display:flex;gap:4px">
           <button class="kb-add" style="flex:1" onclick="kbAddEx('${d.id}',${bi})">+ exercício</button>
-          <button class="kb-add" style="flex:1" onclick="addExVarios('${d.id}',${bi})" title="Vários de uma vez">📂 vários</button>
-          <button class="kb-add" style="flex:1;color:var(--Pd);border-color:var(--P)" onclick="kbAddCJPar('${d.id}',${bi})">🔗 conjugado</button>
+          <button class="kb-add kb-add-sec" style="flex:1" onclick="addExVarios('${d.id}',${bi})" title="Vários de uma vez">📂 vários</button>
+          <button class="kb-add kb-add-sec" style="flex:1;color:var(--Pd);border-color:var(--P)" onclick="kbAddCJPar('${d.id}',${bi})">🔗 conjugado</button>
         </div>
       </div>`;
     });
@@ -3785,18 +3815,18 @@ function renderKanbanSemana(sid){
         <select class="kb-dow" onchange="setDF('${d.id}','diaSemana',this.value)" title="Dia real da semana em que este treino aparece para o aluno">${['','Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'].map(x=>`<option value="${x}"${(d.diaSemana||'')===x?' selected':''}>${x?x.slice(0,3):'dia?'}</option>`).join('')}</select>
         <button class="kb-edit-btn" onclick="dupDia('${sid}','${d.id}')" title="Duplicar este dia">⧉</button>
         <button class="kb-edit-btn" onclick="nav('${d.id}')" title="Editar este dia por completo (progressão automática, dia da semana, fase...)">✎</button>
+      <div class="kb-col-foot" id="kb-foot-${d.id}" title="Tempo previsto = execução das séries (3 s por repetição ou o tempo da isometria) + descanso + 15 s de preparo por exercício. Conjugado: um descanso por rodada.">${totalEx} exercício${totalEx!==1?'s':''} · ⏱️ ~${minutos} min</div>
       </div>
       <div class="kb-col-body">${body}</div>
-      <div class="kb-col-foot" id="kb-foot-${d.id}" title="Tempo previsto = execução das séries (3 s por repetição ou o tempo da isometria) + descanso + 15 s de preparo por exercício. Conjugado: um descanso por rodada.">${totalEx} exercício${totalEx!==1?'s':''} · ⏱️ ~${minutos} min</div>
     </div>`;
   }).join('');
   pg.innerHTML=`
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
-      <button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button>
+      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button></div>
     </div>
-    <div class="kb-board">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
+    <div class="kb-board" style="--kbn:${sem.dias.length}">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
       <span style="font-size:20px">+</span><span style="font-size:11px;font-weight:700">Novo dia</span>
     </div></div>`;
 }
@@ -3958,8 +3988,11 @@ function kbRmCJ(did,bi,g){
 // todo bloco como "lista de exercícios", mas Aeróbico/MetCon tem campos
 // próprios (tipo, duração, zona de FC, título) que também precisam dar
 // pra editar sem sair do kanban.
+let _kbCondAb=new Set();
+function kbCondTog(did,bi,on){const k=did+':'+bi;if(on)_kbCondAb.add(k);else _kbCondAb.delete(k);}
 function kbCondFields(did,bi,b){
-  return `<div class="kb-cond">
+  const _rs=[b.tipo||'Condicionamento',b.duracao,b.zonaFC,b.titulo].filter(Boolean).map(escAttr).join(' · ');
+  return `<details class="kb-cond-d"${_kbCondAb.has(did+':'+bi)?' open':''} ontoggle="kbCondTog('${did}',${bi},this.open)"><summary>${_rs}</summary><div class="kb-cond">
     <div class="kb-cond-row">
       <select class="kb-cond-sel" onchange="setBl('${did}',${bi},'tipo',this.value);kbRefresh('${did}')">
         <option${b.tipo==='Aeróbico'?' selected':''}>Aeróbico</option>
@@ -3977,7 +4010,7 @@ function kbCondFields(did,bi,b){
     <input class="kb-cond-inp" value="${escAttr(b.titulo||'')}" placeholder="Título (ex: Corrida Zona 2)" oninput="setBl('${did}',${bi},'titulo',this.value)"/>
     <input class="kb-cond-inp" value="${escAttr(b.duracao||'')}" placeholder="Duração (ex: 20 min)" oninput="setBl('${did}',${bi},'duracao',this.value);kbAtualizarFooter('${did}')"/>
     <textarea class="kb-cond-inp" rows="2" placeholder="Descrição / observações" oninput="setBl('${did}',${bi},'desc',this.value)">${b.desc||''}</textarea>
-  </div>`;
+  </div></details>`;
 }
 function kbRefresh(did){const sid=_kbSemDeDia(did);if(sid)renderKanbanSemana(sid);}
 function kbAtualizarFooter(did){
@@ -5907,6 +5940,7 @@ function renderDia(did){
           <button class="btn bs" style="margin-left:auto;font-size:10.5px;padding:4px 10px" onclick="dupDia('${semObj?semObj.id:''}','${did}')" title="Cria uma cópia deste dia na mesma semana">⧉ Duplicar dia</button>
         </div>
         <input style="font-size:11px;color:var(--t3);background:transparent;border:none;outline:none;margin-top:2px;width:100%" placeholder="Subtítulo (ex: Upper A)" value="${escAttr(dia.sub||'')}" oninput="setDF('${did}','sub',this.value)"/>
+        <details class="dia-det"${_diaDetAb?' open':''} ontoggle="_diaDetAb=this.open"><summary>⚙ Detalhes do dia · ${escAttr(dia.diaSemana||'dia não definido')}${semObj&&semObj.fase?' · '+escAttr(semObj.fase):''}</summary>
         <div class="dia-cfg">
         <div class="dcf">
           <span class="dcf-l">Dia real da semana</span>
@@ -5946,7 +5980,7 @@ function renderDia(did){
           <span class="dcf-l">Idioma exercícios</span>
           <button class="btn bs" style="font-size:10px;padding:2px 10px" onclick="mbToggleLangProtocolo()" id="lang-dia-btn-${did}">${_mbLangEditor==='en'?'🇬🇧 EN → PT':'🇧🇷 PT → EN'}</button>
         </div>
-        </div>
+        </div></details>
         ${semObj&&semObj.fase&&FASES_TEMPLATE[semObj.fase]?(()=>{const ft=FASES_TEMPLATE[semObj.fase];return `<div style="margin-top:8px;padding:8px 10px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs);font-size:10px;color:var(--t2)">
           <b style="color:var(--tx)">${ft.emoji} ${ft.label}</b> — RPE ${ft.rpe} · RIR ${ft.rir} · Carga ${ft.carga} · Volume ${ft.volume} · Descanso ${ft.descanso}
           ${semObj.focoDim&&FOCO_TREINO[semObj.focoDim]?` · Foco: <b style="color:var(--tx)">${FOCO_TREINO[semObj.focoDim].emoji} ${semObj.focoItem||FOCO_TREINO[semObj.focoDim].label}</b>`:''}
