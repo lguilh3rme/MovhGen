@@ -126,3 +126,11 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Próximas frentes: (1) templates novos no site (online: adaptação 120, mensal 180, bimestral 320, trimestral 420, renovação 150, reativação 165; presencial: ver §17) — precisa dos arquivos/Canva; rótulos de desconto do presencial viram "Economia de R$ 40/R$ 108"; alinhar regra de pagamento (Pix antes da 1ª sessão x Pix ou cartão); (2) roteiro de gravação de vídeos (por equipamento; os 21 exercícios mais usados; nenhum vídeo é do professor ainda) e padronizar nomes duplicados da biblioteca (adutora/cadeira abdutora/cadeira abdtora, rdl/rdl barra, tríceps polia/triceps corda, face pull/facepull); (3) testar os agentes `movh-treino` e `movh-gestao`; (4) Quadro: arrastar exercício entre dias e comparar Semana A × B; (5) bloqueio com tolerância de 7 dias e aviso de 14 dias.
 - Conector Supabase está ligado (projeto `cfanjhuzrcgxrbfmhahi`): usar só leitura por padrão e avisar antes de qualquer escrita.
 
+## 19. Landing atualizada (06/11/2026) — repo `lguilh3rme/movhtemplate` (PR #1, planmovh.netlify.app); Gerador e app inalterados
+- Fallback dos planos online: Mensal 180, Bimestral 320 (mais popular), Trimestral 420 (UK 39/69/99). Os planos reais vêm de `landing_config.planos` (aba Planos do Gerador → publicar); a landing agora filtra `tipo==='novo'` (Renovação/Reativação não viram card).
+- Card "Adaptação online" R$120 (28 dias, só BR/Asaas, `PL_ADAPT` no código da landing; sem UK). Seção "Personal presencial" só em PT (individual/dupla; adaptação 220/180, avulsa 80/77, 8 sessões 576/528, 12 sessões 816/744; botão WhatsApp 5527988225340).
+- Presencial na landing é fixo no código (a aba Planos só edita a consultoria online). Ao mudar valores, editar `PRES` e `PL_ADAPT` em `movhtemplate/index.html`.
+- Divergência a decidir: templates do Canva (v7) e a landing usam avulsa 80/77; o Gerador (`PL_PRESENCIAL`) tem avulsa 77/70.
+- ALERTA: `index.html` da landing tem a chave de produção do Asaas (`asaasKey`) em texto aberto. Revogar/gerar nova no Asaas e mover a criação da cobrança para uma Edge Function.
+- Lição: teste visual da landing com Playwright, bloqueando requisições externas (`file://` + `route.abort`).
+
