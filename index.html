@@ -1204,7 +1204,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div class="card" style="margin-bottom:.75rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Planos disponíveis</div>
-        <span style="display:flex;gap:6px"><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="plAplicarValores()" title="Mensal 180 · Trimestral 420 · Semestral 780 · Renovação 150 · Reativação 165">↺ Valores definidos</button><button class="btn bp" style="font-size:10px;padding:4px 10px" onclick="plAddPlano()">+ Plano</button></span>
+        <span style="display:flex;gap:6px"><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="plAplicarValores()" title="Mensal 180 · Bimestral 320 · Trimestral 420 · Renovação 150 · Reativação 165">↺ Valores definidos</button><button class="btn bp" style="font-size:10px;padding:4px 10px" onclick="plAddPlano()">+ Plano</button></span>
       </div>
       <div id="pl-tabela"></div>
       <div id="pl-planos-status" style="font-size:10.5px;color:var(--t3);margin-top:8px"></div>
@@ -3583,7 +3583,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v59.4 · 05/11';
+var MOVH_VER = 'v59.5 · 05/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8703,7 +8703,9 @@ async function mbCobrar(alunoId){
   document.getElementById('cob-titulo').textContent = '💰 Cobrar — ' + a.nome;
   const ctxTxt = { novo: 'Cadastrou e ainda não tem acesso pago: plano novo.', renovacao: 'Acesso ' + (a.acesso_fim ? 'até ' + mbCobrarDataBR(a.acesso_fim) : '') + ': renovação.', reativacao: 'Acesso venceu em ' + mbCobrarDataBR(a.acesso_fim) + ' (mais de 7 dias): reativação.' }[sit];
   document.getElementById('cob-ctx').textContent = ctxTxt + ' Valores vêm da aba Planos.';
-  document.getElementById('cob-plano').innerHTML = ativos.map(p => `<option value="${escAttr(p.id)}"${p.id === sug.id ? ' selected' : ''}>${escAttr(p.nome)} · ${p.dias}d · ${mbCobrarFmt(p.precoBR)}</option>`).join('');
+  const _optPl = p => `<option value="${escAttr(p.id)}"${p.id === sug.id ? ' selected' : ''}>${escAttr(p.nome)} · ${p.dias}d · ${mbCobrarFmt(p.precoBR)}</option>`;
+  const _grupos = [...new Set(PL_PRESENCIAL.map(x => x.grupo))];
+  document.getElementById('cob-plano').innerHTML = '<optgroup label="Online (aba Planos)">' + ativos.map(_optPl).join('') + '</optgroup>' + _grupos.map(g => '<optgroup label="' + escAttr(g) + '">' + PL_PRESENCIAL.filter(x => x.grupo === g).map(_optPl).join('') + '</optgroup>').join('');
   document.getElementById('cob-chave').innerHTML = pix ? pix.itens.map((x, i) => `<option value="${i}">${escAttr(x.banco || ('Pix ' + (i + 1)))}</option>`).join('') : '<option value="">sem Pix</option>';
   document.getElementById('cob-chave').style.display = (pix && pix.itens.length > 1) ? '' : 'none';
   const av = document.getElementById('cob-aviso');
@@ -8714,7 +8716,7 @@ async function mbCobrar(alunoId){
   mbCobrarAtualizar(false);
   openM('modal-cobrar');
 }
-function mbCobrarPlano(){ const id = document.getElementById('cob-plano').value; return plPlanos.find(p => p.id === id); }
+function mbCobrarPlano(){ const id = document.getElementById('cob-plano').value; return plPlanos.find(p => p.id === id) || PL_PRESENCIAL.find(p => p.id === id); }
 function mbCobrarAtualizar(trocouPlano){
   if (!_cob) return;
   const pl = mbCobrarPlano(); if (!pl) return;
@@ -8726,7 +8728,8 @@ function mbCobrarAtualizar(trocouPlano){
   _cob.code = code;
   const val = mbCobrarFmt(valor);
   let t;
-  if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
+  if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
+  else if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
   else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   if (code) t += `\n\nPix copia e cola 👇\n${code}`;
@@ -8744,7 +8747,7 @@ async function mbCobrarOferta(){
   const a = _cob.a, valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
   const ex = a.cobranca;
   if (ex && ex.status === 'aberta' && ex.plano_id === pl.id && Number(ex.valor) === Number(valor)) return true;
-  const c = { status: 'aberta', tipo: pl.tipo || 'novo', plano_id: pl.id, plano_nome: pl.nome, dias: pl.dias, valor: valor, criado_em: new Date().toISOString() };
+  const c = { status: 'aberta', tipo: pl.grupo ? _cob.sit : (pl.tipo || 'novo'), plano_id: pl.id, plano_nome: pl.nome, dias: pl.dias, valor: valor, criado_em: new Date().toISOString() };
   const { error } = await mbClient.from('alunos').update({ cobranca: c }).eq('id', a.id);
   if (error) { notify(/cobranca/i.test(error.message || '') ? 'Falta rodar no Supabase: ALTER TABLE alunos ADD COLUMN IF NOT EXISTS cobranca jsonb;' : 'Erro ao deixar a oferta no app: ' + error.message); return false; }
   a.cobranca = c;
@@ -15989,12 +15992,24 @@ const PL_LAND_KEY = 'movh_landing_cfg';
 
 const PL_DEFAULT = [
   { id:'pl1', nome:'Mensal',     dias:30,  precoBR:180, precoUK:39,  ativo:true, tipo:'novo' },
+  { id:'pl6', nome:'Bimestral',  dias:60,  precoBR:320, precoUK:69,  ativo:true, tipo:'novo' },
   { id:'pl2', nome:'Trimestral', dias:90,  precoBR:420, precoUK:99,  ativo:true, tipo:'novo' },
-  { id:'pl3', nome:'Semestral',  dias:180, precoBR:780, precoUK:169, ativo:true, tipo:'novo' },
   { id:'pl4', nome:'Renovação',  dias:30,  precoBR:150, precoUK:0,   ativo:true, tipo:'renovacao' },
   { id:'pl5', nome:'Reativação', dias:30,  precoBR:165, precoUK:0,   ativo:true, tipo:'reativacao' },
 ];
 const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação' };
+// Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
+const PL_PRESENCIAL = [
+  { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
+  { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220 },
+  { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
+  { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
+  { id:'pr_i_12',grupo:'Presencial individual',      nome:'Presencial · 12 sessões',                  dias:30, precoBR:816 },
+  { id:'pr_d_ad',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Adaptação (4 sessões)', dias:30, precoBR:180 },
+  { id:'pr_d_av',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Sessão avulsa',       dias:7,  precoBR:70 },
+  { id:'pr_d_8', grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 8 sessões',           dias:30, precoBR:528 },
+  { id:'pr_d_12',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 12 sessões',          dias:30, precoBR:744 },
+];
 const plEhNovo = p => !p.tipo || p.tipo === 'novo';
 // Planos salvos antes da v55 (sem campo `tipo`) são substituídos pelos valores definidos; publica no próximo login
 function plMigrarLegado(l){
@@ -16120,7 +16135,7 @@ async function plPlanosPublicar(){
   } catch (e) { if (st) st.textContent = '❌ Não publicou: ' + (e.message || e); }
 }
 function plAplicarValores(){
-  if (!confirm('Substituir a lista de planos pelos valores definidos (Mensal 180, Trimestral 420, Semestral 780, Renovação 150, Reativação 165)?')) return;
+  if (!confirm('Substituir a lista de planos pelos valores definidos (Mensal 180, Bimestral 320, Trimestral 420, Renovação 150, Reativação 165)?')) return;
   plPlanos = JSON.parse(JSON.stringify(PL_DEFAULT)); plSavePlanos(); plRender();
 }
 
