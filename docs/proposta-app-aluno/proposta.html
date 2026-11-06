@@ -1,0 +1,144 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Proposta visual do app do aluno · v2</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
+:root{--bg:#0B1220;--card:#111A2E;--card2:#16213a;--bd:#1F2B45;--P:#D62839;--P2:#FF4D5A;--cream:#F3EAD8;--mute:#9AA3BD;--soft:#C9C2B0;--ok:#3DDC97}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,system-ui,sans-serif;background:#05080f;color:var(--cream);padding:30px;display:flex;gap:34px;justify-content:center;align-items:flex-start}
+.col{display:flex;flex-direction:column;align-items:center;gap:12px}
+.cap{font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.ph{width:390px;height:844px;background:var(--bg);border-radius:38px;border:1px solid var(--bd);overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.in{padding:20px 18px 110px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.brand{font-weight:800;letter-spacing:.14em;font-size:15px}.brand b{color:var(--P2)}
+.chip{font-size:11px;font-weight:700;color:var(--mute);border:1px solid var(--bd);border-radius:99px;padding:5px 10px;background:var(--card)}
+h1{font-size:26px;font-weight:800;letter-spacing:-.01em}
+.sub{font-size:13px;color:var(--mute);margin:2px 0 14px}
+.week{display:flex;gap:6px;margin-bottom:14px}
+.d{flex:1;text-align:center;border:1px solid var(--bd);background:var(--card);border-radius:14px;padding:7px 0;font-size:11px;color:var(--mute)}
+.d b{display:block;font-size:14px;color:var(--cream)}
+.d.on{background:var(--P);border-color:var(--P);color:#fff}.d.on b{color:#fff}
+.d.ok b:after{content:"✓";color:var(--ok);margin-left:2px;font-size:11px}
+.hero{background:linear-gradient(160deg,#1a2644,#111A2E);border:1.5px solid var(--P);border-radius:22px;padding:16px;display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.ring{width:74px;height:74px;border-radius:50%;background:conic-gradient(var(--P2) 0 33%,var(--bd) 0);display:grid;place-items:center;flex:none}
+.ring i{width:58px;height:58px;border-radius:50%;background:#131d36;display:grid;place-items:center;font-style:normal;font-weight:800;font-size:16px}
+.hero h3{font-size:17px;font-weight:800}.hero p{font-size:12px;color:var(--soft);margin-top:2px}
+.btn{display:block;width:100%;border:none;border-radius:16px;background:var(--P);color:#fff;font-weight:800;font-size:15px;padding:15px;text-align:center;box-shadow:0 10px 26px rgba(214,40,57,.35);font-family:inherit}
+.btn.g{background:transparent;border:1.5px solid var(--bd);color:var(--cream);box-shadow:none}
+.blk{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:6px 14px;margin-bottom:10px}
+.bh{display:flex;justify-content:space-between;font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);padding:10px 0 4px}
+.ex{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--bd)}
+.ex:first-of-type{border-top:none}
+.ex .n{flex:1;font-size:15px;font-weight:700}
+.ex .m{font-size:11.5px;color:var(--mute);font-weight:500;margin-top:2px}
+.dots{display:flex;gap:5px}.dots s{width:20px;height:20px;border-radius:50%;border:2px solid var(--bd);text-decoration:none;display:block}
+.dots s.f{background:var(--ok);border-color:var(--ok)}
+.kg{font-size:12px;font-weight:700;border:1px solid var(--bd);border-radius:10px;padding:6px 9px;background:var(--card2)}
+.ex.done .n{color:var(--mute);text-decoration:line-through}
+.dock{position:absolute;left:12px;right:12px;bottom:14px;background:rgba(17,26,46,.96);border:1px solid var(--bd);border-radius:22px;padding:10px 12px;display:flex;align-items:center;gap:10px;backdrop-filter:blur(8px)}
+.dock .t{flex:1;font-size:12px;color:var(--mute);line-height:1.3}.dock .t b{display:block;font-size:14px;color:var(--cream)}
+.dock .btn{width:auto;padding:12px 18px;font-size:14px}
+.tabs{position:absolute;left:0;right:0;bottom:0;height:0}
+/* tela 2 */
+.vid{height:190px;border-radius:22px;background:linear-gradient(135deg,#1c2a4d,#0e1730);border:1px solid var(--bd);display:grid;place-items:center;margin-bottom:14px;position:relative}
+.vid span{width:58px;height:58px;border-radius:50%;background:var(--P);display:grid;place-items:center;font-size:22px;box-shadow:0 8px 22px rgba(214,40,57,.5)}
+.vid em{position:absolute;left:14px;bottom:10px;font-style:normal;font-size:11px;color:var(--soft)}
+.sets{display:flex;gap:10px;justify-content:center;margin:14px 0}
+.sets div{width:60px;height:60px;border-radius:50%;border:2.5px solid var(--bd);display:grid;place-items:center;font-weight:800;font-size:18px;color:var(--mute)}
+.sets .f{background:var(--ok);border-color:var(--ok);color:#06231a}
+.sets .a{border-color:var(--P2);color:var(--cream);box-shadow:0 0 0 5px rgba(255,77,90,.15)}
+.step{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:10px 12px;margin-bottom:10px}
+.step b{font-size:22px;font-weight:800}.step small{display:block;font-size:11px;color:var(--mute);font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.pm{display:flex;gap:8px}.pm span{width:44px;height:44px;border-radius:14px;background:var(--card2);border:1px solid var(--bd);display:grid;place-items:center;font-size:22px;font-weight:700}
+.rest{background:var(--card);border:1px dashed var(--P);border-radius:18px;padding:12px;text-align:center;margin:12px 0}
+.rest b{font-size:34px;font-weight:800;letter-spacing:-.02em;color:var(--P2)}.rest small{display:block;font-size:11px;color:var(--mute);letter-spacing:.12em;text-transform:uppercase}
+.last{font-size:12px;color:var(--mute);text-align:center}.last b{color:var(--cream)}
+/* tela 3 */
+.alert{background:var(--P);border-radius:20px;padding:16px;margin-bottom:12px}
+.alert b{font-size:17px}.alert p{font-size:13px;opacity:.95;margin-top:3px}
+.plan{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:13px 14px;margin-bottom:10px}
+.plan.pop{border-color:var(--P);background:var(--card2)}
+.plan b{font-size:15px}.plan small{display:block;font-size:11.5px;color:var(--mute)}
+.plan .v{font-size:20px;font-weight:800}.plan .e{font-size:11px;color:var(--ok);font-weight:700;text-align:right}
+.pix{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:14px;text-align:center;margin:12px 0}
+.qr{width:118px;height:118px;margin:8px auto;background:repeating-conic-gradient(#F3EAD8 0 25%,#0B1220 0 50%) 0 0/18px 18px;border-radius:10px;border:6px solid #F3EAD8}
+.code{font-size:11px;color:var(--mute);background:var(--bg);border:1px dashed var(--bd);border-radius:10px;padding:8px;word-break:break-all;margin-bottom:8px}
+
+body{gap:26px;padding:26px;zoom:.9}
+.bar{height:5px;border-radius:99px;background:var(--bd);overflow:hidden;margin:2px 0 3px}.bar i{display:block;height:100%;width:22%;background:var(--P2);border-radius:99px}
+.bl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mute);margin-bottom:10px}.bl b{color:var(--cream)}
+.week.s .d{padding:5px 0;border-radius:12px}.week.s .d b{font-size:13px}
+.coll{display:flex;justify-content:space-between;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:9px 14px;margin-bottom:10px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.coll span:last-child{color:var(--ok);letter-spacing:0;font-size:12px}
+.vid.s{height:140px;margin-bottom:10px}.vid.s span{width:46px;height:46px;font-size:18px}
+.note{font-size:11px;color:var(--mute);background:var(--card);border:1px dashed var(--bd);border-radius:12px;padding:8px 10px;margin:8px 0}
+.sets.m div{width:50px;height:50px;font-size:16px}.sets.m{margin:8px 0}
+.mini{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:8px;margin-bottom:10px}
+.mini i{width:64px;height:44px;border-radius:10px;background:linear-gradient(135deg,#1c2a4d,#0e1730);display:grid;place-items:center;font-style:normal;font-size:13px}
+.mini b{font-size:13px}.mini small{display:block;font-size:11px;color:var(--mute)}
+.tabs2{display:flex;gap:6px;margin-bottom:12px;overflow:hidden}
+.tabs2 div{flex:none;padding:8px 13px;border-radius:99px;border:1px solid var(--bd);background:var(--card);font-size:12px;font-weight:700;color:var(--mute)}
+.tabs2 .on{background:var(--P);border-color:var(--P);color:#fff}
+.aula{background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:14px;margin-bottom:10px}
+.aula h3{font-size:16px;font-weight:800}.aula .h{font-size:12px;color:var(--soft);margin:2px 0 8px}
+.aula .r{display:flex;gap:10px;font-size:13px;padding:7px 0;border-top:1px solid var(--bd);color:var(--soft)}.aula .r b{color:var(--cream);min-width:92px;font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.pers{display:flex;gap:8px;margin-bottom:12px}
+.pers div{flex:1;border:1px solid var(--bd);background:var(--card);border-radius:14px;padding:9px;font-size:12px;color:var(--mute)}.pers .on{border-color:var(--P);background:var(--card2);color:var(--cream)}
+.pers b{display:block;font-size:14px}
+.sess{display:flex;justify-content:space-between;align-items:center;background:linear-gradient(160deg,#1a2644,#111A2E);border:1.5px solid var(--P);border-radius:20px;padding:13px 15px;margin-bottom:12px}
+.sess b{font-size:17px}.sess small{display:block;font-size:12px;color:var(--soft)}
+.reg{display:flex;align-items:center;gap:8px;padding:10px 0;border-top:1px solid var(--bd)}.reg:first-of-type{border-top:none}
+.reg .n{flex:1;font-size:14px;font-weight:700}.reg .m{font-size:11px;color:var(--mute);font-weight:500}
+.reg .st{display:flex;align-items:center;gap:6px}.reg .st span{width:32px;height:32px;border-radius:10px;background:var(--card2);border:1px solid var(--bd);display:grid;place-items:center;font-weight:700}.reg .st b{min-width:50px;text-align:center;font-size:14px}
+</style></head><body>
+<div class="col"><div class="cap">1 · Treino de hoje (compacto)</div><div class="ph"><div class="in">
+ <div class="top"><div class="brand">MOV<b>H</b></div><div class="chip">Hipertrofia · Fase 1</div></div>
+ <h1 style="font-size:22px">Boa noite, Ana 👊</h1><div class="sub" style="margin-bottom:10px">Sexta · acesso até 28/11</div>
+ <div class="week s"><div class="d ok">D<b>1</b></div><div class="d">S<b>2</b></div><div class="d ok">T<b>3</b></div><div class="d">Q<b>4</b></div><div class="d">Q<b>5</b></div><div class="d on">S<b>6</b></div><div class="d">S<b>7</b></div></div>
+ <div class="bar"><i></i></div><div class="bl"><span><b>A · Inferiores</b> · 2 de 9</span><span>~40 min restantes</span></div>
+ <div class="coll"><span>Ativação · 2 exercícios</span><span>2/2 ✓ ▾</span></div>
+ <div class="blk"><div class="bh"><span>Força</span><span>0/4</span></div>
+  <div class="ex"><div style="flex:1"><div class="n">Agachamento livre</div><div class="m">4 × 8-10 · 60s</div></div><div class="kg">40 kg</div></div>
+  <div class="ex"><div style="flex:1"><div class="n">Cadeira extensora</div><div class="m">3 × 12 · 60s</div></div><div class="kg">— kg</div></div>
+  <div class="ex"><div style="flex:1"><div class="n">Mesa flexora</div><div class="m">3 × 12 · 60s</div></div><div class="kg">— kg</div></div>
+  <div class="ex"><div style="flex:1"><div class="n">Adutora</div><div class="m">3 × 15 · 60s</div></div><div class="kg">— kg</div></div></div>
+ <div class="blk"><div class="bh"><span>Condicionamento</span><span>0/2 ▸</span></div></div>
+ </div><div class="dock"><div class="t"><b>Agachamento livre</b>última carga 40 kg</div><div class="btn" style="width:auto;padding:13px 20px">Iniciar</div></div>
+</div></div>
+
+<div class="col"><div class="cap">2 · Vídeo do exercício</div><div class="ph"><div class="in">
+ <div class="top"><div class="chip">← A · Inferiores</div><div class="chip">3 de 9</div></div>
+ <div class="vid s"><span>▶</span><em>Execução · 0:42 · loop sem som</em></div>
+ <h1 style="font-size:22px">Agachamento livre</h1><div class="sub" style="margin-bottom:6px">4 × 8-10 · descanso 60s</div>
+ <div class="note">① Ao entrar no exercício, o vídeo aparece em tamanho médio. ② Ao concluir a 1ª série, ele recolhe para a miniatura abaixo e libera espaço para o registro.</div>
+ <div class="mini"><i>▶</i><div><b>Ver execução</b><small>toque para ampliar</small></div></div>
+ <div class="sets m"><div class="f">✓</div><div class="a">2</div><div>3</div><div>4</div></div>
+ <div class="step"><div><small>Carga</small><b>42,5 kg</b></div><div class="pm"><span>−</span><span>+</span></div></div>
+ <div class="rest" style="margin:8px 0"><small>Descanso</small><b>0:38</b></div>
+ <div class="note" style="text-align:center">Sem vídeo na biblioteca? A área não aparece e o registro sobe.</div>
+ </div><div class="dock"><div class="btn" style="flex:1">Concluir série 2</div></div>
+</div></div>
+
+<div class="col"><div class="cap">3 · Aulas coletivas</div><div class="ph"><div class="in">
+ <div class="top"><div class="chip">← Treino</div><div class="chip">Semana 04–09/11</div></div>
+ <h1 style="font-size:22px">Aulas coletivas</h1><div class="sub">Plano da semana · Bodytech Moxuara</div>
+ <div class="tabs2"><div>Seg</div><div>Ter</div><div class="on">Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div></div>
+ <div class="aula"><h3>Funcional · 18:30</h3><div class="h">Quarta, 4/11 · 4 blocos · ~50 min</div>
+  <div class="r"><b>Aquecimento</b><span>Mobilidade de quadril e ombro · 5 min</span></div>
+  <div class="r"><b>Bloco 1</b><span>Agachamento goblet + remada · 4 rodadas</span></div>
+  <div class="r"><b>Bloco 2</b><span>Avanço + flexão · 3 rodadas</span></div>
+  <div class="r"><b>Finalizador</b><span>EMOM 8 min</span></div></div>
+ <div class="aula" style="opacity:.75"><h3>Mobilidade · 19:30</h3><div class="h">Toque para abrir o plano</div></div>
+ <div class="note">Cada bloco abre e fecha; só a aula do dia vem aberta. Os dias com aula ganham um ponto na faixa.</div>
+ </div>
+</div></div>
+
+<div class="col"><div class="cap">4 · Personal (tela do professor)</div><div class="ph"><div class="in">
+ <div class="top"><div class="brand">MOV<b>H</b> <span style="font-weight:600;letter-spacing:0;color:var(--mute);font-size:12px">· Personal</span></div><div class="chip">Sex 6/11 · 19:00</div></div>
+ <div class="pers"><div class="on"><b>Carla</b>individual</div><div><b>Rafa + Bia</b>dupla</div><div><b>Lucas</b>individual</div></div>
+ <div class="sess"><div><b>Sessão 3 de 8</b><small>Pacote 8 sessões · vence 28/11</small></div><div class="chip" style="color:var(--ok)">5 restantes</div></div>
+ <div class="blk"><div class="bh"><span>Treino de hoje · Inferiores</span><span>1/4</span></div>
+  <div class="reg"><div style="flex:1"><div class="n">Agachamento livre</div><div class="m">4 × 8-10 · última 40 kg</div></div><div class="st"><span>−</span><b>42,5</b><span>+</span></div></div>
+  <div class="reg"><div style="flex:1"><div class="n">Leg press</div><div class="m">3 × 12 · última 120 kg</div></div><div class="st"><span>−</span><b>120</b><span>+</span></div></div>
+  <div class="reg"><div style="flex:1"><div class="n">Stiff</div><div class="m">3 × 10 · última 30 kg</div></div><div class="st"><span>−</span><b>30</b><span>+</span></div></div></div>
+ <div class="note">Troca de aluno em um toque, sem login.</div>
+ </div><div class="dock"><div class="btn" style="flex:1">Concluir sessão 3</div></div>
+</div></div>
+</body></html>
