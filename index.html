@@ -1210,6 +1210,18 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
       <div id="pl-planos-status" style="font-size:10.5px;color:var(--t3);margin-top:8px"></div>
       <div style="font-size:10px;color:var(--t3);margin-top:10px">💡 O plano do meio é destacado como "Mais popular" na landing page automaticamente.</div>
     </div>
+    <div class="card" id="pl-pres-card" style="margin-bottom:.75rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem">
+        <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">🏃 Presencial e adaptação</div>
+        <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="plPresAplicar()" title="Volta aos valores definidos">↺ Valores definidos</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--t3)">Aparecem na landing (aba Presencial) e no botão Cobrar. Sessões servem para calcular o valor por sessão e a economia.</div>
+      <div id="pl-pres-tabela"></div>
+    </div>
+    <div class="card" id="pl-pag-card" style="margin-bottom:.75rem">
+      <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em">💳 Formas de pagamento</div>
+      <div id="pl-pag-body"></div>
+    </div>
     <div class="card" id="pl-pix-card" style="margin-bottom:.75rem">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
         <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">💠 Pix (chave própria)</div>
@@ -3583,7 +3595,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v59.5 · 05/11';
+var MOVH_VER = 'v60.0 · 06/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8704,8 +8716,9 @@ async function mbCobrar(alunoId){
   const ctxTxt = { novo: 'Cadastrou e ainda não tem acesso pago: plano novo.', renovacao: 'Acesso ' + (a.acesso_fim ? 'até ' + mbCobrarDataBR(a.acesso_fim) : '') + ': renovação.', reativacao: 'Acesso venceu em ' + mbCobrarDataBR(a.acesso_fim) + ' (mais de 7 dias): reativação.' }[sit];
   document.getElementById('cob-ctx').textContent = ctxTxt + ' Valores vêm da aba Planos.';
   const _optPl = p => `<option value="${escAttr(p.id)}"${p.id === sug.id ? ' selected' : ''}>${escAttr(p.nome)} · ${p.dias}d · ${mbCobrarFmt(p.precoBR)}</option>`;
-  const _grupos = [...new Set(PL_PRESENCIAL.map(x => x.grupo))];
-  document.getElementById('cob-plano').innerHTML = '<optgroup label="Online (aba Planos)">' + ativos.map(_optPl).join('') + '</optgroup>' + _grupos.map(g => '<optgroup label="' + escAttr(g) + '">' + PL_PRESENCIAL.filter(x => x.grupo === g).map(_optPl).join('') + '</optgroup>').join('');
+  const _presAt = plPres.filter(x => x.ativo !== false);
+  const _grupos = [...new Set(_presAt.map(x => x.grupo))];
+  document.getElementById('cob-plano').innerHTML = '<optgroup label="Online (aba Planos)">' + ativos.map(_optPl).join('') + '</optgroup>' + _grupos.map(g => '<optgroup label="' + escAttr(g) + '">' + _presAt.filter(x => x.grupo === g).map(_optPl).join('') + '</optgroup>').join('');
   document.getElementById('cob-chave').innerHTML = pix ? pix.itens.map((x, i) => `<option value="${i}">${escAttr(x.banco || ('Pix ' + (i + 1)))}</option>`).join('') : '<option value="">sem Pix</option>';
   document.getElementById('cob-chave').style.display = (pix && pix.itens.length > 1) ? '' : 'none';
   const av = document.getElementById('cob-aviso');
@@ -8716,7 +8729,7 @@ async function mbCobrar(alunoId){
   mbCobrarAtualizar(false);
   openM('modal-cobrar');
 }
-function mbCobrarPlano(){ const id = document.getElementById('cob-plano').value; return plPlanos.find(p => p.id === id) || PL_PRESENCIAL.find(p => p.id === id); }
+function mbCobrarPlano(){ const id = document.getElementById('cob-plano').value; return plPlanos.find(p => p.id === id) || plPres.find(p => p.id === id); }
 function mbCobrarAtualizar(trocouPlano){
   if (!_cob) return;
   const pl = mbCobrarPlano(); if (!pl) return;
@@ -16000,15 +16013,15 @@ const PL_DEFAULT = [
 const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação' };
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
 const PL_PRESENCIAL = [
-  { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
-  { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220 },
-  { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
-  { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
-  { id:'pr_i_12',grupo:'Presencial individual',      nome:'Presencial · 12 sessões',                  dias:30, precoBR:816 },
-  { id:'pr_d_ad',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Adaptação (4 sessões)', dias:30, precoBR:180 },
-  { id:'pr_d_av',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Sessão avulsa',       dias:7,  precoBR:70 },
-  { id:'pr_d_8', grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 8 sessões',           dias:30, precoBR:528 },
-  { id:'pr_d_12',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 12 sessões',          dias:30, precoBR:744 },
+  { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120, sessoes:0 },
+  { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220, sessoes:4 },
+  { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77, sessoes:1 },
+  { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576, sessoes:8 },
+  { id:'pr_i_12',grupo:'Presencial individual',      nome:'Presencial · 12 sessões',                  dias:30, precoBR:816, sessoes:12 },
+  { id:'pr_d_ad',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Adaptação (4 sessões)', dias:30, precoBR:180, sessoes:4 },
+  { id:'pr_d_av',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Sessão avulsa',       dias:7,  precoBR:70, sessoes:1 },
+  { id:'pr_d_8', grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 8 sessões',           dias:30, precoBR:528, sessoes:8 },
+  { id:'pr_d_12',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 12 sessões',          dias:30, precoBR:744, sessoes:12 },
 ];
 const plEhNovo = p => !p.tipo || p.tipo === 'novo';
 // Planos salvos antes da v55 (sem campo `tipo`) são substituídos pelos valores definidos; publica no próximo login
@@ -16039,6 +16052,8 @@ const PL_LAND_DEFAULT = {
 };
 
 let plPlanos  = plMigrarLegado(JSON.parse(localStorage.getItem(PL_KEY)      || 'null') || JSON.parse(JSON.stringify(PL_DEFAULT)));
+let plPres    = JSON.parse(localStorage.getItem('movh_pres') || 'null') || PL_PRESENCIAL.map(x => Object.assign({ ativo: true }, x));
+let plPag     = Object.assign({ cartaoMinDias: 31, whatsapp: '5527988225340' }, JSON.parse(localStorage.getItem('movh_pag') || 'null') || {});
 let plProtos  = JSON.parse(localStorage.getItem('movh_protos')|| 'null') || JSON.parse(JSON.stringify(PL_PROTO_DEFAULT));
 let plLand    = JSON.parse(localStorage.getItem(PL_LAND_KEY) || 'null') || JSON.parse(JSON.stringify(PL_LAND_DEFAULT));
 // Flag de rascunho não sincronizado — plPlanos/plProtos/plLand só vão pro Supabase
@@ -16127,7 +16142,7 @@ async function plPlanosPublicar(){
     const { data, error: e0 } = await mbClient.from('landing_config').select('config').eq('professor_id', mbProfessor.id).maybeSingle();
     if (e0) throw e0;
     const row = { professor_id: mbProfessor.id, planos: plPlanos.filter(x => x.ativo).map(x => ({ id: x.id, nome: x.nome, dias: x.dias, precoBR: x.precoBR, precoUK: x.precoUK, tipo: x.tipo || 'novo' })), updated_at: new Date().toISOString() };
-    if (data && data.config) row.config = data.config;
+    row.config = Object.assign({}, (data && data.config) || {}, plExtraConfig());
     const { error } = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
     if (error) throw error;
     try { localStorage.removeItem('movh_planos_pub_pend'); } catch (e) {}
@@ -16138,6 +16153,54 @@ function plAplicarValores(){
   if (!confirm('Substituir a lista de planos pelos valores definidos (Mensal 180, Bimestral 320, Trimestral 420, Renovação 150, Reativação 165)?')) return;
   plPlanos = JSON.parse(JSON.stringify(PL_DEFAULT)); plSavePlanos(); plRender();
 }
+
+// Presencial/adaptação e formas de pagamento: vão em landing_config.config (a landing lê; o app do aluno ignora)
+function plExtraConfig(){
+  return {
+    presencial: plPres.filter(x => x.ativo !== false).map(x => ({ id: x.id, grupo: x.grupo, nome: x.nome, dias: x.dias, precoBR: x.precoBR, sessoes: x.sessoes || 0 })),
+    pagamento: { cartaoMinDias: Math.max(0, +plPag.cartaoMinDias || 0), whatsapp: String(plPag.whatsapp || '').replace(/\D/g, '') }
+  };
+}
+function plExtraSalvar(){
+  localStorage.setItem('movh_pres', JSON.stringify(plPres));
+  localStorage.setItem('movh_pag', JSON.stringify(plPag));
+  plMarcarDirty(); plPlanosPublicarSoon();
+}
+function plPresAplicar(){
+  if (!confirm('Voltar o presencial e a adaptação para os valores definidos?')) return;
+  plPres = PL_PRESENCIAL.map(x => Object.assign({ ativo: true }, x)); plExtraSalvar(); plPresRender();
+}
+function plPresAdd(g){
+  plPres.push({ id: 'pr' + Date.now(), grupo: g, nome: 'Novo pacote', dias: 30, precoBR: 0, sessoes: 1, ativo: true });
+  plExtraSalvar(); plPresRender();
+}
+function plPresDel(i){ if (!confirm('Remover este item?')) return; plPres.splice(i, 1); plExtraSalvar(); plPresRender(); }
+function plPresSet(i, k, v){ plPres[i][k] = (k === 'nome') ? v : +v; plExtraSalvar(); if (k !== 'nome') plPresRender(); }
+function plPresRender(){
+  const el = document.getElementById('pl-pres-tabela'); if (!el) return;
+  const th = (t, a) => '<th style="text-align:' + (a || 'left') + ';padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">' + t + '</th>';
+  const grupos = [...new Set(plPres.map(x => x.grupo))];
+  el.innerHTML = grupos.map(g => '<div style="font-size:11px;font-weight:700;color:var(--t2);margin:10px 0 4px">' + escAttr(g) + '</div>' +
+    '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr style="border-bottom:1px solid var(--bd)">' + th('Nome') + th('Sessões', 'right') + th('Dias', 'right') + th('R$', 'right') + th('R$/sessão', 'right') + th('Ativo', 'center') + '<th></th></tr></thead><tbody>' +
+    plPres.map((p, i) => p.grupo !== g ? '' :
+      '<tr style="border-bottom:1px solid var(--bd2)">' +
+      '<td style="padding:6px 8px"><input class="ie" value="' + escAttr(p.nome) + '" style="width:260px" onchange="plPresSet(' + i + ',\'nome\',this.value)"/></td>' +
+      '<td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="' + (p.sessoes || 0) + '" style="width:54px;text-align:right" onchange="plPresSet(' + i + ',\'sessoes\',this.value)"/></td>' +
+      '<td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="' + p.dias + '" style="width:54px;text-align:right" onchange="plPresSet(' + i + ',\'dias\',this.value)"/></td>' +
+      '<td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="' + p.precoBR + '" style="width:64px;text-align:right" onchange="plPresSet(' + i + ',\'precoBR\',this.value)"/></td>' +
+      '<td style="padding:6px 8px;text-align:right;color:var(--t3)">' + (p.sessoes > 0 ? 'R$ ' + (p.precoBR / p.sessoes).toFixed(0) : '—') + '</td>' +
+      '<td style="padding:6px 8px;text-align:center"><label class="toggle-sw"><input type="checkbox" ' + (p.ativo !== false ? 'checked' : '') + ' onchange="plPres[' + i + '].ativo=this.checked;plExtraSalvar()"><span class="toggle-sw-slider"></span></label></td>' +
+      '<td style="padding:6px 8px;text-align:right"><button class="bic" onclick="plPresDel(' + i + ')" title="Remover">×</button></td></tr>').join('') +
+    '</tbody></table><button class="btn bs" style="font-size:10px;padding:3px 10px;margin-top:6px" onclick="plPresAdd(\'' + escAttr(g).replace(/'/g, '') + '\')">+ Item</button>').join('');
+}
+function plPagSet(k, v){ plPag[k] = v; plExtraSalvar(); }
+function plPagRender(){
+  const el = document.getElementById('pl-pag-body'); if (!el) return;
+  el.innerHTML = '<div class="fr r2"><div class="fld"><span class="lbl">Cartão a partir de (dias de acesso)</span><input class="ie" type="number" min="0" value="' + (+plPag.cartaoMinDias || 0) + '" onchange="plPagSet(\'cartaoMinDias\',this.value)"/></div>' +
+    '<div class="fld"><span class="lbl">WhatsApp do contato (com DDI e DDD)</span><input class="ie" value="' + escAttr(plPag.whatsapp || '') + '" placeholder="5527999999999" onchange="plPagSet(\'whatsapp\',this.value)"/></div></div>' +
+    '<div style="font-size:11px;color:var(--t2);margin-top:8px;line-height:1.6">Hoje: <b>Pix é a forma principal</b>; cartão só em planos com ' + (+plPag.cartaoMinDias || 0) + ' dias ou mais (' + (+plPag.cartaoMinDias > 30 ? 'ou seja, acima de 1 mês' : 'todos os planos') + '). Mensal, adaptação, presencial, renovação e reativação ficam só no Pix.</div>';
+}
+const _plRender1 = plRender; plRender = function(){ _plRender1.apply(this, arguments); plPresRender(); plPagRender(); };
 
 function plRender(){
   const el = document.getElementById('pl-tabela');
@@ -16205,7 +16268,7 @@ async function plPixPublicar(){
     if (e0) throw e0;
     const p = plPixObj();
     const pix = { ativo: !!p.ativo, nome: p.nome || '', cidade: p.cidade || '', msg: p.msg || '', itens: (p.itens || []).filter(x => x && x.chave).map(x => ({ banco: x.banco || '', chave: String(x.chave).trim() })) };
-    const row = { professor_id: mbProfessor.id, config: Object.assign({}, (data && data.config) || {}, { pix: pix }), updated_at: new Date().toISOString() };
+    const row = { professor_id: mbProfessor.id, config: Object.assign({}, (data && data.config) || {}, { pix: pix }, plExtraConfig()), updated_at: new Date().toISOString() };
     if (!data || !Array.isArray(data.planos) || !data.planos.length) row.planos = plPlanos.filter(x => x.ativo).map(x => ({ id: x.id, nome: x.nome, dias: x.dias, precoBR: x.precoBR, precoUK: x.precoUK, tipo: x.tipo || 'novo' }));
     const { error } = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
     if (error) throw error;
