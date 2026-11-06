@@ -130,7 +130,8 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Fallback dos planos online: Mensal 180, Bimestral 320 (mais popular), Trimestral 420 (UK 39/69/99). Os planos reais vêm de `landing_config.planos` (aba Planos do Gerador → publicar); a landing agora filtra `tipo==='novo'` (Renovação/Reativação não viram card).
 - Card "Adaptação online" R$120 (28 dias, só BR/Asaas, `PL_ADAPT` no código da landing; sem UK). Seção "Personal presencial" só em PT (individual/dupla; adaptação 220/180, avulsa 80/77, 8 sessões 576/528, 12 sessões 816/744; botão WhatsApp 5527988225340).
 - Presencial na landing é fixo no código (a aba Planos só edita a consultoria online). Ao mudar valores, editar `PRES` e `PL_ADAPT` em `movhtemplate/index.html`.
-- Divergência a decidir: templates do Canva (v7) e a landing usam avulsa 80/77; o Gerador (`PL_PRESENCIAL`) tem avulsa 77/70.
-- ALERTA: `index.html` da landing tem a chave de produção do Asaas (`asaasKey`) em texto aberto. Revogar/gerar nova no Asaas e mover a criação da cobrança para uma Edge Function.
+- DECIDIDO (06/11): avulsa 77 (individual) e 70 (dupla); economia em reais (individual 40/108, dupla 32/96). Landing e Gerador alinhados; os templates do Canva (v7/v8) ainda mostram 80/77 e 10%/15%: atualizar.
+- DECIDIDO (06/11): Pix é a forma principal; cartão só em planos acima de 1 mês, o resto é Pix. Landing já diz isso; a Edge Function `create-checkout-asaas` ainda usa `billingType UNDEFINED` (Pix/Boleto/Cartão) para planos ≤30 dias: trocar para PIX exige deploy (pendente de autorização).
+- ALERTA: a `asaasKey` de produção (sem uso, a cobrança já passa pela Edge Function) foi removida do HTML, mas continua no histórico do Git: revogar/gerar nova no painel do Asaas e atualizar o secret `ASAAS_API_KEY` no Supabase.
 - Lição: teste visual da landing com Playwright, bloqueando requisições externas (`file://` + `route.abort`).
 
