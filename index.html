@@ -575,6 +575,15 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-tab.hoje{border-color:var(--G)}
 .cl-tab.on{background:var(--P);color:#fff;border-color:var(--P)}
 .cl-day{max-width:920px}
+/* v59.4 — Aulas Coletivas: usa a largura toda (blocos em colunas), blocos mais compactos, abas fixas */
+#page-coletivas .cl-day{max-width:none}
+@media(min-width:1000px){#page-coletivas .pg-head{flex-wrap:nowrap;gap:14px;margin-bottom:10px}#page-coletivas .pg-head>div:first-child{flex:1;min-width:0}#page-coletivas .pg-sub{font-size:11px}}
+#page-coletivas .cl-bloco{padding:8px 10px;margin-bottom:8px;break-inside:avoid}
+#page-coletivas .cl-bhd{margin-bottom:6px}
+#page-coletivas .cl-ex{margin-bottom:3px}
+#page-coletivas .cl-addex{margin:0 0 4px}
+#page-coletivas .cl-tabs{position:sticky;top:-1px;z-index:5;background:var(--bg);padding:4px 0 6px}
+@media(min-width:1000px){#page-coletivas .cl-blocos{column-width:500px;column-gap:10px}#page-coletivas .cl-vazio{column-span:all}}
 .cl-day-hd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .cl-day-t{font-size:15px;font-weight:800}
 .cl-dup{width:auto!important;font-size:11px;padding:3px 6px}
@@ -3065,7 +3074,7 @@ function coletivasRenderEditor(el, datas){
     '<div class="cl-day"><div class="cl-day-hd"><span class="cl-day-t">' + label + (coletivasDiaSel === hojeKey ? ' · hoje' : '') + '</span><span style="flex:1"></span>' +
     notasBtn('dia', (coletivasModo === 'personal' ? personalAlunoId : 'col') + '|' + coletivasDiaSel, 'Dia ' + label) + '<input type="date" id="cl-dup-data" class="cl-dup" title="Copiar este dia para a data escolhida"/><button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasDuplicarDia()">⧉ Copiar dia p/ data</button>' +
     '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasLimparDia()">🗑 Limpar dia</button></div>' +
-    (blocos.length ? blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length)).join('') : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') +
+    '<div class="cl-blocos">' + (blocos.length ? blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length)).join('') : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
     '<div class="cl-add"><button type="button" class="btn bp" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\')">＋ Bloco</button><button type="button" class="btn bs" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\',\'condicionamento\')">🔥 ＋ Condicionamento</button></div></div>';
   el.querySelectorAll('textarea.cl-ta').forEach(coletivasAuto);
 }
@@ -3092,7 +3101,7 @@ function renderColetivasBloco(dia, i, b, total){
     '<button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',-1)" title="Subir bloco"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',1)" title="Descer bloco"' + (i === total - 1 ? ' disabled' : '') + '>↓</button>' +
     '<button type="button" class="cl-ib" onclick="coletivasDupBloco(' + q + ')" title="Duplicar bloco">⧉</button><button type="button" class="cl-ib x" onclick="coletivasRemoverBloco(' + q + ')" title="Remover bloco">×</button></div>' + pal +
     (isC ? '<div class="cl-row2"><input type="text" placeholder="Formato (ex.: AMRAP 15min, EMOM 12min)" value="' + escAttr(b.formato || '') + '" oninput="coletivasSetBloco(' + q + ',\'formato\',this.value)"/><input type="text" placeholder="Materiais" value="' + escAttr(b.materiais || '') + '" oninput="coletivasSetBloco(' + q + ',\'materiais\',this.value)"/></div>' : exs + '<button type="button" class="cl-addex" onclick="coletivasAddEx(' + q + ')">＋ exercício</button><button type="button" class="cl-addex" onclick="coletivasAddVarios(' + q + ')">📂 vários</button>') +
-    '<textarea class="cl-ta" data-min="' + (isC ? 170 : 70) + '" placeholder="' + (isC ? 'Descreva o treino completo: rounds, movimentos, cargas, tempos, variações, escalas…' : 'Descrição, instruções, cargas, observações do bloco (aparece para o aluno)…') + '" oninput="coletivasAuto(this);coletivasSetBloco(' + q + ',\'detalhes\',this.value)">' + escAttr(b.detalhes || '') + '</textarea></div>';
+    '<textarea class="cl-ta" data-min="' + (isC ? 110 : 44) + '" placeholder="' + (isC ? 'Descreva o treino completo: rounds, movimentos, cargas, tempos, variações, escalas…' : 'Descrição, instruções, cargas, observações do bloco (aparece para o aluno)…') + '" oninput="coletivasAuto(this);coletivasSetBloco(' + q + ',\'detalhes\',this.value)">' + escAttr(b.detalhes || '') + '</textarea></div>';
 }
 const COLETIVAS_CORES = ['#1A9E72','#3580D8','#D45828','#C23B5A','#8A5CD0','#D9A21B','#2A9DB5','#6B7280'];
 let coletivasPalAberta = null;
@@ -3574,7 +3583,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v59.3 · 05/11';
+var MOVH_VER = 'v59.4 · 05/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──

@@ -109,3 +109,6 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Lista de exercícios mais usados: SQL em `protocolos.conteudo` (semanas→dias→blocos→exercicios[].nome), rodado pelo usuário no Supabase; base para o roteiro de gravação de vídeos.
 - Testes: reg_all 38, bulk 26, kbm 20, 0 FAIL. App inalterado, sem deploy.
 
+## 16. v59.4 (05/11/2026) — só Gerador
+- Aulas Coletivas: `.cl-day` sem limite de 920px; blocos dentro de `.cl-blocos` em colunas CSS (`column-width:500px`, só ≥1000px, `break-inside:avoid`); blocos/linhas mais compactos; textarea `data-min` 44 (normal) / 110 (condicionamento); abas dos dias `sticky`; cabeçalho da página sem quebra de linha (botões ao lado do título). Dia de 4 blocos: altura 1521→823 px (1700 px de largura). Estilos escopados em `#page-coletivas` (o app e o link público não mudam).
+
