@@ -112,3 +112,10 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 ## 16. v59.4 (05/11/2026) — só Gerador
 - Aulas Coletivas: `.cl-day` sem limite de 920px; blocos dentro de `.cl-blocos` em colunas CSS (`column-width:500px`, só ≥1000px, `break-inside:avoid`); blocos/linhas mais compactos; textarea `data-min` 44 (normal) / 110 (condicionamento); abas dos dias `sticky`; cabeçalho da página sem quebra de linha (botões ao lado do título). Dia de 4 blocos: altura 1521→823 px (1700 px de largura). Estilos escopados em `#page-coletivas` (o app e o link público não mudam).
 
+## 17. v59.5 (05/11/2026) — só Gerador (app idêntico, sem deploy)
+- Planos online (`PL_DEFAULT`): Mensal 180, Bimestral 320 (`pl6`, 60 dias, UK 69 = sugestão a confirmar), Trimestral 420, Renovação 150, Reativação 165; Semestral removido. Para valer: aba Planos → "↺ Valores definidos" e publicar; planos salvos no navegador/banco continuam com os antigos até isso.
+- `PL_PRESENCIAL` (só Gerador, não publica na landing nem no app): adaptação online 120; presencial individual 220/77 avulsa/576/816; dupla por pessoa 180/70 avulsa/528/744. `dias` assumidos: 30 (pacotes e adaptação presencial), 7 (avulsa), 28 (adaptação online) — é o acesso liberado ao confirmar o Pix; ajustar na constante se preferir.
+- Cobrar: lista agrupada (online + catálogo); oferta do catálogo grava `cobranca` com `tipo` = situação do aluno e `plano_nome`/`valor`/`dias`, e o app já paga por Pix e registra em `pagamentos_pix`. Mensagem própria para itens do catálogo.
+- Pendente: site/landing com os templates novos (adaptação online como plano de entrada, UK da adaptação) e rótulos de desconto do presencial (com avulsa 77, 8 sessões = ~6% e 12 = ~12%; usar "Economia de R$40/R$108").
+- Testes: reg_all 38, bulk 26, kbm 20, 0 FAIL; Cobrar testado com aluno simulado.
+
