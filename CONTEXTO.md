@@ -105,7 +105,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 ## 15. v59.3 (05/11/2026) — só Gerador
 - Quadro: resumo (exercícios · tempo) agora no cabeçalho da coluna; exercício em 1 linha (séries·descanso à direita); "vários/conjugado" só no hover (desktop); Condicionamento em `<details>` recolhido (estado em `_kbCondAb`); `--kbn` + coluna "Novo dia" fina; botão ⛶ Foco recolhe o menu lateral só no Quadro (`nav()` remove a classe fora de `kb-*`; preferência em `movh_kb_foco`).
 - Editor do dia: dia real/fase/foco/idioma dentro de "⚙ Detalhes do dia" (`_diaDetAb`).
-- Agentes do repo: `.claude/agents/movh-treino.md` (consultor de treino) e `movh-gestao.md` (administração); só leem e sugerem. Invocar pelo nome numa sessão com o MovhGen anexado.
+- Agentes do repo: FONTE ÚNICA em `plugins/movh/agents/` (`.claude/agents` é um link simbólico para lá): `movh-treino.md` (consultor de treino) e `movh-gestao.md` (administração); só leem e sugerem. Editar só em `plugins/movh/agents/` e subir a versão do plugin. Invocar pelo nome numa sessão com o MovhGen anexado.
 - Lista de exercícios mais usados: SQL em `protocolos.conteudo` (semanas→dias→blocos→exercicios[].nome), rodado pelo usuário no Supabase; base para o roteiro de gravação de vídeos.
 - Testes: reg_all 38, bulk 26, kbm 20, 0 FAIL. App inalterado, sem deploy.
 

@@ -6,7 +6,7 @@
       "name": "movh",
       "source": "./plugins/movh",
       "description": "Skills do Gerador/app do aluno e agents movh-treino e movh-gestao.",
-      "version": "1.0.0"
+      "version": "1.0.1"
     }
   ]
 }
