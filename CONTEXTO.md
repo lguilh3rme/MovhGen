@@ -151,3 +151,9 @@ Protótipo e prints em `docs/proposta-app-aluno/` (`proposta.html` abre no naveg
 - Tela de renovação: aviso "acesso termina em N dias" (tolerância 7 dias), planos com economia em reais (mensal 150 renovação, bimestral 320, trimestral 420), Pix em destaque (QR + copia-e-cola), "Já paguei"; cartão só em planos acima de 1 mês.
 - Regras de implementação: JS do app é TEXTO dentro do template literal (barra invertida dobrada, sem crases e `${`); `movh/index.html` é gerado pelo export; testar com `t.py`/`reg.py`; um merge por repo por rodada; pedir print antes de aplicar mudanças visuais maiores.
 
+
+## 21. Retomar (06/11/2026, 21h) — pós v60.1
+- App v60.1 mesclado (movh PR #34, 21h04); no print do Netlify às 21h05 aparecia só o Preview #34 e o último Production era o anterior: conferir em Deploys se existe Production `1a9904d`; se não, Trigger deploy. Cada preview/deploy do app gasta ~15 créditos (conta nova: 179 → 164 após o preview).
+- Landing v2 mesclada (movhtemplate PR #3). Tela de login do app só trocou o roxo por vermelho.
+- PR #63 do MovhGen (v60.0: presencial editável + Formas de pagamento) está com conflito com a v60.1: precisa de rebase sobre `main`, `MOVH_VER` v60.2 e rodar reg_all 38 / bulk 26 / kbm 20.
+- Seguem pendentes: Pix-only em `create-checkout-asaas` (aguarda autorização de deploy), tela do personal com sessões do pacote (tabela/coluna nova), renovação redesenhada, revogar chave Asaas, templates do Canva (80/77 e 10%/15% antigos).
