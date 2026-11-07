@@ -106,6 +106,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Quadro: resumo (exercícios · tempo) agora no cabeçalho da coluna; exercício em 1 linha (séries·descanso à direita); "vários/conjugado" só no hover (desktop); Condicionamento em `<details>` recolhido (estado em `_kbCondAb`); `--kbn` + coluna "Novo dia" fina; botão ⛶ Foco recolhe o menu lateral só no Quadro (`nav()` remove a classe fora de `kb-*`; preferência em `movh_kb_foco`).
 - Editor do dia: dia real/fase/foco/idioma dentro de "⚙ Detalhes do dia" (`_diaDetAb`).
 - Agentes do repo: FONTE ÚNICA em `plugins/movh/agents/` (`.claude/agents` é um link simbólico para lá): `movh-treino.md` (consultor de treino) e `movh-gestao.md` (administração); só leem e sugerem. Editar só em `plugins/movh/agents/` e subir a versão do plugin. Invocar pelo nome numa sessão com o MovhGen anexado.
+- Plugin `movh` (skills `movh` e `movh-gerador` + agents): fonte em `plugins/movh/`, instalável por `/plugin marketplace add lguilh3rme/MovhGen`. Sincronia: a skill compara a cópia instalada com a do repo a cada rodada (Passo 0, item 4) e o repo registra aqui o que muda; ao alterar o plugin, subir a versão em `plugin.json` e `marketplace.json`.
 - Lista de exercícios mais usados: SQL em `protocolos.conteudo` (semanas→dias→blocos→exercicios[].nome), rodado pelo usuário no Supabase; base para o roteiro de gravação de vídeos.
 - Testes: reg_all 38, bulk 26, kbm 20, 0 FAIL. App inalterado, sem deploy.
 
