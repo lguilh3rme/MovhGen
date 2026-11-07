@@ -1,0 +1,12 @@
+{
+  "name": "movh-marketplace",
+  "owner": { "name": "LGuilherme" },
+  "plugins": [
+    {
+      "name": "movh",
+      "source": "./plugins/movh",
+      "description": "Skills do Gerador/app do aluno e agents movh-treino e movh-gestao.",
+      "version": "1.0.0"
+    }
+  ]
+}
