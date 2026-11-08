@@ -29,4 +29,12 @@ const build = crypto.createHash('sha1').update(out).digest('hex').slice(0, 12);
 const final = out.replace('__MOVH_BUILD__', build);
 fs.writeFileSync(outPath, final);
 fs.writeFileSync(path.join(path.dirname(outPath), 'version.json'), JSON.stringify({ build }) + '\n');
+// Página do Personal (/personal): gerada de tools/personal_page.html com a URL e a chave pública do Supabase do Gerador.
+const ppSrc = path.join(__dirname, 'personal_page.html');
+if (fs.existsSync(ppSrc)) {
+  const mbUrl = (src.match(/const MB_URL = '([^']+)'/) || [])[1], mbKey = (src.match(/const MB_KEY = '([^']+)'/) || [])[1];
+  if (!mbUrl || !mbKey) throw new Error('MB_URL/MB_KEY não encontradas no Gerador');
+  const pdir = path.join(path.dirname(outPath), 'personal'); fs.mkdirSync(pdir, { recursive: true });
+  fs.writeFileSync(path.join(pdir, 'index.html'), fs.readFileSync(ppSrc, 'utf8').replace('__SB_URL__', mbUrl).replace('__SB_KEY__', mbKey));
+}
 console.log('ok', outPath, final.length, 'bytes', 'build', build);
