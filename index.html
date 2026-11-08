@@ -522,6 +522,7 @@ body.dock-open #aluno-dock{display:flex}
 /* ── editor enxuto (v97) ── */
 .sb-ver{margin:10px 14px 4px;font-size:9.5px;color:var(--t3);opacity:.7}
 .pb-btn.sv{background:var(--P);color:#fff;border-color:var(--P)}
+.pb-badge{font-size:10px;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap;border:1px solid}.pb-badge.pb-ativo{color:#1fb583;border-color:#1A9E72;background:rgba(26,158,114,.12)}.pb-badge.pb-rasc{color:#f0b429;border-color:#D4A017;background:rgba(212,160,23,.14)}.pb-btn.pf-prox{color:#1fb583!important;border-color:#1A9E72!important}
 .pb-btn.dest{max-width:150px;overflow:hidden;text-overflow:ellipsis;background:var(--Pl);color:var(--Pd);border-color:var(--P)}
 .pb-btn.sv.dirty{box-shadow:0 0 0 2px rgba(224,80,40,.35)}
 .sel-cb{display:none;width:16px;height:16px;flex:0 0 auto;accent-color:var(--P);cursor:pointer;margin:0 4px 0 0}
@@ -2300,7 +2301,11 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')">⚙️</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">✅ Treino ativo do aluno</span>':'<span class="pb-badge pb-rasc">📝 Rascunho inativo · não está em vigor</span>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+}
+function pbProximaFase(){
+  if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
+  mbSugerirProximaFase(String(mbProtoCarregadoId),mbAlunoSelecionadoId);
 }
 function pbDestInfo(){
   if(_dest&&_dest.tipo==='split'){const sp=(typeof SPLITS!=='undefined'?SPLITS:[]).find(x=>x.id===_dest.id);return{k:'split',txt:'📂 '+(sp?sp.nome:'Split'),acao:'💾 Salvar split'};}
@@ -3580,7 +3585,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.1 · 08/11';
+var MOVH_VER = 'v61.2 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3785,9 +3790,92 @@ visualAplicar();verAplicar();
 // dias/blocos/exercícios já existentes. Editar estrutura (renomear bloco,
 // trocar tipo etc.) continua na visão de dia completo — o pencil de cada
 // coluna e cada card leva direto pra lá.
+
+// ══ Análise técnica (Quadro + Próxima fase): painel RECOLHÍVEL, estado lembrado ══
+let _kbSidAtual = null;
+const _kbDb = {}; // alunoId -> {rpeMed, diasReg, hits, nivel} (carregado 1x do banco)
+const PF_PARAMS = ['Fase única 8 semanas','RIR 2 (última série 1)',"Compostos 2' · isoladores 1'",'Progressão dupla: topo da faixa → +carga','Volume mín. ~10 séries/sem por músculo','Revisão a cada 4 semanas'];
+function pfAnAberto(){ try { return localStorage.getItem('movh_pf_analise') !== '0'; } catch(e){ return true; } }
+function pfAnToggle(el){
+  try { localStorage.setItem('movh_pf_analise', el.open ? '1' : '0'); } catch(e){}
+  document.querySelectorAll('details.pf-an').forEach(d => { if (d !== el && d.open !== el.open) d.open = el.open; });
+}
+function pfAnaliseHTML(o){
+  const vol = o.vol || {};
+  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0, ok = n >= 10; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/10</span>`; }).join('');
+  const nAl = (o.alertas||[]).filter(x => x.t !== 'ok').length;
+  const box = (tit, inner, fl) => `<div style="flex:${fl||1};min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">${tit}</b>${inner}</div>`;
+  const ctx = (o.ctx||[]).map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${escAttr(r[0])}</span><b>${escAttr(r[1])}</b></div>`).join('');
+  const par = PF_PARAMS.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('');
+  const al = (o.alertas||[]).length ? o.alertas.map(x => `<div style="padding:2px 0;color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'+':'!'} ${escAttr(x.x)}</div>`).join('') : '<div style="padding:2px 0;color:var(--t3,#888)">Sem alertas.</div>';
+  return `<details class="pf-an" ${pfAnAberto()?'open':''} ontoggle="pfAnToggle(this)" style="margin:6px 0 12px;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 10px">
+    <summary style="cursor:pointer;font-size:12px;font-weight:700;display:flex;flex-wrap:wrap;gap:8px;align-items:center">📊 Análise técnica · ${nAl} alerta${nAl!==1?'s':''} <span style="font-weight:400;font-size:10px;color:var(--t3,#888)">(clique para recolher/expandir)</span></summary>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${box('CONTEXTO',ctx)}${box('PARÂMETROS',par)}${box('ALERTAS',al,1.4)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px"><b style="font-size:10px;letter-spacing:.5px">VOLUME SEMANAL</b>${chips}</div>
+  </details>`;
+}
+// Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
+function kbAnaliseDados(sem){
+  const vol = pfVolume(sem), alertas = [];
+  const baixo = PF_MUSCULOS.filter(m => (vol[m.k]||0) < 10).map(m => m.k+' '+(vol[m.k]||0));
+  if (baixo.length) alertas.push({t:'av', x:'Volume abaixo de ~10 séries/sem: '+baixo.join(' · ')});
+  const fora = [];
+  (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
+    if (!e.nome) return;
+    const alvo = (PF_COMPOSTO.test(e.nome) && !/panturrilha/i.test(e.nome)) ? 120 : 60;
+    if (parseRestSegundos(e.rest) !== alvo) fora.push(e.nome);
+  }); }));
+  if (fora.length) alertas.push({t:'av', x:"Descanso fora do padrão (compostos 2', isoladores 1') em "+fora.length+': '+fora.slice(0,3).join(', ')+(fora.length>3?'…':'')});
+  const semRegra = (sem.dias||[]).filter(d => { const b = pfBlocoPrincipal(d); return b && !/progress[aã]o dupla/i.test(b.obs||''); }).map(d => d.nome || 'Dia');
+  if (semRegra.length) alertas.push({t:'av', x:'Bloco principal sem a regra de RIR/progressão dupla na obs: '+semRegra.join(', ')});
+  const db = (typeof mbAlunoSelecionadoId !== 'undefined' && mbAlunoSelecionadoId) ? _kbDb[mbAlunoSelecionadoId] : null;
+  if (db) {
+    if (db.hits && db.hits.length) alertas.push({t:'av', x:'Anamnese cita: '+db.hits.join(', ')+' — confira exercícios e volume dessas regiões'});
+    if (db.rpeMed != null && db.rpeMed >= 9) alertas.push({t:'av', x:'RPE médio '+db.rpeMed.toFixed(1)+': sessões muito puxadas — considere reduzir volume'});
+    if (db.rpeMed != null && db.rpeMed <= 4) alertas.push({t:'av', x:'RPE médio '+db.rpeMed.toFixed(1)+': sessões leves — pode apertar a carga'});
+    if (db.diasReg < 15) alertas.push({t:'av', x:'Poucos registros: '+db.diasReg+' dia(s) com carga em 10 semanas — a progressão dupla depende deles'});
+  }
+  let tot = 0, min = 0;
+  (sem.dias||[]).forEach(d => { const r = kbEstimarDia(d); tot += r.totalEx; min += r.minutos; });
+  const nd = (sem.dias||[]).length || 1;
+  const ini = (typeof mbProtoDataInicio !== 'undefined' && mbProtoDataInicio) ? mbProtoDataInicio.split('-').reverse().join('/') : '—';
+  const dest = (typeof pbDestInfo === 'function') ? pbDestInfo().txt.replace(/^\S+\s/,'').replace(/ · novo$/,'') : '—';
+  const ctx = [['Destino', dest], ['Fase', (sem.nome||'—')+' · '+(parseInt(sem.duracaoSemanas)||4)+' sem'], ['Dias por semana', String((sem.dias||[]).length)],
+    ['Exercícios', tot+' · ~'+Math.round(min/nd)+' min/dia'], ['Início', ini],
+    ['RPE médio', db && db.rpeMed != null ? db.rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', db ? db.diasReg+' dia(s)' : '—']];
+  return {vol, alertas, ctx};
+}
+function kbAnaliseHTML(sem){ return pfAnaliseHTML(kbAnaliseDados(sem)); }
+function kbAnaliseRefresh(){
+  const w = document.getElementById('kb-analise-wrap'); if (!w) return;
+  const sem = semanas.find(x => x.id === _kbSidAtual); if (!sem) return;
+  const det = w.querySelector('details'), aberto = det ? det.open : null;
+  w.innerHTML = kbAnaliseHTML(sem);
+  if (aberto != null) { const d2 = w.querySelector('details'); if (d2) d2.open = aberto; }
+}
+async function kbAnaliseCarregarDb(){
+  const aid = (typeof mbAlunoSelecionadoId !== 'undefined') ? mbAlunoSelecionadoId : null;
+  if (!aid || _kbDb[aid] || typeof mbClient === 'undefined' || !mbClient) return;
+  _kbDb[aid] = {rpeMed:null, diasReg:0, hits:[], nivel:''}; // evita chamadas repetidas
+  try {
+    const desde = new Date(Date.now() - 70*86400000).toISOString();
+    const [an, rp, rg] = await Promise.all([
+      mbClient.from('anamneses').select('respostas').eq('aluno_id', aid).eq('tipo','anamnese').not('respostas','is',null).order('criado_em',{ascending:false}).limit(1),
+      mbClient.from('rpe_sessoes').select('rpe').eq('aluno_id', aid).order('criado_em',{ascending:false}).limit(5),
+      mbClient.from('registros_sessao').select('criado_em').eq('aluno_id', aid).gte('criado_em', desde)
+    ]);
+    const resp = an.data && an.data[0] ? an.data[0].respostas : null;
+    const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
+    const rpes = (rp.data||[]).filter(r => r.rpe != null);
+    _kbDb[aid] = { rpeMed: rpes.length >= 3 ? rpes.reduce((x,r) => x + r.rpe, 0) / rpes.length : null,
+      diasReg: new Set((rg.data||[]).map(r => String(r.criado_em).slice(0,10))).size, hits, nivel: resp && resp.tempo_treino ? String(resp.tempo_treino) : '' };
+    kbAnaliseRefresh();
+  } catch (e) { console.warn('[MOVH] análise do Quadro (banco):', e); }
+}
 function kbToggleFoco(){const a=document.querySelector('.app');if(!a)return;const on=a.classList.toggle('foco');try{localStorage.setItem('movh_kb_foco',on?'1':'0');}catch(e){}}
 function renderKanbanSemana(sid){
   const sem=semanas.find(s=>s.id===sid);if(!sem)return;
+  _kbSidAtual=sid;kbAnaliseCarregarDb();
   let pg=document.getElementById('page-kb-'+sid);
   if(!pg){pg=document.createElement('div');pg.id='page-kb-'+sid;pg.className='page';document.getElementById('day-pages').appendChild(pg);}
   const cols=sem.dias.map(d=>{
@@ -3832,6 +3920,7 @@ function renderKanbanSemana(sid){
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button></div>
     </div>
+    <div id="kb-analise-wrap">${kbAnaliseHTML(sem)}</div>
     <div class="kb-board" style="--kbn:${sem.dias.length}">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
       <span style="font-size:20px">+</span><span style="font-size:11px;font-weight:700">Novo dia</span>
     </div></div>`;
@@ -4025,6 +4114,7 @@ function kbAtualizarFooter(did){
   if(!foot)return;
   const{totalEx,minutos}=kbEstimarDia(d);
   foot.textContent=`${totalEx} exercício${totalEx!==1?'s':''} · ⏱️ ~${minutos} min`;
+  kbAnaliseRefresh();
 }
 function kbCard(did,bi,i,ex){
   const badge=ex.series?(ex.rest?`${escAttr(ex.series)} · ${escAttr(ex.rest)}`:escAttr(ex.series)):'';
@@ -7814,6 +7904,7 @@ const mbClientAvulso = window.supabase.createClient(MB_URL, MB_KEY, {
 let mbProfessor = null; // {id, nome, email}
 let mbAlunos = [];       // lista de alunos do professor logado
 let mbAlunoSelecionadoId = null;
+let _mbProtoAtivo = true; // false = protocolo carregado no editor é rascunho inativo
 let mbProtoCarregadoId = null; // ID do protocolo carregado no editor (para UPDATE)
 
 function mbShowMsg(elId, text, type) {
@@ -10368,8 +10459,8 @@ function pfRender(){
     const linhas = (d.blocos||[]).map((b,bi) => b.id === 'con' ? '' : (b.exercicios||[]).map((e,ei) => `
       <div style="display:flex;gap:4px;align-items:center;padding:4px 5px;margin-bottom:4px;border-radius:6px;border:1px solid ${e._novo?'#1A9E72':'var(--bd,#ddd)'};background:${e._novo?'rgba(26,158,114,.22)':'transparent'}">
         <input value="${escAttr(e.nome||'')}" oninput="pfSet(${di},${bi},${ei},'nome',this.value)" style="flex:1;min-width:0;font-size:11px;font-weight:600;border:0;background:transparent;color:inherit">
-        <input value="${escAttr(e.series||'')}" oninput="pfSet(${di},${bi},${ei},'series',this.value)" style="width:58px;font-size:11px;text-align:center;border:1px solid var(--bd,#ddd);border-radius:4px">
-        <input value="${escAttr(e.rest||'')}" oninput="pfSet(${di},${bi},${ei},'rest',this.value)" style="width:38px;font-size:11px;text-align:center;border-radius:4px;border:1px solid ${e._restAlt?'#D4A017':'var(--bd,#ddd)'};${e._restAlt?'background:rgba(212,160,23,.25);color:#f0b429;font-weight:700':''}">
+        <input value="${escAttr(e.series||'')}" oninput="pfSet(${di},${bi},${ei},'series',this.value)" style="width:92px;font-size:11px;text-align:center;border:1px solid var(--bd,#ddd);border-radius:4px">
+        <input value="${escAttr(e.rest||'')}" oninput="pfSet(${di},${bi},${ei},'rest',this.value)" style="width:46px;font-size:11px;text-align:center;border-radius:4px;border:1px solid ${e._restAlt?'#D4A017':'var(--bd,#ddd)'};${e._restAlt?'background:rgba(212,160,23,.25);color:#f0b429;font-weight:700':''}">
         <button onclick="pfDel(${di},${bi},${ei})" title="Remover" style="border:0;background:none;color:#c03030;cursor:pointer;font-size:13px">×</button>
         ${e._novo ? '<span style="font-size:8px;font-weight:700;background:#1A9E72;color:#fff;border-radius:99px;padding:1px 5px">novo</span>' : ''}
       </div>`).join('')).join('');
@@ -10384,20 +10475,18 @@ function pfRender(){
       <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:800">✨ Próxima fase · ${escAttr(P.alunoNome)}</div>
       <div style="font-size:11px;color:var(--t3,#888)">Rascunho gerado da fase vigente + histórico + regras do MOVH · tudo editável · só grava ao salvar</div></div>
       <label style="font-size:11px">Início <input type="date" value="${P.data}" onchange="_pf.data=this.value" style="font-size:12px"></label>
+      <button class="btn bs" onclick="pfSalvar('quadro')" title="Grava como rascunho INATIVO (não entra em vigor) e abre no Quadro para editar">🗂️ Editar no Quadro</button>
       <button class="btn bs" onclick="pfFechar()">Descartar</button>
       <button class="btn bs" onclick="pfSalvar(false)">Salvar rascunho</button>
       <button class="btn bp" onclick="pfSalvar(true)">Salvar e ativar…</button>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-      <div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">CONTEXTO</b>${P.ctx.map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${r[0]}</span><b>${escAttr(r[1])}</b></div>`).join('')}</div>
-      <div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">PARÂMETROS</b>${par.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('')}</div>
-      <div style="flex:1.4;min-width:260px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">ALERTAS</b>${P.alertas.length ? P.alertas.map(x => `<div style="padding:2px 0;color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'+':'!'} ${escAttr(x.x)}</div>`).join('') : '<div style="padding:2px 0;color:var(--t3,#888)">Sem alertas.</div>'}</div>
-    </div>
+    <div id="pf-analise-wrap">${pfAnaliseHTML({ctx:P.ctx,alertas:P.alertas,vol:pfVolume(P.sem)})}</div>
     <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">${col}</div>
     <div style="font-size:10px;color:var(--t3,#888);margin-top:8px">Campos: nome · séries×reps · descanso (âmbar = descanso alterado, verde = exercício novo sugerido; a obs do bloco principal recebe a regra de RIR/progressão). Condicionamento e ativação ficam como estavam.</div>
   </div>`;
 }
-function pfSet(di,bi,ei,k,v){ const e = _pf.sem.dias[di].blocos[bi].exercicios[ei]; e[k] = v; if (k === 'rest') e._restAlt = false; }
+function pfSet(di,bi,ei,k,v){ const e = _pf.sem.dias[di].blocos[bi].exercicios[ei]; e[k] = v; if (k === 'rest') e._restAlt = false;
+  if (k === 'series' || k === 'nome') { const w = document.getElementById('pf-analise-wrap'); if (w) { const d0 = w.querySelector('details'), ab = d0 ? d0.open : null; w.innerHTML = pfAnaliseHTML({ctx:_pf.ctx,alertas:_pf.alertas,vol:pfVolume(_pf.sem)}); const d2 = w.querySelector('details'); if (d2 && ab != null) d2.open = ab; } } }
 function pfDel(di,bi,ei){ _pf.sem.dias[di].blocos[bi].exercicios.splice(ei,1); pfRender(); }
 function pfAdd(di){ const b = pfBlocoPrincipal(_pf.sem.dias[di]); if (!b) return; b.exercicios.push({nome:'', url:'', series:'3×10-12', rest:"1'", obs:'', cj:null}); pfRender(); }
 function pfFechar(){ const ov = document.getElementById('pf-overlay'); if (ov) ov.remove(); _pf = null; }
@@ -10415,9 +10504,17 @@ async function pfSalvar(ativar){
     if (error) throw error;
     const alunoId = P.alunoId, novoId = data && data.id;
     pfFechar();
+    if (ativar === 'quadro' && novoId) {
+      const sel = document.getElementById('mb-aluno-select');
+      if (sel) { sel.value = alunoId; mbOnAlunoChange(); }
+      mbAplicarProtoNoEditor({ id: novoId, nome, conteudo, ativo: false, data_inicio: P.data });
+      if (semanas[0]) nav('kb-' + semanas[0].id);
+      notify('📝 Rascunho inativo salvo e aberto no Quadro. Edite e use 💾 Atualizar aluno; ele só entra em vigor se você ativar.');
+      return;
+    }
     notify('✅ Rascunho salvo (inativo, início ' + P.data.split('-').reverse().join('/') + ').');
     mbGerenciarProtocolos(alunoId);
-    if (ativar && novoId) mbReativarProtocolo(String(novoId), alunoId);
+    if (ativar === true && novoId) mbReativarProtocolo(String(novoId), alunoId);
   } catch (e) { notify('Erro ao salvar rascunho: ' + (e.message || e)); }
 }
 
@@ -10759,6 +10856,7 @@ function mbAplicarProtoNoEditor(proto) {
 
   // guarda o ID para permitir UPDATE direto
   mbProtoCarregadoId = proto.id;
+  _mbProtoAtivo = proto.ativo !== false;
   const nomeProto = c.nome || proto.nome || 'protocolo';
   document.getElementById('mb-update-wrap').style.display = 'block';
   document.getElementById('mb-proto-editando').textContent = '✏️ Editando: ' + nomeProto;
