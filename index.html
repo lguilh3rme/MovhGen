@@ -3787,6 +3787,37 @@ function pfAnToggle(el){
   try { localStorage.setItem('movh_pf_analise', el.open ? '1' : '0'); } catch(e){}
   document.querySelectorAll('details.pf-an').forEach(d => { if (d !== el && d.open !== el.open) d.open = el.open; });
 }
+// Gera comparação "atual vs recomendado" por nível/fase
+function pfComparacaoHTML(o){
+  const sem = o.sem || {};
+  const nivel = o.nivel || '';
+  const vol = o.vol || {};
+  if(!nivel || !NIVEL_TREINO[nivel]) return '';
+  const rec = NIVEL_TREINO[nivel];
+  const porFase = {};
+  (o.lista || []).forEach(s => { if(s.fase) porFase[s.fase] = (porFase[s.fase]||0) + (s.duracaoSemanas||4); });
+  const baseAtual = porFase.base || (sem.fase==='base' ? (sem.duracaoSemanas||8) : 0);
+  const adapAtual = porFase.adaptacao || (sem.fase==='adaptacao' ? (sem.duracaoSemanas||4) : 0);
+  const baseRec = rec.base ? rec.base[0]+'–'+rec.base[1]+' sem' : '—';
+  const adapRec = rec.adaptacao ? rec.adaptacao[0]+'–'+rec.adaptacao[1]+' sem' : '—';
+  const deloadRec = rec.deloadACada ? rec.deloadACada[0]+'–'+rec.deloadACada[1]+' sem' : '—';
+  const deloadAtual = o.maiorSemDeload || 0;
+  const volMin = 10; // séries/sem por músculo
+  const ftBase = FASES_TEMPLATE.base;
+  const ftAdap = FASES_TEMPLATE.adaptacao;
+  const linhas = [
+    {label:'Duração Base', atual:baseAtual?baseAtual+' sem':'—', rec:baseRec, ok:baseAtual && baseAtual>=rec.base[0] && baseAtual<=rec.base[1]},
+    {label:'Duração Adaptação', atual:adapAtual?adapAtual+' sem':'—', rec:adapRec, ok:!rec.adaptacao || !adapAtual || (adapAtual>=rec.adaptacao[0] && adapAtual<=rec.adaptacao[1])},
+    {label:'Deload máx. sem deload', atual:deloadAtual?deloadAtual+' sem':'—', rec:deloadRec, ok:deloadAtual <= rec.deloadACada[1]},
+    {label:'Volume mín. músculo', atual:Math.min(...Object.values(vol).filter(v=>v>0))+' séries/sem', rec:'≥10 séries/sem', ok:Object.values(vol).every(v=>v>=10 || v===0)},
+    {label:'RPE alvo', atual:'—', rec:ftBase.rpe, ok:true},
+    {label:'RIR alvo', atual:'—', rec:ftBase.rir, ok:true},
+    {label:'Descanso padrão', atual:'—', rec:ftBase.descanso, ok:true},
+  ];
+  const rows = linhas.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px solid var(--bd,#eee)"><div><span style="color:var(--t3,#888)">${escAttr(x.label)}</span></div><div style="text-align:right"><span style="font-weight:600">${escAttr(x.atual)}</span><span style="color:var(--t3,#888);margin-left:6px">→ ${escAttr(x.rec)}</span>${x.ok?' <span style="color:#1A9E72;margin-left:4px">✓</span>':''}</div></div>`).join('');
+  return `<div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">PARÂMETROS ATUAL vs RECOMENDADO (${rec.label})</b>${rows}</div>`;
+}
+
 function pfAnaliseHTML(o){
   const vol = o.vol || {};
   const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0, ok = n >= 10; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/10</span>`; }).join('');
@@ -3795,9 +3826,10 @@ function pfAnaliseHTML(o){
   const ctx = (o.ctx||[]).map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${escAttr(r[0])}</span><b>${escAttr(r[1])}</b></div>`).join('');
   const par = PF_PARAMS.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('');
   const al = (o.alertas||[]).length ? o.alertas.map(x => `<div style="padding:2px 0;color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'+':'!'} ${escAttr(x.x)}</div>`).join('') : '<div style="padding:2px 0;color:var(--t3,#888)">Sem alertas.</div>';
+  const cmp = pfComparacaoHTML(o);
   return `<details class="pf-an" ${pfAnAberto()?'open':''} ontoggle="pfAnToggle(this)" style="margin:6px 0 12px;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 10px">
     <summary style="cursor:pointer;font-size:12px;font-weight:700;display:flex;flex-wrap:wrap;gap:8px;align-items:center">📊 Análise técnica · ${nAl} alerta${nAl!==1?'s':''} <span style="font-weight:400;font-size:10px;color:var(--t3,#888)">(clique para recolher/expandir)</span></summary>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${box('CONTEXTO',ctx)}${box('PARÂMETROS',par)}${box('ALERTAS',al,1.4)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${box('CONTEXTO',ctx)}${box('PARÂMETROS',par)}${cmp}${box('ALERTAS',al,1.4)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px"><b style="font-size:10px;letter-spacing:.5px">VOLUME SEMANAL</b>${chips}</div>
   </details>`;
 }
@@ -3830,7 +3862,13 @@ function kbAnaliseDados(sem){
   const ctx = [['Destino', dest], ['Fase', (sem.nome||'—')+' · '+(parseInt(sem.duracaoSemanas)||4)+' sem'], ['Dias por semana', String((sem.dias||[]).length)],
     ['Exercícios', tot+' · ~'+Math.round(min/nd)+' min/dia'], ['Início', ini],
     ['RPE médio', db && db.rpeMed != null ? db.rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', db ? db.diasReg+' dia(s)' : '—']];
-  return {vol, alertas, ctx};
+  // Dados para comparação atual vs recomendado
+  let maiorSemDeload = 0, semDeload = 0;
+  semanas.forEach(s => {
+    if (s.fase === 'deload') { semDeload = 0; }
+    else { semDeload += (s.duracaoSemanas || 4); maiorSemDeload = Math.max(maiorSemDeload, semDeload); }
+  });
+  return {vol, alertas, ctx, lista: semanas, nivel: nivelAluno, maiorSemDeload, sem};
 }
 function kbAnaliseHTML(sem){ return pfAnaliseHTML(kbAnaliseDados(sem)); }
 function kbAnaliseRefresh(){
@@ -4918,25 +4956,24 @@ function renderSB(){
 const NIVEL_TREINO = {
   iniciante: {
     label:'Iniciante', sub:'< 1 ano de treino',
-    base:[6,8], intensificacao:[3,4], densidade:[0,2], deloadACada:[8,12],
-    modelo:'Linear — progressão previsível funciona bem, ainda não precisa de muita variação.'
+    base:[6,8], adaptacao:[4,6], deloadACada:[8,12],
+    modelo:'Linear — Base longa (6-8 sem) + Adaptação opcional (4-6 sem) para construir fundação sólida.'
   },
   intermediario: {
     label:'Intermediário', sub:'1–3 anos de treino',
-    base:[3,4], intensificacao:[3,4], densidade:[2,3], deloadACada:[4,6],
-    modelo:'Ondulatória/blocos — o progresso linear já desacelera, precisa de mais variação de estímulo.'
+    base:[4,6], adaptacao:[3,4], deloadACada:[6,8],
+    modelo:'Ondulatória — Base moderada (4-6 sem) + Adaptação (3-4 sem) se necessário, variação de estímulo.'
   },
   avancado: {
     label:'Avançado', sub:'3+ anos de treino',
-    base:[1,2], intensificacao:[2,3], densidade:[2,3], deloadACada:[3,4],
-    modelo:'Blocos concentrados — fases curtas e específicas, deload mais frequente (margem até o teto é pequena).'
+    base:[3,5], adaptacao:[0,2], deloadACada:[4,6],
+    modelo:'Blocos concentrados — Base curta (3-5 sem), Adaptação rara/opcional, deload mais frequente.'
   }
 };
 // Compara o plano atual (lista de mesociclos) com o recomendado pro nível
 // e devolve avisos textuais curtos — não é validação rígida, é orientação.
 function analisarPeriodizacao(lista, nivel){
   const avisos=[];
-  // RPE real independe do nível de treino selecionado — roda sempre que houver dado.
   if(rpeMedioRecente!=null && rpeMedioRecente>=8){
     avisos.push({
       texto:`🔥 RPE médio das últimas sessões: ${rpeMedioRecente.toFixed(1)}/10 — fadiga alta mesmo sem bater o limite de semanas. Considere antecipar o deload.`,
@@ -4947,7 +4984,8 @@ function analisarPeriodizacao(lista, nivel){
   const rec=NIVEL_TREINO[nivel];
   const porFase={};
   lista.forEach(s=>{if(s.fase)porFase[s.fase]=(porFase[s.fase]||0)+(s.duracaoSemanas||4);});
-  ['base','intensificacao','densidade'].forEach(f=>{
+  // Fases novas: base, adaptacao
+  ['base','adaptacao'].forEach(f=>{
     const [min,max]=rec[f];
     const atual=porFase[f]||0;
     if(min>0&&atual<min){
