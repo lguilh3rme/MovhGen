@@ -4,7 +4,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- 08/11 ~14h: Quadro (editor de treino) no padrão do overlay ✨ Próxima fase. Pedido: (1) cabeçalho com CONTEXTO/PARÂMETROS/ALERTAS (volume por músculo, RIR, descanso) também no Quadro normal; (2) overlay da Próxima fase passa a usar a edição séries×reps/descanso/obs do Quadro e ganha botão "Editar no Quadro" (rascunho inativo, não entra em vigor); (3) reorganizar o topo do Quadro (Base/Densidade espalhados; fase única base 8 sem); (4) botão ✨ Próxima fase também no Quadro/card do aluno. Plano: implementar local, testar, mostrar print ANTES de subir. Só Gerador (sem deploy do app). Retomado 08/11 (nova conta, push via token temporário): prints aprovados pelo usuário; acrescentado pedido: cabeçalho técnico (CONTEXTO/PARÂMETROS/ALERTAS) RECOLHÍVEL/EXPANSÍVEL no Quadro e no overlay, estado lembrado.
+- (nada em andamento)
 
 ## 1. Repositórios e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~17k linhas) = FONTE de tudo (Gerador + app do aluno dentro do template literal de `exportarComLogin()`, ~linhas 11148–15600). Gerador hospedado no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (também existe cópia em Cloudflare Workers `movhgen.lguilh3rme.workers.dev`).
@@ -111,6 +111,8 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Personal: `tools/personal_page.html` (placeholders `__SB_URL__`/`__SB_KEY__`) → `export_app.js` grava `personal/index.html` ao lado do app; RPCs `get_personal_painel`, `get_personal_registros`, `salvar_personal_registro`, `get_treino_personal_publico`.
 - Testes: reg_all 38, bulk 26, kbm 20, `node --check`, t.py ok/erro, Personal com RPC simulado. NÃO testado: YouTube real, Supabase real na página do Personal, celular real. Netlify: um push no app = ~30 créditos (preview + produção).
 - Lição visual: regras antigas `.vbtn` e `.ec-name-row .vbtn` usam `!important`; componente novo precisa de `!important` ou escopo e conferência por print real (os testes não pegam layout). Em `onclick` do template evitar aspas escapadas (`==1`, não `==='1'`).
+
+- v61.2 (08/11, só Gerador, app IDÊNTICO → sem deploy no Netlify): Quadro ganhou **📊 Análise técnica** (CONTEXTO/PARÂMETROS/ALERTAS + chips de volume por músculo) RECOLHÍVEL/EXPANSÍVEL, estado lembrado em `localStorage movh_pf_analise` e sincronizado com o overlay; recalcula ao editar (`kbAnaliseRefresh` via `kbAtualizarFooter`); dados de RPE/registros/anamnese vêm do banco 1x por aluno (`_kbDb`). Barra do Quadro: selo "✅ Treino ativo do aluno" / "📝 Rascunho inativo" (`_mbProtoAtivo`) e botão ✨ Próxima fase (`pbProximaFase`, só com treino ATIVO salvo carregado). Overlay da Próxima fase: usa o mesmo painel (`pfAnaliseHTML`), volume ao vivo e botão **🗂️ Editar no Quadro** (`pfSalvar('quadro')`: grava rascunho INATIVO e abre no Quadro; Atualizar aluno NÃO muda `ativo`). Testes: reg_all 38, bulk 26, kbm 20, `node --check`, teste de feature com Playwright (recolher/expandir, selo, overlay, Editar no Quadro com insert simulado). NÃO testado: Supabase real.
 
 ## 15. Como retomar em qualquer conta
 1. Vincular o GitHub (claude.ai → Customize → Connectors) e conectar o conector Supabase (só SELECT por padrão; escrita/DDL só com autorização). Token colado no chat NÃO é necessário: `add_repo` com `access:"push"` e clone em `/home/claude/<repo>`.
