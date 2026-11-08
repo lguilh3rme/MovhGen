@@ -2021,35 +2021,29 @@ async function dbDeletarCategoria(cat){
 // pro gráfico de Volume × Intensidade (montarGraficoVolInt), não mudam
 // nada do texto já exibido em outros lugares do editor/app do aluno.
 const FASES_TEMPLATE = {
+  adaptacao: {
+    label: 'Adaptação', emoji: '🟢', cor: '#1A9E72',
+    rpe: '5–7', rir: '3–4', carga: '~50–65%', volume: 'Baixo/Moderado', descanso: 'Conforme necessidade',
+    volNum: 4, intNum: 55,
+    progressao: [
+      'Fase opcional de 4 semanas — SÓ para iniciantes/retorno',
+      'Foco em aprendizado motor e condicionamento inicial',
+      'Transição suave para Base'
+    ]
+  },
   base: {
     label: 'Base', emoji: '🔵', cor: '#3580D8',
-    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Alto (mín. 10 séries/sem por músculo)', descanso: 'Compostos 2 min · isoladores 1 min',
+    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Por grupamento (faixas próprias)', descanso: 'Compostos 2 min · isoladores 1 min',
     volNum: 8, intNum: 65,
     progressao: [
-      'Fase única de 8 semanas',
+      'Fase principal de 8 semanas (hard sets perto da falha)',
       'Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga',
-      'Revisão a cada 4 semanas pelos registros e dor'
+      'Revisão a cada 4 semanas pelos registros e dor',
+      'Após Base, a próxima fase recomendada é NOVA Base (variar exercícios)'
     ]
   },
-  intensificacao: {
-    label: 'Intensificação', emoji: '🔴', cor: '#D43A3A',
-    rpe: '7–9', rir: '1–3', carga: '~75–90%', volume: 'Moderado', descanso: 'Maior',
-    volNum: 5, intNum: 82,
-    progressao: [
-      'Semana 1: sobe carga',
-      'Semana 2: mantém carga + melhora execução',
-      'Semana 3: aproxima da falha (RIR 1–2)'
-    ]
-  },
-  densidade: {
-    label: 'Densidade', emoji: '🟡', cor: '#D4A017',
-    rpe: '7–9', rir: '1–2', carga: 'Moderada (~65–80%)', volume: 'Moderado/Alto', descanso: 'Curto',
-    volNum: 7, intNum: 72,
-    progressao: [
-      'Reduz descanso',
-      'Mantém carga moderada, aumenta esforço total'
-    ]
-  },
+  // Deload mantido só para uso interno (inserção automática de semana de deload baseada em RPE/nível).
+  // NÃO aparece no seletor de fases do professor.
   deload: {
     label: 'Deload', emoji: '⚫', cor: '#666666',
     rpe: '4–6', rir: '4–6', carga: '~50–60%', volume: 'Baixo', descanso: 'Livre',
@@ -2093,17 +2087,11 @@ function condSugestao(faseKey, duracaoBase, zonaBase){
   const zonas=['Z1','Z2','Z3','Z4','Z5'];
   const zIdx=zonaBase?zonas.indexOf(zonaBase):1; // padrão Z2 se não definida
   let minutos=minBase, zonaSug=zonaBase||'Z2', obsTxt='';
-  if(faseKey==='base'){
-    minutos=minBase; zonaSug=zonaBase||'Z2'; obsTxt='ritmo constante, construção de base';
-  } else if(faseKey==='intensificacao'){
-    minutos=minBase?Math.max(10,Math.round(minBase*0.85)):minBase;
-    zonaSug=zonas[Math.min(zIdx+1,4)]; obsTxt='menos duração, mais intensidade';
-  } else if(faseKey==='densidade'){
+  if(faseKey==='adaptacao'){
     minutos=minBase?Math.max(8,Math.round(minBase*0.7)):minBase;
-    zonaSug=zonas[Math.min(zIdx+1,4)]; obsTxt='intervalado, descansos curtos';
-  } else if(faseKey==='deload'){
-    minutos=minBase?Math.max(8,Math.round(minBase*0.6)):minBase;
-    zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='recuperação ativa, sem esforço alto';
+    zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='foco em técnica e condicionamento inicial (iniciante/retorno)';
+  } else if(faseKey==='base'){
+    minutos=minBase; zonaSug=zonaBase||'Z2'; obsTxt='ritmo constante, construção de base (hard sets)';
   }
   return{
     duracaoTxt:minutos?minutos+' min':(duracaoBase||'—'),
@@ -2120,10 +2108,8 @@ function condSugestao(faseKey, duracaoBase, zonaBase){
 // simples ("4×8-10", "3×12", "5×5"); textos livres (AMRAP, Máx reps, etc.)
 // não têm sugestão automática (não dá pra escalar de forma segura).
 const VOLUME_AJUSTE_FASE = {
-  base:           { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 1.0  }, // mantém — foco é consolidar volume
-  intensificacao: { sets: 0,  repMinF: 0.85, repMaxF: 0.85, restF: 1.2  }, // menos reps, mais pesado, mais descanso
-  densidade:      { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 0.65 }, // mesmas reps, descanso bem mais curto
-  deload:         { sets: -1, repMinF: 1.15, repMaxF: 1.15, restF: 1.15 }  // menos série, mais leve, mais descanso
+  base:       { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 1.0  }, // mantém — foco é consolidar volume (progressão dupla)
+  adaptacao:  { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 1.0  }, // mantém — foco em aprendizado motor
 };
 function parseSeriesSimples(txt){
   const m = String(txt||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)(?:\s*[-–a]\s*(\d+))?\s*$/);
@@ -2161,7 +2147,9 @@ function formatRestSegundos(totalSeg){
 function fatorSemanaDentroFase(semanaDentroFase, duracaoSemanas, faseKey){
   duracaoSemanas = duracaoSemanas || 4;
   semanaDentroFase = Math.min(Math.max(semanaDentroFase || 1, 1), duracaoSemanas);
-  if (faseKey === 'deload' || faseKey === 'base') return { sets: 0, repF: 1.0, restF: 1.0 }; // base = progressão dupla (carga sobe pelo registro, não por fator de reps/descanso)
+  // Fases simplificadas: base (progressão dupla) e adaptacao (manter)
+  if (faseKey === 'base' || faseKey === 'adaptacao') return { sets: 0, repF: 1.0, restF: 1.0 };
+  // Fallback para fases antigas (não devem mais aparecer)
   const ultimaSemana = semanaDentroFase === duracaoSemanas && duracaoSemanas >= 3;
   if (ultimaSemana) return { sets: -1, repF: 1.08, restF: 1.10 };
   const passo = semanaDentroFase - 1;
@@ -3585,7 +3573,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.2 · 08/11';
+var MOVH_VER = 'v61.3 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3794,31 +3782,73 @@ visualAplicar();verAplicar();
 // ══ Análise técnica (Quadro + Próxima fase): painel RECOLHÍVEL, estado lembrado ══
 let _kbSidAtual = null;
 const _kbDb = {}; // alunoId -> {rpeMed, diasReg, hits, nivel} (carregado 1x do banco)
-const PF_PARAMS = ['Fase única 8 semanas','RIR 2 (última série 1)',"Compostos 2' · isoladores 1'",'Progressão dupla: topo da faixa → +carga','Volume mín. ~10 séries/sem por músculo','Revisão a cada 4 semanas'];
+const PF_PARAMS = ['Fase única 8 semanas','RIR 2 (última série 1)',"Compostos 2' · isoladores 1'",'Progressão dupla: topo da faixa → +carga','Volume por grupamento (faixas próprias)','Revisão a cada 4 semanas'];
 function pfAnAberto(){ try { return localStorage.getItem('movh_pf_analise') !== '0'; } catch(e){ return true; } }
 function pfAnToggle(el){
   try { localStorage.setItem('movh_pf_analise', el.open ? '1' : '0'); } catch(e){}
   document.querySelectorAll('details.pf-an').forEach(d => { if (d !== el && d.open !== el.open) d.open = el.open; });
 }
+// Gera comparação "atual vs recomendado" por nível/fase
+function pfComparacaoHTML(o){
+  const sem = o.sem || {};
+  const nivel = o.nivel || '';
+  const vol = o.vol || {};
+  if(!nivel || !NIVEL_TREINO[nivel]) return '';
+  const rec = NIVEL_TREINO[nivel];
+  const porFase = {};
+  (o.lista || []).forEach(s => { if(s.fase) porFase[s.fase] = (porFase[s.fase]||0) + (s.duracaoSemanas||4); });
+  const baseAtual = porFase.base || (sem.fase==='base' ? (sem.duracaoSemanas||8) : 0);
+  const adapAtual = porFase.adaptacao || (sem.fase==='adaptacao' ? (sem.duracaoSemanas||4) : 0);
+  const baseRec = rec.base ? rec.base[0]+'–'+rec.base[1]+' sem' : '—';
+  const adapRec = rec.adaptacao ? rec.adaptacao[0]+'–'+rec.adaptacao[1]+' sem' : '—';
+  const deloadRec = rec.deloadACada ? rec.deloadACada[0]+'–'+rec.deloadACada[1]+' sem' : '—';
+  const deloadAtual = o.maiorSemDeload || 0;
+  const ftBase = FASES_TEMPLATE.base;
+  const ftAdap = FASES_TEMPLATE.adaptacao;
+  // Volume por grupamento: usa volMin/volMax de PF_MUSCULOS (padrão 10 se não definido)
+  const volCheck = PF_MUSCULOS.map(m => {
+    const atual = vol[m.k]||0;
+    const min = m.volMin || 10;
+    const max = m.volMax || 20;
+    return {musculo: m.k, atual, min, max, ok: atual === 0 || (atual >= min && atual <= max)};
+  });
+  const volAllOk = volCheck.every(x => x.ok);
+  const volWorst = volCheck.filter(x => x.atual > 0 && !x.ok).sort((a,b) => (a.atual - a.min) - (b.atual - b.min))[0] || volCheck[0];
+  const linhas = [
+    {label:'Duração Base', atual:baseAtual?baseAtual+' sem':'—', rec:baseRec, ok:baseAtual && baseAtual>=rec.base[0] && baseAtual<=rec.base[1]},
+    {label:'Duração Adaptação', atual:adapAtual?adapAtual+' sem':'—', rec:adapRec, ok:!rec.adaptacao || !adapAtual || (adapAtual>=rec.adaptacao[0] && adapAtual<=rec.adaptacao[1])},
+    {label:'Deload máx. sem deload', atual:deloadAtual?deloadAtual+' sem':'—', rec:deloadRec, ok:deloadAtual <= rec.deloadACada[1]},
+    {label:'Volume por grupamento', atual:volWorst ? volWorst.musculo+' '+volWorst.atual+'/'+volWorst.min+'–'+volWorst.max : 'OK', rec:'ver detalhes', ok:volAllOk},
+    {label:'RPE alvo', atual:'—', rec:ftBase.rpe, ok:true},
+    {label:'RIR alvo', atual:'—', rec:ftBase.rir, ok:true},
+    {label:'Descanso padrão', atual:'—', rec:ftBase.descanso, ok:true},
+  ];
+  const rows = linhas.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0;border-bottom:1px solid var(--bd,#eee)"><div><span style="color:var(--t3,#888)">${escAttr(x.label)}</span></div><div style="text-align:right"><span style="font-weight:600">${escAttr(x.atual)}</span><span style="color:var(--t3,#888);margin-left:6px">→ ${escAttr(x.rec)}</span>${x.ok?' <span style="color:#1A9E72;margin-left:4px">✓</span>':''}</div></div>`).join('');
+  return `<div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">PARÂMETROS ATUAL vs RECOMENDADO (${rec.label})</b>${rows}</div>`;
+}
+
 function pfAnaliseHTML(o){
   const vol = o.vol || {};
-  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0, ok = n >= 10; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/10</span>`; }).join('');
+  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; const max = m.volMax || 20; const ok = n >= min && n <= max; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/${min}–${max}</span>`; }).join('');
   const nAl = (o.alertas||[]).filter(x => x.t !== 'ok').length;
   const box = (tit, inner, fl) => `<div style="flex:${fl||1};min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">${tit}</b>${inner}</div>`;
   const ctx = (o.ctx||[]).map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${escAttr(r[0])}</span><b>${escAttr(r[1])}</b></div>`).join('');
   const par = PF_PARAMS.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('');
   const al = (o.alertas||[]).length ? o.alertas.map(x => `<div style="padding:2px 0;color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'+':'!'} ${escAttr(x.x)}</div>`).join('') : '<div style="padding:2px 0;color:var(--t3,#888)">Sem alertas.</div>';
+  const cmp = pfComparacaoHTML(o);
   return `<details class="pf-an" ${pfAnAberto()?'open':''} ontoggle="pfAnToggle(this)" style="margin:6px 0 12px;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 10px">
     <summary style="cursor:pointer;font-size:12px;font-weight:700;display:flex;flex-wrap:wrap;gap:8px;align-items:center">📊 Análise técnica · ${nAl} alerta${nAl!==1?'s':''} <span style="font-weight:400;font-size:10px;color:var(--t3,#888)">(clique para recolher/expandir)</span></summary>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${box('CONTEXTO',ctx)}${box('PARÂMETROS',par)}${box('ALERTAS',al,1.4)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${box('CONTEXTO',ctx)}${box('PARÂMETROS',par)}${cmp}${box('ALERTAS',al,1.4)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px"><b style="font-size:10px;letter-spacing:.5px">VOLUME SEMANAL</b>${chips}</div>
   </details>`;
 }
 // Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
 function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
-  const baixo = PF_MUSCULOS.filter(m => (vol[m.k]||0) < 10).map(m => m.k+' '+(vol[m.k]||0));
-  if (baixo.length) alertas.push({t:'av', x:'Volume abaixo de ~10 séries/sem: '+baixo.join(' · ')});
+  const zero = PF_MUSCULOS.filter(m => (vol[m.k]||0) === 0).map(m => m.k);
+  if (zero.length) alertas.push({t:'av', x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
+  const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 || (n > 0 && n < min); }).map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 ? m.k+' volume ZERO — verifique se é intencional' : m.k+' '+n+'/'+min; });
+  if (baixo.length) alertas.push({t:'av', x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
   const fora = [];
   (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
     if (!e.nome) return;
@@ -3843,7 +3873,13 @@ function kbAnaliseDados(sem){
   const ctx = [['Destino', dest], ['Fase', (sem.nome||'—')+' · '+(parseInt(sem.duracaoSemanas)||4)+' sem'], ['Dias por semana', String((sem.dias||[]).length)],
     ['Exercícios', tot+' · ~'+Math.round(min/nd)+' min/dia'], ['Início', ini],
     ['RPE médio', db && db.rpeMed != null ? db.rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', db ? db.diasReg+' dia(s)' : '—']];
-  return {vol, alertas, ctx};
+  // Dados para comparação atual vs recomendado
+  let maiorSemDeload = 0, semDeload = 0;
+  semanas.forEach(s => {
+    if (s.fase === 'deload') { semDeload = 0; }
+    else { semDeload += (s.duracaoSemanas || 4); maiorSemDeload = Math.max(maiorSemDeload, semDeload); }
+  });
+  return {vol, alertas, ctx, lista: semanas, nivel: nivelAluno, maiorSemDeload, sem};
 }
 function kbAnaliseHTML(sem){ return pfAnaliseHTML(kbAnaliseDados(sem)); }
 function kbAnaliseRefresh(){
@@ -3948,7 +3984,7 @@ function kbCalHTML(sid){
     const extra=mbProtoFim&&porF&&calDateKey(porF)!==mbProtoFim?` <span class="kb-cal-aj" title="Fim ajustado manualmente (pelas fases seria ${kbFmtD(porF)})">ajustado</span>`:'';
     resumo=(ini?kbFmtD(ini)+' → ':'até ')+kbFmtD(fim)+' · <b>'+st+'</b>'+extra;
   }
-  let linhas='',ext='';
+  let linhas='',ext='', prox='';
   if(ini){
     let acc=0;
     linhas=semanas.map(x=>{
@@ -3961,6 +3997,27 @@ function kbCalHTML(sid){
       const cls=(hoje>=a&&hoje<=b)?' atual':(hoje>b?' passou':'');
       return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
     }).join('');
+    // Próxima fase recomendada (rascunho separado no Calendário)
+    // Regra: Adaptação só para iniciante/retorno (primeira fase).
+    // Após Base, a próxima fase recomendada é NOVA Base (variar exercícios), nunca Adaptação.
+    const ultima = semanas[semanas.length-1];
+    const ultimaFase = ultima?.fase || 'base';
+    let proxFase, proxDur, proxLabel;
+    if (ultimaFase === 'adaptacao') {
+      // Após Adaptação → Base
+      proxFase = 'base';
+      proxDur = 8;
+      proxLabel = '';
+    } else {
+      // Após Base → nova Base (variar exercícios)
+      proxFase = 'base';
+      proxDur = 8;
+      proxLabel = ' (variar exercícios)';
+    }
+    const ftProx = FASES_TEMPLATE[proxFase];
+    const aProx = new Date(ini); aProx.setDate(aProx.getDate() + acc*7);
+    const bProx = new Date(aProx); bProx.setDate(bProx.getDate() + proxDur*7 - 1);
+    prox = `<div class="kb-cal-f prox" style="border-style:dashed;opacity:.8"><span class="kb-cal-fn">${ftProx.emoji} ${ftProx.label}${proxLabel} · recomendada</span><span class="kb-cal-fd">${kbFmtD(aProx)} → ${kbFmtD(bProx)} · ${proxDur} sem.</span></div>`;
     if(porF&&fim&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
   }
   const dica=ini
@@ -3976,7 +4033,7 @@ function kbCalHTML(sid){
         <button type="button" class="btn bs" onclick="kbCalAdd(7,'${sid}')" title="Estende o fim em 1 semana">+1 sem.</button>
         ${mbProtoFim?`<button type="button" class="btn bs" onclick="kbCalReset('${sid}')" title="Volta a calcular o fim pela soma das fases">↺ ${porF?'pelas fases ('+kbFmtD(porF)+')':'limpar fim'}</button>`:''}
       </div>
-      ${linhas||ext?`<div class="kb-cal-fases">${linhas}${ext}</div>`:''}
+      ${linhas||ext||prox?`<div class="kb-cal-fases">${linhas}${prox}${ext}</div>`:''}
       <div class="kb-cal-dica">${dica}</div>
     </div>
   </div>`;
@@ -4636,7 +4693,7 @@ function kbRemoverExAtual(){
 }
 
 // ══ SIDEBAR ══
-const FASES_COR = { base:'#3580D8', intensificacao:'#D43A3A', densidade:'#D4A017', deload:'#666666' };
+const FASES_COR = { base:'#3580D8', adaptacao:'#1A9E72' };
 // Monta o gráfico (timeline) de periodização prevista: um segmento por
 // mesociclo, largura proporcional à duração em semanas, colorido pela fase.
 // semanaAtualGlobal (opcional, 0-based, pode ser fracionária) marca "você
@@ -4665,7 +4722,7 @@ function montarTimelinePeriodizacao(lista, semanaAtualGlobal, detalhado){
   const testeMarkers = (testesAgendados||[]).map((t,ti)=>
     `<div class="pzt-teste-marker" style="left:${Math.min(99,Math.max(0,t.semana/total*100))}%" title="🎯 ${(mbPadraoInfo(t.tipo||'condicionamento')||{}).label||'Teste'} — semana ${t.semana+1}${t.dia?' · '+t.dia:''}">🎯</div>`
   ).join('');
-  const legenda = Object.keys(FASES_TEMPLATE).map(k=>`<span>${FASES_TEMPLATE[k].emoji} ${FASES_TEMPLATE[k].label}</span>`).join('');
+  const legenda = Object.keys(FASES_TEMPLATE).filter(k=>k!=='deload').map(k=>`<span>${FASES_TEMPLATE[k].emoji} ${FASES_TEMPLATE[k].label}</span>`).join('');
   const nivelSel = `<select id="pzt-nivel-sel" onchange="nivelAluno=this.value;nivelAlunoOrigem=this.value?'manual':'';renderSB()" style="font-size:9.5px;padding:2px 5px;border-radius:5px;width:auto">
     <option value=""${!nivelAluno?' selected':''}>Nível do aluno — não definido</option>
     ${Object.keys(NIVEL_TREINO).map(k=>`<option value="${k}"${nivelAluno===k?' selected':''}>${NIVEL_TREINO[k].label} (${NIVEL_TREINO[k].sub})</option>`).join('')}
@@ -4921,25 +4978,24 @@ function renderSB(){
 const NIVEL_TREINO = {
   iniciante: {
     label:'Iniciante', sub:'< 1 ano de treino',
-    base:[6,8], intensificacao:[3,4], densidade:[0,2], deloadACada:[8,12],
-    modelo:'Linear — progressão previsível funciona bem, ainda não precisa de muita variação.'
+    adaptacao:[4,6], base:[6,8], deloadACada:[8,12],
+    modelo:'Linear — Adaptação (4-6 sem) se iniciante/retorno → Base longa (6-8 sem). Após Base, nova Base (variar exercícios).'
   },
   intermediario: {
     label:'Intermediário', sub:'1–3 anos de treino',
-    base:[3,4], intensificacao:[3,4], densidade:[2,3], deloadACada:[4,6],
-    modelo:'Ondulatória/blocos — o progresso linear já desacelera, precisa de mais variação de estímulo.'
+    adaptacao:[0,0], base:[4,6], deloadACada:[6,8],
+    modelo:'Ondulatória — Base moderada (4-6 sem). Adaptação só se retorno/lesão. Após Base, nova Base (variar exercícios).'
   },
   avancado: {
     label:'Avançado', sub:'3+ anos de treino',
-    base:[1,2], intensificacao:[2,3], densidade:[2,3], deloadACada:[3,4],
-    modelo:'Blocos concentrados — fases curtas e específicas, deload mais frequente (margem até o teto é pequena).'
+    adaptacao:[0,0], base:[3,5], deloadACada:[4,6],
+    modelo:'Blocos concentrados — Base curta (3-5 sem). Adaptação só se retorno/lesão. Após Base, nova Base (variar exercícios).'
   }
 };
 // Compara o plano atual (lista de mesociclos) com o recomendado pro nível
 // e devolve avisos textuais curtos — não é validação rígida, é orientação.
 function analisarPeriodizacao(lista, nivel){
   const avisos=[];
-  // RPE real independe do nível de treino selecionado — roda sempre que houver dado.
   if(rpeMedioRecente!=null && rpeMedioRecente>=8){
     avisos.push({
       texto:`🔥 RPE médio das últimas sessões: ${rpeMedioRecente.toFixed(1)}/10 — fadiga alta mesmo sem bater o limite de semanas. Considere antecipar o deload.`,
@@ -4950,7 +5006,8 @@ function analisarPeriodizacao(lista, nivel){
   const rec=NIVEL_TREINO[nivel];
   const porFase={};
   lista.forEach(s=>{if(s.fase)porFase[s.fase]=(porFase[s.fase]||0)+(s.duracaoSemanas||4);});
-  ['base','intensificacao','densidade'].forEach(f=>{
+  // Fases novas: adaptacao, base (adaptacao só se iniciante/retorno)
+  ['adaptacao','base'].forEach(f=>{
     const [min,max]=rec[f];
     const atual=porFase[f]||0;
     if(min>0&&atual<min){
@@ -5055,7 +5112,7 @@ function aplicarSugestaoDeload(){
 }
 function addSem(){const sid='s'+sc++;const l=String.fromCharCode(64+semanas.length+1);semanas.push({id:sid,nome:'Semana '+l,duracaoSemanas:4,dias:[{id:sid+'d1',nome:'Segunda',diaSemana:'Segunda',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},{id:sid+'d2',nome:'Quarta',diaSemana:'Quarta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},{id:sid+'d3',nome:'Sexta',diaSemana:'Sexta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]}]});renderAll();notify('Mesociclo adicionado!');}
 function rmSem(){if(semanas.length<=1){notify('Mínimo 1 mesociclo.');return;}semanas.pop();renderAll();nav('config');notify('Mesociclo removido.');}
-const SEQUENCIA_FASES = ['base', 'intensificacao', 'densidade', 'deload'];
+const SEQUENCIA_FASES = ['adaptacao', 'base']; // deload não está na sequência do usuário (só uso interno); após Base → nova Base (variar exercícios), nunca Adaptação
 function dupSem(sid){
   const idx=semanas.findIndex(x=>x.id===sid);
   if(idx<0)return;
@@ -5068,17 +5125,10 @@ function dupSem(sid){
   if (!avancaFase) clone.nome = orig.nome + ' (cópia)';
   clone.dias.forEach((d,di)=>{ d.id=newSid+'d'+dc++; });
   semanas.splice(idx+1,0,clone);
-  if (avancaFase) {
-    // Reaproveita setSemFase pra herdar a mesma lógica de nome/renumeração
-    // já usada quando o professor troca a fase manualmente — evita duplicar
-    // essa regra em dois lugares.
-    const proximaFase = SEQUENCIA_FASES[(faseOrigIdx + 1) % SEQUENCIA_FASES.length];
-    setSemFase(newSid, proximaFase);
-    notify('Mesociclo duplicado — fase avançada automaticamente pra "' + FASES_TEMPLATE[proximaFase].label + '".');
-  } else {
-    renderAll();
-    notify('Mesociclo duplicado!');
-  }
+  // Nova regra: sem auto-avanço de fase (fases simplificadas: Base 8 sem + Adaptação opcional).
+  // A "próxima fase" é um rascunho recomendado separado no Calendário.
+  renderAll();
+  notify('Mesociclo duplicado!');
 }
 function dupDia(sid,did){
   const s=semanas.find(x=>x.id===sid);if(!s)return;
@@ -5285,6 +5335,108 @@ function mbDiaEfetivo(dataStr){
   return { origem: ag.dia ? 'template' : 'vazio', dia: ag.dia, agenda: ag };
 }
 
+// --- Previous workout diff (Item 4) ---
+// Encontra o treino anterior (7 dias antes) para a mesma data
+function calTreinoAnterior(dataStr){
+  const dt = new Date(dataStr + 'T00:00:00');
+  dt.setDate(dt.getDate() - 7);
+  const antKey = calDateKey(dt);
+  // Só considera se a data anterior for >= início do protocolo
+  if (mbProtoDataInicio && antKey < mbProtoDataInicio) return null;
+  return mbDiaEfetivo(antKey);
+}
+
+// Compara dois dias e retorna diff textual
+function calDiffDias(diaAtual, diaAnt){
+  if (!diaAtual && !diaAnt) return 'Sem treino nos dois dias';
+  if (!diaAnt) return 'Sem treino anterior (primeira semana)';
+  if (!diaAtual) return 'Dia atual sem treino (era descanso)';
+  const blocosAtual = (diaAtual.blocos||[]).map(b => ({
+    tipo: b.tipo || (b.sub==='atv'?'Ativação':b.sub==='pri'?'Principal':b.sub==='con'?'Condicionamento':'Outro'),
+    exs: (b.exercicios||[]).map(e => ({
+      nome: e.nome || '',
+      series: e.series || '',
+      rest: e.rest || '',
+      reg: e.reg || '',
+      carga: e.carga || ''
+    }))
+  }));
+  const blocosAnt = (diaAnt.blocos||[]).map(b => ({
+    tipo: b.tipo || (b.sub==='atv'?'Ativação':b.sub==='pri'?'Principal':b.sub==='con'?'Condicionamento':'Outro'),
+    exs: (b.exercicios||[]).map(e => ({
+      nome: e.nome || '',
+      series: e.series || '',
+      rest: e.rest || '',
+      reg: e.reg || '',
+      carga: e.carga || ''
+    }))
+  }));
+  let out = '';
+  const maxB = Math.max(blocosAtual.length, blocosAnt.length);
+  for (let bi=0; bi<maxB; bi++){
+    const ba = blocosAtual[bi], bb = blocosAnt[bi];
+    if (!ba && bb){
+      out += `<div style="color:#c03030">➖ Bloco ${escAttr(bb.tipo)} removido</div>`;
+      continue;
+    }
+    if (ba && !bb){
+      out += `<div style="color:#1A9E72">➕ Bloco ${escAttr(ba.tipo)} adicionado</div>`;
+      continue;
+    }
+    if (ba.tipo !== bb.tipo){
+      out += `<div style="color:#D4A017">🔄 Tipo do bloco: ${escAttr(bb.tipo)} → ${escAttr(ba.tipo)}</div>`;
+    }
+    const maxE = Math.max(ba.exs.length, bb.exs.length);
+    for (let ei=0; ei<maxE; ei++){
+      const ea = ba.exs[ei], eb = bb.exs[ei];
+      if (!ea && eb){
+        out += `<div style="color:#c03030;margin-left:8px">➖ ${escAttr(eb.nome)} (${escAttr(eb.series)}${escAttr(eb.rest)?' · '+escAttr(eb.rest):''})</div>`;
+        continue;
+      }
+      if (ea && !eb){
+        out += `<div style="color:#1A9E72;margin-left:8px">➕ ${escAttr(ea.nome)} (${escAttr(ea.series)}${escAttr(ea.rest)?' · '+escAttr(ea.rest):''})</div>`;
+        continue;
+      }
+      const diffs = [];
+      if (ea.nome !== eb.nome) diffs.push(`nome: ${escAttr(eb.nome||'—')} → ${escAttr(ea.nome||'—')}`);
+      if (ea.series !== eb.series) diffs.push(`séries: ${escAttr(eb.series||'—')} → ${escAttr(ea.series||'—')}`);
+      if (ea.rest !== eb.rest) diffs.push(`descanso: ${escAttr(eb.rest||'—')} → ${escAttr(ea.rest||'—')}`);
+      if (ea.reg !== eb.reg) diffs.push(`reg: ${escAttr(eb.reg||'—')} → ${escAttr(ea.reg||'—')}`);
+      if (ea.carga !== eb.carga) diffs.push(`carga: ${escAttr(eb.carga||'—')} → ${escAttr(ea.carga||'—')}`);
+      if (diffs.length) out += `<div style="margin-left:8px">${escAttr(eb.nome)} · ${diffs.join(' | ')}</div>`;
+    }
+  }
+  return out || '<span style="color:var(--t3)">Sem diferenças</span>';
+}
+
+// Abre modal com diff do treino anterior
+function calAbrirDiffAnterior(dataStr){
+  const efetivo = mbDiaEfetivo(dataStr);
+  const ant = calTreinoAnterior(dataStr);
+  const diaAtual = efetivo?.dia;
+  const diaAnt = ant?.dia;
+  const diff = calDiffDias(diaAtual, diaAnt);
+  const dt = new Date(dataStr + 'T00:00:00');
+  const dtAnt = new Date(dt); dtAnt.setDate(dtAnt.getDate() - 7);
+  const titulo = `${CAL_DOW[dt.getDay()]} ${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+  const tituloAnt = diaAnt ? `${CAL_DOW[dtAnt.getDay()]} ${String(dtAnt.getDate()).padStart(2,'0')}/${String(dtAnt.getMonth()+1).padStart(2,'0')}/${dtAnt.getFullYear()}` : '—';
+  const html = `<div style="padding:12px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">📊 Diff: Treino anterior → Atual</div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:8px">Atual: <b>${titulo}</b> · Anterior: <b>${tituloAnt}</b></div>
+    <div style="max-height:300px;overflow:auto;font-size:10px;line-height:1.6;font-family:monospace">${diff}</div>
+  </div>`;
+  const m = document.getElementById('modal-diff');
+  if (m) m.remove();
+  const div = document.createElement('div');
+  div.id = 'modal-diff';
+  div.style.cssText = 'position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:12px';
+  div.onclick = e => { if(e.target===div) div.remove(); };
+  div.innerHTML = `<div class="card" style="width:min(420px,100%);max-height:85vh;overflow:auto">${html}
+    <div style="text-align:right;margin-top:12px"><button class="btn bp" onclick="document.getElementById('modal-diff').remove()">Fechar</button></div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
 function calMudarMes(delta){
   if (!calMesAtual) calMesAtual = new Date();
   calMesAtual = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth()+delta, 1);
@@ -5315,8 +5467,13 @@ function renderCalProto(){
     const emoji = fase && FASES_TEMPLATE[fase] ? FASES_TEMPLATE[fase].emoji : '';
     const temTreino = efetivo && efetivo.dia;
     const isHoje = key === hojeKey;
-    cels += `<div onclick="calAbrirDia('${key}')" title="${d}/${mes+1}${temOverride?' · alterado só neste dia':''}" style="cursor:pointer;padding:5px 2px;border-radius:6px;font-size:10px;text-align:center${isHoje?';background:var(--Pl);font-weight:800;color:var(--Pd)':''}${temOverride?';box-shadow:inset 0 0 0 1.5px var(--P)':''}">
-      ${d}<div style="height:12px;font-size:10px;line-height:1">${temTreino?emoji:''}</div>
+    // Verifica treino anterior (7 dias antes)
+    const ant = calTreinoAnterior(key);
+    const temAnt = ant && ant.dia;
+    const cellStyle = `position:relative;cursor:pointer;padding:5px 2px;border-radius:6px;font-size:10px;text-align:center${isHoje?';background:var(--Pl);font-weight:800;color:var(--Pd)':''}${temOverride?';box-shadow:inset 0 0 0 1.5px var(--P)':''}`;
+    const diffBtn = temAnt ? `<button class="btn" style="font-size:9px;padding:0 4px;line-height:1;min-height:14px;background:var(--P);color:#fff;border:none;border-radius:3px" onclick="event.stopPropagation();calAbrirDiffAnterior('${key}')" title="Ver diff com treino anterior">⏪</button>` : '';
+    cels += `<div style="${cellStyle}" onclick="calAbrirDia('${key}')" title="${d}/${mes+1}${temOverride?' · alterado só neste dia':''}${temAnt?' · treino anterior disponível (⏪)':''}">
+      ${d}<div style="height:12px;font-size:10px;line-height:1;display:flex;align-items:center;justify-content:center;gap:2px">${temTreino?emoji:''}${diffBtn}</div>
     </div>`;
   }
   card.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
@@ -6056,9 +6213,7 @@ function renderDia(did){
           <select onchange="setSemFase('${semObj?semObj.id:''}',this.value)" style="font-size:11px;padding:3px 7px">
             <option value=""${!semObj||!semObj.fase?' selected':''}>— sem fase definida —</option>
             <option value="base"${semObj&&semObj.fase==='base'?' selected':''}>🔵 Base</option>
-            <option value="intensificacao"${semObj&&semObj.fase==='intensificacao'?' selected':''}>🔴 Intensificação</option>
-            <option value="densidade"${semObj&&semObj.fase==='densidade'?' selected':''}>🟡 Densidade</option>
-            <option value="deload"${semObj&&semObj.fase==='deload'?' selected':''}>⚫ Deload</option>
+            <option value="adaptacao"${semObj&&semObj.fase==='adaptacao'?' selected':''}>🟢 Adaptação</option>
           </select>
         </div>
         <div class="dcf">
@@ -10343,14 +10498,16 @@ async function mbToggleLoop(protoId, alunoId, ligar) {
 // a partir do mesociclo vigente do protocolo ativo. Regras: ver CONTEXTO.md §26.
 // Nada é gravado até o professor clicar em Salvar; o protocolo ativo não é tocado.
 const PF_MUSCULOS = [
-  {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,sug:'Supino inclinado máquina'},
-  {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,sug:'Remada máquina'},
-  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,sug:'Elevação lateral'},
-  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,sug:'Rosca martelo'},
-  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,sug:'Tríceps corda'},
-  {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i},
-  {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i},
-  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i}
+  // Fonte: Schoenfeld et al. 2017 (meta-análise dose-resposta); revisão 12-20 séries/sem/grupo para hipertrofia (hard sets perto da falha).
+  // Mínimo 10 séries/sem/grupo; faixa-alvo 12-20. Bíceps/Tríceps: menor volume direto (prática, indireto via compostos).
+  {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,volMin:10,volMax:20,sug:'Supino inclinado máquina'},
+  {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,volMin:10,volMax:20,sug:'Remada máquina'},
+  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,volMin:10,volMax:20,sug:'Elevação lateral'},
+  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,volMin:6,volMax:12,sug:'Rosca martelo'}, // prática, indireto
+  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,volMin:6,volMax:12,sug:'Tríceps corda'}, // prática, indireto
+  {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i,volMin:12,volMax:24},
+  {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i,volMin:10,volMax:20},
+  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i,volMin:10,volMax:20}
 ];
 const PF_COMPOSTO = /agachamento|squat|leg press|hack|supino|remada|puxada|stiff|rdl|terra|deadlift|desenvolvimento|p[eé]lvica|b[uú]lgaro|afundo|barra fixa|paralela/i;
 let _pf = null;
@@ -10412,7 +10569,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
     const alertas = [];
     const vol0 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0})).filter(x => x.n < 10).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
+    PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0, min: m.volMin || 10})).filter(x => x.n < x.min).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
       // dia de destino: o dia do mesmo "tipo" (empurrar/puxar) que já tem mais exercícios dele; empate -> dia com menos exercícios
       const cls = {Peito:'push',Ombros:'push','Tríceps':'push',Costas:'pull','Bíceps':'pull'};
       const pontua = d => { let same = 0, tot = 0, up = 0; (d.blocos||[]).forEach(bb => { if (bb.id === 'con') return; (bb.exercicios||[]).forEach(ee => { tot++; const mm = pfMusculo(ee.nome); if (mm && mm.up) { up++; if (cls[mm.k] === cls[x.m.k]) same++; } }); }); return {same, tot, up}; };
@@ -10425,7 +10582,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
       alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
     });
     const vol1 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n < 10) alertas.push({t:'av', x: m.k+': '+n+' séries/sem (mín. ~10) — avaliar se é intencional'}); });
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
     // anamnese / dor
     const resp = an.data && an.data[0] ? an.data[0].respostas : null;
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
@@ -10453,7 +10610,7 @@ function pfRender(){
   const P = _pf; if (!P) return;
   let ov = document.getElementById('pf-overlay');
   if (!ov) { ov = document.createElement('div'); ov.id = 'pf-overlay'; ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);overflow:auto;padding:14px'; document.body.appendChild(ov); }
-  const par = ['Fase única 8 semanas','RIR 2 (última série 1)','Compostos 2\' · isoladores 1\'','Progressão dupla: topo da faixa → +carga','Volume mín. ~10 séries/sem por músculo','Revisão a cada 4 semanas'];
+  const par = ['Fase única 8 semanas','RIR 2 (última série 1)','Compostos 2\' · isoladores 1\'','Progressão dupla: topo da faixa → +carga','Volume por grupamento (faixas próprias)','Revisão a cada 4 semanas'];
   const col = P.sem.dias.map((d,di) => {
     const pri = pfBlocoPrincipal(d);
     const linhas = (d.blocos||[]).map((b,bi) => b.id === 'con' ? '' : (b.exercicios||[]).map((e,ei) => `
@@ -14518,7 +14675,7 @@ function aMontarTimelinePeriodizacao(lista, semanaAtualGlobal, ctxPrefix){
   const testeMarkers = (aTestesAgendados||[]).map(t=>
     '<div class="a-pzt-teste-marker" style="left:'+Math.min(99,Math.max(0,t.semana/total*100))+'%" title="🎯 '+(aLang==='en'?'Test':'Teste')+' — '+(aLang==='en'?'week ':'semana ')+(t.semana+1)+(t.dia?' · '+aEsc(aDiaExibicao(t.dia)):'')+'">🎯</div>'
   ).join('');
-  const legenda = Object.keys(ft).map(k=>'<span>'+ft[k].emoji+' '+ft[k].label+'</span>').join('');
+  const legenda = Object.keys(ft).filter(k=>k!=='deload').map(k=>'<span>'+ft[k].emoji+' '+ft[k].label+'</span>').join('');
   const detId = aPztDetId(ctxPrefix);
   return '<div class="a-pzt-wrap" id="' + detId + '" style="display:none">'+
     '<div class="a-pzt-title">'+(aLang==='en'?'Planned periodization':'Periodização prevista')+' ('+total+(aLang==='en'?' weeks)':' semanas)')+'</div>'+
