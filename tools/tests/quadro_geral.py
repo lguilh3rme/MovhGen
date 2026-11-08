@@ -48,7 +48,7 @@ with sync_playwright() as p:
     ck('segue no geral após kbAddBloco', pg.evaluate("(document.querySelector('.page.active')||{}).id") == 'page-kb-geral')
     # abrir só uma fase e voltar
     sid2 = pg.evaluate("semanas[1].id")
-    pg.locator('#kbg-%s button:has-text("Abrir só esta fase")' % sid2).click(); pg.wait_for_timeout(400)
+    pg.locator('#kbg-%s button[aria-label="Abrir só esta fase"]' % sid2).click(); pg.wait_for_timeout(400)
     ck('Abrir só esta fase -> Quadro da fase', pg.evaluate("(document.querySelector('.page.active')||{}).id") == 'page-kb-' + sid2)
     ck('Quadro da fase renderizou colunas', pg.evaluate("document.querySelectorAll('#page-kb-%s .kb-col').length" % sid2) >= nd)
     pg.evaluate("kbRefresh(semanas[1].dias[0].id)"); pg.wait_for_timeout(200)

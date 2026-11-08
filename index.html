@@ -484,6 +484,19 @@ body.dock-open #aluno-dock{display:flex}
 .kbg-tt{display:flex;flex-direction:column;flex:1;min-width:0}.kbg-tt b{font-size:14px}.kbg-tt span{font-size:11px;color:var(--mt,#888)}
 .kbg-board.kb-board{grid-auto-columns:230px!important;overflow:visible!important}
 .kbg-board .kb-col{max-height:none!important}
+.an-chip{font-size:10px;font-weight:700;border-radius:99px;padding:2px 8px;border:1px solid;white-space:nowrap;line-height:1.4}
+.an-chip.ok{color:#1fb583;border-color:#1A9E72}.an-chip.b,.an-chip.a{color:#e0902a;border-color:#D4A017}.an-chip.z{color:#ff5a6a;border-color:#d63b4b}
+.an-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.pf-an-ctx{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11px;margin-top:10px;color:var(--t3,#888)}.pf-an-ctx b{color:var(--tx,inherit);font-weight:600}
+.pf-an-al{margin-top:8px;font-size:12px;line-height:1.5}.pf-an-al div{padding:1px 0}
+.pf-an-nota{font-size:10px;color:var(--t3,#888);margin-top:8px}
+.kbg-hd2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;left:0;max-width:calc(100vw - 40px)}
+.kbg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.kbg-acts .btn{font-size:11px;padding:5px 10px}
+.kbg-chips{position:sticky;left:0;max-width:calc(100vw - 40px);margin:6px 0 2px 34px}
+.kbg-per{position:sticky;left:0;max-width:calc(100vw - 40px);display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:11px}
+.kbg-per input[type=date],.kbg-per input[type=number]{font-size:12px;padding:4px 6px;border:1px solid var(--bd,#ddd);border-radius:6px;background:var(--cl,#fff);color:inherit}
+.kbg-per label{display:inline-flex;align-items:center;gap:6px}.kbg-per input[type=number]{width:56px}.kbg-per .hint{color:var(--t3,#888)}
 .kbg-pg .pbar [onclick^="addDia"],.kbg-pg .pbar .pb-chip[data-did]{display:none!important}
 .kb-card{align-items:center;padding:4px 7px;margin-bottom:3px}
 .kb-card-txt{display:flex;align-items:center;gap:6px}
@@ -3582,7 +3595,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.6 · 08/11';
+var MOVH_VER = 'v61.7 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3836,19 +3849,27 @@ function pfComparacaoHTML(o){
   return `<div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">PARÂMETROS ATUAL vs RECOMENDADO (${rec.label})</b>${rows}</div>`;
 }
 
+function pfChipsCompactos(vol, abrev){
+  vol = vol || {};
+  return PF_MUSCULOS.map(m => { const n = vol[m.k]||0, min = m.volMin || 10, max = m.volMax || 20;
+    const c = n === 0 ? 'z' : (n < min ? 'b' : (n > max ? 'a' : 'ok')), ic = n === 0 ? '✕' : (n < min ? '↓' : (n > max ? '↑' : '✓'));
+    return '<span class="an-chip '+c+'" title="'+escAttr(m.k)+': '+n+' séries/sem (meta '+min+'–'+max+')">'+escAttr(abrev ? m.k.slice(0,3) : m.k)+' '+n+' '+ic+'</span>'; }).join('');
+}
 function pfAnaliseHTML(o){
   const vol = o.vol || {};
-  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; const max = m.volMax || 20; const ok = n >= min && n <= max; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/${min}–${max}</span>`; }).join('');
   const nAl = (o.alertas||[]).filter(x => x.t !== 'ok').length;
   const box = (tit, inner, fl) => `<div style="flex:${fl||1};min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">${tit}</b>${inner}</div>`;
-  const ctx = (o.ctx||[]).map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${escAttr(r[0])}</span><b>${escAttr(r[1])}</b></div>`).join('');
+  const ctx = (o.ctx||[]).map(r => `<span>${escAttr(r[0])} <b>${escAttr(r[1])}</b></span>`).join('');
   const par = PF_PARAMS.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('');
-  const al = (o.alertas||[]).length ? o.alertas.map(x => `<div style="padding:2px 0;color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'+':'!'} ${escAttr(x.x)}</div>`).join('') : '<div style="padding:2px 0;color:var(--t3,#888)">Sem alertas.</div>';
+  const al = (o.alertas||[]).length ? o.alertas.map(x => `<div style="color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'✔':'⚠'} ${escAttr(x.x)}</div>`).join('') : '<div style="color:var(--t3,#888)">Sem alertas.</div>';
   const cmp = pfComparacaoHTML(o);
+  const esp = PF_MUSCULOS.filter(m => (m.volMin||10) !== 10 || (m.volMax||20) !== 20).map(m => m.k+' '+(m.volMin||10)+'–'+(m.volMax||20)).join(' · ');
   return `<details class="pf-an" ${pfAnAberto()?'open':''} ontoggle="pfAnToggle(this)" style="margin:6px 0 12px;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 10px">
-    <summary style="cursor:pointer;font-size:12px;font-weight:700;display:flex;flex-wrap:wrap;gap:8px;align-items:center">📊 Análise técnica · ${nAl} alerta${nAl!==1?'s':''} <span style="font-weight:400;font-size:10px;color:var(--t3,#888)">(clique para recolher/expandir)</span></summary>
-    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${box('CONTEXTO',ctx)}${box('PARÂMETROS',par)}${cmp}${box('ALERTAS',al,1.4)}</div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px"><b style="font-size:10px;letter-spacing:.5px">VOLUME SEMANAL</b>${chips}</div>
+    <summary style="cursor:pointer;font-size:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b>📊 Análise técnica</b><span class="an-chips">${pfChipsCompactos(vol)}</span><b style="margin-left:auto;color:${nAl?'#e0902a':'#1fb583'}">${nAl?'⚠ '+nAl+' ponto'+(nAl!==1?'s':'')+' de atenção':'✔ sem alertas'}</b></summary>
+    <div class="pf-an-ctx">${ctx}</div>
+    <div class="pf-an-al">${al}</div>
+    <div class="pf-an-nota">Volume = séries por semana de cada grupo (soma de todos os dias). Meta MOVH, base Schoenfeld et al. 2017 (10–20 séries/grupo)${esp?'; '+escAttr(esp):''}. ✓ na meta · ↓ abaixo · ↑ acima · ✕ zero.</div>
+    <details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:var(--t3,#888)">Parâmetros MOVH e comparação por nível</summary><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">${box('PARÂMETROS',par)}${cmp}</div></details>
   </details>`;
 }
 // Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
@@ -3964,6 +3985,75 @@ function renderKanbanSemana(sid){
 }
 // ══ Quadro geral: todas as fases empilhadas (de cima p/ baixo), dias alinhados em colunas ══
 // Reaproveita as colunas do Quadro (kbColsHTML): cada edição grava na fase/dia da própria célula.
+var _kbgPer = {};
+function kbgFmt(d){return d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2):'—';}
+// Início/fim de cada fase (data própria ou cascata; 1ª fase cai no início do treino)
+function kbFaseDatas(){
+  const out=[];let prevFim=null;
+  semanas.forEach((s,i)=>{
+    const dur=parseInt(s.duracaoSemanas)||4;let a=null;
+    if(s.dataInicio)a=new Date(s.dataInicio+'T00:00:00');
+    else if(i===0&&typeof mbProtoDataInicio!=='undefined'&&mbProtoDataInicio)a=new Date(mbProtoDataInicio+'T00:00:00');
+    else if(prevFim){a=new Date(prevFim);a.setDate(a.getDate()+1);}
+    let b=null;if(a){b=new Date(a);b.setDate(b.getDate()+dur*7-1);}
+    out.push({a:a,b:b});if(b)prevFim=b;
+  });
+  return out;
+}
+function kbgPeriodo(sid){_kbgPer[sid]=!_kbgPer[sid];renderKanbanGeral();}
+function kbgSetInicio(sid,v){if(!v)return;kbCalSetFaseInicio(v,sid,sid);renderKanbanGeral();}
+function kbgSetDur(sid,v){
+  const idx=semanas.findIndex(x=>x.id===sid);if(idx<0)return;
+  const n=Math.max(1,Math.min(52,parseInt(v)||4));
+  semanas[idx].duracaoSemanas=n;_pbDirty=true;
+  const a=kbFaseDatas()[idx].a;
+  if(a)kbCalSetFaseInicio(calDateKey(a),sid,sid);else{pbRefreshDest();}
+  renderKanbanGeral();
+}
+function kbgTravar(sid){kbToggleTravar(sid,sid);renderKanbanGeral();}
+// Duplica a fase logo após ela (início = dia seguinte ao fim); as fases seguintes não travadas deslocam
+function kbgDuplicar(sid){
+  const idx=semanas.findIndex(x=>x.id===sid);if(idx<0)return;
+  const dt=kbFaseDatas()[idx];
+  let n=semanas.length+1;while(semanas.some(x=>x.id==='s'+n))n++;
+  const nid='s'+n,c=JSON.parse(JSON.stringify(semanas[idx]));
+  c.id=nid;c.nome=(c.nome||'Fase')+' (cópia)';c.travado=false;delete c.dataInicio;
+  (c.dias||[]).forEach((d,di)=>{d.id=nid+'d'+(di+1);});
+  semanas.splice(idx+1,0,c);
+  if(dt.b){const ini=new Date(dt.b);ini.setDate(ini.getDate()+1);kbCalSetFaseInicio(calDateKey(ini),nid,nid);}
+  _pbDirty=true;
+  try{renderAll();}catch(e){}
+  renderKanbanGeral();pbRefreshDest();
+  notify('Fase duplicada'+(dt.b?' com início em '+kbgFmt(semanas[idx+1]&&semanas[idx+1].dataInicio?new Date(semanas[idx+1].dataInicio+'T00:00:00'):null):'')+'. Use 💾 Salvar fase para gravar só ela.');
+}
+// Grava SÓ esta fase no treino carregado (as demais ficam como estão no banco)
+async function kbgSalvarFase(sid){
+  const idx=semanas.findIndex(x=>x.id===sid);if(idx<0)return;
+  if(typeof mbProtoCarregadoId==='undefined'||!mbProtoCarregadoId||typeof mbClient==='undefined'||!mbClient){notify('Salvar fase grava no treino de um aluno já carregado. Escolha o aluno / abra o treino dele, ou use 💾 Salvar… no topo.');return;}
+  const btn=document.querySelector('#kbg-'+sid+' .kbg-save');if(btn)btn.disabled=true;
+  try{
+    const lang=document.getElementById('cfg-lang')?document.getElementById('cfg-lang').value:'pt';
+    const s0=semanas[idx];
+    const fase=Object.assign({},JSON.parse(JSON.stringify(s0)),{nome:trNome(s0.nome,lang)});
+    fase.dias=(fase.dias||[]).map(d=>Object.assign({},d,{nome:trNome(d.nome,lang),blocos:(d.blocos||[]).map(b=>Object.assign({},b,{nome:trNome(b.nome,lang),tipo:b.tipo?trNome(b.tipo,lang):b.tipo,exercicios:(b.exercicios||[]).map(ex=>Object.assign({},ex,{nome:trNome(ex.nome,lang)})),metconExs:(b.metconExs||[]).map(e=>Object.assign({},e,{nome:trNome(e.nome,lang)}))}))}));
+    const r=await mbClient.from('protocolos').select('conteudo').eq('id',mbProtoCarregadoId).maybeSingle();
+    if(r.error||!r.data)throw (r.error||new Error('protocolo não encontrado'));
+    const c=JSON.parse(JSON.stringify(r.data.conteudo||{}));
+    c.semanas=Array.isArray(c.semanas)?c.semanas:[];
+    const pos=c.semanas.findIndex(x=>x.id===sid);
+    if(pos>=0)c.semanas[pos]=fase;
+    else{const ant=idx>0?c.semanas.findIndex(x=>x.id===semanas[idx-1].id):-1;c.semanas.splice(ant>=0?ant+1:(idx===0?0:c.semanas.length),0,fase);}
+    const upd={conteudo:c};
+    if(idx===0&&typeof mbProtoDataInicio!=='undefined'&&mbProtoDataInicio)upd.data_inicio=mbProtoDataInicio;
+    const w=await mbClient.from('protocolos').update(upd).eq('id',mbProtoCarregadoId);
+    if(w.error)throw w.error;
+    notify('✅ Fase "'+(s0.nome||sid)+'" salva. As outras fases não foram alteradas no banco.');
+  }catch(e){notify('Erro ao salvar a fase: '+(e.message||e));}
+  finally{if(btn)btn.disabled=false;}
+}
+// ══ Quadro geral: todas as fases empilhadas (de cima p/ baixo), dias alinhados em colunas ══
+// Reaproveita as colunas do Quadro (kbColsHTML): cada edição grava na fase/dia da própria célula.
+// Cada fase tem período próprio (início/duração/fim/travar), duplicar e salvar só ela.
 function renderKanbanGeral(){
   let pg=document.getElementById('page-kb-geral');
   if(!pg){pg=document.createElement('div');pg.id='page-kb-geral';pg.className='page kbg-pg';document.getElementById('day-pages').appendChild(pg);}
@@ -3971,17 +4061,34 @@ function renderKanbanGeral(){
   const wr0=pg.querySelector('.kbg-all'),left=wr0?wr0.scrollLeft:0;
   if(!semanas.length){pg.innerHTML='<div class="pg-head"><div class="pg-title">🧮 Quadro geral</div></div><div class="kb-vazio">Nenhuma fase no treino ainda.</div>';return;}
   const nmax=Math.max.apply(null,semanas.map(s=>s.dias.length).concat([1]));
+  const datas=kbFaseDatas();
   const secs=semanas.map((sm,i)=>{
     const tot=sm.dias.reduce((a,d)=>a+kbEstimarDia(d).totalEx,0);
-    const dur=parseInt(sm.duracaoSemanas)||4;
+    const dur=parseInt(sm.duracaoSemanas)||4,dt=datas[i];
+    const per=dt.a?' · 📅 '+kbgFmt(dt.a)+' → '+kbgFmt(dt.b):'';
+    const prox=dt.b?new Date(dt.b.getTime()+86400000):null;
+    const aberto=!!_kbgPer[sm.id];
+    const painel=aberto?`<div class="kbg-per">
+        <label>Início <input type="date" value="${dt.a?calDateKey(dt.a):''}" ${sm.travado?'disabled':''} onchange="kbgSetInicio('${sm.id}',this.value)"/></label>
+        <label>Duração <input type="number" min="1" max="52" value="${dur}" onchange="kbgSetDur('${sm.id}',this.value)"/> sem</label>
+        <span>Fim <b>${dt.b?kbgFmt(dt.b):'—'}</b></span>
+        <label><input type="checkbox" ${sm.travado?'checked':''} onchange="kbgTravar('${sm.id}')"/> 🔒 travar início</label>
+        <span class="hint">Mudar início/duração reorganiza as fases seguintes (as não travadas).</span></div>`:'';
     return `<section class="kbg-sec" id="kbg-${sm.id}">
-      <div class="kbg-hd"><span class="kbg-n">${i+1}</span><div class="kbg-tt"><b>${escAttr(sm.nome||('Fase '+(i+1)))}</b><span>${dur} sem · ${sm.dias.length} dia${sm.dias.length!==1?'s':''} · ${tot} exercício${tot!==1?'s':''}</span></div>
-      <button class="btn bs" style="font-size:11px;padding:5px 10px" onclick="nav('kb-${sm.id}')" title="Abre só esta fase no Quadro">🗂️ Abrir só esta fase</button></div>
+      <div class="kbg-hd2"><span class="kbg-n">${i+1}</span><div class="kbg-tt"><b>${escAttr(sm.nome||('Fase '+(i+1)))}</b><span>${dur} sem · ${sm.dias.length} dia${sm.dias.length!==1?'s':''} · ${tot} exercício${tot!==1?'s':''}${per}</span></div>
+      <div class="kbg-acts">
+        <button class="btn bs kbg-per-btn" onclick="kbgPeriodo('${sm.id}')" title="Início, duração e fim desta fase">📅 Período ${aberto?'▴':'▾'}</button>
+        <button class="btn bs" onclick="kbgDuplicar('${sm.id}')" title="Cria uma cópia desta fase logo depois dela${prox?' (início '+kbgFmt(prox)+')':''}">⧉ Duplicar${prox?' p/ '+kbgFmt(prox).slice(0,5):''}</button>
+        <button class="btn bp kbg-save" onclick="kbgSalvarFase('${sm.id}')" title="Grava só esta fase no treino carregado (as outras não mudam no banco)">💾 Salvar fase</button>
+        <button class="btn bs" onclick="nav('kb-${sm.id}')" title="Abrir só esta fase no Quadro" aria-label="Abrir só esta fase">🗂️</button>
+      </div></div>
+      <div class="kbg-chips an-chips">${pfChipsCompactos(pfVolume(sm),true)}</div>
+      ${painel}
       <div class="kb-board kbg-board" style="--kbn:${sm.dias.length}">${kbColsHTML(sm)}</div></section>`;
   }).join('');
   pg.innerHTML=`${pbarHTML(semanas[0].id,'','kbg')}
     <div class="pg-head">
-      <div><div class="pg-title">🧮 Quadro geral — todas as fases</div><div class="pg-sub">Fases de cima pra baixo, com o mesmo treino/dia alinhado em coluna para comparar. Cada ajuste vale só para a fase onde você editou.</div></div>
+      <div><div class="pg-title">🧮 Quadro geral — todas as fases</div><div class="pg-sub">Fases de cima pra baixo, com o mesmo treino/dia alinhado em coluna. Cada ajuste, período e salvamento vale só para a fase da linha.</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas">⛶ Foco</button></div>
     </div>
     <div class="kbg-all"><div class="kbg-in" style="--kbmax:${nmax}">${secs}</div></div>`;
