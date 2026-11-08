@@ -487,8 +487,8 @@ body.dock-open #aluno-dock{display:flex}
 .an-chip{font-size:10px;font-weight:700;border-radius:99px;padding:2px 8px;border:1px solid;white-space:nowrap;line-height:1.4}
 .an-chip.ok{color:#1fb583;border-color:#1A9E72}.an-chip.b,.an-chip.a{color:#e0902a;border-color:#D4A017}.an-chip.z{color:#ff5a6a;border-color:#d63b4b}
 .an-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
-.pf-an-ctx{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:11px;margin-top:10px;color:var(--t3,#888)}.pf-an-ctx b{color:var(--tx,inherit);font-weight:600}
-.pf-an-al{margin-top:8px;font-size:12px;line-height:1.5}.pf-an-al div{padding:1px 0}
+.pf-an-ctx{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:11px;margin-top:6px;color:var(--t3,#888)}.pf-an-ctx b{color:var(--tx,inherit);font-weight:600}
+.pf-an-al{margin-top:6px;font-size:11.5px;line-height:1.45}.pf-an-al div{padding:1px 0}
 .pf-an-nota{font-size:10px;color:var(--t3,#888);margin-top:8px}
 .kbg-hd2{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;left:0;max-width:calc(100vw - 40px)}
 .kbg-acts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
@@ -496,7 +496,21 @@ body.dock-open #aluno-dock{display:flex}
 .kbg-chips{position:sticky;left:0;max-width:calc(100vw - 40px);margin:6px 0 2px 34px}
 .kbg-per{position:sticky;left:0;max-width:calc(100vw - 40px);display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 12px;margin:8px 0;font-size:11px}
 .kbg-per input[type=date],.kbg-per input[type=number]{font-size:12px;padding:4px 6px;border:1px solid var(--bd,#ddd);border-radius:6px;background:var(--cl,#fff);color:inherit}
-.kbg-per label{display:inline-flex;align-items:center;gap:6px}.kbg-per input[type=number]{width:56px}.kbg-per .hint{color:var(--t3,#888)}
+.kbg-per{align-items:flex-start!important;gap:16px!important}
+.kbg-per label{display:inline-flex;align-items:center;gap:6px}
+.kc{width:196px;flex-shrink:0}.kc-nav{display:flex;align-items:center;justify-content:space-between;font-size:11.5px;margin-bottom:4px}
+.kc-nav button{background:none;border:0;color:inherit;font-size:16px;cursor:pointer;padding:0 8px;line-height:1}
+.kc-g{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center}
+.kc-g span{font-size:9px;color:var(--t3,#888);padding:2px 0}.kc-g i{display:block}
+.kc-d{border:0;background:none;color:inherit;font:inherit;font-size:10.5px;height:24px;border-radius:6px;cursor:pointer;padding:0;position:relative}
+.kc-d:hover{background:var(--cl,#eee)}
+.kc-d.in{background:rgba(var(--Prgb,225,29,46),.18);border-radius:0}.kc-d.ini{border-radius:6px 0 0 6px}.kc-d.fim{border-radius:0 6px 6px 0}
+.kc-d.ini.fim{border-radius:6px}.kc-d.ini,.kc-d.fim{background:var(--P,#E11D2E);color:#fff;font-weight:800}
+.kc-d.hoje{box-shadow:inset 0 0 0 1px var(--t3,#888)}.kc-d.oth::after{content:'';position:absolute;left:30%;right:30%;bottom:2px;height:2px;border-radius:2px;background:var(--t3,#888);opacity:.6}
+.kc-side input[type=checkbox]{width:auto!important;flex:0 0 auto;margin:0}.kc-side label{align-self:flex-start}
+.kc-side{display:flex;flex-direction:column;gap:8px;min-width:190px;max-width:260px}
+.kc-modo{display:flex;gap:6px}.kc-modo button{flex:1;text-align:left;background:var(--cl,#f3f3f3);border:1px solid var(--bd,#ddd);border-radius:8px;padding:5px 8px;color:inherit;cursor:pointer;display:flex;flex-direction:column;line-height:1.25}
+.kc-modo button small{font-size:9px;color:var(--t3,#888)}.kc-modo button b{font-size:12px}.kc-modo button.on{border-color:var(--P,#E11D2E);box-shadow:0 0 0 1px var(--P,#E11D2E)}.kbg-per input[type=number]{width:56px}.kbg-per .hint{color:var(--t3,#888)}
 .kbg-pg .pbar [onclick^="addDia"],.kbg-pg .pbar .pb-chip[data-did]{display:none!important}
 .kb-card{align-items:center;padding:4px 7px;margin-bottom:3px}
 .kb-card-txt{display:flex;align-items:center;gap:6px}
@@ -3595,7 +3609,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.7 · 08/11';
+var MOVH_VER = 'v61.8 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3673,6 +3687,37 @@ async function homeCarregar(){
   try { await notasCarregar(); } catch(e){}
   homeBusy = false; homeRender(); tbBadge();
 }
+// Treinos que acabam em até 7 dias (ou já venceram): atalho para a fase atual ou a próxima
+function homeVencerLista(at){
+  const L=[];
+  (at||[]).forEach(a=>{
+    const f=mbFimAvisos(a).find(x=>x.k==='treino'&&x.n===3);if(!f)return;
+    const p=a.protocoloAtivo,c=p&&(p._conteudo||p.conteudo)||{},ss=c.semanas||[];
+    const ds=faseDatasDe(ss,p&&p.data_inicio),cur=ss.length?faseIdxHoje(ds):0;
+    L.push({a:a,f:f,cur:cur,tem:cur<ss.length-1,nome:(ss[cur]&&ss[cur].nome)||'',prox:(ss[cur+1]&&ss[cur+1].nome)||''});
+  });
+  return L.sort((x,y)=>x.f.d-y.f.d);
+}
+function homeVencerHTML(at){
+  const L=homeVencerLista(at);if(!L.length)return '';
+  const b=(cls,txt,aid,modo,tt)=>'<button type="button" class="btn '+cls+'" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(aid)+'" data-m="'+modo+'" onclick="event.stopPropagation();homeAbrirFase(this.dataset.id,this.dataset.m)" title="'+escAttr(tt)+'">'+txt+'</button>';
+  const linhas=L.map(x=>{
+    const n=(x.a.nome||'Aluno').split(' ');const nm=n[0]+(n[1]?' '+n[1]:'');
+    const prim=x.tem?b('bp','🗂️ Editar próxima fase','' + x.a.id,'prox','Abre a próxima fase do treino no Quadro'):b('bp','✨ Próxima fase','' + x.a.id,'prox','Gera o rascunho da próxima fase (inativo) e abre no Quadro');
+    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':'')+'</span><span class="t" style="display:flex;gap:6px">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+prim+'</span></div>';
+  }).join('');
+  return '<section class="card hm-c" style="grid-column:1/-1"><h3>🏁 Treinos a vencer (até 7 dias) <span class="sp"></span><small style="color:var(--t3);font-weight:500">'+L.length+'</small></h3>'+linhas+'</section>';
+}
+async function homeAbrirFase(alunoId,modo){
+  if(!(await mbCarregarProtoAluno(alunoId)))return;
+  const idx=faseIdxHoje(kbFaseDatas());
+  if(modo==='prox'){
+    if(semanas[idx+1]){nav('kb-'+semanas[idx+1].id);notify('Próxima fase aberta no Quadro. Edite e use 💾 Atualizar aluno / 💾 Salvar fase.');return;}
+    mbSugerirProximaFase(String(mbProtoCarregadoId),alunoId);return;
+  }
+  if(semanas[idx])nav('kb-'+semanas[idx].id);
+  notify('Fase atual aberta no Quadro.');
+}
 async function homeIrAluno(id){ nav('alunos'); await mbCarregarPainelAlunos(); mbIrParaAluno(id); }
 async function homeIrColetiva(key){ coletivasModo = 'coletivas'; nav('coletivas'); await mbCarregarAulasColetivas(); coletivasIrParaData(key); }
 function homeIrPersonal(id){ personalAlunoId = id; try { localStorage.setItem('movh_personal_aluno', id); } catch(e){} personalAbrir(); }
@@ -3691,7 +3736,7 @@ function homeRender(){
   let alertas = []; try { alertas = mbAlertas(); } catch(e){}
   const dem = alertas.filter(x => HM_DEM.indexOf(x.i) >= 0), idsDem = {}; dem.forEach(x => idsDem[x.aid] = 1);
   semT.forEach(a => { if (!idsDem[a.id]) dem.push({ n:1, i:'🕐', t:(a.nome || 'Aluno').split(' ')[0] + ' · aguardando treino', aid:a.id }); });
-  const outros = alertas.filter(x => HM_DEM.indexOf(x.i) < 0);
+  const outros = alertas.filter(x => HM_DEM.indexOf(x.i) < 0 && !(x.i === '🏁' && x.n === 3));
   const kp = (cls, n, l) => '<button type="button" class="hm-k ' + cls + '" onclick="nav(\'alunos\')"><b>' + n + '</b><span>' + l + '</span></button>';
   K.innerHTML = kp('g', at.length, 'alunos ativos') + kp('r', v7, 'vencendo em até 7 dias') + kp('o', v14, 'vencendo em 8–14 dias') + kp('', semT.length, 'sem treino ativo') + kp(dem.length ? 'o' : '', dem.length, 'demandas') + kp('', sess, 'treinos no mês');
   const it = (x) => '<button type="button" class="hm-it n' + x.n + '" data-id="' + escAttr(x.aid || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>' + x.i + '</span><span>' + escAttr(x.t) + '</span>' + ((x.i === '⏰' || x.i === '🏁' || x.i === '💠') ? '<span class="t"><span class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.aid || '') + '" onclick="event.stopPropagation();mbCobrar(this.dataset.id)">💰 Cobrar</span></span>' : '') + '</button>';
@@ -3712,7 +3757,7 @@ function homeRender(){
   const cAc = '<section class="card hm-c"><h3>🔔 Alunos recentes <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + gr.length + '</small></h3>' + (gr.length ? '<div class="al-feed-list">' + gr.map(g => '<button type="button" class="al-feed-it al-grp" data-id="' + escAttr(g.id || '') + '" onclick="homeIrAluno(this.dataset.id)" title="' + escAttr(g.evs.map(e => hh(e.t) + ' ' + e.a + ' ' + e.x).join('\n')) + '"><span class="al-feed-t">' + mbTempoC(g.t) + '</span><b class="al-g-n">' + escAttr(g.a) + '</b><span class="al-g-ev">' + g.evs.map(e => '<span class="al-g-i">' + e.i + ' ' + escAttr(g.evs.length === 1 ? e.x : e.s) + ' <i>' + hh(e.t) + '</i></span>').join('') + '</span></button>').join('') + '</div>' : '<div class="hm-vz">Sem atividade nos últimos dias.</div>') + '</section>';
   const fix = (notasCache || []).filter(n => n.fixada).slice(0, 5);
   const cNo = '<section class="card hm-c"><h3>📝 Notas fixadas <span class="sp"></span>' + notasBtn('geral', '', 'Geral') + '</h3>' + (!notasOk ? '<div class="hm-vz">⚠️ Falta rodar o SQL de Notas (Configuração › Geral › Copiar SQL das policies RLS).</div>' : (fix.length ? fix.map(n => '<button type="button" class="hm-it" data-i="' + escAttr(n.id) + '" onclick="notasAbrirNota(this.dataset.i)"><span style="width:4px;align-self:stretch;border-radius:3px;background:' + (n.cor || 'var(--bd)') + '"></span><span><b>' + escAttr(n.titulo || '') + '</b> ' + escAttr(String(n.texto || '').split('\n')[0].slice(0, 80)) + '</span></button>').join('') : '<div class="hm-vz">Fixe uma nota (📌) para ela aparecer aqui.</div>')) + '</section>';
-  G.innerHTML = cDem + cAt + cAg + cAc + cNo;
+  G.innerHTML = homeVencerHTML(at) + cDem + cAt + cAg + cAc + cNo;
 }
 
 // ── Notas (por contexto: geral, aluno, dia, exercício) + atalho para o Google Keep ──
@@ -3857,28 +3902,28 @@ function pfChipsCompactos(vol, abrev){
 }
 function pfAnaliseHTML(o){
   const vol = o.vol || {};
-  const nAl = (o.alertas||[]).filter(x => x.t !== 'ok').length;
+  const lista = (o.alertas||[]).filter(x => !x.v); // alertas de volume já aparecem nos chips
+  const nAl = lista.filter(x => x.t !== 'ok').length;
   const box = (tit, inner, fl) => `<div style="flex:${fl||1};min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">${tit}</b>${inner}</div>`;
   const ctx = (o.ctx||[]).map(r => `<span>${escAttr(r[0])} <b>${escAttr(r[1])}</b></span>`).join('');
   const par = PF_PARAMS.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('');
-  const al = (o.alertas||[]).length ? o.alertas.map(x => `<div style="color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'✔':'⚠'} ${escAttr(x.x)}</div>`).join('') : '<div style="color:var(--t3,#888)">Sem alertas.</div>';
+  const al = lista.map(x => `<div style="color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'✔':'⚠'} ${escAttr(x.x)}</div>`).join('');
   const cmp = pfComparacaoHTML(o);
-  const esp = PF_MUSCULOS.filter(m => (m.volMin||10) !== 10 || (m.volMax||20) !== 20).map(m => m.k+' '+(m.volMin||10)+'–'+(m.volMax||20)).join(' · ');
-  return `<details class="pf-an" ${pfAnAberto()?'open':''} ontoggle="pfAnToggle(this)" style="margin:6px 0 12px;border:1px solid var(--bd,#ddd);border-radius:10px;padding:8px 10px">
-    <summary style="cursor:pointer;font-size:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b>📊 Análise técnica</b><span class="an-chips">${pfChipsCompactos(vol)}</span><b style="margin-left:auto;color:${nAl?'#e0902a':'#1fb583'}">${nAl?'⚠ '+nAl+' ponto'+(nAl!==1?'s':'')+' de atenção':'✔ sem alertas'}</b></summary>
-    <div class="pf-an-ctx">${ctx}</div>
-    <div class="pf-an-al">${al}</div>
-    <div class="pf-an-nota">Volume = séries por semana de cada grupo (soma de todos os dias). Meta MOVH, base Schoenfeld et al. 2017 (10–20 séries/grupo)${esp?'; '+escAttr(esp):''}. ✓ na meta · ↓ abaixo · ↑ acima · ✕ zero.</div>
-    <details style="margin-top:8px"><summary style="cursor:pointer;font-size:11px;color:var(--t3,#888)">Parâmetros MOVH e comparação por nível</summary><div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">${box('PARÂMETROS',par)}${cmp}</div></details>
+  const esp = PF_MUSCULOS.map(m => m.k+' '+(m.volMin||10)+'–'+(m.volMax||20)).join(' · ');
+  return `<details class="pf-an" ${pfAnAberto()?'open':''} ontoggle="pfAnToggle(this)" style="margin:6px 0 10px;border:1px solid var(--bd,#ddd);border-radius:10px;padding:6px 10px">
+    <summary style="cursor:pointer;font-size:12px;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center"><b>📊 Análise técnica</b><span class="an-chips">${pfChipsCompactos(vol)}</span><b style="margin-left:auto;color:${nAl?'#e0902a':'#1fb583'}">${nAl?'⚠ '+nAl+' alerta'+(nAl!==1?'s':''):'✔ sem alertas'}</b></summary>
+    ${ctx?`<div class="pf-an-ctx">${ctx}</div>`:''}
+    ${al?`<div class="pf-an-al">${al}</div>`:''}
+    <details style="margin-top:6px"><summary style="cursor:pointer;font-size:10.5px;color:var(--t3,#888)">Metas e parâmetros</summary><div class="pf-an-nota" style="margin:6px 0">Volume = séries/semana por grupo (soma dos dias). Meta (séries/sem): ${escAttr(esp)}. ✓ na meta · ↓ abaixo · ↑ acima · ✕ zero. Base: Schoenfeld et al. 2017.</div><div style="display:flex;flex-wrap:wrap;gap:10px">${box('PARÂMETROS',par)}${cmp}</div></details>
   </details>`;
 }
 // Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
 function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
   const zero = PF_MUSCULOS.filter(m => (vol[m.k]||0) === 0).map(m => m.k);
-  if (zero.length) alertas.push({t:'av', x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
+  if (zero.length) alertas.push({t:'av', v:1, x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
   const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 || (n > 0 && n < min); }).map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 ? m.k+' volume ZERO — verifique se é intencional' : m.k+' '+n+'/'+min; });
-  if (baixo.length) alertas.push({t:'av', x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
+  if (baixo.length) alertas.push({t:'av', v:1, x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
   const fora = [];
   (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
     if (!e.nome) return;
@@ -3900,9 +3945,9 @@ function kbAnaliseDados(sem){
   const nd = (sem.dias||[]).length || 1;
   const ini = (typeof mbProtoDataInicio !== 'undefined' && mbProtoDataInicio) ? mbProtoDataInicio.split('-').reverse().join('/') : '—';
   const dest = (typeof pbDestInfo === 'function') ? pbDestInfo().txt.replace(/^\S+\s/,'').replace(/ · novo$/,'') : '—';
-  const ctx = [['Destino', dest], ['Fase', (sem.nome||'—')+' · '+(parseInt(sem.duracaoSemanas)||4)+' sem'], ['Dias por semana', String((sem.dias||[]).length)],
-    ['Exercícios', tot+' · ~'+Math.round(min/nd)+' min/dia'], ['Início', ini],
-    ['RPE médio', db && db.rpeMed != null ? db.rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', db ? db.diasReg+' dia(s)' : '—']];
+  const ctx = [['Fase', (sem.nome||'—')+' · '+(parseInt(sem.duracaoSemanas)||4)+' sem'], ['Treino', (sem.dias||[]).length+' dias · '+tot+' ex · ~'+Math.round(min/nd)+' min/dia']];
+  if (db && db.rpeMed != null) ctx.push(['RPE médio', db.rpeMed.toFixed(1)]);
+  if (db) ctx.push(['Registros', db.diasReg+' dia(s)/10 sem']);
   // Dados para comparação atual vs recomendado
   let maiorSemDeload = 0, semDeload = 0;
   semanas.forEach(s => {
@@ -3988,17 +4033,69 @@ function renderKanbanSemana(sid){
 var _kbgPer = {};
 function kbgFmt(d){return d?String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2):'—';}
 // Início/fim de cada fase (data própria ou cascata; 1ª fase cai no início do treino)
-function kbFaseDatas(){
+function faseDatasDe(arr,ini){
   const out=[];let prevFim=null;
-  semanas.forEach((s,i)=>{
+  (arr||[]).forEach((s,i)=>{
     const dur=parseInt(s.duracaoSemanas)||4;let a=null;
     if(s.dataInicio)a=new Date(s.dataInicio+'T00:00:00');
-    else if(i===0&&typeof mbProtoDataInicio!=='undefined'&&mbProtoDataInicio)a=new Date(mbProtoDataInicio+'T00:00:00');
+    else if(i===0&&ini)a=new Date(ini+'T00:00:00');
     else if(prevFim){a=new Date(prevFim);a.setDate(a.getDate()+1);}
     let b=null;if(a){b=new Date(a);b.setDate(b.getDate()+dur*7-1);}
     out.push({a:a,b:b});if(b)prevFim=b;
   });
   return out;
+}
+function kbFaseDatas(){return faseDatasDe(semanas,(typeof mbProtoDataInicio!=='undefined')?mbProtoDataInicio:null);}
+// índice da fase vigente por data: a que contém hoje; vencido → última; ainda não começou → primeira
+function faseIdxHoje(datas){
+  const h=new Date();h.setHours(0,0,0,0);
+  let i=datas.findIndex(d=>d.a&&d.b&&h>=d.a&&h<=d.b);if(i>=0)return i;
+  const com=datas.map((d,k)=>({d:d,k:k})).filter(x=>x.d.a);if(!com.length)return 0;
+  const fut=com.find(x=>x.d.a>h);if(fut)return fut.k>0?fut.k-1:0;
+  return com[com.length-1].k;
+}
+var _kbgMes={},_kbgModo={};
+const KBG_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+function kbgCalNav(sid,delta){const m=_kbgMes[sid]||new Date();_kbgMes[sid]=new Date(m.getFullYear(),m.getMonth()+delta,1);renderKanbanGeral();}
+function kbgCalModo(sid,m){_kbgModo[sid]=m;renderKanbanGeral();}
+// clique no dia: modo "Início" move o início (duração mantida); modo "Fim" ajusta a duração em semanas inteiras
+function kbgCalClick(sid,key){
+  const idx=semanas.findIndex(x=>x.id===sid);if(idx<0)return;
+  const dt=kbFaseDatas()[idx],modo=_kbgModo[sid]||'ini';
+  if(modo==='ini'){
+    if(semanas[idx].travado){notify('Esta fase está travada (🔒). Destrave para mudar o início.');return;}
+    _kbgModo[sid]='fim';_kbgMes[sid]=new Date(key+'T00:00:00');_kbgMes[sid].setDate(1);
+    kbgSetInicio(sid,key);return;
+  }
+  if(!dt.a){notify('Defina primeiro o início da fase.');_kbgModo[sid]='ini';renderKanbanGeral();return;}
+  const f=new Date(key+'T00:00:00');
+  if(f<dt.a){notify('O fim precisa ser depois do início.');return;}
+  const sem=Math.max(1,Math.ceil(((f-dt.a)/86400000+1)/7));
+  _kbgModo[sid]='ini';
+  kbgSetDur(sid,sem);
+  const nb=kbFaseDatas()[idx].b;
+  if(nb&&calDateKey(nb)!==key)notify('Fim ajustado para '+kbgFmt(nb)+' ('+sem+' semana'+(sem!==1?'s':'')+' inteiras).');
+}
+function kbgCalHTML(sm,idx,datas){
+  const dt=datas[idx],h=new Date();h.setHours(0,0,0,0);
+  let mes=_kbgMes[sm.id];if(!mes){const b=dt.a||h;mes=new Date(b.getFullYear(),b.getMonth(),1);_kbgMes[sm.id]=mes;}
+  const y=mes.getFullYear(),m=mes.getMonth(),pri=new Date(y,m,1).getDay(),nd=new Date(y,m+1,0).getDate();
+  const ini=dt.a?calDateKey(dt.a):'',fim=dt.b?calDateKey(dt.b):'',hoje=calDateKey(h);
+  const outras=datas.filter((d,k)=>k!==idx&&d.a&&d.b);
+  let cel='';for(let i=0;i<pri;i++)cel+='<i></i>';
+  for(let d=1;d<=nd;d++){
+    const k=calDateKey(new Date(y,m,d));let c='kc-d';
+    if(ini&&fim&&k>=ini&&k<=fim)c+=' in';if(k===ini)c+=' ini';if(k===fim)c+=' fim';if(k===hoje)c+=' hoje';
+    if(outras.some(o=>k>=calDateKey(o.a)&&k<=calDateKey(o.b)))c+=' oth';
+    cel+='<button type="button" class="'+c+'" data-k="'+k+'" onclick="kbgCalClick(\''+sm.id+'\',this.dataset.k)">'+d+'</button>';
+  }
+  const modo=_kbgModo[sm.id]||'ini';
+  return '<div class="kc"><div class="kc-nav"><button type="button" onclick="kbgCalNav(\''+sm.id+'\',-1)" aria-label="Mês anterior">‹</button><b>'+KBG_MESES[m]+' '+y+'</b><button type="button" onclick="kbgCalNav(\''+sm.id+'\',1)" aria-label="Próximo mês">›</button></div>'
+    +'<div class="kc-g"><span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>'+cel+'</div></div>'
+    +'<div class="kc-side"><div class="kc-modo"><button type="button" class="'+(modo==='ini'?'on':'')+'" onclick="kbgCalModo(\''+sm.id+'\',\'ini\')"><small>Início</small><b>'+(dt.a?kbgFmt(dt.a):'—')+'</b></button><button type="button" class="'+(modo==='fim'?'on':'')+'" onclick="kbgCalModo(\''+sm.id+'\',\'fim\')"><small>Fim</small><b>'+(dt.b?kbgFmt(dt.b):'—')+'</b></button></div>'
+    +'<label>Duração <input type="number" min="1" max="52" value="'+(parseInt(sm.duracaoSemanas)||4)+'" onchange="kbgSetDur(\''+sm.id+'\',this.value)"/> sem</label>'
+    +'<label><input type="checkbox" '+(sm.travado?'checked':'')+' onchange="kbgTravar(\''+sm.id+'\')"/> 🔒 travar início</label>'
+    +'<span class="hint">Toque num dia para definir o <b>'+(modo==='ini'?'início':'fim')+'</b>. As fases seguintes (não travadas) acompanham.</span></div>';
 }
 function kbgPeriodo(sid){_kbgPer[sid]=!_kbgPer[sid];renderKanbanGeral();}
 function kbgSetInicio(sid,v){if(!v)return;kbCalSetFaseInicio(v,sid,sid);renderKanbanGeral();}
@@ -4068,12 +4165,7 @@ function renderKanbanGeral(){
     const per=dt.a?' · 📅 '+kbgFmt(dt.a)+' → '+kbgFmt(dt.b):'';
     const prox=dt.b?new Date(dt.b.getTime()+86400000):null;
     const aberto=!!_kbgPer[sm.id];
-    const painel=aberto?`<div class="kbg-per">
-        <label>Início <input type="date" value="${dt.a?calDateKey(dt.a):''}" ${sm.travado?'disabled':''} onchange="kbgSetInicio('${sm.id}',this.value)"/></label>
-        <label>Duração <input type="number" min="1" max="52" value="${dur}" onchange="kbgSetDur('${sm.id}',this.value)"/> sem</label>
-        <span>Fim <b>${dt.b?kbgFmt(dt.b):'—'}</b></span>
-        <label><input type="checkbox" ${sm.travado?'checked':''} onchange="kbgTravar('${sm.id}')"/> 🔒 travar início</label>
-        <span class="hint">Mudar início/duração reorganiza as fases seguintes (as não travadas).</span></div>`:'';
+    const painel=aberto?`<div class="kbg-per">${kbgCalHTML(sm,i,datas)}</div>`:'';
     return `<section class="kbg-sec" id="kbg-${sm.id}">
       <div class="kbg-hd2"><span class="kbg-n">${i+1}</span><div class="kbg-tt"><b>${escAttr(sm.nome||('Fase '+(i+1)))}</b><span>${dur} sem · ${sm.dias.length} dia${sm.dias.length!==1?'s':''} · ${tot} exercício${tot!==1?'s':''}${per}</span></div>
       <div class="kbg-acts">
