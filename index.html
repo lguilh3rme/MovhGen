@@ -2021,24 +2021,25 @@ async function dbDeletarCategoria(cat){
 // pro gráfico de Volume × Intensidade (montarGraficoVolInt), não mudam
 // nada do texto já exibido em outros lugares do editor/app do aluno.
 const FASES_TEMPLATE = {
-  base: {
-    label: 'Base', emoji: '🔵', cor: '#3580D8',
-    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Por grupamento (faixas próprias)', descanso: 'Compostos 2 min · isoladores 1 min',
-    volNum: 8, intNum: 65,
-    progressao: [
-      'Fase única de 8 semanas',
-      'Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga',
-      'Revisão a cada 4 semanas pelos registros e dor'
-    ]
-  },
   adaptacao: {
     label: 'Adaptação', emoji: '🟢', cor: '#1A9E72',
     rpe: '5–7', rir: '3–4', carga: '~50–65%', volume: 'Baixo/Moderado', descanso: 'Conforme necessidade',
     volNum: 4, intNum: 55,
     progressao: [
-      'Fase opcional de 4 semanas para iniciantes/retorno',
+      'Fase opcional de 4 semanas — SÓ para iniciantes/retorno',
       'Foco em aprendizado motor e condicionamento inicial',
       'Transição suave para Base'
+    ]
+  },
+  base: {
+    label: 'Base', emoji: '🔵', cor: '#3580D8',
+    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Por grupamento (faixas próprias)', descanso: 'Compostos 2 min · isoladores 1 min',
+    volNum: 8, intNum: 65,
+    progressao: [
+      'Fase principal de 8 semanas (hard sets perto da falha)',
+      'Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga',
+      'Revisão a cada 4 semanas pelos registros e dor',
+      'Após Base, a próxima fase recomendada é NOVA Base (variar exercícios)'
     ]
   },
   // Deload mantido só para uso interno (inserção automática de semana de deload baseada em RPE/nível).
@@ -2086,11 +2087,11 @@ function condSugestao(faseKey, duracaoBase, zonaBase){
   const zonas=['Z1','Z2','Z3','Z4','Z5'];
   const zIdx=zonaBase?zonas.indexOf(zonaBase):1; // padrão Z2 se não definida
   let minutos=minBase, zonaSug=zonaBase||'Z2', obsTxt='';
-  if(faseKey==='base'){
-    minutos=minBase; zonaSug=zonaBase||'Z2'; obsTxt='ritmo constante, construção de base';
-  } else if(faseKey==='adaptacao'){
+  if(faseKey==='adaptacao'){
     minutos=minBase?Math.max(8,Math.round(minBase*0.7)):minBase;
-    zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='foco em técnica e condicionamento inicial';
+    zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='foco em técnica e condicionamento inicial (iniciante/retorno)';
+  } else if(faseKey==='base'){
+    minutos=minBase; zonaSug=zonaBase||'Z2'; obsTxt='ritmo constante, construção de base (hard sets)';
   }
   return{
     duracaoTxt:minutos?minutos+' min':(duracaoBase||'—'),
@@ -3572,7 +3573,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.2 · 08/11';
+var MOVH_VER = 'v61.3 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3844,6 +3845,8 @@ function pfAnaliseHTML(o){
 // Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
 function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
+  const zero = PF_MUSCULOS.filter(m => (vol[m.k]||0) === 0).map(m => m.k);
+  if (zero.length) alertas.push({t:'av', x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
   const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n > 0 && n < min; }).map(m => m.k+' '+(vol[m.k]||0)+'/'+(m.volMin||10));
   if (baixo.length) alertas.push({t:'av', x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
   const fora = [];
@@ -3995,15 +3998,26 @@ function kbCalHTML(sid){
       return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
     }).join('');
     // Próxima fase recomendada (rascunho separado no Calendário)
+    // Regra: Adaptação só para iniciante/retorno (primeira fase).
+    // Após Base, a próxima fase recomendada é NOVA Base (variar exercícios), nunca Adaptação.
     const ultima = semanas[semanas.length-1];
     const ultimaFase = ultima?.fase || 'base';
-    const proxFase = ultimaFase === 'adaptacao' ? 'base' : 'adaptacao';
+    let proxFase, proxDur, proxLabel;
+    if (ultimaFase === 'adaptacao') {
+      // Após Adaptação → Base
+      proxFase = 'base';
+      proxDur = 8;
+      proxLabel = '';
+    } else {
+      // Após Base → nova Base (variar exercícios)
+      proxFase = 'base';
+      proxDur = 8;
+      proxLabel = ' (variar exercícios)';
+    }
     const ftProx = FASES_TEMPLATE[proxFase];
-    const proxDur = proxFase === 'base' ? 8 : 4;
     const aProx = new Date(ini); aProx.setDate(aProx.getDate() + acc*7);
     const bProx = new Date(aProx); bProx.setDate(bProx.getDate() + proxDur*7 - 1);
-    const proxLabel = proxFase === 'adaptacao' ? '(opcional)' : '';
-    prox = `<div class="kb-cal-f prox" style="border-style:dashed;opacity:.8"><span class="kb-cal-fn">${ftProx.emoji} ${ftProx.label} ${proxLabel} · recomendada</span><span class="kb-cal-fd">${kbFmtD(aProx)} → ${kbFmtD(bProx)} · ${proxDur} sem.</span></div>`;
+    prox = `<div class="kb-cal-f prox" style="border-style:dashed;opacity:.8"><span class="kb-cal-fn">${ftProx.emoji} ${ftProx.label}${proxLabel} · recomendada</span><span class="kb-cal-fd">${kbFmtD(aProx)} → ${kbFmtD(bProx)} · ${proxDur} sem.</span></div>`;
     if(porF&&fim&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
   }
   const dica=ini
@@ -4708,7 +4722,7 @@ function montarTimelinePeriodizacao(lista, semanaAtualGlobal, detalhado){
   const testeMarkers = (testesAgendados||[]).map((t,ti)=>
     `<div class="pzt-teste-marker" style="left:${Math.min(99,Math.max(0,t.semana/total*100))}%" title="🎯 ${(mbPadraoInfo(t.tipo||'condicionamento')||{}).label||'Teste'} — semana ${t.semana+1}${t.dia?' · '+t.dia:''}">🎯</div>`
   ).join('');
-  const legenda = Object.keys(FASES_TEMPLATE).map(k=>`<span>${FASES_TEMPLATE[k].emoji} ${FASES_TEMPLATE[k].label}</span>`).join('');
+  const legenda = Object.keys(FASES_TEMPLATE).filter(k=>k!=='deload').map(k=>`<span>${FASES_TEMPLATE[k].emoji} ${FASES_TEMPLATE[k].label}</span>`).join('');
   const nivelSel = `<select id="pzt-nivel-sel" onchange="nivelAluno=this.value;nivelAlunoOrigem=this.value?'manual':'';renderSB()" style="font-size:9.5px;padding:2px 5px;border-radius:5px;width:auto">
     <option value=""${!nivelAluno?' selected':''}>Nível do aluno — não definido</option>
     ${Object.keys(NIVEL_TREINO).map(k=>`<option value="${k}"${nivelAluno===k?' selected':''}>${NIVEL_TREINO[k].label} (${NIVEL_TREINO[k].sub})</option>`).join('')}
@@ -4964,18 +4978,18 @@ function renderSB(){
 const NIVEL_TREINO = {
   iniciante: {
     label:'Iniciante', sub:'< 1 ano de treino',
-    base:[6,8], adaptacao:[4,6], deloadACada:[8,12],
-    modelo:'Linear — Base longa (6-8 sem) + Adaptação opcional (4-6 sem) para construir fundação sólida.'
+    adaptacao:[4,6], base:[6,8], deloadACada:[8,12],
+    modelo:'Linear — Adaptação (4-6 sem) se iniciante/retorno → Base longa (6-8 sem). Após Base, nova Base (variar exercícios).'
   },
   intermediario: {
     label:'Intermediário', sub:'1–3 anos de treino',
-    base:[4,6], adaptacao:[3,4], deloadACada:[6,8],
-    modelo:'Ondulatória — Base moderada (4-6 sem) + Adaptação (3-4 sem) se necessário, variação de estímulo.'
+    adaptacao:[0,0], base:[4,6], deloadACada:[6,8],
+    modelo:'Ondulatória — Base moderada (4-6 sem). Adaptação só se retorno/lesão. Após Base, nova Base (variar exercícios).'
   },
   avancado: {
     label:'Avançado', sub:'3+ anos de treino',
-    base:[3,5], adaptacao:[0,2], deloadACada:[4,6],
-    modelo:'Blocos concentrados — Base curta (3-5 sem), Adaptação rara/opcional, deload mais frequente.'
+    adaptacao:[0,0], base:[3,5], deloadACada:[4,6],
+    modelo:'Blocos concentrados — Base curta (3-5 sem). Adaptação só se retorno/lesão. Após Base, nova Base (variar exercícios).'
   }
 };
 // Compara o plano atual (lista de mesociclos) com o recomendado pro nível
@@ -4992,8 +5006,8 @@ function analisarPeriodizacao(lista, nivel){
   const rec=NIVEL_TREINO[nivel];
   const porFase={};
   lista.forEach(s=>{if(s.fase)porFase[s.fase]=(porFase[s.fase]||0)+(s.duracaoSemanas||4);});
-  // Fases novas: base, adaptacao
-  ['base','adaptacao'].forEach(f=>{
+  // Fases novas: adaptacao, base (adaptacao só se iniciante/retorno)
+  ['adaptacao','base'].forEach(f=>{
     const [min,max]=rec[f];
     const atual=porFase[f]||0;
     if(min>0&&atual<min){
@@ -5098,7 +5112,7 @@ function aplicarSugestaoDeload(){
 }
 function addSem(){const sid='s'+sc++;const l=String.fromCharCode(64+semanas.length+1);semanas.push({id:sid,nome:'Semana '+l,duracaoSemanas:4,dias:[{id:sid+'d1',nome:'Segunda',diaSemana:'Segunda',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},{id:sid+'d2',nome:'Quarta',diaSemana:'Quarta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},{id:sid+'d3',nome:'Sexta',diaSemana:'Sexta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]}]});renderAll();notify('Mesociclo adicionado!');}
 function rmSem(){if(semanas.length<=1){notify('Mínimo 1 mesociclo.');return;}semanas.pop();renderAll();nav('config');notify('Mesociclo removido.');}
-const SEQUENCIA_FASES = ['base', 'adaptacao']; // deload não está na sequência do usuário (só uso interno)
+const SEQUENCIA_FASES = ['adaptacao', 'base']; // deload não está na sequência do usuário (só uso interno); após Base → nova Base (variar exercícios), nunca Adaptação
 function dupSem(sid){
   const idx=semanas.findIndex(x=>x.id===sid);
   if(idx<0)return;
@@ -5362,34 +5376,34 @@ function calDiffDias(diaAtual, diaAnt){
   for (let bi=0; bi<maxB; bi++){
     const ba = blocosAtual[bi], bb = blocosAnt[bi];
     if (!ba && bb){
-      out += `<div style="color:#c03030">➖ Bloco ${bb.tipo} removido</div>`;
+      out += `<div style="color:#c03030">➖ Bloco ${escAttr(bb.tipo)} removido</div>`;
       continue;
     }
     if (ba && !bb){
-      out += `<div style="color:#1A9E72">➕ Bloco ${ba.tipo} adicionado</div>`;
+      out += `<div style="color:#1A9E72">➕ Bloco ${escAttr(ba.tipo)} adicionado</div>`;
       continue;
     }
     if (ba.tipo !== bb.tipo){
-      out += `<div style="color:#D4A017">🔄 Tipo do bloco: ${bb.tipo} → ${ba.tipo}</div>`;
+      out += `<div style="color:#D4A017">🔄 Tipo do bloco: ${escAttr(bb.tipo)} → ${escAttr(ba.tipo)}</div>`;
     }
     const maxE = Math.max(ba.exs.length, bb.exs.length);
     for (let ei=0; ei<maxE; ei++){
       const ea = ba.exs[ei], eb = bb.exs[ei];
       if (!ea && eb){
-        out += `<div style="color:#c03030;margin-left:8px">➖ ${eb.nome} (${eb.series}${eb.rest?' · '+eb.rest:''})</div>`;
+        out += `<div style="color:#c03030;margin-left:8px">➖ ${escAttr(eb.nome)} (${escAttr(eb.series)}${escAttr(eb.rest)?' · '+escAttr(eb.rest):''})</div>`;
         continue;
       }
       if (ea && !eb){
-        out += `<div style="color:#1A9E72;margin-left:8px">➕ ${ea.nome} (${ea.series}${ea.rest?' · '+ea.rest:''})</div>`;
+        out += `<div style="color:#1A9E72;margin-left:8px">➕ ${escAttr(ea.nome)} (${escAttr(ea.series)}${escAttr(ea.rest)?' · '+escAttr(ea.rest):''})</div>`;
         continue;
       }
       const diffs = [];
-      if (ea.nome !== eb.nome) diffs.push(`nome: ${eb.nome||'—'} → ${ea.nome||'—'}`);
-      if (ea.series !== eb.series) diffs.push(`séries: ${eb.series||'—'} → ${ea.series||'—'}`);
-      if (ea.rest !== eb.rest) diffs.push(`descanso: ${eb.rest||'—'} → ${ea.rest||'—'}`);
-      if (ea.reg !== eb.reg) diffs.push(`reg: ${eb.reg||'—'} → ${ea.reg||'—'}`);
-      if (ea.carga !== eb.carga) diffs.push(`carga: ${eb.carga||'—'} → ${ea.carga||'—'}`);
-      if (diffs.length) out += `<div style="margin-left:8px">${eb.nome} · ${diffs.join(' | ')}</div>`;
+      if (ea.nome !== eb.nome) diffs.push(`nome: ${escAttr(eb.nome||'—')} → ${escAttr(ea.nome||'—')}`);
+      if (ea.series !== eb.series) diffs.push(`séries: ${escAttr(eb.series||'—')} → ${escAttr(ea.series||'—')}`);
+      if (ea.rest !== eb.rest) diffs.push(`descanso: ${escAttr(eb.rest||'—')} → ${escAttr(ea.rest||'—')}`);
+      if (ea.reg !== eb.reg) diffs.push(`reg: ${escAttr(eb.reg||'—')} → ${escAttr(ea.reg||'—')}`);
+      if (ea.carga !== eb.carga) diffs.push(`carga: ${escAttr(eb.carga||'—')} → ${escAttr(ea.carga||'—')}`);
+      if (diffs.length) out += `<div style="margin-left:8px">${escAttr(eb.nome)} · ${diffs.join(' | ')}</div>`;
     }
   }
   return out || '<span style="color:var(--t3)">Sem diferenças</span>';
@@ -10484,14 +10498,16 @@ async function mbToggleLoop(protoId, alunoId, ligar) {
 // a partir do mesociclo vigente do protocolo ativo. Regras: ver CONTEXTO.md §26.
 // Nada é gravado até o professor clicar em Salvar; o protocolo ativo não é tocado.
 const PF_MUSCULOS = [
+  // Fonte: Schoenfeld et al. 2017 (meta-análise dose-resposta); revisão 12-20 séries/sem/grupo para hipertrofia (hard sets perto da falha).
+  // Mínimo 10 séries/sem/grupo; faixa-alvo 12-20. Bíceps/Tríceps: menor volume direto (prática, indireto via compostos).
   {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,volMin:10,volMax:20,sug:'Supino inclinado máquina'},
   {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,volMin:10,volMax:20,sug:'Remada máquina'},
-  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,volMin:8,volMax:16,sug:'Elevação lateral'},
-  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,volMin:6,volMax:12,sug:'Rosca martelo'},
-  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,volMin:6,volMax:12,sug:'Tríceps corda'},
+  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,volMin:10,volMax:20,sug:'Elevação lateral'},
+  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,volMin:6,volMax:12,sug:'Rosca martelo'}, // prática, indireto
+  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,volMin:6,volMax:12,sug:'Tríceps corda'}, // prática, indireto
   {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i,volMin:12,volMax:24},
   {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i,volMin:10,volMax:20},
-  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i,volMin:8,volMax:16}
+  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i,volMin:10,volMax:20}
 ];
 const PF_COMPOSTO = /agachamento|squat|leg press|hack|supino|remada|puxada|stiff|rdl|terra|deadlift|desenvolvimento|p[eé]lvica|b[uú]lgaro|afundo|barra fixa|paralela/i;
 let _pf = null;
@@ -10566,7 +10582,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
       alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
     });
     const vol1 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; const min = m.volMin || 10; if (n > 0 && n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); });
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
     // anamnese / dor
     const resp = an.data && an.data[0] ? an.data[0].respostas : null;
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
@@ -14659,7 +14675,7 @@ function aMontarTimelinePeriodizacao(lista, semanaAtualGlobal, ctxPrefix){
   const testeMarkers = (aTestesAgendados||[]).map(t=>
     '<div class="a-pzt-teste-marker" style="left:'+Math.min(99,Math.max(0,t.semana/total*100))+'%" title="🎯 '+(aLang==='en'?'Test':'Teste')+' — '+(aLang==='en'?'week ':'semana ')+(t.semana+1)+(t.dia?' · '+aEsc(aDiaExibicao(t.dia)):'')+'">🎯</div>'
   ).join('');
-  const legenda = Object.keys(ft).map(k=>'<span>'+ft[k].emoji+' '+ft[k].label+'</span>').join('');
+  const legenda = Object.keys(ft).filter(k=>k!=='deload').map(k=>'<span>'+ft[k].emoji+' '+ft[k].label+'</span>').join('');
   const detId = aPztDetId(ctxPrefix);
   return '<div class="a-pzt-wrap" id="' + detId + '" style="display:none">'+
     '<div class="a-pzt-title">'+(aLang==='en'?'Planned periodization':'Periodização prevista')+' ('+total+(aLang==='en'?' weeks)':' semanas)')+'</div>'+
