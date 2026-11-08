@@ -2023,7 +2023,7 @@ async function dbDeletarCategoria(cat){
 const FASES_TEMPLATE = {
   base: {
     label: 'Base', emoji: '🔵', cor: '#3580D8',
-    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Alto (mín. 10 séries/sem por músculo)', descanso: 'Compostos 2 min · isoladores 1 min',
+    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Por grupamento (faixas próprias)', descanso: 'Compostos 2 min · isoladores 1 min',
     volNum: 8, intNum: 65,
     progressao: [
       'Fase única de 8 semanas',
@@ -3781,7 +3781,7 @@ visualAplicar();verAplicar();
 // ══ Análise técnica (Quadro + Próxima fase): painel RECOLHÍVEL, estado lembrado ══
 let _kbSidAtual = null;
 const _kbDb = {}; // alunoId -> {rpeMed, diasReg, hits, nivel} (carregado 1x do banco)
-const PF_PARAMS = ['Fase única 8 semanas','RIR 2 (última série 1)',"Compostos 2' · isoladores 1'",'Progressão dupla: topo da faixa → +carga','Volume mín. ~10 séries/sem por músculo','Revisão a cada 4 semanas'];
+const PF_PARAMS = ['Fase única 8 semanas','RIR 2 (última série 1)',"Compostos 2' · isoladores 1'",'Progressão dupla: topo da faixa → +carga','Volume por grupamento (faixas próprias)','Revisão a cada 4 semanas'];
 function pfAnAberto(){ try { return localStorage.getItem('movh_pf_analise') !== '0'; } catch(e){ return true; } }
 function pfAnToggle(el){
   try { localStorage.setItem('movh_pf_analise', el.open ? '1' : '0'); } catch(e){}
@@ -3802,14 +3802,22 @@ function pfComparacaoHTML(o){
   const adapRec = rec.adaptacao ? rec.adaptacao[0]+'–'+rec.adaptacao[1]+' sem' : '—';
   const deloadRec = rec.deloadACada ? rec.deloadACada[0]+'–'+rec.deloadACada[1]+' sem' : '—';
   const deloadAtual = o.maiorSemDeload || 0;
-  const volMin = 10; // séries/sem por músculo
   const ftBase = FASES_TEMPLATE.base;
   const ftAdap = FASES_TEMPLATE.adaptacao;
+  // Volume por grupamento: usa volMin/volMax de PF_MUSCULOS (padrão 10 se não definido)
+  const volCheck = PF_MUSCULOS.map(m => {
+    const atual = vol[m.k]||0;
+    const min = m.volMin || 10;
+    const max = m.volMax || 20;
+    return {musculo: m.k, atual, min, max, ok: atual === 0 || (atual >= min && atual <= max)};
+  });
+  const volAllOk = volCheck.every(x => x.ok);
+  const volWorst = volCheck.filter(x => x.atual > 0 && !x.ok).sort((a,b) => (a.atual - a.min) - (b.atual - b.min))[0] || volCheck[0];
   const linhas = [
     {label:'Duração Base', atual:baseAtual?baseAtual+' sem':'—', rec:baseRec, ok:baseAtual && baseAtual>=rec.base[0] && baseAtual<=rec.base[1]},
     {label:'Duração Adaptação', atual:adapAtual?adapAtual+' sem':'—', rec:adapRec, ok:!rec.adaptacao || !adapAtual || (adapAtual>=rec.adaptacao[0] && adapAtual<=rec.adaptacao[1])},
     {label:'Deload máx. sem deload', atual:deloadAtual?deloadAtual+' sem':'—', rec:deloadRec, ok:deloadAtual <= rec.deloadACada[1]},
-    {label:'Volume mín. músculo', atual:Math.min(...Object.values(vol).filter(v=>v>0))+' séries/sem', rec:'≥10 séries/sem', ok:Object.values(vol).every(v=>v>=10 || v===0)},
+    {label:'Volume por grupamento', atual:volWorst ? volWorst.musculo+' '+volWorst.atual+'/'+volWorst.min+'–'+volWorst.max : 'OK', rec:'ver detalhes', ok:volAllOk},
     {label:'RPE alvo', atual:'—', rec:ftBase.rpe, ok:true},
     {label:'RIR alvo', atual:'—', rec:ftBase.rir, ok:true},
     {label:'Descanso padrão', atual:'—', rec:ftBase.descanso, ok:true},
@@ -3820,7 +3828,7 @@ function pfComparacaoHTML(o){
 
 function pfAnaliseHTML(o){
   const vol = o.vol || {};
-  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0, ok = n >= 10; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/10</span>`; }).join('');
+  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; const max = m.volMax || 20; const ok = n === 0 || (n >= min && n <= max); return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/${min}–${max}</span>`; }).join('');
   const nAl = (o.alertas||[]).filter(x => x.t !== 'ok').length;
   const box = (tit, inner, fl) => `<div style="flex:${fl||1};min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">${tit}</b>${inner}</div>`;
   const ctx = (o.ctx||[]).map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${escAttr(r[0])}</span><b>${escAttr(r[1])}</b></div>`).join('');
@@ -3836,8 +3844,8 @@ function pfAnaliseHTML(o){
 // Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
 function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
-  const baixo = PF_MUSCULOS.filter(m => (vol[m.k]||0) < 10).map(m => m.k+' '+(vol[m.k]||0));
-  if (baixo.length) alertas.push({t:'av', x:'Volume abaixo de ~10 séries/sem: '+baixo.join(' · ')});
+  const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n > 0 && n < min; }).map(m => m.k+' '+(vol[m.k]||0)+'/'+(m.volMin||10));
+  if (baixo.length) alertas.push({t:'av', x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
   const fora = [];
   (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
     if (!e.nome) return;
@@ -10369,14 +10377,14 @@ async function mbToggleLoop(protoId, alunoId, ligar) {
 // a partir do mesociclo vigente do protocolo ativo. Regras: ver CONTEXTO.md §26.
 // Nada é gravado até o professor clicar em Salvar; o protocolo ativo não é tocado.
 const PF_MUSCULOS = [
-  {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,sug:'Supino inclinado máquina'},
-  {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,sug:'Remada máquina'},
-  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,sug:'Elevação lateral'},
-  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,sug:'Rosca martelo'},
-  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,sug:'Tríceps corda'},
-  {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i},
-  {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i},
-  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i}
+  {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,volMin:10,volMax:20,sug:'Supino inclinado máquina'},
+  {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,volMin:10,volMax:20,sug:'Remada máquina'},
+  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,volMin:8,volMax:16,sug:'Elevação lateral'},
+  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,volMin:6,volMax:12,sug:'Rosca martelo'},
+  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,volMin:6,volMax:12,sug:'Tríceps corda'},
+  {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i,volMin:12,volMax:24},
+  {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i,volMin:10,volMax:20},
+  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i,volMin:8,volMax:16}
 ];
 const PF_COMPOSTO = /agachamento|squat|leg press|hack|supino|remada|puxada|stiff|rdl|terra|deadlift|desenvolvimento|p[eé]lvica|b[uú]lgaro|afundo|barra fixa|paralela/i;
 let _pf = null;
@@ -10438,7 +10446,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
     const alertas = [];
     const vol0 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0})).filter(x => x.n < 10).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
+    PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0, min: m.volMin || 10})).filter(x => x.n < x.min).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
       // dia de destino: o dia do mesmo "tipo" (empurrar/puxar) que já tem mais exercícios dele; empate -> dia com menos exercícios
       const cls = {Peito:'push',Ombros:'push','Tríceps':'push',Costas:'pull','Bíceps':'pull'};
       const pontua = d => { let same = 0, tot = 0, up = 0; (d.blocos||[]).forEach(bb => { if (bb.id === 'con') return; (bb.exercicios||[]).forEach(ee => { tot++; const mm = pfMusculo(ee.nome); if (mm && mm.up) { up++; if (cls[mm.k] === cls[x.m.k]) same++; } }); }); return {same, tot, up}; };
@@ -10451,7 +10459,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
       alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
     });
     const vol1 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n < 10) alertas.push({t:'av', x: m.k+': '+n+' séries/sem (mín. ~10) — avaliar se é intencional'}); });
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; const min = m.volMin || 10; if (n > 0 && n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); });
     // anamnese / dor
     const resp = an.data && an.data[0] ? an.data[0].respostas : null;
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
@@ -10479,7 +10487,7 @@ function pfRender(){
   const P = _pf; if (!P) return;
   let ov = document.getElementById('pf-overlay');
   if (!ov) { ov = document.createElement('div'); ov.id = 'pf-overlay'; ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);overflow:auto;padding:14px'; document.body.appendChild(ov); }
-  const par = ['Fase única 8 semanas','RIR 2 (última série 1)','Compostos 2\' · isoladores 1\'','Progressão dupla: topo da faixa → +carga','Volume mín. ~10 séries/sem por músculo','Revisão a cada 4 semanas'];
+  const par = ['Fase única 8 semanas','RIR 2 (última série 1)','Compostos 2\' · isoladores 1\'','Progressão dupla: topo da faixa → +carga','Volume por grupamento (faixas próprias)','Revisão a cada 4 semanas'];
   const col = P.sem.dias.map((d,di) => {
     const pri = pfBlocoPrincipal(d);
     const linhas = (d.blocos||[]).map((b,bi) => b.id === 'con' ? '' : (b.exercicios||[]).map((e,ei) => `
