@@ -6,12 +6,20 @@ description: "Tudo do MOVH: Gerador do professor, app do aluno e landing (bugs, 
 # MOVH — procedimento enxuto
 Dono: LGuilherme (personal trainer, dev solo). Responder em português, direto, compacto. Pouco orçamento de tokens e créditos Netlify: poucas rodadas, tudo testado, um merge por repo por rodada.
 
+## Regra de ouro: commitar o progresso SEMPRE (os tokens podem acabar a qualquer momento)
+O sandbox é descartável: o que não está no GitHub some quando a sessão/conta acaba. Então:
+- Depois de CADA bloco que funciona (um item concluído, um teste que passou, ~1 edição relevante), dar `git add -A && git commit -m "[skip netlify] WIP: <o que ficou pronto>"` e `git push origin HEAD` (rascunho temporário vale; squash depois). Nunca acumular várias edições só no sandbox.
+- Mudança de código em andamento → branch `wip/<assunto>` (push a cada bloco); `main` só recebe o que passou nos testes. Mudança só de doc (CONTEXTO/skill) → direto no `main`.
+- No `CONTEXTO.md` seção 0, manter a lista do plano com `[x]` feito / `[ ]` falta + nome da branch `wip/...` + SHA do último commit, e atualizar a cada commit. Quem retomar: `git fetch && git checkout wip/<assunto>` e seguir do primeiro `[ ]`.
+- Ao concluir: PR/squash da `wip/` no `main`, apagar a branch (`git push origin --delete wip/...`), limpar a seção 0.
+- Token: usar `$GITHUB_TOKEN` só em variável de ambiente; nunca gravar em arquivo, remote, commit ou resposta. Se o usuário colou o token no chat, lembrar de revogar no fim.
+
 ## Passo 0 (gastar poucos tokens)
 0. ANTES de executar qualquer tarefa: gravar no `CONTEXTO.md` do MovhGen, na seção `0. EM ANDAMENTO`, data/hora + pedido + plano (2-4 linhas), e dar commit `[skip netlify]` + push direto no `main` (só docs). Assim, se a sessão acabar, outra conta retoma do ponto certo clonando o repo (estado = CONTEXTO.md; procedimento = esta skill; a conexão é o GitHub vinculado à conta + `add_repo`, não o plugin). Ao concluir, apagar a entrada e registrar o estado final nas seções certas.
 1. Anexar e clonar SÓ `lguilh3rme/MovhGen` (`git clone --depth 1`, timeout ~10 min). Clonar `lguilh3rme/movh` (app) só se o app exportado mudar (compare com `cmp`); `lguilh3rme/movhtemplate` = landing (planmovh.netlify.app; planos vêm do Supabase `landing_config`, presencial fixo em `PRES`/`PL_ADAPT`). Clone anônimo é SÓ leitura: para push use `add_repo` com `access:"push"` (o clone fica em `/home/claude/<repo>`).
 2. NÃO ler o CONTEXTO.md inteiro por padrão: `grep -n '^## ' CONTEXTO.md` e ler só as seções do pedido (seção 4 = regras do template, 8 = testes, 11 = pendências). O estado (versão, decisões, gotchas) mora lá; esta skill só guarda o procedimento.
 3. Nunca ler `index.html` inteiro (~17k linhas): `grep -n` + `sed -n` e diffs cirúrgicos (script Python com `assert s.count(old)==1`).
-4. Sincronia skill↔repo: a fonte da verdade desta skill é `plugins/movh/skills/movh/SKILL.md` no MovhGen (versão em `plugins/movh/.claude-plugin/plugin.json`). Depois do clone: `cmp /mnt/skills/plugin-files/movh/skills/movh/SKILL.md plugins/movh/skills/movh/SKILL.md`. Se diferir, SEGUIR a versão do repo e avisar o usuário para reinstalar o plugin (zip ou `/plugin marketplace update`); reinstalar também remove a skill antiga `movh-gerador`, que não existe mais no repo. Mudou procedimento, regra ou agent → editar em `plugins/movh/`, subir a versão (plugin.json + marketplace.json) e incluir no PR da rodada. Estado do projeto vai no CONTEXTO.md; procedimento vai no plugin. Nunca guardar token em arquivo do repo (público).
+4. Sincronia skill↔repo: a fonte da verdade desta skill é `plugins/movh/skills/movh/SKILL.md` no MovhGen (versão em `plugins/movh/.claude-plugin/plugin.json`). Depois do clone: `cmp /mnt/skills/plugin-files/movh/skills/movh/SKILL.md plugins/movh/skills/movh/SKILL.md`. Se diferir, SEGUIR a versão do repo e avisar o usuário para reinstalar o plugin (zip ou `/plugin marketplace update`); reinstalar também remove a skill antiga `movh-gerador`, que não existe mais: o nome do plugin e da skill é só `movh`. Mudou procedimento, regra ou agent → editar em `plugins/movh/`, subir a versão (plugin.json + marketplace.json) e incluir no PR da rodada. Estado do projeto vai no CONTEXTO.md; procedimento vai no plugin. Nunca guardar token em arquivo do repo (público).
 
 ## Regras que quebram coisas
 - O app do aluno é um template literal dentro de `exportarComLogin()` no `index.html` do MovhGen: JS do app é TEXTO (barra invertida dobrada, evitar crases e `${`; nunca usar `MOVH_CONFIG` ali). `movh/index.html` é GERADO: `node tools/export_app.js index.html tools/config.json /tmp/x/app.html` e copiar `index.html` + `version.json`. Se o export sair idêntico ao atual (`cmp`), não tocar no repo `movh`.
@@ -25,6 +33,11 @@ Dono: LGuilherme (personal trainer, dev solo). Responder em português, direto, 
 - Fase `base` = fase única 8 sem, progressão dupla: `fatorSemanaDentroFase`/`aFatorSemanaDentroFase` devolvem fator neutro para `base` (nunca voltar a cair reps/subir descanso por semana). Protocolo novo já nasce assim (`REGRA_BASE`/`nbBase()`).
 - Próxima fase: botão "✨ Próxima fase" em Protocolos do aluno → `mbSugerirProximaFase` (rascunho INATIVO; regras em `PF_MUSCULOS`/`PF_COMPOSTO`; não toca o ativo). Mudou a regra → mexer ali e no agent `movh-treino`.
 - `const`/`let` usados pelo estado inicial (`let semanas=[...]`) precisam ser declarados ANTES dele (TDZ); `function` é içada, `const` não.
+
+## Retomar em outra conta/sessão (3 passos)
+1. Conta nova precisa de: GitHub vinculado (Customize → Connectors), conector Supabase (só SELECT por padrão) e o plugin `movh` instalado/atualizado. Sem conector, usar `$GITHUB_TOKEN` colado só pra clonar/pushar.
+2. `git clone` do MovhGen; `git branch -r | grep wip/` e `git log -5 --format='%h %ad %s'`; ler a seção 0 do `CONTEXTO.md`.
+3. Se existir `wip/...`, fazer checkout e continuar do primeiro `[ ]`; se não, o repo está limpo e vale o pedido atual. Comparar a skill (`cmp`, passo 4) e avisar se o plugin estiver velho.
 
 ## Git
 `git fetch`; branch nova a partir do `origin/main`; commit com as linhas de atribuição do system-reminder; PR via `gh api repos/lguilh3rme/REPO/pulls` (GraphQL bloqueado); merge squash por `gh api -X PUT .../merge -f merge_method=squash -f commit_title='[skip netlify] ...'`. `gh pr create` falha (GraphQL): sempre `gh api`. Depois `git checkout -B main origin/main` e apagar a branch local. Aviso do hook de stop "unpushed commit(s)" após squash é falso positivo se `git diff --stat origin/main BRANCH` for vazio: não repushar.

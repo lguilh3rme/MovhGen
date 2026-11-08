@@ -1,6 +1,6 @@
 {
   "name": "movh",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "MOVH: skills de manutenção do Gerador do professor e do app do aluno, e agents de treino e gestão.",
   "author": { "name": "LGuilherme" },
   "repository": "https://github.com/lguilh3rme/MovhGen",

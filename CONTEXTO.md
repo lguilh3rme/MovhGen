@@ -4,6 +4,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
+- Branch: `wip/fases-parametros` (criada ao começar o item 1). Checklist: [ ] 1 fases simples · [ ] 2 parâmetros atual×recomendado · [ ] 3 volume por grupo · [ ] 4 treino anterior no Quadro. Último SHA: (nenhum ainda). Sessão anterior perdeu ~12 edições por não commitar: não repetir.
 - 08/11 (pós v61.2): (1) simplificar FASES: deixar só Base 8 sem (+ Adaptação opcional) e a PRÓXIMA fase como fase separada/recomendada (desassociada da atual) no Calendário/periodização; (2) PARÂMETROS comparando atual × recomendado por nível/fase; (3) volume por grupamento com faixa própria (hoje todos /10 fixo) + varredura dos parâmetros hardcoded; (4) botão por dia no Quadro: ver o treino ANTERIOR correspondente (hover/clique) com diff. Só Gerador.
 
 ## 1. Repositórios e relação
@@ -115,6 +116,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - v61.2 (08/11, só Gerador, app IDÊNTICO → sem deploy no Netlify): Quadro ganhou **📊 Análise técnica** (CONTEXTO/PARÂMETROS/ALERTAS + chips de volume por músculo) RECOLHÍVEL/EXPANSÍVEL, estado lembrado em `localStorage movh_pf_analise` e sincronizado com o overlay; recalcula ao editar (`kbAnaliseRefresh` via `kbAtualizarFooter`); dados de RPE/registros/anamnese vêm do banco 1x por aluno (`_kbDb`). Barra do Quadro: selo "✅ Treino ativo do aluno" / "📝 Rascunho inativo" (`_mbProtoAtivo`) e botão ✨ Próxima fase (`pbProximaFase`, só com treino ATIVO salvo carregado). Overlay da Próxima fase: usa o mesmo painel (`pfAnaliseHTML`), volume ao vivo e botão **🗂️ Editar no Quadro** (`pfSalvar('quadro')`: grava rascunho INATIVO e abre no Quadro; Atualizar aluno NÃO muda `ativo`). Testes: reg_all 38, bulk 26, kbm 20, `node --check`, teste de feature com Playwright (recolher/expandir, selo, overlay, Editar no Quadro com insert simulado). NÃO testado: Supabase real.
 
 ## 15. Como retomar em qualquer conta
+0. REGRA: commit WIP + push a cada bloco (branch `wip/<assunto>`), seção 0 com checklist `[x]/[ ]`, branch e SHA; detalhes na skill (plugin 1.0.6).
 1. Vincular o GitHub (claude.ai → Customize → Connectors) e conectar o conector Supabase (só SELECT por padrão; escrita/DDL só com autorização). Token colado no chat NÃO é necessário: `add_repo` com `access:"push"` e clone em `/home/claude/<repo>`.
 2. Instalar/atualizar o plugin `movh` (`plugins/movh` ou `/plugin marketplace update`); a skill manda seguir o repo.
 3. Ler só as seções do pedido deste arquivo: estado aqui, procedimento no plugin. Memória e progresso = este arquivo + `plugins/movh/` no repo público `lguilh3rme/MovhGen`.
