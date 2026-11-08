@@ -921,7 +921,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div id="mb-logged-in" style="display:none">
       <div class="mb-top"><span class="mb-dot"></span><span>Conectado como <b id="mb-prof-name">—</b></span><span style="flex:1"></span><button class="btn bs" style="font-size:9px;padding:2px 7px" onclick="mbLogout()">Sair</button></div>
       <div class="mb-lbl">Aluno do treino</div>
-      <div style="margin-bottom:6px"><select id="mb-aluno-select" onchange="mbOnAlunoChange()"><option value="">— selecione —</option></select></div>
+      <div style="margin-bottom:6px"><select id="mb-aluno-select" onchange="mbOnAlunoChange(true)"><option value="">— selecione —</option></select></div>
       <div id="mb-aluno-new" style="display:none;gap:6px;margin-bottom:8px" >
         <input id="mb-aluno-novo-nome" type="text" placeholder="Nome do novo aluno" style="margin-bottom:4px"/>
         <input id="mb-aluno-novo-email" type="email" placeholder="Email do novo aluno" style="margin-bottom:6px"/>
@@ -3573,7 +3573,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.4 · 08/11';
+var MOVH_VER = 'v61.5 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -10884,13 +10884,14 @@ async function mbSugerirProximaFase(protoId, alunoId){
     const ini = fd ? new Date(fd.getTime() + 86400000) : new Date();
     const iniIso = mbIsoLocal(ini);
     // IDEMPOTENTE: verifica se já existe rascunho inativo com essa data_inicio para este aluno
-    const { data: existente } = await mbClient.from('protocolos')
+    const { data: _exL } = await mbClient.from('protocolos')
       .select('id, conteudo')
       .eq('aluno_id', alunoId)
       .eq('professor_id', mbProfessor.id)
       .eq('ativo', false)
       .eq('data_inicio', iniIso)
-      .maybeSingle();
+      .order('criado_em', { ascending: false }).limit(1);
+    const existente = Array.isArray(_exL) ? _exL[0] : null;
     if (existente && existente.conteudo) {
       // Carrega o rascunho existente no editor e abre no Quadro
       notify('Rascunho existente encontrado — carregando…');
@@ -11481,7 +11482,9 @@ function mbAplicarSugestaoPeriodizacao(duracao){
   notify('Semana 1 configurada: Base, ' + duracao + ' semana(s).');
 }
 
-function mbOnAlunoChange() {
+// autoCarregar=true SÓ quando o professor troca o aluno no seletor. Chamadas de código (montar treino, salvar como,
+// rascunho, mbCarregarProtoAluno) NÃO carregam o treino ativo: antes isso gerava recursão infinita e travava o Gerador.
+function mbOnAlunoChange(autoCarregar) {
   const val = document.getElementById('mb-aluno-select').value;
   const novoBox = document.getElementById('mb-aluno-new');
   // ao trocar aluno, limpa protocolo carregado
@@ -11506,7 +11509,7 @@ function mbOnAlunoChange() {
     document.getElementById('mb-sync-btn').disabled = !val;
     document.getElementById('mb-lang-proto-btn').disabled = !val;
     // Se aluno selecionado tem protocolo ativo, carrega e abre no Quadro
-    if (val) {
+    if (val && autoCarregar === true) {
       const a = (mbPainelAlunos || []).find(x => x.id === val);
       if (a && a.protocoloAtivo) {
         mbCarregarProtoAluno(val).then(ok => {
