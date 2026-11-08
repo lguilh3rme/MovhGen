@@ -4,7 +4,8 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- (nenhum — main limpo)
+- Branch: `wip/quadro-padrao` (criada ao começar item A). Checklist: [ ] A Quadro por padrão + Editor clássico link · [ ] B Próxima fase idempotente + Modal Protocolos · [ ] C Calendário fases com início/fim próprios. Último SHA: (próximo commit).
+- 08/11 (pós v61.3): (A) Abrir Quadro por padrão ao selecionar aluno/entrar em Treino; editor antigo atrás de link "Editor clássico" (não apagar código). (B) ✨ Próxima fase idempotente: se rascunho inativo existe do mesmo protocolo ativo, abrir existente; Modal Protocolos: ativo no topo, rascunhos por data, nº exercícios, etiqueta "igual ao rascunho X", botão "Apagar duplicados idênticos". (C) Calendário: cada fase com início/fim próprios (cascata nas seguintes, opção travar); clicar fase abre no Quadro; clicar recomendada cria rascunho idempotente e abre no Quadro. Um por vez, commit WIP + push, [x] na seção 0. Testes + print 390x844 cada etapa. MOVH_VER = 'v61.4 · 08/11'. Só Gerador: no fim export_app + cmp; se app MUDAR, pare e avise. Sem Supabase write. PR final [skip netlify], sem merge.
 
 ## 1. Repositórios e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~17k linhas) = FONTE de tudo (Gerador + app do aluno dentro do template literal de `exportarComLogin()`, ~linhas 11148–15600). Gerador hospedado no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (também existe cópia em Cloudflare Workers `movhgen.lguilh3rme.workers.dev`).
@@ -88,7 +89,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - AÇÃO DO USUÁRIO: reexecutar o SQL idempotente do Gerador (Publicar app → SQL) para garantir `notas`, `personal_*`, `treinos_personal`, `pagamentos_pix`, colunas de `alunos`; conferir "Allow anonymous sign-ins" e policy SELECT de `rpe_sessoes`; deploy e webhook do `notify-pix`; parar builds do Netlify do Gerador; revogar a chave Asaas; atualizar templates do Canva (80/77 e 10%/15% antigos); apagar o token GitHub colado no chat de 08/11.
 - Gestão em lote (aguarda dados do professor): `acesso_fim` quase vazio e nenhum Pix real lançado. Formato pedido: `Nome: fim, plano/valor, pagou?` → SQL em lote com confirmação. Ludmila e Iasmim passaram do fim sem registrar; Jocimar/Felipe/Érika/Hellen/João/Samuel quase sem registros; só o Natan registra.
 - Banco: 5 cadastros "Jocimar" (só 1 com protocolo ativo) e contas de teste ("eu dnv", "teste", "luizin", "LGuilh3rmee"…): apagar só com autorização.
-- Izabella (`alunos.id 0d36b669…`): rascunho inativo `protocolos.id 3bc3e94f-7fce-4197-9328-5da65d5f6959` (início 21/11, "Inf/Sup 5x · Base 8 sem"); o botão ✨ Próxima fase gera outro, apague um dos dois. Revisar as obs dos 3 exercícios "Sugestão nova" antes de ativar.
+- Izabella (`alunos.id 0d36b669…`): duplicados idênticos apagados em 08/11; restam ef30eb11 (rascunho Base 8 sem, o que fica) e 3bc3e94f (rascunho antigo, aguardando decisão do professor) e 79d5597a (Inf/Sup 4x inativo).
 - Se o topo ainda "grudar" no celular, pedir print da rolagem (no Playwright ele rola junto).
 - Pix-only em `create-checkout-asaas` (exige autorização de deploy); UK do bimestral (69?); bloqueio com tolerância de 7 dias e aviso 14 dias antes (hoje ≤7 no app); conferir `A_WHATSAPP_NUM`.
 - Escolher o quadro do vídeo (coluna `thumb` em `exercicios`); progresso com resumo/gráficos; histórico de cargas do Personal no editor; "Repetir semana anterior"; sessões do pacote presencial (tabela nova).
