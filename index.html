@@ -3965,10 +3965,30 @@ function renderKanbanSemana(sid){
 // Recolhido por padrão. O fim manual (`mbProtoFim`) vai em conteudo.fimPrevisto
 // e passa a valer nos alertas (laranja/vermelho) e no cartão do aluno.
 function kbFmtD(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');}
+// Calcula fim do treino baseado nas datas de início explícitas de cada fase (ou cascata)
 function kbFimPorFases(){
-  if(!mbProtoDataInicio)return null;
-  const tot=semanas.reduce((a,x)=>a+(parseInt(x.duracaoSemanas)||4),0)||(semanas.length*4);
-  const d=new Date(mbProtoDataInicio+'T00:00:00');d.setDate(d.getDate()+tot*7-1);return d;
+  if(!semanas.length) return null;
+  // Se primeira fase tem dataInicio, usar ela; senão usar mbProtoDataInicio
+  let inicioPrimeira = semanas[0].dataInicio || mbProtoDataInicio;
+  if (!inicioPrimeira) return null;
+  let ultimaDataFim = new Date(inicioPrimeira + 'T00:00:00');
+  const durPrimeira = parseInt(semanas[0].duracaoSemanas)||4;
+  ultimaDataFim.setDate(ultimaDataFim.getDate() + durPrimeira*7 - 1);
+  for (let i = 1; i < semanas.length; i++) {
+    const s = semanas[i];
+    const dur = parseInt(s.duracaoSemanas)||4;
+    let inicioSemana;
+    if (s.dataInicio) {
+      inicioSemana = new Date(s.dataInicio + 'T00:00:00');
+    } else {
+      // Cascata a partir da fase anterior
+      inicioSemana = new Date(ultimaDataFim);
+      inicioSemana.setDate(inicioSemana.getDate() + 1);
+    }
+    ultimaDataFim = new Date(inicioSemana);
+    ultimaDataFim.setDate(ultimaDataFim.getDate() + dur*7 - 1);
+  }
+  return ultimaDataFim;
 }
 function kbFimEfetivo(){return mbProtoFim?new Date(mbProtoFim+'T00:00:00'):kbFimPorFases();}
 function kbCalHTML(sid){
@@ -3986,16 +4006,36 @@ function kbCalHTML(sid){
   }
   let linhas='',ext='', prox='';
   if(ini){
+    // Calcular datas das fases usando dataInicio explícita de cada semana (se houver) ou cascata
     let acc=0;
-    linhas=semanas.map(x=>{
+    let ultimaDataFim = ini;
+    linhas=semanas.map((x, idx)=>{
       const dur=parseInt(x.duracaoSemanas)||4;
-      const a=new Date(ini);a.setDate(a.getDate()+acc*7);
-      const b=new Date(a);b.setDate(b.getDate()+dur*7-1);
-      acc+=dur;
+      // Usar dataInicio explícita da semana se existir, senão calcular em cascata
+      let a;
+      if (x.dataInicio) {
+        a = new Date(x.dataInicio + 'T00:00:00');
+        // Atualizar ultimaDataFim para o fim desta fase
+        ultimaDataFim = new Date(a);
+        ultimaDataFim.setDate(ultimaDataFim.getDate() + dur*7 - 1);
+      } else {
+        a = new Date(ultimaDataFim);
+        a.setDate(a.getDate() + 1); // dia seguinte ao fim da fase anterior
+        ultimaDataFim = new Date(a);
+        ultimaDataFim.setDate(ultimaDataFim.getDate() + dur*7 - 1);
+      }
+      const b = new Date(ultimaDataFim);
       const ft=FASES_TEMPLATE[x.fase];
       const foco=x.focoDim&&FOCO_TREINO[x.focoDim]?(' · '+FOCO_TREINO[x.focoDim].emoji+' '+(x.focoItem||FOCO_TREINO[x.focoDim].label)):'';
       const cls=(hoje>=a&&hoje<=b)?' atual':(hoje>b?' passou':'');
-      return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
+      const travado = x.travado ? ' 🔒' : '';
+      const dataInicioStr = x.dataInicio || '';
+      return `<div class="kb-cal-f ${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;border:1px solid var(--bd);background:var(--cl);margin-bottom:4px">
+        <button type="button" class="kb-cal-f-btn" data-sid="${x.id}" onclick="nav('kb-'+this.dataset.sid)" title="Abrir esta fase no Quadro" style="flex:1;text-align:left;padding:4px 8px;background:none;border:none;cursor:pointer;font-size:11px"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}${travado}</span></button>
+        <input type="date" class="kb-cal-f-data" value="${dataInicioStr}" onchange="kbCalSetFaseInicio(this.value,'${x.id}','${sid}')" title="Início da fase" style="width:130px;font-size:10px" ${x.travado?'disabled':''}/>
+        <span class="kb-cal-fd" style="font-size:10px;color:var(--t3);white-space:nowrap">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span>
+        <button type="button" class="btn bs" onclick="kbToggleTravar('${x.id}','${sid}')" title="${x.travado?'Destravadar (permite cascata)':'Travar (impede cascata ao mudar datas anteriores)'}" style="font-size:10px;padding:2px 6px">${x.travado?'🔓':'🔒'}</button>
+      </div>`;
     }).join('');
     // Próxima fase recomendada (rascunho separado no Calendário)
     // Regra: Adaptação só para iniciante/retorno (primeira fase).
@@ -4015,19 +4055,24 @@ function kbCalHTML(sid){
       proxLabel = ' (variar exercícios)';
     }
     const ftProx = FASES_TEMPLATE[proxFase];
-    const aProx = new Date(ini); aProx.setDate(aProx.getDate() + acc*7);
+    const aProx = new Date(ultimaDataFim); aProx.setDate(aProx.getDate() + 1);
     const bProx = new Date(aProx); bProx.setDate(bProx.getDate() + proxDur*7 - 1);
-    prox = `<div class="kb-cal-f prox" style="border-style:dashed;opacity:.8"><span class="kb-cal-fn">${ftProx.emoji} ${ftProx.label}${proxLabel} · recomendada</span><span class="kb-cal-fd">${kbFmtD(aProx)} → ${kbFmtD(bProx)} · ${proxDur} sem.</span></div>`;
+    // Clique na fase recomendada cria rascunho idempotente e abre no Quadro
+    prox = `<div class="kb-cal-f prox" style="border-style:dashed;opacity:.8;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;border:1px dashed var(--P);background:rgba(var(--Prgb),.08);margin-bottom:4px" onclick="kbAplicarFaseRecomendada('${proxFase}',${proxDur},'${sid}')" title="Clica para criar rascunho da próxima fase recomendada e abrir no Quadro">
+      <span class="kb-cal-fn" style="flex:1;text-align:left;font-size:11px;cursor:pointer">${ftProx.emoji} ${ftProx.label}${proxLabel} · recomendada</span>
+      <span class="kb-cal-fd" style="font-size:10px;color:var(--t3);white-space:nowrap">${kbFmtD(aProx)} → ${kbFmtD(bProx)} · ${proxDur} sem.</span>
+      <span style="font-size:10px;color:var(--P);cursor:pointer">➕</span>
+    </div>`;
     if(porF&&fim&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
   }
   const dica=ini
-    ?'Mudar o <b>início</b> desloca as datas das fases. O <b>fim previsto</b> vale para os alertas (laranja ≤14 dias, vermelho ≤7). Grave com 💾 Atualizar aluno. Calendário mensal por dia: ⚙️ Configuração.'
-    :'Este treino <b>não tem data de início</b>: o app mostra a 1ª fase, como sempre, e os dias da semana seguem iguais. Definir o início faz o app passar a seguir as fases por data. O <b>fim previsto</b> pode ser definido sozinho (só para os alertas). Grave com 💾 Atualizar aluno.';
+    ?'Cada fase tem sua <b>data de início própria</b>. Mudar o início de uma fase desloca as seguintes (cascata), a menos que estejam <b>travadas (🔒)</b>. Clique numa fase para abri-la no Quadro. Clique na fase "recomendada" (tracejada) para criar rascunho idempotente e abrir no Quadro. O <b>fim previsto</b> vale para os alertas. Grave com 💾 Atualizar aluno.'
+    :'Este treino <b>não tem data de início</b>: o app mostra a 1ª fase, como sempre. Definir o início faz o app passar a seguir as fases por data. O <b>fim previsto</b> pode ser definido sozinho (só para os alertas). Grave com 💾 Atualizar aluno.';
   return `<div class="kb-cal${lv?' lv-'+lv:''}">
     <div class="kb-cal-hd">📅 Calendário do treino <span class="kb-cal-st">· ${resumo}</span></div>
     <div class="kb-cal-body">
       <div class="kb-cal-row">
-        <label>Início <input type="date" value="${di||''}" onchange="kbCalSet('ini',this.value,'${sid}')"/></label>
+        <label>Início do treino <input type="date" value="${di||''}" onchange="kbCalSet('ini',this.value,'${sid}')"/></label>
         <label>Fim previsto <input type="date" value="${fim?calDateKey(fim):''}" ${di?`min="${di}"`:''} onchange="kbCalSet('fim',this.value,'${sid}')"/></label>
         <button type="button" class="btn bs" onclick="kbCalAdd(1,'${sid}')" title="Estende o fim em 1 dia">+1 dia</button>
         <button type="button" class="btn bs" onclick="kbCalAdd(7,'${sid}')" title="Estende o fim em 1 semana">+1 sem.</button>
@@ -4037,6 +4082,139 @@ function kbCalHTML(sid){
       <div class="kb-cal-dica">${dica}</div>
     </div>
   </div>`;
+}
+
+// Define data de início de uma fase específica com cascata nas seguintes (a menos que travadas)
+function kbCalSetFaseInicio(dataStr, faseSid, sid){
+  if (!dataStr) return;
+  const idx = semanas.findIndex(x => x.id === faseSid);
+  if (idx === -1) return;
+  semanas[idx].dataInicio = dataStr;
+  // Cascata: atualizar dataInicio das fases seguintes que NÃO estão travadas
+  let ultimaDataFim = new Date(dataStr + 'T00:00:00');
+  const dur = parseInt(semanas[idx].duracaoSemanas)||4;
+  ultimaDataFim.setDate(ultimaDataFim.getDate() + dur*7 - 1);
+  for (let i = idx + 1; i < semanas.length; i++) {
+    if (semanas[i].travado) {
+      // Fase travada: parar cascata, mas atualizar ultimaDataFim para o fim desta fase travada
+      if (semanas[i].dataInicio) {
+        ultimaDataFim = new Date(semanas[i].dataInicio + 'T00:00:00');
+        const d2 = parseInt(semanas[i].duracaoSemanas)||4;
+        ultimaDataFim.setDate(ultimaDataFim.getDate() + d2*7 - 1);
+      }
+      continue;
+    }
+    // Fase não travada: definir dataInicio para dia seguinte ao fim da fase anterior
+    const novaData = new Date(ultimaDataFim);
+    novaData.setDate(novaData.getDate() + 1);
+    semanas[i].dataInicio = calDateKey(novaData);
+    const d3 = parseInt(semanas[i].duracaoSemanas)||4;
+    ultimaDataFim = new Date(novaData);
+    ultimaDataFim.setDate(ultimaDataFim.getDate() + d3*7 - 1);
+  }
+  // Se a primeira fase foi alterada, atualizar mbProtoDataInicio
+  if (idx === 0) {
+    mbProtoDataInicio = dataStr;
+    calMesAtual = new Date(dataStr + 'T00:00:00');
+  }
+  kbCalRefresh(sid);
+}
+
+// Trava/destrava uma fase (impede/permite cascata)
+function kbToggleTravar(faseSid, sid){
+  const idx = semanas.findIndex(x => x.id === faseSid);
+  if (idx === -1) return;
+  semanas[idx].travado = !semanas[idx].travado;
+  kbCalRefresh(sid);
+}
+
+// Aplica a fase recomendada (cria rascunho idempotente da próxima fase e abre no Quadro)
+async function kbAplicarFaseRecomendada(proxFase, proxDur, sid){
+  // Verificar se já existe uma semana com essa fase logo após a última
+  const ultima = semanas[semanas.length-1];
+  if (!ultima) return;
+  // Calcular data de início esperada para a próxima fase
+  let ultimaDataFim;
+  if (ultima.dataInicio) {
+    ultimaDataFim = new Date(ultima.dataInicio + 'T00:00:00');
+    const dur = parseInt(ultima.duracaoSemanas)||4;
+    ultimaDataFim.setDate(ultimaDataFim.getDate() + dur*7 - 1);
+  } else {
+    // Calcular a partir do início do treino
+    if (!mbProtoDataInicio) return;
+    let acc = 0;
+    for (const s of semanas) acc += parseInt(s.duracaoSemanas)||4;
+    ultimaDataFim = new Date(mbProtoDataInicio + 'T00:00:00');
+    ultimaDataFim.setDate(ultimaDataFim.getDate() + acc*7 - 1);
+  }
+  const proxDataInicio = new Date(ultimaDataFim);
+  proxDataInicio.setDate(proxDataInicio.getDate() + 1);
+  const proxDataInicioStr = calDateKey(proxDataInicio);
+  // IDEMPOTENTE: verificar se já existe semana com essa fase e data_inicio
+  const existente = semanas.find(s => s.fase === proxFase && s.dataInicio === proxDataInicioStr);
+  if (existente) {
+    // Já existe: abrir no Quadro
+    notify('Fase recomendada já existe — abrindo no Quadro.');
+    nav('kb-' + existente.id);
+    return;
+  }
+  // Não existe: criar nova semana baseada na última fase (clone do mesociclo vigente)
+  notify('Criando rascunho da próxima fase…');
+  try {
+    // Clonar a última semana (mesociclo vigente)
+    const vig = ultima;
+    const dias = JSON.parse(JSON.stringify(vig.dias || []));
+    const novoSid = 's' + (semanas.length + 1);
+    const sem = {
+      id: novoSid,
+      nome: FASES_TEMPLATE[proxFase]?.label || proxFase,
+      fase: proxFase,
+      duracaoSemanas: proxDur,
+      dias,
+      dataInicio: proxDataInicioStr
+    };
+    // Aplicar regras de progressão (igual a mbSugerirProximaFase)
+    sem.dias.forEach((d,di) => {
+      d.id = novoSid+'d'+(di+1);
+      (d.blocos||[]).forEach(b => {
+        if (b.id === 'con') return;
+        (b.exercicios||[]).forEach(e => {
+          const m = String(e.series||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)\s*-\s*(\d+)$/);
+          if (m && +m[2] > +m[3]) e.series = m[1]+'×'+m[3]+'-'+m[2];
+          if (b.id === 'pri' || b.id === 'atv') {
+            const alvo = (PF_COMPOSTO.test(e.nome||'') && !/panturrilha/i.test(e.nome||'')) ? 120 : 60;
+            const atual = parseRestSegundos(e.rest);
+            if (b.id === 'pri' && atual !== alvo) { e._restAlt = true; e.rest = pfFmtRest(alvo); }
+          }
+        });
+        if (b.id === 'pri') { const o = (b.obs||'').trim(); b.obs = /progress[aã]o dupla/i.test(o) ? o : (o ? o+'\n' : '') + REGRA_BASE; }
+      });
+    });
+    // Adicionar sugestões de volume mínimo (igual a mbSugerirProximaFase)
+    const alertas = [];
+    const vol0 = pfVolume(sem);
+    PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0, min: m.volMin || 10})).filter(x => x.n < x.min).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
+      const cls = {Peito:'push',Ombros:'push','Tríceps':'push',Costas:'pull','Bíceps':'pull'};
+      const pontua = d => { let same = 0, tot = 0, up = 0; (d.blocos||[]).forEach(bb => { if (bb.id === 'con') return; (bb.exercicios||[]).forEach(ee => { tot++; const mm = pfMusculo(ee.nome); if (mm && mm.up) { up++; if (cls[mm.k] === cls[x.m.k]) same++; } }); }); return {same, tot, up}; };
+      const todos = sem.dias.map((d,di) => ({d,di,sc:pontua(d)}));
+      const sup = todos.filter(o => o.sc.up > 0);
+      const alvo = (sup.length ? sup : todos).sort((p,q) => (q.sc.same - p.sc.same) || (p.sc.tot - q.sc.tot))[0];
+      const b = alvo && pfBlocoPrincipal(alvo.d);
+      if (!b) return;
+      b.exercicios.push({nome:x.m.sug, url:'', series:'3×10-12', rest:"1'", obs:'Sugestão nova (volume mínimo). Remova se não quiser.', cj:null, _novo:true});
+      alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
+    });
+    const vol1 = pfVolume(sem);
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
+    semanas.push(sem);
+    _pbDirty = true;
+    kbCalRefresh(sid);
+    // Abrir no Quadro
+    nav('kb-' + novoSid);
+    notify('Próxima fase criada e aberta no Quadro.');
+  } catch (e) {
+    notify('Erro ao criar fase recomendada: ' + (e.message || e));
+  }
 }
 function kbCalRefresh(sid){_pbDirty=true;pbCalRender(sid);try{renderCalProto();}catch(e){}pbRefreshDest();}
 // Recupera início/fim do treino carregado quando o editor os perdeu (ex.: rascunho restaurado só guarda o id).
@@ -5308,22 +5486,75 @@ function calDateKey(d){const y=d.getFullYear(),m=String(d.getMonth()+1).padStart
 // e qual `dia` dentro dela correspondem a essa data real, com base em
 // mbProtoDataInicio + duracaoSemanas acumulada de cada fase.
 function mbAgendaParaData(dataStr){
-  if (!mbProtoDataInicio || !semanas.length) return null;
-  const inicio = new Date(mbProtoDataInicio + 'T00:00:00');
+  if (!semanas.length) return null;
   const alvo = new Date(dataStr + 'T00:00:00');
-  const semanaGlobal = Math.floor((alvo - inicio) / (7*86400000));
-  if (semanaGlobal < 0) return null;
-  let acc = 0, semanaIdx = semanas.length - 1, inicioFaseGlobal = 0;
+
+  // Primeiro, tentar encontrar a semana pela dataInicio explícita
+  let semanaIdx = -1;
+  let inicioFaseGlobal = 0;
+  let accDur = 0;
+
   for (let i=0; i<semanas.length; i++){
-    const dur = semanas[i].duracaoSemanas || 4;
-    if (semanaGlobal < acc + dur){ semanaIdx = i; inicioFaseGlobal = acc; break; }
-    acc += dur;
-    inicioFaseGlobal = acc;
+    const s = semanas[i];
+    const dur = s.duracaoSemanas || 4;
+    let inicioSemana;
+
+    if (s.dataInicio) {
+      // Usar dataInicio explícita
+      inicioSemana = new Date(s.dataInicio + 'T00:00:00');
+    } else if (i === 0 && mbProtoDataInicio) {
+      // Primeira semana sem dataInicio: usar mbProtoDataInicio
+      inicioSemana = new Date(mbProtoDataInicio + 'T00:00:00');
+    } else if (i > 0) {
+      // Calcular em cascata a partir da semana anterior
+      const anterior = semanas[i-1];
+      const durAnt = anterior.duracaoSemanas || 4;
+      let inicioAnt;
+      if (anterior.dataInicio) {
+        inicioAnt = new Date(anterior.dataInicio + 'T00:00:00');
+      } else if (i-1 === 0 && mbProtoDataInicio) {
+        inicioAnt = new Date(mbProtoDataInicio + 'T00:00:00');
+      } else {
+        // Não tem como calcular - pular
+        continue;
+      }
+      inicioSemana = new Date(inicioAnt);
+      inicioSemana.setDate(inicioSemana.getDate() + durAnt*7);
+    } else {
+      continue;
+    }
+
+    const fimSemana = new Date(inicioSemana);
+    fimSemana.setDate(fimSemana.getDate() + dur*7 - 1);
+
+    if (alvo >= inicioSemana && alvo <= fimSemana) {
+      semanaIdx = i;
+      inicioFaseGlobal = accDur;
+      break;
+    }
+    accDur += dur;
   }
+
+  // Fallback: cálculo antigo baseado em mbProtoDataInicio
+  if (semanaIdx === -1 && mbProtoDataInicio) {
+    const inicio = new Date(mbProtoDataInicio + 'T00:00:00');
+    const semanaGlobal = Math.floor((alvo - inicio) / (7*86400000));
+    if (semanaGlobal < 0) return null;
+    let acc = 0;
+    for (let i=0; i<semanas.length; i++){
+      const dur = semanas[i].duracaoSemanas || 4;
+      if (semanaGlobal < acc + dur){ semanaIdx = i; inicioFaseGlobal = acc; break; }
+      acc += dur;
+      inicioFaseGlobal = acc;
+    }
+  }
+
+  if (semanaIdx === -1) return null;
+
   const diaSemana = CAL_DOW[alvo.getDay()];
   const semanaObj = semanas[semanaIdx];
   const dia = semanaObj ? (semanaObj.dias.find(d => d.diaSemana === diaSemana) || null) : null;
-  return { semanaIdx, semanaObj, semanaGlobal, inicioFaseGlobal, diaSemana, dia };
+  return { semanaIdx, semanaObj, semanaGlobal: inicioFaseGlobal, inicioFaseGlobal, diaSemana, dia };
 }
 
 // Conteúdo que REALMENTE vale pra essa data: override pontual tem prioridade
