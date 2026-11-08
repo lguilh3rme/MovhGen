@@ -1204,7 +1204,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div class="card" style="margin-bottom:.75rem">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem">
         <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">Planos disponíveis</div>
-        <span style="display:flex;gap:6px"><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="plAplicarValores()" title="Mensal 180 · Bimestral 320 · Trimestral 420 · Renovação 150 · Reativação 165">↺ Valores definidos</button><button class="btn bp" style="font-size:10px;padding:4px 10px" onclick="plAddPlano()">+ Plano</button></span>
+        <span style="display:flex;gap:6px"><button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="plAplicarValores()" title="Mensal 180 · Bimestral 290 · Trimestral 420 · Renovação 150 · Reativação 90 (acesso ao treino atual)">↺ Valores definidos</button><button class="btn bp" style="font-size:10px;padding:4px 10px" onclick="plAddPlano()">+ Plano</button></span>
       </div>
       <div id="pl-tabela"></div>
       <div id="pl-planos-status" style="font-size:10.5px;color:var(--t3);margin-top:8px"></div>
@@ -3583,7 +3583,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v60.1 · 06/11';
+var MOVH_VER = 'v60.2 · 07/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8655,6 +8655,13 @@ async function mbConfirmarPix(pid){
   if (!a.acesso_inicio || base === hoje) novo.acesso_inicio = mbIsoLocal(hoje);
   const { error: e2 } = await mbClient.from('alunos').update(novo).eq('id', a.id);
   if (e2) { await mbClient.from('pagamentos_pix').update({ status: 'pendente', confirmado_em: null }).eq('id', pid); notify('Erro ao liberar o acesso: ' + e2.message); return; }
+  try {
+    const plx = (plPlanos || []).find(x => x.nome === p.plano_nome);
+    if (/reativ/i.test(p.plano_nome || '') || (plx && plx.tipo === 'reativacao')) {
+      const { data: pr } = await mbClient.from('protocolos').select('id, conteudo').eq('aluno_id', a.id).eq('ativo', true).order('data_inicio', { ascending: false }).limit(1).maybeSingle();
+      if (pr) await mbClient.from('protocolos').update({ conteudo: Object.assign({}, pr.conteudo || {}, { loop: true }) }).eq('id', pr.id);
+    }
+  } catch (_) {}
   notify('✅ Pix confirmado. Acesso de ' + a.nome + ' até ' + novo.acesso_fim.split('-').reverse().join('/'));
   mbCarregarPainelAlunos();
 }
@@ -8731,7 +8738,7 @@ function mbCobrarAtualizar(trocouPlano){
   if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
   else if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
-  else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
+  else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}. Você volta a ter acesso ao seu treino atual (sem treino novo).`;
   if (code) t += `\n\nPix copia e cola 👇\n${code}`;
   if (document.getElementById('cob-app').checked) t += `\n\nTambém deixei a oferta no seu app (${mbCobrarAppUrl()}): é só abrir e tocar em pagar.`;
   t += `\n\nDepois de pagar, é só me mandar o comprovante por aqui que eu libero na hora. Qualquer dúvida, estou à disposição! 🙌`;
@@ -10164,7 +10171,13 @@ async function mbGerenciarProtocolos(alunoId) {
       let fd = null;
       if (/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto || '')) fd = new Date(c.fimPrevisto + 'T00:00:00');
       else { const tw = (c.semanas || []).reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || ((c.semanas || []).length * 4); if (tw) { fd = new Date(p.data_inicio + 'T00:00:00'); fd.setDate(fd.getDate() + tw * 7 - 1); } }
-      if (fd) fimTxt = ' · fim previsto ' + fd.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+      if (fd) {
+        fimTxt = ' · fim previsto ' + fd.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+        const dl = Math.ceil((fd - new Date()) / 86400000);
+        if (p.ativo && c.loop) fimTxt += ' · <b style="color:#085040">🔁 em loop</b>';
+        else if (p.ativo && dl >= 0 && dl <= 7) fimTxt += ' · <b style="color:#B45309">faltam ' + dl + ' dia' + (dl !== 1 ? 's' : '') + ': deixar em loop?</b>';
+        else if (p.ativo && dl < 0) fimTxt += ' · <b style="color:#B45309">treino acabou: deixar em loop?</b>';
+      }
     }
     const ativoBadge = p.ativo
       ? '<span style="font-size:9px;background:#E0F5EE;color:#085040;padding:2px 6px;border-radius:99px;font-weight:700">✅ ativo</span>'
@@ -10174,6 +10187,7 @@ async function mbGerenciarProtocolos(alunoId) {
         <div style="font-size:12px;font-weight:600;color:var(--tx)">${escAttr(nome)} ${ativoBadge}</div>
         <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · criado ${criado}${fimTxt}</div>
       </div>
+      ${p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${p.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>` : ''}
       <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
       <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
       ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="Volta a ser o treino ativo do aluno (o ativo atual vai para o histórico)">↩ Reativar</button>` : ''}
@@ -10223,6 +10237,18 @@ async function mbRevogarLinkTreino(tipo, id){
   if (error) notify('Erro ao revogar: ' + error.message); else notify('Link revogado.');
 }
 
+async function mbToggleLoop(protoId, alunoId, ligar) {
+  try {
+    const { data: row, error: e0 } = await mbClient.from('protocolos').select('conteudo').eq('id', protoId).maybeSingle();
+    if (e0 || !row) throw (e0 || new Error('protocolo não encontrado'));
+    const c = Object.assign({}, row.conteudo || {});
+    if (ligar) c.loop = true; else delete c.loop;
+    const { error } = await mbClient.from('protocolos').update({ conteudo: c }).eq('id', protoId);
+    if (error) throw error;
+    notify(ligar ? '🔁 Loop ligado: quando o treino acabar, recomeça da semana 1.' : 'Loop desligado.');
+    mbGerenciarProtocolos(alunoId);
+  } catch (e) { notify('Erro no loop: ' + (e.message || e)); }
+}
 async function mbReativarProtocolo(protoId, alunoId) {
   if (!confirm('Reativar este protocolo? O treino ativo atual do aluno vai para o histórico (inativo) e o aluno passa a ver este no app.\n\nSe as datas dele já venceram, ajuste início/fim no Quadro (📅 Calendário do treino).')) return;
   try {
@@ -11826,6 +11852,16 @@ body.xo-open #movh-descanso-widget{display:none!important}
 .xo-foot{position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(to top,var(--bg) 70%,transparent)}
 .xo-foot .xo-btn{width:100%;max-width:560px;display:block;margin:0 auto;padding:15px}
 .xo-foot .xo-btn.ok{background:var(--G);color:#06210f}
+/* v60.2: miniatura de vídeo no exercício + vídeo só carrega ao tocar na tela de foco */
+.ec-hd .vbtn.vthumb,.ec-name-row .vbtn.vthumb,.vbtn.vthumb{position:relative!important;top:0!important;width:54px!important;height:54px!important;min-width:54px;border-radius:13px!important;overflow:hidden;padding:0!important;margin:0!important;flex:0 0 54px;display:block!important;border:1px solid var(--bd)!important;background:linear-gradient(135deg,#1c2a48,#2a1620)!important}
+@media(min-width:0px){.vbtn.vthumb::before,.vbtn.vthumb span{display:none!important}}
+.ec-name-row:has(.vbtn.vthumb){align-items:center;gap:12px}
+.vbtn.vthumb .vimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vbtn.vthumb .vimg.vsh{transform:scale(1.75)}
+.vbtn.vthumb .vplay{position:absolute;right:3px;bottom:3px;width:20px;height:20px;border-radius:50%;background:#D62839;color:#fff;font-size:8px;font-style:normal;display:grid;place-items:center;border:2px solid var(--card)}
+.xo-fac img{width:100%;height:100%;object-fit:cover;display:block}
+.xo-fac .xo-playbtn{display:grid;place-items:center;background:rgba(0,0,0,.25)}
+.xo-fac .xo-playbtn i{width:52px;height:52px;border-radius:50%;background:rgba(214,40,57,.95);color:#fff;font-style:normal;font-size:18px;display:grid;place-items:center}
 </style>
 </head>
 <body>
@@ -12263,7 +12299,7 @@ function aShowTelARenovar(fim){
   const btnRenovar = '<button class="btn-renovar-principal" onclick="aAbrirRenovar()">'+btnTxt+'</button>';
   div.innerHTML = '<div class="tela-renovar-icon">🔒</div>'
     + '<h2>' + titulo + '</h2>'
-    + '<p>' + msg + '</p>'
+    + '<p>' + msg + '</p>' + (aOfertaSituacao() === 'reativacao' ? '<p>' + (aLang==='en' ? 'Reactivate to go back to your current workout.' : 'Reative o acesso para voltar ao seu treino atual.') + '</p>' : '')
     + btnRenovar
     + '<button class="btn-renovar-sair" onclick="aLogout()">' + sairTxt + '</button>';
   document.body.appendChild(div);
@@ -12827,10 +12863,41 @@ async function aBoot(sessionParam){
   }
 
   // Verificar Anamnese (obrigatória no 1º acesso)
-  const { data: anamneses } = await aClient.from('anamneses')
+  // v60.2: as 7 consultas rodam em paralelo (antes eram em sequência); as não críticas falham em silêncio
+  const _sf = function(p){ return Promise.resolve(p).then(function(r){ return r || { data: null }; }, function(){ return { data: null }; }); };
+  const [_rAn, _rPr, _rRg, _rRp, _rTe, _rEx, _rAv] = await Promise.all([
+    aClient.from('anamneses')
     .select('id, tipo, respostas, solicitado_em')
     .eq('aluno_id', aAlunoRow.id)
-    .order('criado_em', { ascending: false });
+    .order('criado_em', { ascending: false }),
+    aClient.from('protocolos')
+    .select('*')
+    .eq('aluno_id', aAlunoRow.id)
+    .eq('ativo', true)
+    .order('criado_em', { ascending: false })
+    .limit(1)
+    .maybeSingle(),
+    aClient.from('registros_sessao')
+    .select('exercicio_nome, carga, reps, data_sessao, criado_em')
+    .eq('aluno_id', aAlunoRow.id)
+    .order('criado_em', { ascending: false })
+    .limit(1000),
+    _sf(aClient.from('rpe_sessoes')
+      .select('rpe').eq('aluno_id', aAlunoRow.id)
+      .order('criado_em', { ascending: false }).limit(1).maybeSingle()),
+    _sf(aClient.from('testes_fisicos')
+    .select('padrao_movimento, exercicio_nome, valor, unidade, distancia_km, observacoes, data')
+    .eq('aluno_id', aAlunoRow.id)
+    .order('data', { ascending: true })),
+    _sf(aClient.from('exercicios')
+    .select('nome, padrao_movimento, percentual_rm, url')
+    .eq('professor_id', aAlunoRow.professor_id)),
+    _sf(aClient.from('avaliacoes_fisicas')
+    .select('id, status, data_avaliacao, diagnostico, achados, composicao, medidas, created_at')
+    .eq('aluno_id', aAlunoRow.id)
+    .order('created_at', { ascending: false }))
+  ]);
+  const { data: anamneses } = _rAn;
   // IMPORTANTE: considera apenas a anamnese MAIS RECENTE (anamneses já vem ordenado
   // desc por criado_em). Usar .some() aqui é o bug que fazia uma anamnese antiga já
   // respondida "esconder" uma nova solicitação do professor (respostas: null) — o
@@ -12855,13 +12922,7 @@ async function aBoot(sessionParam){
     return;
   }
 
-  const { data: proto, error: protoErr } = await aClient.from('protocolos')
-    .select('*')
-    .eq('aluno_id', aAlunoRow.id)
-    .eq('ativo', true)
-    .order('criado_em', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data: proto, error: protoErr } = _rPr;
 
   document.getElementById('loadingScreen').style.display = 'none';
 
@@ -12880,13 +12941,9 @@ async function aBoot(sessionParam){
   // primeira que o aluno registrou) que serve de ponto de partida pra
   // projetar a carga sugerida nas fases seguintes, e (c) alimentar a tela
   // de progresso (histórico completo por exercício).
-  const { data: registros } = await aClient.from('registros_sessao')
-    .select('exercicio_nome, carga, reps, data_sessao, criado_em')
-    .eq('aluno_id', aAlunoRow.id)
-    .order('criado_em', { ascending: true })
-    .limit(1000);
+  const { data: registros } = _rRg;
 
-  aTodosRegistros = registros || [];
+  aTodosRegistros = (registros || []).slice().reverse(); // veio do mais novo para o mais antigo (limite 1000)
   aUltimaCargaPorExercicio = {};
   aBaselineCargaPorExercicio = {};
   aTodosRegistros.forEach(r => {
@@ -12904,19 +12961,14 @@ async function aBoot(sessionParam){
   // não substitui a fase, só afina pra cima/baixo com base em como a última
   // sessão realmente foi sentida.
   try {
-    const { data: ultRpe } = await aClient.from('rpe_sessoes')
-      .select('rpe').eq('aluno_id', aAlunoRow.id)
-      .order('criado_em', { ascending: false }).limit(1).maybeSingle();
+    const ultRpe = (_rRp && _rRp.data) || null;
     aUltimoRPE = ultRpe ? ultRpe.rpe : null;
   } catch(e) { aUltimoRPE = null; }
 
   // testes de RM/condicionamento lançados pelo professor ou pelo aluno
   // (alimenta a seção "🏋️ Meus Testes" e a sugestão de carga por padrão de
   // movimento, dentro da tela de progresso)
-  const { data: testes } = await aClient.from('testes_fisicos')
-    .select('padrao_movimento, exercicio_nome, valor, unidade, distancia_km, observacoes, data')
-    .eq('aluno_id', aAlunoRow.id)
-    .order('data', { ascending: true });
+  const { data: testes } = _rTe;
   aTestesFisicos = testes || [];
 
   // metadados dos exercícios do banco do professor (padrão de movimento,
@@ -12924,9 +12976,7 @@ async function aBoot(sessionParam){
   // fallback de vídeo quando o bloco não tem b.exercicios[].url preenchido
   // direto (ex: treinos digitados/colados a partir de PDF, que só têm o
   // nome do exercício — sem isso o botão ▶ simplesmente não aparecia).
-  const { data: exMeta } = await aClient.from('exercicios')
-    .select('nome, padrao_movimento, percentual_rm, url')
-    .eq('professor_id', aAlunoRow.professor_id);
+  const { data: exMeta } = _rEx;
   aExerciciosMeta = {};
   aExVideoMap = {};
   (exMeta || []).forEach(e => {
@@ -12936,10 +12986,7 @@ async function aBoot(sessionParam){
 
   // Avaliações físicas/posturais — só o status/pedido por enquanto (a
   // ferramenta de captura ainda não está integrada ao app do aluno)
-  const { data: avals } = await aClient.from('avaliacoes_fisicas')
-    .select('id, status, data_avaliacao, diagnostico, achados, composicao, medidas, created_at')
-    .eq('aluno_id', aAlunoRow.id)
-    .order('created_at', { ascending: false });
+  const { data: avals } = _rAv;
   aAvaliacoesFisicas = avals || [];
 
   aRenderProtocolo(proto);
@@ -12947,6 +12994,11 @@ async function aBoot(sessionParam){
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function aAttr(s){ return aEsc(s); }
+function aThumbHtml(emb, url){
+  var id = String(emb || '').split('/embed/')[1] || ''; if (!id) return '';
+  var sh = String(url || '').indexOf('/shorts/') >= 0;
+  return '<img class="vimg' + (sh ? ' vsh' : '') + '" loading="lazy" decoding="async" alt="" src="https://i.ytimg.com/vi/' + aEsc(id) + '/mqdefault.jpg" onerror="this.remove()">';
+}
 function aEmbedUrl(url){ if(!url) return ''; const m=url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/shorts\\/)([^&?\\/]+)/); return m ? 'https://www.youtube-nocookie.com/embed/'+m[1] : ''; }
 
 // Converte formatos compactos de série/reps (ex: "3x12", "4×[6-10→10-12→4-6]")
@@ -13304,7 +13356,7 @@ function aAtualizarBlocoProgresso(bloco){
 }
 
 // ── Modo exercício (tela de foco: séries, carga, descanso, vídeo) ──
-let aXoEid = null, aXoTimer = null, aXoVid = false;
+let aXoEid = null, aXoTimer = null, aXoVid = false, aXoPlay = false;
 function aXoInfo(eid){
   const card = document.getElementById(eid);
   if (!card) return null;
@@ -13331,7 +13383,7 @@ function aXoBarraProximo(){
   box.style.display = 'flex';
 }
 function aXoAbrir(eid){
-  aXoEid = eid; aXoVid = false;
+  aXoEid = eid; aXoVid = false; aXoPlay = false;
   const el = document.getElementById('aXo');
   if (!el) return;
   el.style.display = 'flex';
@@ -13367,7 +13419,9 @@ function aXoRender(){
   let vid = '';
   if (i.emb) {
     const idm = i.emb.split('/embed/')[1] || '';
-    if (feitas === 0 || aXoVid) {
+    if ((feitas === 0 || aXoVid) && !aXoPlay) {
+      vid = '<div class="xo-vid xo-fac">' + aThumbHtml(i.emb, '') + '<button class="xo-playbtn" aria-label="Reproduzir" onclick="aXoPlay=true;aXoRender()"><i>▶</i></button></div>';
+    } else if (feitas === 0 || aXoVid) {
       vid = '<div class="xo-vid"><iframe loading="lazy" allow="autoplay; encrypted-media" src="' + aEsc(i.emb) + '?autoplay=1&mute=1&loop=1&controls=0&playsinline=1&rel=0&playlist=' + aEsc(idm) + '"></iframe><button aria-label="Ampliar" data-emb="' + aEsc(i.emb) + '" onclick="aAbrirVideoModal(this.dataset.emb)"></button></div>';
     } else {
       vid = '<button class="xo-vmini" onclick="aXoVid=true;aXoRender()"><i>▶</i><div><b>' + (aLang==='en'?'Watch form':'Ver execução') + '</b><span>' + (aLang==='en'?'tap to expand':'toque para ampliar') + '</span></div></button>';
@@ -13420,7 +13474,7 @@ function aXoConcluir(){
   const feitas = Math.min(aSeriesFeitas[aXoEid] || 0, i.total || 1);
   if (i.total && feitas >= i.total) {
     const prox = aProximoPendente(aXoEid);
-    if (prox) { aXoVid = false; aXoEid = prox.id; aXoRender(); } else aXoFechar();
+    if (prox) { aXoVid = false; aXoPlay = false; aXoEid = prox.id; aXoRender(); } else aXoFechar();
     return;
   }
   const ultima = i.total && feitas + 1 >= i.total;
@@ -13604,7 +13658,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     '<div class="ec-hd">' +
       '<div class="ec-info">' +
         '<div class="ec-name-row">' +
-          (emb ? '<button class="vbtn" aria-label="Vídeo" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)"><span>'+(aLang==='en'?'Video':'Vídeo')+'</span></button>' : '') +
+          (emb ? '<button class="vbtn vthumb" aria-label="Vídeo" data-emb="'+aEsc(emb)+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)">'+aThumbHtml(emb, ex.url || (ex.nome && aExVideoMap[ex.nome]) || '')+'<i class="vplay">▶</i></button>' : '') +
           '<span class="ec-n">'+aEsc(ex.nome)+(ex.obs ? '<span class="ec-o"> (<span class="ec-o-i">💬</span> '+aEsc(ex.obs)+')</span>' : '')+'</span>' +
         '</div>' +
         '<div class="ec-chips">' +
@@ -14309,7 +14363,12 @@ function aCalcularAgendaHoje(proto, semanas, dataAlvoISO){
   hoje.setHours(0,0,0,0);
 
   const diffMs = hoje - inicio;
-  const diffSemanasCorridas = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+  let diffSemanasCorridas = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+  // Loop: quando o professor liga, o treino recomeça da semana 1 em vez de travar na última fase
+  if (diffSemanasCorridas > 0 && (proto.loop || (proto.conteudo && proto.conteudo.loop))) {
+    const totSem = semanas.reduce((x, sm) => x + (sm.duracaoSemanas || 4), 0);
+    if (totSem > 0) diffSemanasCorridas = diffSemanasCorridas % totSem;
+  }
 
   let semanaIdx = 0;
   let semanaDentroFase = 1;
@@ -16191,10 +16250,10 @@ const PL_LAND_KEY = 'movh_landing_cfg';
 
 const PL_DEFAULT = [
   { id:'pl1', nome:'Mensal',     dias:30,  precoBR:180, precoUK:39,  ativo:true, tipo:'novo' },
-  { id:'pl6', nome:'Bimestral',  dias:60,  precoBR:320, precoUK:69,  ativo:true, tipo:'novo' },
+  { id:'pl6', nome:'Bimestral',  dias:60,  precoBR:290, precoUK:69,  ativo:true, tipo:'novo' },
   { id:'pl2', nome:'Trimestral', dias:90,  precoBR:420, precoUK:99,  ativo:true, tipo:'novo' },
   { id:'pl4', nome:'Renovação',  dias:30,  precoBR:150, precoUK:0,   ativo:true, tipo:'renovacao' },
-  { id:'pl5', nome:'Reativação', dias:30,  precoBR:165, precoUK:0,   ativo:true, tipo:'reativacao' },
+  { id:'pl5', nome:'Reativação (treino atual)', dias:30,  precoBR:90, precoUK:0,   ativo:true, tipo:'reativacao' },
 ];
 const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação' };
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
@@ -16334,7 +16393,7 @@ async function plPlanosPublicar(){
   } catch (e) { if (st) st.textContent = '❌ Não publicou: ' + (e.message || e); }
 }
 function plAplicarValores(){
-  if (!confirm('Substituir a lista de planos pelos valores definidos (Mensal 180, Bimestral 320, Trimestral 420, Renovação 150, Reativação 165)?')) return;
+  if (!confirm('Substituir a lista de planos pelos valores definidos (Mensal 180, Bimestral 290, Trimestral 420, Renovação 150, Reativação 90 (acesso ao treino atual))?')) return;
   plPlanos = JSON.parse(JSON.stringify(PL_DEFAULT)); plSavePlanos(); plRender();
 }
 

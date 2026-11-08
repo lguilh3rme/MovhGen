@@ -158,3 +158,12 @@ Protótipo e prints em `docs/proposta-app-aluno/` (`proposta.html` abre no naveg
 - Landing v2 mesclada (movhtemplate PR #3). Tela de login do app só trocou o roxo por vermelho.
 - PR #63 do MovhGen (v60.0: presencial editável + Formas de pagamento) está com conflito com a v60.1: precisa de rebase sobre `main`, `MOVH_VER` v60.2 e rodar reg_all 38 / bulk 26 / kbm 20.
 - Seguem pendentes: Pix-only em `create-checkout-asaas` (aguarda autorização de deploy), tela do personal com sessões do pacote (tabela/coluna nova), renovação redesenhada, revogar chave Asaas, templates do Canva (80/77 e 10%/15% antigos).
+
+## 22. v60.2 (07/11/2026) — Gerador + app do aluno (deploy do app, Netlify com ~149 créditos)
+- Planos: Bimestral 290 (60 d, UK 69 a confirmar); Reativação 90 = só reabre o acesso ao treino ATUAL (30 d), sem treino novo; ao confirmar o Pix de reativação o protocolo ativo recebe `conteudo.loop = true`; Renovação 150 (treino novo). Para valer: aba Planos → "↺ Valores definidos" → publicar. Escada por mês: novo 180 > renovação 150 > bimestral 145 > trimestral 140.
+- Loop: botão 🔁 em Gerenciar protocolos (`mbToggleLoop`); aviso "faltam N dias: deixar em loop?" nos últimos 7 dias e "treino acabou: deixar em loop?".
+- App do aluno: miniatura 54 px do vídeo na linha do exercício (`.vbtn.vthumb`, `aThumbHtml`, imagem `i.ytimg.com/vi/ID/mqdefault.jpg`; shorts com zoom 1.75 no centro); tela de foco só carrega o player do YouTube ao tocar (`aXoPlay`); abertura com as 7 consultas em paralelo (`Promise.all`, as não críticas falham em silêncio); registros buscados do mais novo para o mais antigo (limite 1000) e invertidos, corrige o teto de 1000 antigos.
+- Lição: regras antigas `.vbtn` / `.ec-name-row .vbtn` usam `!important`; qualquer variante nova do botão precisa de `!important` e `position:relative` ou a imagem `absolute` cobre o cartão (pego só no print real, não nos testes).
+- Barra de páginas embaixo (proposta de protótipo): REJEITADA; as seções continuam no fim da página rolando.
+- Não feito (próximo): escolher o quadro do vídeo na biblioteca (coluna `thumb` em `exercicios`, 0-3 = capa, início, meio, fim), progresso com resumo/gráficos, remover `indeex.html`/`indeeex.html`/`indexx.html`/`deploy.txt` do repo `movh`.
+- Testes: reg_all 38, bulk 26, kbm 0 falhas, t.py ok/erro. Miniaturas não testadas com YouTube real (sandbox sem acesso).
