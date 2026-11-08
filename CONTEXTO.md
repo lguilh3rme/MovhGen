@@ -4,7 +4,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- Branch: `wip/quadro-padrao` (criada ao começar item A). Checklist: [x] A Quadro por padrão + Editor clássico link · [x] B Próxima fase idempotente + Modal Protocolos · [ ] C Calendário fases com início/fim próprios. Último SHA: 846bcc1.
+- Branch: `wip/quadro-padrao` (criada ao começar item A). Checklist: [x] A Quadro por padrão + Editor clássico link · [x] B Próxima fase idempotente + Modal Protocolos · [x] C Calendário fases com início/fim próprios. Último SHA: b8541e9.
 - 08/11 (pós v61.3): (A) Abrir Quadro por padrão ao selecionar aluno/entrar em Treino; editor antigo atrás de link "Editor clássico" (não apagar código). (B) ✨ Próxima fase idempotente: se rascunho inativo existe do mesmo protocolo ativo, abrir existente; Modal Protocolos: ativo no topo, rascunhos por data, nº exercícios, etiqueta "igual ao rascunho X", botão "Apagar duplicados idênticos". (C) Calendário: cada fase com início/fim próprios (cascata nas seguintes, opção travar); clicar fase abre no Quadro; clicar recomendada cria rascunho idempotente e abre no Quadro. Um por vez, commit WIP + push, [x] na seção 0. Testes + print 390x844 cada etapa. MOVH_VER = 'v61.4 · 08/11'. Só Gerador: no fim export_app + cmp; se app MUDAR, pare e avise. Sem Supabase write. PR final [skip netlify], sem merge.
 
 ## 1. Repositórios e relação
