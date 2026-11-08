@@ -2031,25 +2031,18 @@ const FASES_TEMPLATE = {
       'Revisão a cada 4 semanas pelos registros e dor'
     ]
   },
-  intensificacao: {
-    label: 'Intensificação', emoji: '🔴', cor: '#D43A3A',
-    rpe: '7–9', rir: '1–3', carga: '~75–90%', volume: 'Moderado', descanso: 'Maior',
-    volNum: 5, intNum: 82,
+  adaptacao: {
+    label: 'Adaptação', emoji: '🟢', cor: '#1A9E72',
+    rpe: '5–7', rir: '3–4', carga: '~50–65%', volume: 'Baixo/Moderado', descanso: 'Conforme necessidade',
+    volNum: 4, intNum: 55,
     progressao: [
-      'Semana 1: sobe carga',
-      'Semana 2: mantém carga + melhora execução',
-      'Semana 3: aproxima da falha (RIR 1–2)'
+      'Fase opcional de 4 semanas para iniciantes/retorno',
+      'Foco em aprendizado motor e condicionamento inicial',
+      'Transição suave para Base'
     ]
   },
-  densidade: {
-    label: 'Densidade', emoji: '🟡', cor: '#D4A017',
-    rpe: '7–9', rir: '1–2', carga: 'Moderada (~65–80%)', volume: 'Moderado/Alto', descanso: 'Curto',
-    volNum: 7, intNum: 72,
-    progressao: [
-      'Reduz descanso',
-      'Mantém carga moderada, aumenta esforço total'
-    ]
-  },
+  // Deload mantido só para uso interno (inserção automática de semana de deload baseada em RPE/nível).
+  // NÃO aparece no seletor de fases do professor.
   deload: {
     label: 'Deload', emoji: '⚫', cor: '#666666',
     rpe: '4–6', rir: '4–6', carga: '~50–60%', volume: 'Baixo', descanso: 'Livre',
@@ -2095,15 +2088,9 @@ function condSugestao(faseKey, duracaoBase, zonaBase){
   let minutos=minBase, zonaSug=zonaBase||'Z2', obsTxt='';
   if(faseKey==='base'){
     minutos=minBase; zonaSug=zonaBase||'Z2'; obsTxt='ritmo constante, construção de base';
-  } else if(faseKey==='intensificacao'){
-    minutos=minBase?Math.max(10,Math.round(minBase*0.85)):minBase;
-    zonaSug=zonas[Math.min(zIdx+1,4)]; obsTxt='menos duração, mais intensidade';
-  } else if(faseKey==='densidade'){
+  } else if(faseKey==='adaptacao'){
     minutos=minBase?Math.max(8,Math.round(minBase*0.7)):minBase;
-    zonaSug=zonas[Math.min(zIdx+1,4)]; obsTxt='intervalado, descansos curtos';
-  } else if(faseKey==='deload'){
-    minutos=minBase?Math.max(8,Math.round(minBase*0.6)):minBase;
-    zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='recuperação ativa, sem esforço alto';
+    zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='foco em técnica e condicionamento inicial';
   }
   return{
     duracaoTxt:minutos?minutos+' min':(duracaoBase||'—'),
@@ -2120,10 +2107,8 @@ function condSugestao(faseKey, duracaoBase, zonaBase){
 // simples ("4×8-10", "3×12", "5×5"); textos livres (AMRAP, Máx reps, etc.)
 // não têm sugestão automática (não dá pra escalar de forma segura).
 const VOLUME_AJUSTE_FASE = {
-  base:           { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 1.0  }, // mantém — foco é consolidar volume
-  intensificacao: { sets: 0,  repMinF: 0.85, repMaxF: 0.85, restF: 1.2  }, // menos reps, mais pesado, mais descanso
-  densidade:      { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 0.65 }, // mesmas reps, descanso bem mais curto
-  deload:         { sets: -1, repMinF: 1.15, repMaxF: 1.15, restF: 1.15 }  // menos série, mais leve, mais descanso
+  base:       { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 1.0  }, // mantém — foco é consolidar volume (progressão dupla)
+  adaptacao:  { sets: 0,  repMinF: 1.0,  repMaxF: 1.0,  restF: 1.0  }, // mantém — foco em aprendizado motor
 };
 function parseSeriesSimples(txt){
   const m = String(txt||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)(?:\s*[-–a]\s*(\d+))?\s*$/);
@@ -2161,7 +2146,9 @@ function formatRestSegundos(totalSeg){
 function fatorSemanaDentroFase(semanaDentroFase, duracaoSemanas, faseKey){
   duracaoSemanas = duracaoSemanas || 4;
   semanaDentroFase = Math.min(Math.max(semanaDentroFase || 1, 1), duracaoSemanas);
-  if (faseKey === 'deload' || faseKey === 'base') return { sets: 0, repF: 1.0, restF: 1.0 }; // base = progressão dupla (carga sobe pelo registro, não por fator de reps/descanso)
+  // Fases simplificadas: base (progressão dupla) e adaptacao (manter)
+  if (faseKey === 'base' || faseKey === 'adaptacao') return { sets: 0, repF: 1.0, restF: 1.0 };
+  // Fallback para fases antigas (não devem mais aparecer)
   const ultimaSemana = semanaDentroFase === duracaoSemanas && duracaoSemanas >= 3;
   if (ultimaSemana) return { sets: -1, repF: 1.08, restF: 1.10 };
   const passo = semanaDentroFase - 1;
@@ -3948,7 +3935,7 @@ function kbCalHTML(sid){
     const extra=mbProtoFim&&porF&&calDateKey(porF)!==mbProtoFim?` <span class="kb-cal-aj" title="Fim ajustado manualmente (pelas fases seria ${kbFmtD(porF)})">ajustado</span>`:'';
     resumo=(ini?kbFmtD(ini)+' → ':'até ')+kbFmtD(fim)+' · <b>'+st+'</b>'+extra;
   }
-  let linhas='',ext='';
+  let linhas='',ext='', prox='';
   if(ini){
     let acc=0;
     linhas=semanas.map(x=>{
@@ -3961,6 +3948,16 @@ function kbCalHTML(sid){
       const cls=(hoje>=a&&hoje<=b)?' atual':(hoje>b?' passou':'');
       return `<button type="button" class="kb-cal-f${cls}${x.id===sid?' edit':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)" title="Abrir esta fase no editor"><span class="kb-cal-fn">${ft?ft.emoji+' ':''}${escAttr((x.nome||'').replace(/^Semana\s*/i,'Fase '))}${escAttr(foco)}</span><span class="kb-cal-fd">${kbFmtD(a)} → ${kbFmtD(b)} · ${dur} sem.</span></button>`;
     }).join('');
+    // Próxima fase recomendada (rascunho separado no Calendário)
+    const ultima = semanas[semanas.length-1];
+    const ultimaFase = ultima?.fase || 'base';
+    const proxFase = ultimaFase === 'adaptacao' ? 'base' : 'adaptacao';
+    const ftProx = FASES_TEMPLATE[proxFase];
+    const proxDur = proxFase === 'base' ? 8 : 4;
+    const aProx = new Date(ini); aProx.setDate(aProx.getDate() + acc*7);
+    const bProx = new Date(aProx); bProx.setDate(bProx.getDate() + proxDur*7 - 1);
+    const proxLabel = proxFase === 'adaptacao' ? '(opcional)' : '';
+    prox = `<div class="kb-cal-f prox" style="border-style:dashed;opacity:.8"><span class="kb-cal-fn">${ftProx.emoji} ${ftProx.label} ${proxLabel} · recomendada</span><span class="kb-cal-fd">${kbFmtD(aProx)} → ${kbFmtD(bProx)} · ${proxDur} sem.</span></div>`;
     if(porF&&fim&&fim>porF){const n=Math.round((fim-porF)/86400000);ext=`<div class="kb-cal-f ext"><span class="kb-cal-fn">➕ Extensão</span><span class="kb-cal-fd">${kbFmtD(porF)} → ${kbFmtD(fim)} · +${n} dia${n!==1?'s':''}</span></div>`;}
   }
   const dica=ini
@@ -3976,7 +3973,7 @@ function kbCalHTML(sid){
         <button type="button" class="btn bs" onclick="kbCalAdd(7,'${sid}')" title="Estende o fim em 1 semana">+1 sem.</button>
         ${mbProtoFim?`<button type="button" class="btn bs" onclick="kbCalReset('${sid}')" title="Volta a calcular o fim pela soma das fases">↺ ${porF?'pelas fases ('+kbFmtD(porF)+')':'limpar fim'}</button>`:''}
       </div>
-      ${linhas||ext?`<div class="kb-cal-fases">${linhas}${ext}</div>`:''}
+      ${linhas||ext||prox?`<div class="kb-cal-fases">${linhas}${prox}${ext}</div>`:''}
       <div class="kb-cal-dica">${dica}</div>
     </div>
   </div>`;
@@ -4636,7 +4633,7 @@ function kbRemoverExAtual(){
 }
 
 // ══ SIDEBAR ══
-const FASES_COR = { base:'#3580D8', intensificacao:'#D43A3A', densidade:'#D4A017', deload:'#666666' };
+const FASES_COR = { base:'#3580D8', adaptacao:'#1A9E72' };
 // Monta o gráfico (timeline) de periodização prevista: um segmento por
 // mesociclo, largura proporcional à duração em semanas, colorido pela fase.
 // semanaAtualGlobal (opcional, 0-based, pode ser fracionária) marca "você
@@ -5055,7 +5052,7 @@ function aplicarSugestaoDeload(){
 }
 function addSem(){const sid='s'+sc++;const l=String.fromCharCode(64+semanas.length+1);semanas.push({id:sid,nome:'Semana '+l,duracaoSemanas:4,dias:[{id:sid+'d1',nome:'Segunda',diaSemana:'Segunda',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},{id:sid+'d2',nome:'Quarta',diaSemana:'Quarta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},{id:sid+'d3',nome:'Sexta',diaSemana:'Sexta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]}]});renderAll();notify('Mesociclo adicionado!');}
 function rmSem(){if(semanas.length<=1){notify('Mínimo 1 mesociclo.');return;}semanas.pop();renderAll();nav('config');notify('Mesociclo removido.');}
-const SEQUENCIA_FASES = ['base', 'intensificacao', 'densidade', 'deload'];
+const SEQUENCIA_FASES = ['base', 'adaptacao']; // deload não está na sequência do usuário (só uso interno)
 function dupSem(sid){
   const idx=semanas.findIndex(x=>x.id===sid);
   if(idx<0)return;
@@ -5068,17 +5065,10 @@ function dupSem(sid){
   if (!avancaFase) clone.nome = orig.nome + ' (cópia)';
   clone.dias.forEach((d,di)=>{ d.id=newSid+'d'+dc++; });
   semanas.splice(idx+1,0,clone);
-  if (avancaFase) {
-    // Reaproveita setSemFase pra herdar a mesma lógica de nome/renumeração
-    // já usada quando o professor troca a fase manualmente — evita duplicar
-    // essa regra em dois lugares.
-    const proximaFase = SEQUENCIA_FASES[(faseOrigIdx + 1) % SEQUENCIA_FASES.length];
-    setSemFase(newSid, proximaFase);
-    notify('Mesociclo duplicado — fase avançada automaticamente pra "' + FASES_TEMPLATE[proximaFase].label + '".');
-  } else {
-    renderAll();
-    notify('Mesociclo duplicado!');
-  }
+  // Nova regra: sem auto-avanço de fase (fases simplificadas: Base 8 sem + Adaptação opcional).
+  // A "próxima fase" é um rascunho recomendado separado no Calendário.
+  renderAll();
+  notify('Mesociclo duplicado!');
 }
 function dupDia(sid,did){
   const s=semanas.find(x=>x.id===sid);if(!s)return;
@@ -6056,9 +6046,7 @@ function renderDia(did){
           <select onchange="setSemFase('${semObj?semObj.id:''}',this.value)" style="font-size:11px;padding:3px 7px">
             <option value=""${!semObj||!semObj.fase?' selected':''}>— sem fase definida —</option>
             <option value="base"${semObj&&semObj.fase==='base'?' selected':''}>🔵 Base</option>
-            <option value="intensificacao"${semObj&&semObj.fase==='intensificacao'?' selected':''}>🔴 Intensificação</option>
-            <option value="densidade"${semObj&&semObj.fase==='densidade'?' selected':''}>🟡 Densidade</option>
-            <option value="deload"${semObj&&semObj.fase==='deload'?' selected':''}>⚫ Deload</option>
+            <option value="adaptacao"${semObj&&semObj.fase==='adaptacao'?' selected':''}>🟢 Adaptação</option>
           </select>
         </div>
         <div class="dcf">
