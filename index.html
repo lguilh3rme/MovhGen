@@ -5321,6 +5321,108 @@ function mbDiaEfetivo(dataStr){
   return { origem: ag.dia ? 'template' : 'vazio', dia: ag.dia, agenda: ag };
 }
 
+// --- Previous workout diff (Item 4) ---
+// Encontra o treino anterior (7 dias antes) para a mesma data
+function calTreinoAnterior(dataStr){
+  const dt = new Date(dataStr + 'T00:00:00');
+  dt.setDate(dt.getDate() - 7);
+  const antKey = calDateKey(dt);
+  // Só considera se a data anterior for >= início do protocolo
+  if (mbProtoDataInicio && antKey < mbProtoDataInicio) return null;
+  return mbDiaEfetivo(antKey);
+}
+
+// Compara dois dias e retorna diff textual
+function calDiffDias(diaAtual, diaAnt){
+  if (!diaAtual && !diaAnt) return 'Sem treino nos dois dias';
+  if (!diaAnt) return 'Sem treino anterior (primeira semana)';
+  if (!diaAtual) return 'Dia atual sem treino (era descanso)';
+  const blocosAtual = (diaAtual.blocos||[]).map(b => ({
+    tipo: b.tipo || (b.sub==='atv'?'Ativação':b.sub==='pri'?'Principal':b.sub==='con'?'Condicionamento':'Outro'),
+    exs: (b.exercicios||[]).map(e => ({
+      nome: e.nome || '',
+      series: e.series || '',
+      rest: e.rest || '',
+      reg: e.reg || '',
+      carga: e.carga || ''
+    }))
+  }));
+  const blocosAnt = (diaAnt.blocos||[]).map(b => ({
+    tipo: b.tipo || (b.sub==='atv'?'Ativação':b.sub==='pri'?'Principal':b.sub==='con'?'Condicionamento':'Outro'),
+    exs: (b.exercicios||[]).map(e => ({
+      nome: e.nome || '',
+      series: e.series || '',
+      rest: e.rest || '',
+      reg: e.reg || '',
+      carga: e.carga || ''
+    }))
+  }));
+  let out = '';
+  const maxB = Math.max(blocosAtual.length, blocosAnt.length);
+  for (let bi=0; bi<maxB; bi++){
+    const ba = blocosAtual[bi], bb = blocosAnt[bi];
+    if (!ba && bb){
+      out += `<div style="color:#c03030">➖ Bloco ${bb.tipo} removido</div>`;
+      continue;
+    }
+    if (ba && !bb){
+      out += `<div style="color:#1A9E72">➕ Bloco ${ba.tipo} adicionado</div>`;
+      continue;
+    }
+    if (ba.tipo !== bb.tipo){
+      out += `<div style="color:#D4A017">🔄 Tipo do bloco: ${bb.tipo} → ${ba.tipo}</div>`;
+    }
+    const maxE = Math.max(ba.exs.length, bb.exs.length);
+    for (let ei=0; ei<maxE; ei++){
+      const ea = ba.exs[ei], eb = bb.exs[ei];
+      if (!ea && eb){
+        out += `<div style="color:#c03030;margin-left:8px">➖ ${eb.nome} (${eb.series}${eb.rest?' · '+eb.rest:''})</div>`;
+        continue;
+      }
+      if (ea && !eb){
+        out += `<div style="color:#1A9E72;margin-left:8px">➕ ${ea.nome} (${ea.series}${ea.rest?' · '+ea.rest:''})</div>`;
+        continue;
+      }
+      const diffs = [];
+      if (ea.nome !== eb.nome) diffs.push(`nome: ${eb.nome||'—'} → ${ea.nome||'—'}`);
+      if (ea.series !== eb.series) diffs.push(`séries: ${eb.series||'—'} → ${ea.series||'—'}`);
+      if (ea.rest !== eb.rest) diffs.push(`descanso: ${eb.rest||'—'} → ${ea.rest||'—'}`);
+      if (ea.reg !== eb.reg) diffs.push(`reg: ${eb.reg||'—'} → ${ea.reg||'—'}`);
+      if (ea.carga !== eb.carga) diffs.push(`carga: ${eb.carga||'—'} → ${ea.carga||'—'}`);
+      if (diffs.length) out += `<div style="margin-left:8px">${eb.nome} · ${diffs.join(' | ')}</div>`;
+    }
+  }
+  return out || '<span style="color:var(--t3)">Sem diferenças</span>';
+}
+
+// Abre modal com diff do treino anterior
+function calAbrirDiffAnterior(dataStr){
+  const efetivo = mbDiaEfetivo(dataStr);
+  const ant = calTreinoAnterior(dataStr);
+  const diaAtual = efetivo?.dia;
+  const diaAnt = ant?.dia;
+  const diff = calDiffDias(diaAtual, diaAnt);
+  const dt = new Date(dataStr + 'T00:00:00');
+  const dtAnt = new Date(dt); dtAnt.setDate(dtAnt.getDate() - 7);
+  const titulo = `${CAL_DOW[dt.getDay()]} ${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`;
+  const tituloAnt = diaAnt ? `${CAL_DOW[dtAnt.getDay()]} ${String(dtAnt.getDate()).padStart(2,'0')}/${String(dtAnt.getMonth()+1).padStart(2,'0')}/${dtAnt.getFullYear()}` : '—';
+  const html = `<div style="padding:12px">
+    <div style="font-size:12px;font-weight:700;margin-bottom:8px">📊 Diff: Treino anterior → Atual</div>
+    <div style="font-size:10px;color:var(--t3);margin-bottom:8px">Atual: <b>${titulo}</b> · Anterior: <b>${tituloAnt}</b></div>
+    <div style="max-height:300px;overflow:auto;font-size:10px;line-height:1.6;font-family:monospace">${diff}</div>
+  </div>`;
+  const m = document.getElementById('modal-diff');
+  if (m) m.remove();
+  const div = document.createElement('div');
+  div.id = 'modal-diff';
+  div.style.cssText = 'position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:12px';
+  div.onclick = e => { if(e.target===div) div.remove(); };
+  div.innerHTML = `<div class="card" style="width:min(420px,100%);max-height:85vh;overflow:auto">${html}
+    <div style="text-align:right;margin-top:12px"><button class="btn bp" onclick="document.getElementById('modal-diff').remove()">Fechar</button></div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
 function calMudarMes(delta){
   if (!calMesAtual) calMesAtual = new Date();
   calMesAtual = new Date(calMesAtual.getFullYear(), calMesAtual.getMonth()+delta, 1);
@@ -5351,8 +5453,13 @@ function renderCalProto(){
     const emoji = fase && FASES_TEMPLATE[fase] ? FASES_TEMPLATE[fase].emoji : '';
     const temTreino = efetivo && efetivo.dia;
     const isHoje = key === hojeKey;
-    cels += `<div onclick="calAbrirDia('${key}')" title="${d}/${mes+1}${temOverride?' · alterado só neste dia':''}" style="cursor:pointer;padding:5px 2px;border-radius:6px;font-size:10px;text-align:center${isHoje?';background:var(--Pl);font-weight:800;color:var(--Pd)':''}${temOverride?';box-shadow:inset 0 0 0 1.5px var(--P)':''}">
-      ${d}<div style="height:12px;font-size:10px;line-height:1">${temTreino?emoji:''}</div>
+    // Verifica treino anterior (7 dias antes)
+    const ant = calTreinoAnterior(key);
+    const temAnt = ant && ant.dia;
+    const cellStyle = `position:relative;cursor:pointer;padding:5px 2px;border-radius:6px;font-size:10px;text-align:center${isHoje?';background:var(--Pl);font-weight:800;color:var(--Pd)':''}${temOverride?';box-shadow:inset 0 0 0 1.5px var(--P)':''}`;
+    const diffBtn = temAnt ? `<button class="btn" style="font-size:9px;padding:0 4px;line-height:1;min-height:14px;background:var(--P);color:#fff;border:none;border-radius:3px" onclick="event.stopPropagation();calAbrirDiffAnterior('${key}')" title="Ver diff com treino anterior">⏪</button>` : '';
+    cels += `<div style="${cellStyle}" onclick="calAbrirDia('${key}')" title="${d}/${mes+1}${temOverride?' · alterado só neste dia':''}${temAnt?' · treino anterior disponível (⏪)':''}">
+      ${d}<div style="height:12px;font-size:10px;line-height:1;display:flex;align-items:center;justify-content:center;gap:2px">${temTreino?emoji:''}${diffBtn}</div>
     </div>`;
   }
   card.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
