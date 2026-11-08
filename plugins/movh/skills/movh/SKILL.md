@@ -51,5 +51,10 @@ Sem `$GITHUB_TOKEN` não há push: entregar `index.html` + patch (`git diff`) do
 ## Testes (da raiz do MovhGen, caminhos ABSOLUTOS)
 `node --check` do maior `<script>` extraído; `python3 tools/tests/reg_all.py $PWD/index.html $PWD/tools/tests/gpage.py <dir>` (38 OK), `bulk.py` (mesmos args, 26 OK), `kbm.py` (20 OK), `t.py`/`reg.py` com o app exportado. `kbm.py` abre `/home/claude/movhgen/index.html` (minúsculo): `ln -sfn /home/claude/MovhGen /home/claude/movhgen`. `t.py` imprime OK e depois um `FAIL` esperado (caminho de erro; igual no app em produção). Feature nova: teste curto com o stub de `gpage.py`; depois de `nav('home')` esperar ~1,5 s antes de injetar dados simulados (o carregamento sobrescreve).
 
+## No terminal local (Claude Code)
+- Usar `git`/`gh` normais com o login do `gh` (não `add_repo`, não `$GITHUB_TOKEN`).
+- `kbm.py` usa caminho relativo (`$PWD/index.html`), não `/home/claude/movhgen`.
+- ⚠️ Se o Claude Code estiver atrás de proxy (ex.: `fcc-claude`), o modelo pode NÃO ser da Anthropic → NÃO consultar Supabase com dados de aluno nem colar segredos.
+
 ## Fechamento da rodada
 Resumo curto (o que mudou, PR/merge, testes, o que NÃO foi testado, ação do usuário). Registrar o aprendizado no CONTEXTO.md (PR junto) e na memória.
