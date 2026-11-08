@@ -174,3 +174,8 @@ Protótipo e prints em `docs/proposta-app-aluno/` (`proposta.html` abre no naveg
 - Shorts (`data-sh="1"` quando a URL tem `/shorts/`): na tela de foco o player vira vertical 9:16 (`.xo-vid.xo-sh`, altura ~40vh) e no modal ampliado vira `min(92vw, 82vh*9/16)` com `aspect-ratio 9/16` (`aAbrirVideoModal(src, sh)`). O pôster usa `object-fit:cover`, que recorta o centro da capa 16:9 e mostra só a parte vertical.
 - Cuidado no template: dentro de `exportarComLogin()` evitar aspas escapadas (`\'`) e `${`; use `==1` em vez de `==='1'` em atributos `onclick`.
 - Testes: reg_all 38, bulk 26, kbm 0 falhas, t.py ok/erro; miniatura ligada mede 54 px; short abre em 9:16. Não testado com YouTube real (sandbox sem acesso).
+
+## 24. v60.4 (07/11/2026, noite) — Gerador + app do aluno (deploy do app)
+- Vídeo: a tela de foco não tem mais player inline nem pôster; só a linha "Ver execução" (`.xo-vmini`) que abre o modal `#a-video-modal` (fundo translúcido, iframe do YouTube criado só ao tocar; short em 9:16). Era assim antes da v60.1; o player inline em loop era o que pesava.
+- Cabeçalho (saudação, descrição, faixa de dias = `#tHeaderRecolhivel`): `aHeaderForcar(true)` o recolhe em Progresso/Semana/Coletivas; agora `aVoltarHoje()` e o fim de `aRenderProtocolo()` sempre o devolvem visível (`_aHdrPrev = null`). Causa exata do "sumiu" não confirmada pelo usuário; se persistir, pedir print do que falta.
+- Testes: reg_all 38, bulk 26, kbm 0 falhas; header block→none→block; modal abre com iframe só após o toque.
