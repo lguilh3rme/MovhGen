@@ -476,6 +476,15 @@ body.dock-open #aluno-dock{display:flex}
 /* v59.3 — Quadro e editor mais compactos */
 .kb-col-head{flex-wrap:wrap;row-gap:1px}
 .kb-col-head .kb-col-foot{flex:0 0 100%;border:none;padding:0 3px 1px;text-align:left;font-size:10px}
+.kbg-all{overflow-x:auto;padding-bottom:12px}
+.kbg-in{min-width:calc(var(--kbmax,1)*238px)}
+.kbg-sec{margin-bottom:16px;border-top:3px solid var(--P);padding-top:8px}
+.kbg-hd{display:flex;align-items:center;gap:10px;position:sticky;left:0;margin-bottom:8px;max-width:calc(100vw - 40px)}
+.kbg-n{background:var(--P);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.kbg-tt{display:flex;flex-direction:column;flex:1;min-width:0}.kbg-tt b{font-size:14px}.kbg-tt span{font-size:11px;color:var(--mt,#888)}
+.kbg-board.kb-board{grid-auto-columns:230px!important;overflow:visible!important}
+.kbg-board .kb-col{max-height:none!important}
+.kbg-pg .pbar [onclick^="addDia"],.kbg-pg .pbar .pb-chip[data-did]{display:none!important}
 .kb-card{align-items:center;padding:4px 7px;margin-bottom:3px}
 .kb-card-txt{display:flex;align-items:center;gap:6px}
 .kb-card-n{flex:1;min-width:0}
@@ -2257,7 +2266,7 @@ function sincronizarExerciciosComBanco(){
 function sbToggle(on){const sb=document.getElementById('sb'),bd=document.getElementById('sb-bd');const o=(typeof on==='boolean')?on:!sb.classList.contains('open');sb.classList.toggle('open',o);if(bd)bd.classList.toggle('open',o);}
 function nav(id){
   {const _a=document.querySelector('.app');if(_a){let f=false;try{f=id.indexOf('kb-')===0&&localStorage.getItem('movh_kb_foco')==='1';}catch(e){}_a.classList.toggle('foco',f);}}
-  if(id.indexOf('kb-')===0)renderKanbanSemana(id.slice(3));
+  if(id==='kb-geral')renderKanbanGeral();else if(id.indexOf('kb-')===0)renderKanbanSemanaUm(id.slice(3));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   const pg=document.getElementById('page-'+id);if(pg)pg.classList.add('active');
@@ -2289,7 +2298,7 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">✅ Treino ativo do aluno</span>':'<span class="pb-badge pb-rasc">📝 Rascunho inativo · não está em vigor</span>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">✅ Treino ativo do aluno</span>':'<span class="pb-badge pb-rasc">📝 Rascunho inativo · não está em vigor</span>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 function pbProximaFase(){
   if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
@@ -3573,7 +3582,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.5 · 08/11';
+var MOVH_VER = 'v61.6 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3909,12 +3918,9 @@ async function kbAnaliseCarregarDb(){
   } catch (e) { console.warn('[MOVH] análise do Quadro (banco):', e); }
 }
 function kbToggleFoco(){const a=document.querySelector('.app');if(!a)return;const on=a.classList.toggle('foco');try{localStorage.setItem('movh_kb_foco',on?'1':'0');}catch(e){}}
-function renderKanbanSemana(sid){
-  const sem=semanas.find(s=>s.id===sid);if(!sem)return;
-  _kbSidAtual=sid;kbAnaliseCarregarDb();
-  let pg=document.getElementById('page-kb-'+sid);
-  if(!pg){pg=document.createElement('div');pg.id='page-kb-'+sid;pg.className='page';document.getElementById('day-pages').appendChild(pg);}
-  const cols=sem.dias.map(d=>{
+function kbColsHTML(sem){
+  const sid=sem.id;
+  return sem.dias.map(d=>{
     let body='';
     (d.blocos||[]).forEach((b,bi)=>{
       const isCon=b.id==='con'||(b.tipo&&!b.exercicios);
@@ -3950,6 +3956,45 @@ function renderKanbanSemana(sid){
       <div class="kb-col-body">${body}</div>
     </div>`;
   }).join('');
+}
+function _kbGeralAtivo(){const pg=document.getElementById('page-kb-geral');return !!(pg&&pg.classList.contains('active'));}
+function renderKanbanSemana(sid){
+  if(sid==='geral'||_kbGeralAtivo()){renderKanbanGeral();return;}
+  renderKanbanSemanaUm(sid);
+}
+// ══ Quadro geral: todas as fases empilhadas (de cima p/ baixo), dias alinhados em colunas ══
+// Reaproveita as colunas do Quadro (kbColsHTML): cada edição grava na fase/dia da própria célula.
+function renderKanbanGeral(){
+  let pg=document.getElementById('page-kb-geral');
+  if(!pg){pg=document.createElement('div');pg.id='page-kb-geral';pg.className='page kbg-pg';document.getElementById('day-pages').appendChild(pg);}
+  const ms=document.getElementById('main-scroll'),top=ms?ms.scrollTop:0;
+  const wr0=pg.querySelector('.kbg-all'),left=wr0?wr0.scrollLeft:0;
+  if(!semanas.length){pg.innerHTML='<div class="pg-head"><div class="pg-title">🧮 Quadro geral</div></div><div class="kb-vazio">Nenhuma fase no treino ainda.</div>';return;}
+  const nmax=Math.max.apply(null,semanas.map(s=>s.dias.length).concat([1]));
+  const secs=semanas.map((sm,i)=>{
+    const tot=sm.dias.reduce((a,d)=>a+kbEstimarDia(d).totalEx,0);
+    const dur=parseInt(sm.duracaoSemanas)||4;
+    return `<section class="kbg-sec" id="kbg-${sm.id}">
+      <div class="kbg-hd"><span class="kbg-n">${i+1}</span><div class="kbg-tt"><b>${escAttr(sm.nome||('Fase '+(i+1)))}</b><span>${dur} sem · ${sm.dias.length} dia${sm.dias.length!==1?'s':''} · ${tot} exercício${tot!==1?'s':''}</span></div>
+      <button class="btn bs" style="font-size:11px;padding:5px 10px" onclick="nav('kb-${sm.id}')" title="Abre só esta fase no Quadro">🗂️ Abrir só esta fase</button></div>
+      <div class="kb-board kbg-board" style="--kbn:${sm.dias.length}">${kbColsHTML(sm)}</div></section>`;
+  }).join('');
+  pg.innerHTML=`${pbarHTML(semanas[0].id,'','kbg')}
+    <div class="pg-head">
+      <div><div class="pg-title">🧮 Quadro geral — todas as fases</div><div class="pg-sub">Fases de cima pra baixo, com o mesmo treino/dia alinhado em coluna para comparar. Cada ajuste vale só para a fase onde você editou.</div></div>
+      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas">⛶ Foco</button></div>
+    </div>
+    <div class="kbg-all"><div class="kbg-in" style="--kbmax:${nmax}">${secs}</div></div>`;
+  if(ms)ms.scrollTop=top;
+  const wr=pg.querySelector('.kbg-all');if(wr)wr.scrollLeft=left;
+}
+function renderKanbanSemanaUm(sid){
+
+  const sem=semanas.find(s=>s.id===sid);if(!sem)return;
+  _kbSidAtual=sid;kbAnaliseCarregarDb();
+  let pg=document.getElementById('page-kb-'+sid);
+  if(!pg){pg=document.createElement('div');pg.id='page-kb-'+sid;pg.className='page';document.getElementById('day-pages').appendChild(pg);}
+  const cols=kbColsHTML(sem);
   pg.innerHTML=`
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
@@ -4761,7 +4806,7 @@ function mvVideoEx(did,bi,i){
     const e2=fBloco(did,bi).exercicios[i];e2.url=u;e2._um=true;
     renderExList(did,bi);
     const sm=semObjDeDia(did),pg=sm&&document.getElementById('page-kb-'+sm.id);
-    if(pg&&pg.classList.contains('active'))renderKanbanSemana(sm.id);
+    if(pg&&pg.classList.contains('active'))renderKanbanSemana(sm.id);else if(_kbGeralAtivo())renderKanbanGeral();
   }});
 }
 // aulas coletivas
@@ -6055,7 +6100,7 @@ function addExVarios(did,bi){
     nomes.forEach(function(n){addEx(did,bi);setEx(did,bi,b.exercicios.length-1,'nome',n);});
     renderExList(did,bi);
     const sm=semanas.find(function(x){return x.dias.some(function(d){return d.id===did;});});
-    if(sm&&document.getElementById('page-kb-'+sm.id)&&document.getElementById('page-kb-'+sm.id).classList.contains('active'))renderKanbanSemana(sm.id);
+    if(sm&&document.getElementById('page-kb-'+sm.id)&&document.getElementById('page-kb-'+sm.id).classList.contains('active'))renderKanbanSemana(sm.id);else if(_kbGeralAtivo())renderKanbanGeral();
   }});
 }
 function addEx(did,bi,cj){const b=fBloco(did,bi);if(!b)return;const ex={nome:'',url:'',series:'',rest:'',obs:'',cj:cj!=null?cj:null};b.exercicios.push(ex);if(cj!=null&&!b.conjGroups[cj])b.conjGroups[cj]={label:'Conjugado',rest:'30s',restAfter:''};renderExList(did,bi);}
