@@ -10404,40 +10404,142 @@ async function mbGerenciarProtocolos(alunoId) {
     return;
   }
 
-  document.getElementById('mb-protos-aluno-body').innerHTML = data.map(p => {
-    const c = p.conteudo || {};
+  // Separar ativo e inativos
+  const ativo = data.find(p => p.ativo);
+  const inativos = data.filter(p => !p.ativo);
+
+  // Função para contar exercícios no protocolo
+  const contarExercicios = (conteudo) => {
+    const c = conteudo || {};
+    let total = 0;
+    (c.semanas || []).forEach(s => {
+      (s.dias || []).forEach(d => {
+        (d.blocos || []).forEach(b => {
+          if (b.id === 'con') return;
+          total += (b.exercicios || []).length;
+        });
+      });
+    });
+    return total;
+  };
+
+  // Detectar duplicados entre inativos (mesmo conteúdo)
+  const conteudosVistos = new Map(); // stringified content -> primeiro id
+  const duplicados = new Set(); // ids que são duplicados
+  inativos.forEach(p => {
+    const key = JSON.stringify(p.conteudo || {});
+    if (conteudosVistos.has(key)) {
+      duplicados.add(p.id);
+    } else {
+      conteudosVistos.set(key, p.id);
+    }
+  });
+
+  // Agrupar inativos por data_inicio
+  const grupos = new Map();
+  inativos.forEach(p => {
+    const data = p.data_inicio || 'sem-data';
+    if (!grupos.has(data)) grupos.set(data, []);
+    grupos.get(data).push(p);
+  });
+  // Ordenar grupos por data decrescente
+  const datasOrdenadas = Array.from(grupos.keys()).sort((a,b) => (b === 'sem-data' ? -1 : a === 'sem-data' ? 1 : b.localeCompare(a)));
+
+  let html = '';
+
+  // --- PROTOCOLO ATIVO (topo) ---
+  if (ativo) {
+    const c = ativo.conteudo || {};
     const nome = c.nome || 'Sem nome';
     const semanas = (c.semanas||[]).length;
-    const criado = p.data_inicio ? new Date(p.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
+    const exCount = contarExercicios(c);
+    const criado = ativo.data_inicio ? new Date(ativo.data_inicio + 'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'}) : '';
     let fimTxt = '';
-    if (p.data_inicio) {
+    if (ativo.data_inicio) {
       let fd = null;
       if (/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto || '')) fd = new Date(c.fimPrevisto + 'T00:00:00');
-      else { const tw = (c.semanas || []).reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || ((c.semanas || []).length * 4); if (tw) { fd = new Date(p.data_inicio + 'T00:00:00'); fd.setDate(fd.getDate() + tw * 7 - 1); } }
+      else { const tw = (c.semanas || []).reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || ((c.semanas || []).length * 4); if (tw) { fd = new Date(ativo.data_inicio + 'T00:00:00'); fd.setDate(fd.getDate() + tw * 7 - 1); } }
       if (fd) {
         fimTxt = ' · fim previsto ' + fd.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
         const dl = Math.ceil((fd - new Date()) / 86400000);
-        if (p.ativo && c.loop) fimTxt += ' · <b style="color:#085040">🔁 em loop</b>';
-        else if (p.ativo && dl >= 0 && dl <= 7) fimTxt += ' · <b style="color:#B45309">faltam ' + dl + ' dia' + (dl !== 1 ? 's' : '') + ': deixar em loop?</b>';
-        else if (p.ativo && dl < 0) fimTxt += ' · <b style="color:#B45309">treino acabou: deixar em loop?</b>';
+        if (c.loop) fimTxt += ' · <b style="color:#085040">🔁 em loop</b>';
+        else if (dl >= 0 && dl <= 7) fimTxt += ' · <b style="color:#B45309">faltam ' + dl + ' dia' + (dl !== 1 ? 's' : '') + ': deixar em loop?</b>';
+        else if (dl < 0) fimTxt += ' · <b style="color:#B45309">treino acabou: deixar em loop?</b>';
       }
     }
-    const ativoBadge = p.ativo
-      ? '<span style="font-size:9px;background:#E0F5EE;color:#085040;padding:2px 6px;border-radius:99px;font-weight:700">✅ ativo</span>'
-      : '<span style="font-size:9px;background:#F3F3F3;color:#888;padding:2px 6px;border-radius:99px">inativo</span>';
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cl);margin-bottom:6px">
+    html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:linear-gradient(135deg,rgba(8,80,64,.12),rgba(8,80,64,.04));border:1px solid #9ad8c2;margin-bottom:10px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:12px;font-weight:600;color:var(--tx)">${escAttr(nome)} ${ativoBadge}</div>
-        <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · criado ${criado}${fimTxt}</div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${escAttr(nome)} <span style="font-size:9px;background:#E0F5EE;color:#085040;padding:2px 6px;border-radius:99px;font-weight:700;margin-left:6px">✅ ATIVO</span></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · criado ${criado}${fimTxt}</div>
       </div>
-      ${p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${p.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>` : ''}
-      ${p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbSugerirProximaFase('${p.id}','${alunoId}')" title="Gera um rascunho inativo da próxima fase (fase única base 8 sem), editável antes de salvar">✨ Próxima fase</button>` : ''}
-      <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
-      <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
-      ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="Volta a ser o treino ativo do aluno (o ativo atual vai para o histórico)">↩ Reativar</button>` : ''}
-      ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px;color:#c03030;border-color:#f0b0b0" onclick="mbDeletarProtocolo('${p.id}','${alunoId}')" title="Excluir protocolo">🗑 Excluir</button>` : ''}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${ativo.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>
+        <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbSugerirProximaFase('${ativo.id}','${alunoId}')" title="Gera um rascunho inativo da próxima fase (fase única base 8 sem), editável antes de salvar">✨ Próxima fase</button>
+        <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${ativo.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
+        <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${ativo.id}')" title="Revogar link">🚫</button>
+      </div>
     </div>`;
-  }).join('');
+  }
+
+  // --- RASCUNHOS INATIVOS (agrupados por data) ---
+  if (inativos.length > 0) {
+    html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bd2)">';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase">Rascunhos inativos</div>';
+    datasOrdenadas.forEach(dataKey => {
+      const lista = grupos.get(dataKey);
+      const dataFmt = dataKey === 'sem-data' ? 'sem data' : new Date(dataKey + 'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+      html += `<div style="margin-bottom:10px"><div style="font-size:10px;color:var(--t3);font-weight:600;margin-bottom:4px">${escAttr(dataFmt)} (${lista.length})</div>`;
+      lista.forEach(p => {
+        const c = p.conteudo || {};
+        const nome = c.nome || 'Sem nome';
+        const semanas = (c.semanas||[]).length;
+        const exCount = contarExercicios(c);
+        const ehDuplicado = duplicados.has(p.id);
+        const originalId = ehDuplicado ? conteudosVistos.get(JSON.stringify(c)) : null;
+        const labelDup = ehDuplicado && originalId ? `<span style="font-size:8px;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:99px;margin-left:4px;font-weight:600">= rascunho ${originalId.slice(0,8)}</span>` : '';
+        const ativoBadge = '<span style="font-size:9px;background:#F3F3F3;color:#888;padding:2px 6px;border-radius:99px">inativo</span>';
+        html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cl);margin-bottom:6px${ehDuplicado ? ';opacity:.7' : ''}">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--tx)">${escAttr(nome)} ${ativoBadge}${labelDup}</div>
+            <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · id ${p.id.slice(0,8)}</div>
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
+            <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
+            <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="Volta a ser o treino ativo do aluno (o ativo atual vai para o histórico)">↩ Reativar</button>
+            <button class="btn bs" style="font-size:9px;padding:3px 8px;color:#c03030;border-color:#f0b0b0" onclick="mbDeletarProtocolo('${p.id}','${alunoId}')" title="Excluir protocolo">🗑 Excluir</button>
+          </div>
+        </div>`;
+      });
+      html += '</div>';
+    });
+    // Botão apagar duplicados idênticos
+    if (duplicados.size > 0) {
+      const dupIds = Array.from(duplicados);
+      html += `<div style="margin-top:8px;padding:8px;border-radius:8px;background:#FEF2F2;border:1px solid #FECACA">
+        <div style="font-size:11px;color:#991B1B;margin-bottom:4px">⚠️ ${duplicados.size} rascunho${duplicados.size!==1?'s':''} idêntico${duplicados.size!==1?'s':''} detectado${duplicados.size!==1?'s':''} (mesmo conteúdo).</div>
+        <button class="btn bs" style="font-size:11px;padding:6px 10px;background:#FEE2E2;color:#991B1B;border-color:#FECACA" onclick="mbApagarDuplicadosProtocolos('${alunoId}','${dupIds.join(',')}')" title="Exclui todos os rascunhos inativos duplicados, mantendo apenas o mais antigo de cada grupo">🗑 Apagar duplicados idênticos</button>
+      </div>`;
+    }
+    html += '</div>';
+  } else {
+    html += '<div style="color:var(--t3);font-size:12px;padding:10px">Nenhum rascunho inativo.</div>';
+  }
+
+  document.getElementById('mb-protos-aluno-body').innerHTML = html;
+}
+
+// Função para apagar protocolos duplicados idênticos
+async function mbApagarDuplicadosProtocolos(alunoId, dupIdsStr) {
+  const ids = dupIdsStr.split(',').filter(Boolean);
+  if (!ids.length) return;
+  if (!confirm('Excluir ' + ids.length + ' rascunho(s) inativo(s) duplicado(s)? Serão mantidos apenas os originais (mais antigos).')) return;
+  try {
+    const { error } = await mbClient.from('protocolos').delete().in('id', ids);
+    if (error) throw error;
+    notify(ids.length + ' duplicado(s) excluído(s).');
+    mbGerenciarProtocolos(alunoId);
+  } catch (e) { notify('Erro ao excluir duplicados: ' + (e.message || e)); }
 }
 
 function mbTokenAleatorio(){
@@ -10544,6 +10646,31 @@ async function mbSugerirProximaFase(protoId, alunoId){
     if (pr.data.data_inicio) semAtual = Math.min(total, Math.max(1, Math.floor((Date.now() - new Date(pr.data.data_inicio+'T00:00:00')) / (7*86400000)) + 1));
     let acum = 0, vig = sems[sems.length-1];
     for (const s of sems) { acum += parseInt(s.duracaoSemanas)||4; if (semAtual <= acum) { vig = s; break; } }
+    // início sugerido = dia seguinte ao fim previsto
+    let fd = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto||'')) fd = new Date(c.fimPrevisto+'T00:00:00');
+    else if (pr.data.data_inicio) { fd = new Date(pr.data.data_inicio+'T00:00:00'); fd.setDate(fd.getDate() + total*7 - 1); }
+    const ini = fd ? new Date(fd.getTime() + 86400000) : new Date();
+    const iniIso = mbIsoLocal(ini);
+    // IDEMPOTENTE: verifica se já existe rascunho inativo com essa data_inicio para este aluno
+    const { data: existente } = await mbClient.from('protocolos')
+      .select('id, conteudo')
+      .eq('aluno_id', alunoId)
+      .eq('professor_id', mbProfessor.id)
+      .eq('ativo', false)
+      .eq('data_inicio', iniIso)
+      .maybeSingle();
+    if (existente && existente.conteudo) {
+      // Carrega o rascunho existente no editor e abre no Quadro
+      notify('Rascunho existente encontrado — carregando…');
+      const sel = document.getElementById('mb-aluno-select');
+      if (sel) { sel.value = alunoId; mbOnAlunoChange(); }
+      mbAplicarProtoNoEditor({ ...existente, conteudo: existente.conteudo });
+      const s0 = semanas[0];
+      if (s0) nav('kb-' + s0.id); else nav('main');
+      notify('Rascunho da próxima fase carregado (idempotente).');
+      return;
+    }
     // rascunho: clone do mesociclo vigente, fase única base 8 sem
     const dias = JSON.parse(JSON.stringify(vig.dias || []));
     const sid = 's1';
@@ -10594,12 +10721,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     if (rpeMed != null && rpeMed <= 4) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões leves — pode apertar a carga'});
     const diasReg = new Set((rg.data||[]).map(r => String(r.criado_em).slice(0,10))).size;
     if (diasReg < 15) alertas.push({t:'av', x:'Poucos registros: '+diasReg+' dia(s) com carga em 10 semanas — peça ao menos 3 por semana (a progressão dupla depende deles)'});
-    // início sugerido = dia seguinte ao fim previsto
-    let fd = null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto||'')) fd = new Date(c.fimPrevisto+'T00:00:00');
-    else if (pr.data.data_inicio) { fd = new Date(pr.data.data_inicio+'T00:00:00'); fd.setDate(fd.getDate() + total*7 - 1); }
-    const ini = fd ? new Date(fd.getTime() + 86400000) : new Date();
-    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: mbIsoLocal(ini), alertas,
+    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: iniIso, alertas,
       ctx: [['Fase vigente', (vig.nome||'—')+' · semana '+semAtual+' de '+total], ['Histórico', sems.length+' mesociclo'+(sems.length!==1?'s':'')+' · '+total+' sem'],
             ['Nível', resp && resp.tempo_treino ? String(resp.tempo_treino) : '—'], ['RPE médio', rpeMed != null ? rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', diasReg+' dia(s)']] };
     pfRender();
