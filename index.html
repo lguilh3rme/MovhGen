@@ -874,7 +874,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 <div class="main" id="main-scroll">
 <div class="mob-menu">
   <button class="mob-btn" onclick="sbToggle()">☰</button>
-  <span style="font-size:13px;font-weight:700;color:var(--tx)">MOV<span style="color:var(--P)">A</span></span>
+  <span style="font-size:13px;font-weight:700;color:var(--tx)">MOV<span style="color:var(--P)">H</span></span>
 </div>
 
 <div class="tb" id="tb"><span class="tb-cr" id="tb-cr">Início</span><div class="tb-sr"><i>🔍</i><input id="tb-q" type="search" placeholder="Buscar aluno ou exercício…" oninput="tbBusca(this.value)" onblur="tbFechaBusca()" autocomplete="off"/><div class="tb-dd" id="tb-dd"></div></div><div class="tb-act"><button type="button" class="tb-ic" onclick="nav('home')" title="Início e alertas">🔔<span class="tb-bd" id="tb-bd"></span></button><button type="button" class="tb-ic" onclick="notasAbrir('geral','','Geral')" title="Notas">📝</button><button type="button" class="tb-ic" onclick="nav('aparencia')" title="Aparência">🎨</button></div></div>
@@ -3573,7 +3573,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.3 · 08/11';
+var MOVH_VER = 'v61.4 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
