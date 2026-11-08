@@ -3829,7 +3829,7 @@ function pfComparacaoHTML(o){
 
 function pfAnaliseHTML(o){
   const vol = o.vol || {};
-  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; const max = m.volMax || 20; const ok = n === 0 || (n >= min && n <= max); return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/${min}–${max}</span>`; }).join('');
+  const chips = PF_MUSCULOS.map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; const max = m.volMax || 20; const ok = n >= min && n <= max; return `<span style="font-size:10px;font-weight:700;border-radius:99px;padding:2px 9px;border:1px solid ${ok?'#1A9E72':'#D4A017'};color:${ok?'#1fb583':'#e0902a'};white-space:nowrap">${m.k} ${n}/${min}–${max}</span>`; }).join('');
   const nAl = (o.alertas||[]).filter(x => x.t !== 'ok').length;
   const box = (tit, inner, fl) => `<div style="flex:${fl||1};min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">${tit}</b>${inner}</div>`;
   const ctx = (o.ctx||[]).map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${escAttr(r[0])}</span><b>${escAttr(r[1])}</b></div>`).join('');
@@ -3847,7 +3847,7 @@ function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
   const zero = PF_MUSCULOS.filter(m => (vol[m.k]||0) === 0).map(m => m.k);
   if (zero.length) alertas.push({t:'av', x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
-  const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n > 0 && n < min; }).map(m => m.k+' '+(vol[m.k]||0)+'/'+(m.volMin||10));
+  const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 || (n > 0 && n < min); }).map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 ? m.k+' volume ZERO — verifique se é intencional' : m.k+' '+n+'/'+min; });
   if (baixo.length) alertas.push({t:'av', x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
   const fora = [];
   (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
