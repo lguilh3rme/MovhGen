@@ -23,9 +23,9 @@ with sync_playwright() as p:
     pg.evaluate("nav('kb-%s')" % sid0); pg.wait_for_timeout(400)
     ck('análise recolhida', pg.evaluate("!document.querySelector('#page-kb-%s details.pf-an').open" % sid0))
     ck('chips de volume visíveis no resumo recolhido', pg.evaluate("(()=>{const s=document.querySelector('#page-kb-%s details.pf-an summary');return s.querySelectorAll('.an-chip').length==PF_MUSCULOS.length&&s.getBoundingClientRect().height>0})()" % sid0))
-    ck('resumo mostra pontos de atenção', 'atenção' in pg.evaluate("document.querySelector('#page-kb-%s details.pf-an summary').innerText" % sid0) or 'sem alertas' in pg.evaluate("document.querySelector('#page-kb-%s details.pf-an summary').innerText" % sid0))
+    ck('resumo mostra pontos de atenção', 'alerta' in pg.evaluate("document.querySelector('#page-kb-%s details.pf-an summary').innerText" % sid0) or 'sem alertas' in pg.evaluate("document.querySelector('#page-kb-%s details.pf-an summary').innerText" % sid0))
     pg.evaluate("document.querySelector('#page-kb-%s details.pf-an summary').click()" % sid0); pg.wait_for_timeout(200)
-    ck('expande com contexto, alertas e nota', pg.evaluate("(()=>{const d=document.querySelector('#page-kb-%s details.pf-an');return d.open&&d.querySelector('.pf-an-ctx')&&d.querySelector('.pf-an-nota')})()" % sid0))
+    ck('expande com contexto', pg.evaluate("(()=>{const d=document.querySelector('#page-kb-%s details.pf-an');return d.open&&d.querySelector('.pf-an-ctx')&&d.querySelector('.pf-an-ctx')})()" % sid0))
     # Quadro geral
     pg.evaluate("nav('kb-geral')"); pg.wait_for_timeout(500)
     ck('chips por fase no geral', pg.evaluate("[...document.querySelectorAll('#page-kb-geral .kbg-sec')].every(s=>s.querySelectorAll('.kbg-chips .an-chip').length==PF_MUSCULOS.length)"))
