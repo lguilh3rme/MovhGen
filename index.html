@@ -3580,7 +3580,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.0 · 08/11';
+var MOVH_VER = 'v61.1 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -11820,10 +11820,16 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .toprow{position:static!important;justify-content:flex-end;margin:0 0 6px}
 body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .regbtn{padding:6px 12px!important;font-size:12px!important}
-/* v61: topo enxuto — saudação na barra; sem "Logado como" nem "recolher" */
-#treinoScreen .toprow #tSaudacaoTitulo{margin:0 auto 0 0!important;font-size:20px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+/* v61.1: topo em 2 linhas — 1) saudação + tema; 2) relógio, registro, Sair, aviso de renovação. Rola com a página (static) */
+#treinoScreen .toprow{position:static!important;flex-wrap:wrap;justify-content:flex-start;gap:8px 10px;padding:10px 12px 0!important;margin:0 0 6px}
+#treinoScreen .toprow::after{content:"";order:3;flex:0 0 100%;height:0}
+#treinoScreen .toprow #tSaudacaoTitulo{order:1;margin:0!important;font-size:21px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
+#treinoScreen .toprow #themeBtn{order:2}
+#treinoScreen .toprow #tRelogioTop{order:4;min-width:0;text-align:left;font-size:13px}
+#treinoScreen .toprow #tRegistroBtn{order:5}
+#treinoScreen .toprow #tSairBtn{order:6;margin-left:auto}
+#treinoScreen .toprow #banner-renovar{order:7;flex:1 1 100%}
 #treinoScreen .alunolbl,#tHeaderToggle{display:none!important}
-#treinoScreen .toprow{padding:10px 12px 0!important}
 .semana-strip-dia{padding:3px 0!important;min-height:0!important;line-height:1.15!important;border-radius:12px!important}
 .bh{flex-wrap:wrap!important;gap:3px 8px!important;padding:10px 12px!important}
 .bh .bt{flex:1 1 0!important;min-width:0!important;font-size:12px!important;letter-spacing:.03em!important;line-height:1.25!important;overflow-wrap:anywhere}

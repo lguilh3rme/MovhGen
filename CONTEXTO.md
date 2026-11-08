@@ -4,7 +4,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- 08/11 12h30 — pedido: (a) topo do app: relógio abaixo da saudação e algo mais na mesma linha; (b) cabeçalho voltar a rolar com a página; (c) regra nova: registrar o pedido aqui antes de executar; (d) plugin 1.0.5 (skill com essa regra + nota do `[skip netlify]`). Deploy v61.0 do app confirmado pelo usuário ("Foi!"). Pendências do usuário: apagar branches do `movh`, abrir link novo do Personal, reinstalar plugin, revogar token, dados da gestão.
+- (nada em andamento — v61.1 concluída em 08/11 12h50)
 
 ## 1. Repositórios e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~17k linhas) = FONTE de tudo (Gerador + app do aluno dentro do template literal de `exportarComLogin()`, ~linhas 11148–15600). Gerador hospedado no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (também existe cópia em Cloudflare Workers `movhgen.lguilh3rme.workers.dev`).
@@ -14,7 +14,7 @@ Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO 
 - Gancho `window._movhSoHTML` devolve o HTML do app como string (prévia "Como aluno").
 
 ## 2. Hospedagem, deploy e créditos (consolidado)
-- App (`movh`): o Netlify faz deploy de PRODUÇÃO a cada merge no main, MESMO com `[skip netlify]` (confirmado em print, PR #33, 02/11). Nunca afirmar "app sem deploy" só por causa disso; dizer que o merge pode ter publicado. Cada deploy = 15 créditos.
+- App (`movh`): em 08/11 o merge com `[skip netlify]` (v61.0) NÃO publicou; foi preciso um commit sem a tag direto no main. Em 02/11 (PR #33) publicou mesmo com a tag: tratar como incerto e pedir ao usuário que confira em Deploys. Cada deploy = ~15 créditos.
 - Estado de créditos: ~13 em 02/11; em 04/11 o Netlify mostrava time em "operational credits" com deploys de produção PAUSADOS até o próximo ciclo (renova ~semana de 09/11; confirmar em Team settings → Billing; não inventar saldo). Mudanças só do Gerador vão para o GitHub Pages e não gastam crédito do app.
 - Pendente do usuário: parar os builds do Netlify da conta do Gerador (Build & deploy → Continuous deployment) para não gastar crédito por merge.
 - Trocar o endereço do Gerador perde o que está só em `localStorage` (por origem; ver seção 10). Domínio próprio do app: depois (mudar o redirect fixo `https://movh.netlify.app/` e as URLs de redirect do Supabase).
@@ -89,6 +89,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Gestão em lote (aguarda dados do professor): `acesso_fim` quase vazio e nenhum Pix real lançado. Formato pedido: `Nome: fim, plano/valor, pagou?` → SQL em lote com confirmação. Ludmila e Iasmim passaram do fim sem registrar; Jocimar/Felipe/Érika/Hellen/João/Samuel quase sem registros; só o Natan registra.
 - Banco: 5 cadastros "Jocimar" (só 1 com protocolo ativo) e contas de teste ("eu dnv", "teste", "luizin", "LGuilh3rmee"…): apagar só com autorização.
 - Izabella (`alunos.id 0d36b669…`): rascunho inativo `protocolos.id 3bc3e94f-7fce-4197-9328-5da65d5f6959` (início 21/11, "Inf/Sup 5x · Base 8 sem"); o botão ✨ Próxima fase gera outro, apague um dos dois. Revisar as obs dos 3 exercícios "Sugestão nova" antes de ativar.
+- Se o topo ainda "grudar" no celular, pedir print da rolagem (no Playwright ele rola junto).
 - Pix-only em `create-checkout-asaas` (exige autorização de deploy); UK do bimestral (69?); bloqueio com tolerância de 7 dias e aviso 14 dias antes (hoje ≤7 no app); conferir `A_WHATSAPP_NUM`.
 - Escolher o quadro do vídeo (coluna `thumb` em `exercicios`); progresso com resumo/gráficos; histórico de cargas do Personal no editor; "Repetir semana anterior"; sessões do pacote presencial (tabela nova).
 - Personal do Cristian: dias 03, 05 e 06/11 em `treinos_personal.dados` (05 sem séries/reps; "Rosca Direta Barra 2" como digitado). Sem anamnese; sugestão: full body A/B/C, 3×8-12, RIR 2-3.
@@ -106,7 +107,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - Segurança: chaves secretas só em Supabase secrets/Edge Functions, nunca em HTML público.
 
 ## 14. Estado atual — v61.0 (08/11/2026): Gerador + app + página do Personal
-- App do aluno: topo enxuto (saudação na barra com registro/relógio/tema; sem 🖼 e sem modo miniatura, só o ▶ compacto na frente do exercício; "Logado como"/"recolher" ocultos por CSS). Vídeo abre no modal `#a-video-modal` (iframe só ao tocar; short 9:16). `#tHeaderRecolhivel` volta visível em `aVoltarHoje()`/`aRenderProtocolo()`.
+- App do aluno (v61.1): topo em 2 linhas (1ª: saudação + tema; 2ª: relógio, registro, Sair, aviso de renovação), rola com a página (`position:static`, testado); antes v61.0: topo enxuto ( sem 🖼 e sem modo miniatura, só o ▶ compacto na frente do exercício; "Logado como"/"recolher" ocultos por CSS). Vídeo abre no modal `#a-video-modal` (iframe só ao tocar; short 9:16). `#tHeaderRecolhivel` volta visível em `aVoltarHoje()`/`aRenderProtocolo()`.
 - Personal: `tools/personal_page.html` (placeholders `__SB_URL__`/`__SB_KEY__`) → `export_app.js` grava `personal/index.html` ao lado do app; RPCs `get_personal_painel`, `get_personal_registros`, `salvar_personal_registro`, `get_treino_personal_publico`.
 - Testes: reg_all 38, bulk 26, kbm 20, `node --check`, t.py ok/erro, Personal com RPC simulado. NÃO testado: YouTube real, Supabase real na página do Personal, celular real. Netlify: um push no app = ~30 créditos (preview + produção).
 - Lição visual: regras antigas `.vbtn` e `.ec-name-row .vbtn` usam `!important`; componente novo precisa de `!important` ou escopo e conferência por print real (os testes não pegam layout). Em `onclick` do template evitar aspas escapadas (`==1`, não `==='1'`).
