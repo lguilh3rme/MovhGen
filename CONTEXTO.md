@@ -167,3 +167,10 @@ Protótipo e prints em `docs/proposta-app-aluno/` (`proposta.html` abre no naveg
 - Barra de páginas embaixo (proposta de protótipo): REJEITADA; as seções continuam no fim da página rolando.
 - Não feito (próximo): escolher o quadro do vídeo na biblioteca (coluna `thumb` em `exercicios`, 0-3 = capa, início, meio, fim), progresso com resumo/gráficos, remover `indeex.html`/`indeeex.html`/`indexx.html`/`deploy.txt` do repo `movh`.
 - Testes: reg_all 38, bulk 26, kbm 0 falhas, t.py ok/erro. Miniaturas não testadas com YouTube real (sandbox sem acesso).
+
+## 23. v60.3 (07/11/2026, noite) — Gerador + app do aluno (deploy do app)
+- Pedido dele: lista compacta só com o botão de play (sem quadro de preview), com botão pequeno para ligar/desligar a miniatura; melhor enquadramento de shorts; manter o visual compacto.
+- Padrão = botão de play circular compacto. Botão 🖼 no topo (`#thumbToggle`, `aThumbsToggle`) liga/desliga o modo miniatura (`body.thumbs-on`, preferência em `localStorage movh-thumbs`); as imagens só são buscadas com o modo ligado (`aThumbsApply` injeta o `<img>` e roda após `aRenderProtocolo`).
+- Shorts (`data-sh="1"` quando a URL tem `/shorts/`): na tela de foco o player vira vertical 9:16 (`.xo-vid.xo-sh`, altura ~40vh) e no modal ampliado vira `min(92vw, 82vh*9/16)` com `aspect-ratio 9/16` (`aAbrirVideoModal(src, sh)`). O pôster usa `object-fit:cover`, que recorta o centro da capa 16:9 e mostra só a parte vertical.
+- Cuidado no template: dentro de `exportarComLogin()` evitar aspas escapadas (`\'`) e `${`; use `==1` em vez de `==='1'` em atributos `onclick`.
+- Testes: reg_all 38, bulk 26, kbm 0 falhas, t.py ok/erro; miniatura ligada mede 54 px; short abre em 9:16. Não testado com YouTube real (sandbox sem acesso).
