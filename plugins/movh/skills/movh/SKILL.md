@@ -21,17 +21,21 @@ Dono: LGuilherme (personal trainer, dev solo). Responder em português, direto, 
 - Supabase (conector, projeto `cfanjhuzrcgxrbfmhahi`): só SELECT por padrão; escrita, DDL e deploy de Edge Function só com autorização dele; para dados reais de aluno em print, buscar um recorte pequeno (`jsonb_build_object`), nunca o protocolo inteiro.
 - Mudança de banco: SQL idempotente no script de configuração do Gerador E entregue ao usuário no fim; o app deve falhar em silêncio sem a coluna/tabela.
 
+- Fase `base` = fase única 8 sem, progressão dupla: `fatorSemanaDentroFase`/`aFatorSemanaDentroFase` devolvem fator neutro para `base` (nunca voltar a cair reps/subir descanso por semana). Protocolo novo já nasce assim (`REGRA_BASE`/`nbBase()`).
+- Próxima fase: botão "✨ Próxima fase" em Protocolos do aluno → `mbSugerirProximaFase` (rascunho INATIVO; regras em `PF_MUSCULOS`/`PF_COMPOSTO`; não toca o ativo). Mudou a regra → mexer ali e no agent `movh-treino`.
+- `const`/`let` usados pelo estado inicial (`let semanas=[...]`) precisam ser declarados ANTES dele (TDZ); `function` é içada, `const` não.
+
 ## Git
 `git fetch`; branch nova a partir do `origin/main`; commit com as linhas de atribuição do system-reminder; PR via `gh api repos/lguilh3rme/REPO/pulls` (GraphQL bloqueado); merge squash por `gh api -X PUT .../merge -f merge_method=squash -f commit_title='[skip netlify] ...'`. `gh pr create` falha (GraphQL): sempre `gh api`. Depois `git checkout -B main origin/main` e apagar a branch local. Aviso do hook de stop "unpushed commit(s)" após squash é falso positivo se `git diff --stat origin/main BRANCH` for vazio: não repushar.
 
 ## Sem `gh` (chat do claude.ai)
-Se `gh` não existir, usar `curl` com `$GITHUB_TOKEN` (api.github.com liberada): `git push https://x-access-token:$GITHUB_TOKEN@github.com/lguilh3rme/REPO.git BRANCH`; PR: `curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/lguilh3rme/REPO/pulls -d '{"title":"...","head":"BRANCH","base":"main"}'`; merge: `PUT .../pulls/N/merge` com `{"merge_method":"squash","commit_title":"[skip netlify] ..."}`. Nunca imprimir nem gravar o token em arquivo/commit. Configurar `git config user.name/user.email` antes do commit.
+Sem `$GITHUB_TOKEN` não há push: entregar `index.html` + patch (`git diff`) do MovhGen, `index.html`+`version.json` do app e o zip do plugin, e dizer o que o usuário deve commitar. Se `gh` não existir, usar `curl` com `$GITHUB_TOKEN` (api.github.com liberada): `git push https://x-access-token:$GITHUB_TOKEN@github.com/lguilh3rme/REPO.git BRANCH`; PR: `curl -s -X POST -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/lguilh3rme/REPO/pulls -d '{"title":"...","head":"BRANCH","base":"main"}'`; merge: `PUT .../pulls/N/merge` com `{"merge_method":"squash","commit_title":"[skip netlify] ..."}`. Nunca imprimir nem gravar o token em arquivo/commit. Configurar `git config user.name/user.email` antes do commit.
 
 ## Agents (repo MovhGen, `.claude/agents/`)
-`movh-treino` (montar/revisar protocolos) e `movh-gestao` (vencimentos, cobrança, mensagens). Só leem e sugerem. Dúvida de treino → movh-treino; cobrança/renovação → movh-gestao.
+`movh-treino` (montar/revisar protocolos; conhece a fase única base 8 sem e a progressão dupla) e `movh-gestao` (vencimentos, cobrança, mensagens). Só leem e sugerem. Dúvida de treino → movh-treino; cobrança/renovação → movh-gestao.
 
 ## Testes (da raiz do MovhGen, caminhos ABSOLUTOS)
-`node --check` do maior `<script>` extraído; `python3 tools/tests/reg_all.py $PWD/index.html $PWD/tools/tests/gpage.py <dir>` (38 OK), `bulk.py` (mesmos args, 26 OK), `kbm.py` (20 OK), `t.py`/`reg.py` com o app exportado. Feature nova: teste curto com o stub de `gpage.py`; depois de `nav('home')` esperar ~1,5 s antes de injetar dados simulados (o carregamento sobrescreve).
+`node --check` do maior `<script>` extraído; `python3 tools/tests/reg_all.py $PWD/index.html $PWD/tools/tests/gpage.py <dir>` (38 OK), `bulk.py` (mesmos args, 26 OK), `kbm.py` (20 OK), `t.py`/`reg.py` com o app exportado. `kbm.py` abre `/home/claude/movhgen/index.html` (minúsculo): `ln -sfn /home/claude/MovhGen /home/claude/movhgen`. `t.py` imprime OK e depois um `FAIL` esperado (caminho de erro; igual no app em produção). Feature nova: teste curto com o stub de `gpage.py`; depois de `nav('home')` esperar ~1,5 s antes de injetar dados simulados (o carregamento sobrescreve).
 
 ## Fechamento da rodada
 Resumo curto (o que mudou, PR/merge, testes, o que NÃO foi testado, ação do usuário). Registrar o aprendizado no CONTEXTO.md (PR junto) e na memória.

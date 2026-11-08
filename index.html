@@ -2022,13 +2022,12 @@ async function dbDeletarCategoria(cat){
 const FASES_TEMPLATE = {
   base: {
     label: 'Base', emoji: '🔵', cor: '#3580D8',
-    rpe: '5–7', rir: '3–5', carga: '~60–70%', volume: 'Alto', descanso: 'Médio',
+    rpe: '7–8', rir: '2 (última série 1)', carga: 'Progressão dupla', volume: 'Alto (mín. 10 séries/sem por músculo)', descanso: 'Compostos 2 min · isoladores 1 min',
     volNum: 8, intNum: 65,
     progressao: [
-      'Semana 1: entra leve',
-      'Semana 2: +reps ou +carga leve',
-      'Semana 3: mantém reps e sobe carga',
-      'Semana 4: pico da base (sem falha)'
+      'Fase única de 8 semanas',
+      'Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga',
+      'Revisão a cada 4 semanas pelos registros e dor'
     ]
   },
   intensificacao: {
@@ -2161,7 +2160,7 @@ function formatRestSegundos(totalSeg){
 function fatorSemanaDentroFase(semanaDentroFase, duracaoSemanas, faseKey){
   duracaoSemanas = duracaoSemanas || 4;
   semanaDentroFase = Math.min(Math.max(semanaDentroFase || 1, 1), duracaoSemanas);
-  if (faseKey === 'deload') return { sets: 0, repF: 1.0, restF: 1.0 };
+  if (faseKey === 'deload' || faseKey === 'base') return { sets: 0, repF: 1.0, restF: 1.0 }; // base = progressão dupla (carga sobe pelo registro, não por fator de reps/descanso)
   const ultimaSemana = semanaDentroFase === duracaoSemanas && duracaoSemanas >= 3;
   if (ultimaSemana) return { sets: -1, repF: 1.08, restF: 1.10 };
   const passo = semanaDentroFase - 1;
@@ -2207,19 +2206,17 @@ let calEditDia = null;        // clone temporário do dia em edição via calend
 let calEditDataAlvo = null;   // 'AAAA-MM-DD' sendo editada no momento
 let calEditOrigemInfo = null; // {semanaIdx, semanaObj, diaSemana, semanaGlobalInicioFase, existiaNoTemplate}
 let calMesAtual = null;       // Date (dia 1 do mês exibido no calendário)
+// Regra da fase base (fase única 8 sem) escrita no bloco principal já na criação
+const REGRA_BASE = 'RIR 2 (última série RIR 1) · progressão dupla: ao atingir o topo da faixa em todas as séries com RIR ≥2, suba a menor carga · descanso 2 min nos compostos e 1 min nos isoladores · revisão a cada 4 semanas pelos registros e dor.';
 let semanas=[
-  {id:'s1',nome:'Semana A',duracaoSemanas:4,dias:[
-    {id:'s1d1',nome:'Segunda',diaSemana:'Segunda',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},
-    {id:'s1d2',nome:'Quarta',diaSemana:'Quarta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},
-    {id:'s1d3',nome:'Sexta',diaSemana:'Sexta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},
-  ]},
-  {id:'s2',nome:'Semana B',duracaoSemanas:4,dias:[
-    {id:'s2d1',nome:'Segunda',diaSemana:'Segunda',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},
-    {id:'s2d2',nome:'Quarta',diaSemana:'Quarta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},
-    {id:'s2d3',nome:'Sexta',diaSemana:'Sexta',sub:'',blocos:[nb('atv'),nb('pri'),nb('con')]},
+  {id:'s1',nome:'Base',fase:'base',duracaoSemanas:8,dias:[
+    {id:'s1d1',nome:'Segunda',diaSemana:'Segunda',sub:'',blocos:[nb('atv'),nbBase(),nb('con')]},
+    {id:'s1d2',nome:'Quarta',diaSemana:'Quarta',sub:'',blocos:[nb('atv'),nbBase(),nb('con')]},
+    {id:'s1d3',nome:'Sexta',diaSemana:'Sexta',sub:'',blocos:[nb('atv'),nbBase(),nb('con')]},
   ]},
 ];
-let sc=3,dc=10;
+let sc=2,dc=10;
+function nbBase(){ const b = nb('pri'); b.obs = REGRA_BASE; return b; }
 function nb(t){
   // progressaoAuto vem TRUE por padrão: sem isso, o ajuste de séries/reps/
   // descanso por fase (VOLUME_AJUSTE_FASE / aSugestaoVolumeFase) nunca
@@ -3583,7 +3580,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v60.4 · 07/11';
+var MOVH_VER = 'v60.5 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -10188,6 +10185,7 @@ async function mbGerenciarProtocolos(alunoId) {
         <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · criado ${criado}${fimTxt}</div>
       </div>
       ${p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${p.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>` : ''}
+      ${p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbSugerirProximaFase('${p.id}','${alunoId}')" title="Gera um rascunho inativo da próxima fase (fase única base 8 sem), editável antes de salvar">✨ Próxima fase</button>` : ''}
       <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
       <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
       ${!p.ativo ? `<button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="Volta a ser o treino ativo do aluno (o ativo atual vai para o histórico)">↩ Reativar</button>` : ''}
@@ -10249,6 +10247,180 @@ async function mbToggleLoop(protoId, alunoId, ligar) {
     mbGerenciarProtocolos(alunoId);
   } catch (e) { notify('Erro no loop: ' + (e.message || e)); }
 }
+// ══ SUGERIR PRÓXIMA FASE ══
+// Gera um RASCUNHO inativo (fase única "base" de 8 sem, progressão dupla, RIR 2)
+// a partir do mesociclo vigente do protocolo ativo. Regras: ver CONTEXTO.md §26.
+// Nada é gravado até o professor clicar em Salvar; o protocolo ativo não é tocado.
+const PF_MUSCULOS = [
+  {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,sug:'Supino inclinado máquina'},
+  {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,sug:'Remada máquina'},
+  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,sug:'Elevação lateral'},
+  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,sug:'Rosca martelo'},
+  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,sug:'Tríceps corda'},
+  {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i},
+  {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i},
+  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i}
+];
+const PF_COMPOSTO = /agachamento|squat|leg press|hack|supino|remada|puxada|stiff|rdl|terra|deadlift|desenvolvimento|p[eé]lvica|b[uú]lgaro|afundo|barra fixa|paralela/i;
+let _pf = null;
+
+function pfMusculo(nome){ return PF_MUSCULOS.find(m => m.re.test(nome||'')) || null; }
+function pfBlocoPrincipal(d){ return (d.blocos||[]).find(b => b.id === 'pri') || (d.blocos||[]).find(b => b.id !== 'con' && b.id !== 'atv') || null; }
+function pfVolume(sem){
+  const v = {};
+  (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id === 'con') return; (b.exercicios||[]).forEach(e => {
+    const m = pfMusculo(e.nome), p = parseSeriesSimples(e.series);
+    if (m && p) v[m.k] = (v[m.k]||0) + p.sets;
+  }); }));
+  return v;
+}
+function pfFmtRest(seg){ return formatRestSegundos(seg); }
+
+async function mbSugerirProximaFase(protoId, alunoId){
+  const a = mbPainelAlunos.find(x => x.id === alunoId);
+  notify('Montando rascunho…');
+  try {
+    const desde = new Date(Date.now() - 70*86400000).toISOString();
+    const [pr, an, rp, rg] = await Promise.all([
+      mbClient.from('protocolos').select('id, conteudo, data_inicio').eq('id', protoId).maybeSingle(),
+      mbClient.from('anamneses').select('respostas').eq('aluno_id', alunoId).eq('tipo','anamnese').not('respostas','is',null).order('criado_em',{ascending:false}).limit(1),
+      mbClient.from('rpe_sessoes').select('rpe').eq('aluno_id', alunoId).order('criado_em',{ascending:false}).limit(5),
+      mbClient.from('registros_sessao').select('criado_em').eq('aluno_id', alunoId).gte('criado_em', desde)
+    ]);
+    if (pr.error || !pr.data) throw (pr.error || new Error('protocolo não encontrado'));
+    const c = pr.data.conteudo || {}, sems = c.semanas || [];
+    if (!sems.length) throw new Error('protocolo sem mesociclos');
+    // posição atual dentro do protocolo
+    const total = sems.reduce((x,y) => x + (parseInt(y.duracaoSemanas)||4), 0);
+    let semAtual = 1;
+    if (pr.data.data_inicio) semAtual = Math.min(total, Math.max(1, Math.floor((Date.now() - new Date(pr.data.data_inicio+'T00:00:00')) / (7*86400000)) + 1));
+    let acum = 0, vig = sems[sems.length-1];
+    for (const s of sems) { acum += parseInt(s.duracaoSemanas)||4; if (semAtual <= acum) { vig = s; break; } }
+    // rascunho: clone do mesociclo vigente, fase única base 8 sem
+    const dias = JSON.parse(JSON.stringify(vig.dias || []));
+    const sid = 's1';
+    const sem = { id: sid, nome: 'Base', fase: 'base', duracaoSemanas: 8, dias };
+    const novos = [];
+    sem.dias.forEach((d,di) => {
+      d.id = sid+'d'+(di+1);
+      (d.blocos||[]).forEach(b => {
+        if (b.id === 'con') return;
+        (b.exercicios||[]).forEach(e => {
+          // faixa invertida ("10-8") -> "8-10"
+          const m = String(e.series||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)\s*-\s*(\d+)$/);
+          if (m && +m[2] > +m[3]) e.series = m[1]+'×'+m[3]+'-'+m[2];
+          if (b.id === 'pri' || b.id === 'atv') {
+            const alvo = (PF_COMPOSTO.test(e.nome||'') && !/panturrilha/i.test(e.nome||'')) ? 120 : 60;
+            const atual = parseRestSegundos(e.rest);
+            if (b.id === 'pri' && atual !== alvo) { e._restAlt = true; e.rest = pfFmtRest(alvo); }
+          }
+        });
+        if (b.id === 'pri') { const o = (b.obs||'').trim(); b.obs = /progress[aã]o dupla/i.test(o) ? o : (o ? o+'\n' : '') + REGRA_BASE; }
+      });
+    });
+    // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
+    const alertas = [];
+    const vol0 = pfVolume(sem);
+    PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0})).filter(x => x.n < 10).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
+      // dia de destino: o dia do mesmo "tipo" (empurrar/puxar) que já tem mais exercícios dele; empate -> dia com menos exercícios
+      const cls = {Peito:'push',Ombros:'push','Tríceps':'push',Costas:'pull','Bíceps':'pull'};
+      const pontua = d => { let same = 0, tot = 0, up = 0; (d.blocos||[]).forEach(bb => { if (bb.id === 'con') return; (bb.exercicios||[]).forEach(ee => { tot++; const mm = pfMusculo(ee.nome); if (mm && mm.up) { up++; if (cls[mm.k] === cls[x.m.k]) same++; } }); }); return {same, tot, up}; };
+      const todos = sem.dias.map((d,di) => ({d,di,sc:pontua(d)}));
+      const sup = todos.filter(o => o.sc.up > 0);
+      const alvo = (sup.length ? sup : todos).sort((p,q) => (q.sc.same - p.sc.same) || (p.sc.tot - q.sc.tot))[0];
+      const b = alvo && pfBlocoPrincipal(alvo.d);
+      if (!b) return;
+      b.exercicios.push({nome:x.m.sug, url:'', series:'3×10-12', rest:"1'", obs:'Sugestão nova (volume mínimo). Remova se não quiser.', cj:null, _novo:true});
+      alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
+    });
+    const vol1 = pfVolume(sem);
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n < 10) alertas.push({t:'av', x: m.k+': '+n+' séries/sem (mín. ~10) — avaliar se é intencional'}); });
+    // anamnese / dor
+    const resp = an.data && an.data[0] ? an.data[0].respostas : null;
+    const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
+    if (hits.length) alertas.push({t:'av', x:'Anamnese cita: '+hits.join(', ')+' — confira exercícios e volume dessas regiões'});
+    // RPE e registros
+    const rpes = (rp.data||[]).filter(r => r.rpe != null);
+    const rpeMed = rpes.length >= 3 ? rpes.reduce((x,r) => x + r.rpe, 0) / rpes.length : null;
+    if (rpeMed != null && rpeMed >= 9) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões muito puxadas — considere reduzir volume'});
+    if (rpeMed != null && rpeMed <= 4) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões leves — pode apertar a carga'});
+    const diasReg = new Set((rg.data||[]).map(r => String(r.criado_em).slice(0,10))).size;
+    if (diasReg < 15) alertas.push({t:'av', x:'Poucos registros: '+diasReg+' dia(s) com carga em 10 semanas — peça ao menos 3 por semana (a progressão dupla depende deles)'});
+    // início sugerido = dia seguinte ao fim previsto
+    let fd = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto||'')) fd = new Date(c.fimPrevisto+'T00:00:00');
+    else if (pr.data.data_inicio) { fd = new Date(pr.data.data_inicio+'T00:00:00'); fd.setDate(fd.getDate() + total*7 - 1); }
+    const ini = fd ? new Date(fd.getTime() + 86400000) : new Date();
+    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: mbIsoLocal(ini), alertas,
+      ctx: [['Fase vigente', (vig.nome||'—')+' · semana '+semAtual+' de '+total], ['Histórico', sems.length+' mesociclo'+(sems.length!==1?'s':'')+' · '+total+' sem'],
+            ['Nível', resp && resp.tempo_treino ? String(resp.tempo_treino) : '—'], ['RPE médio', rpeMed != null ? rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', diasReg+' dia(s)']] };
+    pfRender();
+  } catch (e) { notify('Erro ao montar rascunho: ' + (e.message || e)); }
+}
+
+function pfRender(){
+  const P = _pf; if (!P) return;
+  let ov = document.getElementById('pf-overlay');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'pf-overlay'; ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.55);overflow:auto;padding:14px'; document.body.appendChild(ov); }
+  const par = ['Fase única 8 semanas','RIR 2 (última série 1)','Compostos 2\' · isoladores 1\'','Progressão dupla: topo da faixa → +carga','Volume mín. ~10 séries/sem por músculo','Revisão a cada 4 semanas'];
+  const col = P.sem.dias.map((d,di) => {
+    const pri = pfBlocoPrincipal(d);
+    const linhas = (d.blocos||[]).map((b,bi) => b.id === 'con' ? '' : (b.exercicios||[]).map((e,ei) => `
+      <div style="display:flex;gap:4px;align-items:center;padding:4px 5px;margin-bottom:4px;border-radius:6px;border:1px solid ${e._novo?'#1A9E72':'var(--bd,#ddd)'};background:${e._novo?'rgba(26,158,114,.22)':'transparent'}">
+        <input value="${escAttr(e.nome||'')}" oninput="pfSet(${di},${bi},${ei},'nome',this.value)" style="flex:1;min-width:0;font-size:11px;font-weight:600;border:0;background:transparent;color:inherit">
+        <input value="${escAttr(e.series||'')}" oninput="pfSet(${di},${bi},${ei},'series',this.value)" style="width:58px;font-size:11px;text-align:center;border:1px solid var(--bd,#ddd);border-radius:4px">
+        <input value="${escAttr(e.rest||'')}" oninput="pfSet(${di},${bi},${ei},'rest',this.value)" style="width:38px;font-size:11px;text-align:center;border-radius:4px;border:1px solid ${e._restAlt?'#D4A017':'var(--bd,#ddd)'};${e._restAlt?'background:rgba(212,160,23,.25);color:#f0b429;font-weight:700':''}">
+        <button onclick="pfDel(${di},${bi},${ei})" title="Remover" style="border:0;background:none;color:#c03030;cursor:pointer;font-size:13px">×</button>
+        ${e._novo ? '<span style="font-size:8px;font-weight:700;background:#1A9E72;color:#fff;border-radius:99px;padding:1px 5px">novo</span>' : ''}
+      </div>`).join('')).join('');
+    return `<div style="min-width:270px;flex:1;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px">
+      <div style="font-size:12px;font-weight:700">${escAttr(d.nome||('Dia '+(di+1)))}${d.sub?' · '+escAttr(d.sub):''}</div>
+      <div style="font-size:10px;color:var(--t3,#888);margin-bottom:6px">RIR 2 · última série RIR 1</div>
+      ${linhas}
+      ${pri ? `<button class="btn bs" style="font-size:10px;width:100%" onclick="pfAdd(${di})">+ exercício</button>` : ''}
+    </div>`; }).join('');
+  ov.innerHTML = `<div style="max-width:1200px;margin:0 auto;background:var(--bg,#fff);color:var(--tx,#222);border-radius:14px;padding:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+      <div style="flex:1;min-width:200px"><div style="font-size:16px;font-weight:800">✨ Próxima fase · ${escAttr(P.alunoNome)}</div>
+      <div style="font-size:11px;color:var(--t3,#888)">Rascunho gerado da fase vigente + histórico + regras do MOVH · tudo editável · só grava ao salvar</div></div>
+      <label style="font-size:11px">Início <input type="date" value="${P.data}" onchange="_pf.data=this.value" style="font-size:12px"></label>
+      <button class="btn bs" onclick="pfFechar()">Descartar</button>
+      <button class="btn bs" onclick="pfSalvar(false)">Salvar rascunho</button>
+      <button class="btn bp" onclick="pfSalvar(true)">Salvar e ativar…</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">CONTEXTO</b>${P.ctx.map(r => `<div style="display:flex;justify-content:space-between;gap:8px;padding:2px 0"><span style="color:var(--t3,#888)">${r[0]}</span><b>${escAttr(r[1])}</b></div>`).join('')}</div>
+      <div style="flex:1;min-width:230px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">PARÂMETROS</b>${par.map(x => `<div style="padding:2px 0">• ${escAttr(x)}</div>`).join('')}</div>
+      <div style="flex:1.4;min-width:260px;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px;font-size:11px"><b style="font-size:10px;letter-spacing:.5px">ALERTAS</b>${P.alertas.length ? P.alertas.map(x => `<div style="padding:2px 0;color:${x.t==='ok'?'#1fb583':'#e0902a'}">${x.t==='ok'?'+':'!'} ${escAttr(x.x)}</div>`).join('') : '<div style="padding:2px 0;color:var(--t3,#888)">Sem alertas.</div>'}</div>
+    </div>
+    <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">${col}</div>
+    <div style="font-size:10px;color:var(--t3,#888);margin-top:8px">Campos: nome · séries×reps · descanso (âmbar = descanso alterado, verde = exercício novo sugerido; a obs do bloco principal recebe a regra de RIR/progressão). Condicionamento e ativação ficam como estavam.</div>
+  </div>`;
+}
+function pfSet(di,bi,ei,k,v){ const e = _pf.sem.dias[di].blocos[bi].exercicios[ei]; e[k] = v; if (k === 'rest') e._restAlt = false; }
+function pfDel(di,bi,ei){ _pf.sem.dias[di].blocos[bi].exercicios.splice(ei,1); pfRender(); }
+function pfAdd(di){ const b = pfBlocoPrincipal(_pf.sem.dias[di]); if (!b) return; b.exercicios.push({nome:'', url:'', series:'3×10-12', rest:"1'", obs:'', cj:null}); pfRender(); }
+function pfFechar(){ const ov = document.getElementById('pf-overlay'); if (ov) ov.remove(); _pf = null; }
+async function pfSalvar(ativar){
+  const P = _pf; if (!P) return;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(P.data||'')) { notify('Escolha a data de início.'); return; }
+  const sem = JSON.parse(JSON.stringify(P.sem));
+  sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => { delete e._novo; delete e._restAlt; })));
+  const b0 = P.base || {};
+  const nomeBase = String(b0.nome || 'Protocolo').split('·')[0].trim();
+  const nome = nomeBase + ' · Base 8 sem';
+  const conteudo = { nome, icone: b0.icone || '💪', desc: b0.desc || '', divisao: b0.divisao || '', lang: b0.lang, semanas: [sem], testesAgendados: [], overrides: {}, fimPrevisto: null };
+  try {
+    const { data, error } = await mbClient.from('protocolos').insert({ aluno_id: P.alunoId, professor_id: mbProfessor.id, nome, conteudo, ativo: false, data_inicio: P.data }).select('id').maybeSingle();
+    if (error) throw error;
+    const alunoId = P.alunoId, novoId = data && data.id;
+    pfFechar();
+    notify('✅ Rascunho salvo (inativo, início ' + P.data.split('-').reverse().join('/') + ').');
+    mbGerenciarProtocolos(alunoId);
+    if (ativar && novoId) mbReativarProtocolo(String(novoId), alunoId);
+  } catch (e) { notify('Erro ao salvar rascunho: ' + (e.message || e)); }
+}
+
 async function mbReativarProtocolo(protoId, alunoId) {
   if (!confirm('Reativar este protocolo? O treino ativo atual do aluno vai para o histórico (inativo) e o aluno passa a ver este no app.\n\nSe as datas dele já venceram, ajuste início/fim no Quadro (📅 Calendário do treino).')) return;
   try {
@@ -13140,7 +13312,7 @@ function aFormatRestSegundos(totalSeg){
 function aFatorSemanaDentroFase(semanaDentroFase, duracaoSemanas, faseKey){
   duracaoSemanas = duracaoSemanas || 4;
   semanaDentroFase = Math.min(Math.max(semanaDentroFase || 1, 1), duracaoSemanas);
-  if (faseKey === 'deload') return { sets: 0, repF: 1.0, restF: 1.0 };
+  if (faseKey === 'deload' || faseKey === 'base') return { sets: 0, repF: 1.0, restF: 1.0 }; // base = progressão dupla (carga sobe pelo registro, não por fator de reps/descanso)
   const ultimaSemana = semanaDentroFase === duracaoSemanas && duracaoSemanas >= 3;
   if (ultimaSemana) return { sets: -1, repF: 1.08, restF: 1.10 };
   const passo = semanaDentroFase - 1; // 0 na semana 1, 1 na semana 2...
@@ -14201,8 +14373,8 @@ function aToggleBloco(id, header){
 // estamos hoje, com base na data_inicio do protocolo e na duração
 // (em semanas de calendário) de cada fase.
 const FASES_TEMPLATE_PT = {
-  base: { label:'Base', emoji:'🔵', rpe:'5–7', rir:'3–5', carga:'~60–70%', volume:'Alto', descanso:'Médio',
-    progressao:['Semana 1: entra leve','Semana 2: +reps ou +carga leve','Semana 3: mantém reps e sobe carga','Semana 4: pico da base (sem falha)'] },
+  base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (última série 1)', carga:'Progressão dupla', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
+    progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'] },
   intensificacao: { label:'Intensificação', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderado', descanso:'Maior',
     progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'] },
   densidade: { label:'Densidade', emoji:'🟡', rpe:'7–9', rir:'1–2', carga:'Moderada (~65–80%)', volume:'Moderado/Alto', descanso:'Curto',
@@ -14211,8 +14383,8 @@ const FASES_TEMPLATE_PT = {
     progressao:['Reduz tudo (carga + volume)','Mantém padrão de movimento'] }
 };
 const FASES_TEMPLATE_EN = {
-  base: { label:'Base', emoji:'🔵', rpe:'5–7', rir:'3–5', carga:'~60–70%', volume:'High', descanso:'Medium',
-    progressao:['Week 1: ease in light','Week 2: +reps or +light load','Week 3: keep reps, raise load','Week 4: base peak (no failure)'] },
+  base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (last set 1)', carga:'Double progression', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
+    progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'] },
   intensificacao: { label:'Intensification', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderate', descanso:'Longer',
     progressao:['Week 1: raise load','Week 2: keep load + refine form','Week 3: approach failure (RIR 1–2)'] },
   densidade: { label:'Density', emoji:'🟡', rpe:'7–9', rir:'1–2', carga:'Moderate (~65–80%)', volume:'Moderate/High', descanso:'Short',
