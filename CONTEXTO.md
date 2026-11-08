@@ -3,6 +3,9 @@
 Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Cariacica-ES, dev solo). Responder em português, direto, compacto. Pouco orçamento de tokens e de créditos Netlify: poucas rodadas, tudo testado, um merge por repo por rodada. Registrar aprendizado e progresso a cada rodada (este arquivo + memória).
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
+## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
+- 08/11 12h30 — pedido: (a) topo do app: relógio abaixo da saudação e algo mais na mesma linha; (b) cabeçalho voltar a rolar com a página; (c) regra nova: registrar o pedido aqui antes de executar; (d) plugin 1.0.5 (skill com essa regra + nota do `[skip netlify]`). Deploy v61.0 do app confirmado pelo usuário ("Foi!"). Pendências do usuário: apagar branches do `movh`, abrir link novo do Personal, reinstalar plugin, revogar token, dados da gestão.
+
 ## 1. Repositórios e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~17k linhas) = FONTE de tudo (Gerador + app do aluno dentro do template literal de `exportarComLogin()`, ~linhas 11148–15600). Gerador hospedado no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (também existe cópia em Cloudflare Workers `movhgen.lguilh3rme.workers.dev`).
 - `lguilh3rme/movh` → app do aluno, `index.html` GERADO (nunca editar à mão) + `version.json` + `_redirects` (`/coletivas`; NÃO é gerado, não apagar) + workflow keep-alive do Supabase. Site: movh.netlify.app.
