@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b1220">
+<title>MOVH · Personal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0b1220;--card:#111a2e;--bd:#22304d;--tx:#e8edf7;--t2:#a9b6d0;--t3:#7d8bab;--P:#D62839;--G:#34d399;--in:#0d1526}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.w{max-width:620px;margin:0 auto;padding:14px 14px 60px}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.top h1{flex:1;margin:0;font-size:20px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{font-size:12px;color:var(--t3);margin:0 0 12px}
+select,.b,input{font:inherit;color:var(--tx)}
+select{width:100%;padding:11px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--card);margin-bottom:10px;font-weight:700}
+.nav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.nav b{flex:1;text-align:center;font-size:13px}
+.b{border:1px solid var(--bd);background:var(--card);border-radius:10px;padding:8px 13px;cursor:pointer;font-size:13px;font-weight:700}
+.b.red{background:var(--P);border-color:var(--P);color:#fff}
+.tabs{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:12px}
+.tab{border:1px solid var(--bd);background:var(--card);color:var(--t2);border-radius:12px;padding:6px 0;text-align:center;cursor:pointer;font:inherit;line-height:1.15}
+.tab b{display:block;font-size:12px}.tab span{font-size:10px;color:var(--t3)}
+.tab.hoje{border-color:var(--G)}
+.tab.on{background:var(--G);border-color:var(--G);color:#06210f}.tab.on span{color:#06210f}
+.bl{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--cc,var(--P));border-radius:16px;padding:6px 12px 10px;margin-bottom:12px}
+.bh{font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t2);padding:8px 0 4px}
+.bh small{margin-left:8px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--t3)}
+.d{font-size:12.5px;color:var(--t2);padding:4px 0;line-height:1.45}
+.ex{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--bd)}
+.ex:first-of-type{border-top:0}
+.pl{width:34px;height:34px;border-radius:50%;border:2px solid #8a2330;background:rgba(214,40,57,.14);color:#ff8a96;font-size:12px;cursor:pointer;display:grid;place-items:center;padding:0}
+.ex>span{font-weight:700;font-size:15px;line-height:1.2}
+.ex>em{font-style:normal;font-weight:800;font-size:13px;color:#ff9aa4;background:rgba(214,40,57,.14);border:1px solid #8a2330;border-radius:99px;padding:4px 10px;white-space:nowrap}
+.r2{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr auto auto;gap:6px;align-items:center;margin-top:6px}
+.in{width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--bd);background:var(--in);min-width:0}
+.ck{width:24px;height:24px;accent-color:var(--G)}
+.st{font-size:12px;color:var(--G);min-width:14px}
+.hint{grid-column:1/-1;text-align:left;background:none;border:0;color:var(--t3);font-size:11.5px;padding:2px 0;cursor:pointer}
+.hl{grid-column:1/-1;font-size:11.5px;color:var(--t2);padding:2px 0 4px;line-height:1.5}
+.v{padding:28px 6px;text-align:center;color:var(--t2);font-size:14px;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="w" id="app"><div class="v">Carregando…</div></div>
+<script>
+var SB_URL='__SB_URL__',SB_KEY='__SB_KEY__';
+var cl=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,storageKey:'movh-personal-page'}});
+var DOW=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+var tk='',alunos=[],aid=null,dados={},nome='',semana=null,dia=null,reg={},hist=[],ult=0;
+function esc(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function key(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
+function segunda(d){var t=new Date(d);t.setHours(0,0,0,0);var w=t.getDay();t.setDate(t.getDate()+(w===0?-6:1-w));return t}
+function dk(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fmt(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')}
+function br(iso){var p=String(iso||'').split('-');return p.length===3?p[2]+'/'+p[1]:''}
+function msg(t,extra){document.getElementById('app').innerHTML='<div class="v">'+t+(extra||'')+'</div>'}
+function pick(a){aid=a.id;dados=(a.dados&&typeof a.dados==='object')?a.dados:{};nome=a.nome||''}
+async function boot(){
+  var q=new URLSearchParams(location.search);tk=q.get('personal')||q.get('t')||'';
+  try{if(tk&&tk!=='me')localStorage.setItem('movh_pp_token',tk);else tk=localStorage.getItem('movh_pp_token')||''}catch(e){}
+  if(!tk){msg('Abra uma vez o link completo (Gerador → Personal → 🔗 Link de leitura) neste aparelho. Depois, esta página abre direto.');return}
+  msg('Carregando…');
+  try{
+    var r=await cl.rpc('get_personal_painel',{p_token:tk});if(r.error)throw r.error;
+    var l=(r.data&&Array.isArray(r.data.alunos))?r.data.alunos:null;
+    if(!l){var r2=await cl.rpc('get_treino_personal_publico',{p_token:tk});if(r2.error)throw r2.error;if(r2.data)l=[{id:'x',nome:r2.data.nome||'',dados:r2.data.dados}]}
+    if(!l){msg('Link inválido ou treino não encontrado.');return}
+    if(!l.length){msg('Nenhum aluno com treino salvo ainda.');return}
+    alunos=l;var want=null;try{want=q.get('a')||localStorage.getItem('movh_pp_aluno')}catch(e){}
+    pick(l.find(function(x){return x.id===want})||l[0]);
+    semana=segunda(new Date());dia=null;await carregarReg();ult=Date.now();render();
+  }catch(e){msg('Não foi possível carregar. Tente de novo em instantes.','<br><br><button class="b red" onclick="boot()">Tentar de novo</button>')}
+}
+async function carregarReg(){
+  reg={};hist=[];if(!aid||aid==='x')return;
+  try{var r=await cl.rpc('get_personal_registros',{p_token:tk,p_aluno:aid});if(r.error||!Array.isArray(r.data))return;
+    hist=r.data;r.data.forEach(function(x){reg[x.data+'|'+x.chave]={carga:x.carga||'',obs:x.obs||'',feito:!!x.feito}})}catch(e){}
+}
+async function recarregar(){
+  if(!tk)return;
+  try{var r=await cl.rpc('get_personal_painel',{p_token:tk});if(r.error||!r.data||!Array.isArray(r.data.alunos)||!r.data.alunos.length)return;
+    alunos=r.data.alunos;pick(alunos.find(function(y){return y.id===aid})||alunos[0]);await carregarReg();ult=Date.now();render()}catch(e){}
+}
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState!=='visible'||!tk)return;var ae=document.activeElement;
+  if(Date.now()-ult>60000&&!(ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))recarregar();
+});
+async function trocarAluno(id){var x=alunos.find(function(y){return y.id===id});if(!x)return;pick(x);dia=null;try{localStorage.setItem('movh_pp_aluno',id)}catch(e){}await carregarReg();render()}
+function sem(dl){var d=new Date(semana);d.setDate(d.getDate()+7*dl);semana=d;dia=null;render()}
+function hoje(){semana=segunda(new Date());dia=null;render()}
+function selDia(k){dia=k;render()}
+function play(b){var u=b.getAttribute('data-u')||'';if(/^https?:\/\//i.test(u))window.open(u,'_blank','noopener')}
+function tog(b){var d=b.nextElementSibling;if(d)d.style.display=d.style.display==='none'?'block':'none'}
+async function salvar(el){
+  var row=el.closest('.ex');if(!row)return;
+  var ch=row.dataset.ch,n=row.dataset.ex,dd=dia,al=aid;
+  var carga=row.querySelector('.carga').value.trim(),obs=row.querySelector('.obs').value.trim(),feito=row.querySelector('.ck').checked;
+  var st=row.querySelector('.st');st.textContent='…';st.style.color='';
+  reg[dd+'|'+ch]={carga:carga,obs:obs,feito:feito};
+  try{
+    var r=await cl.rpc('salvar_personal_registro',{p_token:tk,p_aluno:al,p_data:dd,p_chave:ch,p_exercicio:n,p_carga:carga,p_obs:obs,p_feito:feito});
+    if(r.error||r.data!==true)throw(r.error||new Error('nao salvou'));
+    st.textContent='✓';
+    if(aid===al){hist=hist.filter(function(h){return!(h.data===dd&&h.chave===ch)});hist.unshift({data:dd,chave:ch,exercicio:n,carga:carga,obs:obs,feito:feito});hist.sort(function(a,b){return a.data<b.data?1:(a.data>b.data?-1:0)})}
+  }catch(e){st.textContent='⚠';st.style.color='#ff6b6b';st.title='Não salvou. Mexa no campo de novo para tentar outra vez.'}
+}
+function render(){
+  var datas=[];for(var i=0;i<7;i++){var d=new Date(semana);d.setDate(d.getDate()+i);datas.push(d)}
+  var keys=datas.map(dk),h0=dk(new Date());
+  if(!dia||keys.indexOf(dia)<0)dia=keys.indexOf(h0)>=0?h0:(keys.find(function(k){return(dados[k]||[]).length})||keys[0]);
+  var tabs=datas.map(function(d){var k=dk(d),n=(dados[k]||[]).length;
+    return '<button type="button" class="tab'+(k===dia?' on':'')+(k===h0?' hoje':'')+'" onclick="selDia(\''+k+'\')"><b>'+DOW[d.getDay()]+'</b><span>'+fmt(d)+(n?' •':'')+'</span></button>'}).join('');
+  var blocos=dados[dia]||[];
+  var corpo=blocos.length?blocos.map(function(b){
+    var isC=b.tipo==='condicionamento';
+    var cor=/^#[0-9a-fA-F]{6}$/.test(b.cor||'')?b.cor:(isC?'#D45828':'');
+    var tit=isC?'🔥 Condicionamento':(b.nome?esc(b.nome):'Bloco');
+    var meta=(!isC&&b.conjugado)?'Conjugado'+(b.series?' · '+esc(b.series)+' séries':''):'';
+    var h='<div class="bl"'+(cor?' style="--cc:'+cor+'"':'')+'><div class="bh">'+tit+(meta?'<small>'+meta+'</small>':'')+'</div>';
+    if(isC&&b.formato)h+='<div class="d"><b>Formato:</b> '+esc(b.formato)+'</div>';
+    if(isC&&b.materiais)h+='<div class="d"><b>Materiais:</b> '+esc(b.materiais)+'</div>';
+    (b.exercicios||[]).forEach(function(ex){if(!ex.nome)return;
+      var sr=b.conjugado?(ex.reps?esc(ex.reps)+' reps':''):((ex.series||ex.reps)?esc(ex.series||'')+(ex.series&&ex.reps?'×':'')+esc(ex.reps||''):'');
+      var pl=(ex.url&&/^https?:\/\//i.test(ex.url))?'<button type="button" class="pl" data-u="'+esc(ex.url)+'" onclick="play(this)" aria-label="Vídeo">▶</button>':'<span></span>';
+      var em=sr?'<em>'+sr+'</em>':'<em style="visibility:hidden">–</em>';
+      if(aid&&aid!=='x'){
+        var ch=(b.id||'b')+'|'+key(ex.nome),v=reg[dia+'|'+ch]||{carga:'',obs:'',feito:false},kn=key(ex.nome);
+        var hs=hist.filter(function(x){return key(x.exercicio||'')===kn&&x.data<dia&&((x.carga||'').trim()||(x.obs||'').trim())}).slice(0,6);
+        h+='<div class="ex" data-ch="'+esc(ch)+'" data-ex="'+esc(ex.nome)+'">'+pl+'<span>'+esc(ex.nome)+'</span>'+em+
+          '<div class="r2"><input class="in carga" type="text" placeholder="carga" value="'+esc(v.carga)+'" onchange="salvar(this)"><input class="in obs" type="text" placeholder="obs" value="'+esc(v.obs)+'" onchange="salvar(this)"><input class="ck" type="checkbox"'+(v.feito?' checked':'')+' onchange="salvar(this)" aria-label="Feito"><span class="st"></span></div>'+
+          (hs.length?'<button type="button" class="hint" onclick="tog(this)">Última: '+esc(hs[0].carga||hs[0].obs)+' · '+br(hs[0].data)+' ▾</button><div class="hl" style="display:none">'+hs.map(function(x){return br(x.data)+' — '+esc(x.carga||'')+(x.obs?' · '+esc(x.obs):'')}).join('<br>')+'</div>':'')+'</div>';
+      }else h+='<div class="ex">'+pl+'<span>'+esc(ex.nome)+'</span>'+em+'</div>';
+    });
+    if(b.detalhes)h+='<div class="d">'+esc(b.detalhes)+'</div>';
+    return h+'</div>';
+  }).join(''):'<div class="v">Sem treino neste dia.</div>';
+  document.getElementById('app').innerHTML='<div class="top"><h1>🏋️ '+(nome?esc(nome):'Treino')+'</h1></div><p class="sub">Roteiro do atendimento · registre cargas e obs</p>'+
+    (alunos.length>1?'<select onchange="trocarAluno(this.value)">'+alunos.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===aid?' selected':'')+'>'+esc(x.nome||'')+'</option>'}).join('')+'</select>':'')+
+    '<div class="nav"><button class="b" onclick="sem(-1)">‹</button><b>'+fmt(datas[0])+' – '+fmt(datas[6])+'</b><button class="b" onclick="sem(1)">›</button><button class="b red" onclick="hoje()">Hoje</button></div>'+
+    '<div class="tabs">'+tabs+'</div>'+corpo;
+}
+boot();
+</script>
+</body>
+</html>
