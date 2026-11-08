@@ -4,7 +4,7 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- Branch: `wip/fases-parametros` (criada ao começar o item 1). Checklist: [x] 1 fases simples (a4a6c3d) · [ ] 2 parâmetros atual×recomendado · [ ] 3 volume por grupo · [ ] 4 treino anterior no Quadro. Último SHA: a4a6c3d. Sessão anterior perdeu ~12 edições por não commitar: não repetir.
+- Branch: `wip/fases-parametros` (criada ao começar o item 1). Checklist: [x] 1 fases simples (a4a6c3d) · [x] 2 parâmetros atual×recomendado (ea9762d) · [ ] 3 volume por grupo · [ ] 4 treino anterior no Quadro. Último SHA: ea9762d. Sessão anterior perdeu ~12 edições por não commitar: não repetir.
 - 08/11 (pós v61.2): (1) simplificar FASES: deixar só Base 8 sem (+ Adaptação opcional) e a PRÓXIMA fase como fase separada/recomendada (desassociada da atual) no Calendário/periodização; (2) PARÂMETROS comparando atual × recomendado por nível/fase; (3) volume por grupamento com faixa própria (hoje todos /10 fixo) + varredura dos parâmetros hardcoded; (4) botão por dia no Quadro: ver o treino ANTERIOR correspondente (hover/clique) com diff. Só Gerador.
 
 ## 1. Repositórios e relação
