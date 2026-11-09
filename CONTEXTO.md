@@ -4,7 +4,8 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- (nada em andamento)
+- **v62.2 (09/11) pronta em branch `feat/topo-pwa-v62.2`, SEM merge e SEM mexer no repo `movh`** (Netlify do app com ~59 créditos; juntar com a próxima adaptação do app e fazer UM merge/deploy). Conteúdo: (1) topo do app do aluno em grade: saudação 17px à esquerda; à direita 🔄 recarregar, tema, ❌ sair (com confirmação); relógio embaixo dos botões; "Fazer o registro"/aviso no lugar do relógio antigo; (2) PWA: `tools/pwa/` (manifest, sw.js mínimo sem cache, ícones LG+barra+gráfico) copiado para a raiz do app pelo `export_app.js`; meta tags Apple; aviso de instalação (Android: botão nativo via `beforeinstallprompt`; iOS e Android sem evento: passo a passo; some se já estiver instalado; "Agora não" = 7 dias, "Já instalei" = definitivo). Testes 38/26/20 OK; prints com Playwright em localhost. Para publicar: `node tools/export_app.js index.html tools/config.json <dir do repo movh>` (agora copia manifest, sw.js e icons/ junto), commit no `movh`, UM merge.
+- Não abrir PR no repo `movh` só para ver preview: o preview gasta ~15 créditos. No iOS o app instalado tem armazenamento próprio (aluno loga de novo uma vez dentro do app).
 
 ## 1. Repositórios e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~17k linhas) = FONTE de tudo (Gerador + app do aluno dentro do template literal de `exportarComLogin()`, ~linhas 11148–15600). Gerador hospedado no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (também existe cópia em Cloudflare Workers `movhgen.lguilh3rme.workers.dev`).

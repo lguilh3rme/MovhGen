@@ -3699,7 +3699,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.1 · 09/11';
+var MOVH_VER = 'v62.2 · 09/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12322,6 +12322,8 @@ function exportarComLogin(){
 <link rel="preconnect" href="https://www.youtube-nocookie.com"><link rel="preconnect" href="https://i.ytimg.com"><link rel="dns-prefetch" href="https://www.google.com">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>MOVH — Meu Treino</title>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<meta name="theme-color" content="#111110"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MOVH"><meta name="apple-mobile-web-app-status-bar-style" content="black">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
@@ -12800,15 +12802,22 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .toprow{position:static!important;justify-content:flex-end;margin:0 0 6px}
 body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .regbtn{padding:6px 12px!important;font-size:12px!important}
-/* v61.1: topo em 2 linhas — 1) saudação + tema; 2) relógio, registro, Sair, aviso de renovação. Rola com a página (static) */
-#treinoScreen .toprow{position:static!important;flex-wrap:wrap;justify-content:flex-start;gap:8px 10px;padding:10px 12px 0!important;margin:0 0 6px}
-#treinoScreen .toprow::after{content:"";order:3;flex:0 0 100%;height:0}
-#treinoScreen .toprow #tSaudacaoTitulo{order:1;margin:0!important;font-size:21px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0}
-#treinoScreen .toprow #themeBtn{order:2}
-#treinoScreen .toprow #tRelogioTop{order:4;min-width:0;text-align:left;font-size:13px}
-#treinoScreen .toprow #tRegistroBtn{order:5}
-#treinoScreen .toprow #tSairBtn{order:6;margin-left:auto}
-#treinoScreen .toprow #banner-renovar{order:7;flex:1 1 100%}
+/* v62.2: topo em grade — 1) saudação + 🔄 + tema + ❌; 2) registro/aviso à esquerda e relógio sob os botões; 3) aviso de renovação. Rola com a página (static) */
+#treinoScreen .toprow{position:static!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto auto auto;column-gap:8px;row-gap:4px;align-items:center;padding:10px 12px 0!important;margin:0 0 6px}
+#treinoScreen .toprow #tSaudacaoTitulo{grid-column:1;grid-row:1;margin:0!important;font-size:17px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#treinoScreen .toprow #tReloadBtn{grid-column:2;grid-row:1}
+#treinoScreen .toprow #themeBtn{grid-column:3;grid-row:1}
+#treinoScreen .toprow #tSairBtn{grid-column:4;grid-row:1;margin:0}
+#treinoScreen .toprow #tRelogioTop{grid-column:2/5;grid-row:2;justify-self:end;min-width:0;text-align:right;font-size:13px}
+#treinoScreen .toprow #tRegistroBtn{grid-column:1;grid-row:2;justify-self:start}
+#treinoScreen .toprow #banner-renovar{grid-column:1/5;grid-row:3}
+#treinoScreen .toprow .dm{width:32px;height:32px;font-size:15px;padding:0}
+.inst-box{display:flex;gap:10px;align-items:center;margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card);font-size:13px;line-height:1.4;color:var(--tx)}
+.inst-box .inst-ic{font-size:22px;flex:none}
+.inst-box .inst-tx{flex:1;min-width:0}
+.inst-box .inst-bt{display:flex;flex-direction:column;gap:6px;flex:none}
+.inst-box button{border:none;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:var(--P);color:#fff}
+.inst-box button.inst-sec{background:transparent;color:var(--t2);font-weight:600;padding:2px 6px}
 #treinoScreen .alunolbl,#tHeaderToggle{display:none!important}
 .semana-strip-dia{padding:3px 0!important;min-height:0!important;line-height:1.15!important;border-radius:12px!important}
 .bh{flex-wrap:wrap!important;gap:3px 8px!important;padding:10px 12px!important}
@@ -13072,8 +13081,9 @@ body.xo-open #movh-descanso-widget{display:none!important}
       <span id="banner-renovar-txt">⚠️ Acesso vence em breve</span>
     </button>
     <span id="tRelogioTop" class="relogio-top"></span>
-    <button class="sairbtn" id="tSairBtn" onclick="aLogout()">Sair</button>
+    <button class="dm" id="tReloadBtn" onclick="location.reload()" title="Recarregar" aria-label="Recarregar">🔄</button>
     <button class="dm" id="themeBtn" onclick="aToggleTheme()" title="Alternar tema">🌙</button>
+    <button class="dm" id="tSairBtn" onclick="aLogoutConfirma()" title="Sair" aria-label="Sair">❌</button>
   </div>
   <div class="wrap">
     <div class="ph">
@@ -13373,6 +13383,7 @@ function aApplyTheme(theme){
   const authBtn = document.getElementById('authThemeBtn');
   if (authBtn) authBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
   try { localStorage.setItem('mova-theme', theme); } catch(e) {}
+  const tc = document.querySelector('meta[name=theme-color]'); if (tc) tc.setAttribute('content', theme === 'dark' ? '#111110' : '#F2F1EE');
 }
 function aToggleTheme(){
   const atual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -13424,6 +13435,60 @@ function aAtualizarRelogio(){
   const elAuthTop = document.getElementById('authRelogioTop');
   if (elAuthTop) { elAuthTop.textContent = txt; elAuthTop.style.color = cor; }
 }
+// ── Instalar como app (PWA): Android = botão nativo; iOS = passo a passo; some quando já está instalado ──
+var aInstEvt = null, aInstWait = '';
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); aInstEvt = e; try { aInstallInit(); } catch(x) {} });
+window.addEventListener('appinstalled', function(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); });
+if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+function aInstStandalone(){
+  try { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch(x) { return false; }
+}
+function aInstFechar(){ var b = document.getElementById('aInstBox'); if (b) b.remove(); }
+function aInstAdiar(){ try { localStorage.setItem('movh-install-adiar', String(Date.now() + 7 * 86400000)); } catch(x) {} aInstFechar(); }
+function aInstFeito(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); }
+function aInstallClick(){
+  if (!aInstEvt) return;
+  var ev = aInstEvt; aInstEvt = null;
+  try {
+    ev.prompt();
+    ev.userChoice.then(function(c){ if (c && c.outcome === 'accepted') aInstFeito(); else aInstAdiar(); }).catch(function(){ aInstAdiar(); });
+  } catch(x) { aInstAdiar(); }
+}
+function aInstallInit(){
+  try {
+    if (document.getElementById('aInstBox') || aInstStandalone()) return;
+    var ts = document.getElementById('treinoScreen');
+    if (!ts || getComputedStyle(ts).display === 'none') return;
+    if (localStorage.getItem('movh-install') === 'done') return;
+    var adiar = parseInt(localStorage.getItem('movh-install-adiar') || '0', 10);
+    if (adiar && Date.now() < adiar) return;
+    var ua = navigator.userAgent || '';
+    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var and = /Android/.test(ua);
+    var en = (typeof aLang !== 'undefined' && aLang === 'en');
+    var msg, ic = '📲', go = '';
+    if (aInstEvt) {
+      msg = en ? '<b>Install MOVH</b> on your phone: opens full screen, like an app.' : '<b>Instale o MOVH</b> no celular: abre direto, em tela cheia, como um app.';
+      go = '<button onclick="aInstallClick()">' + (en ? 'Install' : 'Instalar') + '</button>';
+    } else if (ios) {
+      msg = en ? '<b>Install MOVH</b>: tap <b>Share</b> (or ⋯ then Share) and choose <b>Add to Home Screen</b>.'
+               : '<b>Instale o MOVH</b>: toque em <b>Compartilhar</b> (ou em ⋯ e depois Compartilhar) e escolha <b>Adicionar à Tela de Início</b>.';
+    } else if (and) {
+      if (aInstWait !== 'done') {
+        if (!aInstWait) { aInstWait = 'w'; setTimeout(function(){ aInstWait = 'done'; aInstallInit(); }, 4000); }
+        return;
+      }
+      msg = en ? '<b>Install MOVH</b>: tap the browser menu ⋮ and choose <b>Install app</b> (or <b>Add to Home screen</b>).'
+               : '<b>Instale o MOVH</b>: toque no menu ⋮ do navegador e escolha <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).';
+    } else { return; }
+    var box = document.createElement('div'); box.id = 'aInstBox'; box.className = 'inst-box';
+    box.innerHTML = '<span class="inst-ic">' + ic + '</span><div class="inst-tx">' + msg + '</div><div class="inst-bt">' + go
+      + '<button class="inst-sec" onclick="aInstAdiar()">' + (en ? 'Not now' : 'Agora não') + '</button>'
+      + (go ? '' : '<button class="inst-sec" onclick="aInstFeito()">' + (en ? 'Already did' : 'Já instalei') + '</button>') + '</div>';
+    var w = document.querySelector('#treinoScreen .wrap'); if (w) w.insertBefore(box, w.firstChild);
+  } catch(x) {}
+}
+setInterval(function(){ aInstallInit(); }, 3000);
 function aAtualizarSaudacao(){
   const h = new Date().getHours();
   const nomeCompleto = (aAlunoRow && aAlunoRow.nome) ? aAlunoRow.nome.trim() : '';
@@ -13437,6 +13502,7 @@ function aAtualizarSaudacao(){
   msg = msg + (primeiroNome ? ', ' + primeiroNome : '') + '! 👊';
   const el = document.getElementById('tSaudacaoTitulo');
   if (el) el.textContent = msg;
+  try { aInstallInit(); } catch(x) {}
 }
 function aShowTelARenovar(fim){
   // Remove qualquer tela de renovação existente
@@ -13825,6 +13891,10 @@ async function aDoSignup(e){
   await aBoot(data.session);
 }
 
+function aLogoutConfirma(){
+  const en = (typeof aLang !== 'undefined' && aLang === 'en');
+  if (confirm(en ? 'Log out of your account?' : 'Sair da conta?')) aLogout();
+}
 async function aLogout(){
   await aClient.auth.signOut();
   aAlunoRow = null; aProtocolo = null;
@@ -16763,7 +16833,7 @@ function aRenderProtocolo(proto){
   aLang = (c.lang === 'en') ? 'en' : 'pt';
   aTestesAgendados = c.testesAgendados || [];
   document.getElementById('tLogadoComo').textContent = aT('logado_como');
-  document.getElementById('tSairBtn').textContent = aT('sair');
+  { const sb = document.getElementById('tSairBtn'); sb.title = aT('sair'); sb.setAttribute('aria-label', aT('sair')); }
   document.getElementById('tBtnProgresso').textContent = aT('meu_progresso');
   document.querySelectorAll('.tBtnVoltar').forEach(btn => btn.textContent = aT('voltar_para_hoje'));
   document.getElementById('tAlunoNome').textContent = aAlunoRow.email || aAlunoRow.nome;

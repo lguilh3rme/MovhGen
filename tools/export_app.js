@@ -37,4 +37,10 @@ if (fs.existsSync(ppSrc)) {
   const pdir = path.join(path.dirname(outPath), 'personal'); fs.mkdirSync(pdir, { recursive: true });
   fs.writeFileSync(path.join(pdir, 'index.html'), fs.readFileSync(ppSrc, 'utf8').replace('__SB_URL__', mbUrl).replace('__SB_KEY__', mbKey));
 }
+// PWA (v62.2): manifest, service worker e ícones de tools/pwa vão para a raiz do app.
+const pwaSrc = path.join(__dirname, 'pwa');
+if (fs.existsSync(pwaSrc)) {
+  const copyDir = (from, to) => { fs.mkdirSync(to, { recursive: true }); for (const f of fs.readdirSync(from, { withFileTypes: true })) { const a = path.join(from, f.name), b = path.join(to, f.name); if (f.isDirectory()) copyDir(a, b); else fs.copyFileSync(a, b); } };
+  copyDir(pwaSrc, path.dirname(outPath));
+}
 console.log('ok', outPath, final.length, 'bytes', 'build', build);
