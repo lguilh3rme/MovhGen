@@ -2115,6 +2115,84 @@ function setSemFoco(sid,campo,v){
 // a partir da fase do mesociclo (mesmo sistema usado na musculação), sem exigir
 // que o professor digite nada extra além de marcar "progressão automática".
 // Puramente informativo — não altera o que já está digitado em duracao/zonaFC.
+// ── Plano de corrida/condicionamento por modelo (mesmo código no Gerador e no app) ──
+// Campos do bloco: modelo, duracao (tempo), dist (km), ritmo (min/km), tiros, esf, rec. Dois de (tempo, dist, ritmo) fecham o terceiro.
+// Progressão: volume antes de intensidade, +8%/sem em 3 sem de carga + 1 de assimilação (ciclo de 4); 2º ciclo parte 12% acima; teto +30%.
+// Pace automático: zonas de Daniels (VDOT do teste de 3 km do aluno) quando não há ritmo digitado.
+var CP_ZONAS=['Recuperação','Fácil','Maratona','Limiar','Intervalo','Repetição'];
+var CP_MODELOS={
+ continuo:{nome:'Contínuo',zona:1,obs:'rodagem em ritmo de conversa (zona Fácil); cerca de 80% do volume semanal deve ser fácil'},
+ regenerativo:{nome:'Regenerativo',zona:0,obs:'bem leve e sem progressão: serve para recuperar'},
+ longao:{nome:'Longão',zona:1,obs:'a sessão mais longa da semana, sempre em ritmo fácil'},
+ tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e sustentável (RPE 6-7); só com base aeróbica e sem dor'},
+ fartlek:{nome:'Fartlek',zona:3,obs:'alterna trechos fortes por percepção com trotes leves, sem relógio rígido'},
+ intervalado:{nome:'Intervalado',zona:4,obs:'tiros com recuperação ativa; aumenta o número de tiros antes de acelerar'},
+ caminhada:{nome:'Caminhada-corrida',zona:0,obs:'alterna corrida leve e caminhada; aumenta o tempo correndo aos poucos'}
+};
+function cpFator(w){w=Math.max(1,parseInt(w,10)||1);var k=(w-1)%4,c=Math.floor((w-1)/4);return{f:Math.min(1+0.12*c+(k===3?0:0.08*k),1.3),assim:k===3,ciclo:c};}
+function cpNum(x){var s=String(x==null?'':x).replace(',','.'),t='',ok=false,i,c;for(i=0;i<s.length;i++){c=s.charAt(i);if((c>='0'&&c<='9')||(c==='.'&&ok&&t.indexOf('.')<0)){t+=c;ok=true;}else if(ok)break;}return ok?parseFloat(t):null;}
+function cpRitmoSeg(r){var p=String(r||'').split(':');if(p.length<2)return null;var m=parseInt(p[0],10),q=parseInt(p[1],10);return(isNaN(m)||isNaN(q))?null:m*60+q;}
+function cpRitmoTxt(sg){sg=Math.round(sg);var q=sg%60;return Math.floor(sg/60)+':'+(q<10?'0':'')+q;}
+function cpR2(x){return Math.round(x*100)/100;}
+function cpKm(x){return String(Math.round(x*10)/10).replace('.',',');}
+function cpPlano(b,w,N,zonaSeg){
+  var mod=b&&b.modelo,M=CP_MODELOS[mod];if(!M)return null;
+  var r=cpFator(w),f=r.f,tb=cpNum(b.duracao),d0=cpNum(b.dist),rit=cpRitmoSeg(b.ritmo),auto=false;
+  var esf=cpNum(b.esf),rec=cpNum(b.rec),zi=M.zona,ser=(mod!=='intervalado'&&mod!=='caminhada');
+  if(mod==='intervalado')zi=((esf||1)<=2)?5:4;
+  if(!rit&&tb&&d0&&ser)rit=tb*60/d0;
+  if(!rit&&typeof zonaSeg==='function'){var zs=zonaSeg(zi);if(zs){rit=zs;auto=true;}}
+  if(!tb&&d0&&rit&&ser)tb=d0*rit/60;
+  var o={modelo:mod,w:w,N:N,assim:r.assim,ciclo:r.ciclo,zonaIdx:zi,ritmoSeg:rit,ritmoAuto:auto,tempo:null,dist:null,tiros:null,esf:null,rec:null,pctEsf:null,corre:null,anda:null,reps:null};
+  if(mod==='intervalado'){
+    var n0=parseInt(b.tiros,10)||4;esf=esf||1;rec=rec||(2*esf);
+    o.tiros=Math.max(n0,Math.round(n0*f));o.esf=esf;o.rec=rec;o.tempo=Math.round(10+o.tiros*(esf+rec));
+    if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
+  }else if(mod==='caminhada'){
+    var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
+    o.corre=Math.max(c0,Math.round(c0*f));o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    if(rit)o.dist=cpR2(reps*o.corre*60/rit);
+  }else if(tb){
+    o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);
+    if(mod==='fartlek'){o.pctEsf=Math.min(35,20+Math.round((f-1)*30));o.esf=Math.max(1,Math.round(o.tempo*o.pctEsf/100));}
+    if(rit)o.dist=cpR2(o.tempo*60/rit);
+  }
+  return o;
+}
+function cpResumo(p){
+  var pc=p.ritmoSeg?(cpRitmoTxt(p.ritmoSeg)+'/km'+(p.ritmoAuto?' ('+CP_ZONAS[p.zonaIdx]+')':'')):'';
+  if(p.modelo==='intervalado')return p.tiros+' x '+p.esf+' min forte + '+p.rec+' min leve'+(pc?' · tiro a '+pc:'')+' · ~'+p.tempo+' min no total';
+  if(p.modelo==='caminhada')return p.reps+' x ('+p.corre+' min corre + '+p.anda+' min anda) · '+p.tempo+' min'+(p.dist?' · ~'+cpKm(p.dist)+' km correndo':'')+(pc?' · '+pc:'');
+  var t=p.tempo+' min';
+  if(p.modelo==='fartlek')t+=' · ~'+p.esf+' min em esforço ('+p.pctEsf+'%)';
+  return t+(p.dist?' · ~'+cpKm(p.dist)+' km':'')+(pc?' · ritmo '+pc:'');
+}
+function cpObs(p){
+  var M=CP_MODELOS[p.modelo];
+  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assimilação: mantém o patamar de partida do ciclo, sem aumentar':(p.w>1?'semana de carga: +8% sobre a anterior':'semana de partida'));
+  return fase+'; '+M.obs+'; dor ou RPE 9+: repita a semana anterior';
+}
+function cpSemanaGlobal(inicio,sems){
+  var N=0,i;for(i=0;i<(sems||[]).length;i++)N+=parseInt(sems[i].duracaoSemanas,10)||4;if(!N)N=1;
+  var w=1;if(inicio){var d=Math.floor((new Date()-new Date(inicio+'T00:00:00'))/604800000)+1;w=Math.min(Math.max(d,1),N);}
+  return{w:w,N:N};
+}
+// UI do editor (só Gerador): campos estruturados + plano semana a semana
+function condPlanoHTML(b){
+  if(!b.modelo||!CP_MODELOS[b.modelo]||!(cpNum(b.duracao)||cpNum(b.dist)||b.tiros))return '';
+  var N=0;(semanas||[]).forEach(function(s){N+=parseInt(s.duracaoSemanas,10)||4;});if(!N)N=8;
+  var L=[],i,p;for(i=1;i<=N;i++){p=cpPlano(b,i,N,null);if(p&&p.tempo)L.push('S'+i+': '+cpResumo(p));}
+  return '<details style="margin-top:4px"><summary style="font-size:10.5px;color:var(--t2);cursor:pointer">📈 Plano semana a semana ('+N+' sem)</summary><div style="font-size:10.5px;color:var(--t2);line-height:1.6;margin-top:3px">'+L.map(escAttr).join('<br>')+'</div></details>';
+}
+function condCamposHTML(did,bi,b,rr){
+  var mo=b.modelo||'',S="setBl('"+did+"',"+bi+",";
+  var op=['<option value="">Modelo —</option>'].concat(Object.keys(CP_MODELOS).map(function(k){return '<option value="'+k+'"'+(mo===k?' selected':'')+'>'+CP_MODELOS[k].nome+'</option>';})).join('');
+  function inp(k,ph,wd){return '<input class="kb-cond-inp" style="width:'+wd+'px;min-width:0;flex:0 0 auto" value="'+escAttr(b[k]||'')+'" placeholder="'+ph+'" oninput="'+S+"'"+k+"',this.value)\" onchange=\""+rr+'"/>';}
+  var extra='';
+  if(mo==='intervalado')extra=inp('tiros','tiros',54)+inp('esf','min forte',66)+inp('rec','min leve',62);
+  else if(mo==='caminhada')extra=inp('esf','min corre',66)+inp('rec','min anda',66);
+  return '<div style="margin:4px 0"><div class="kb-cond-row" style="flex-wrap:wrap;gap:4px"><select class="kb-cond-sel" onchange="'+S+"'modelo',this.value);if(this.value)"+S+"'progressaoAuto',true);"+rr+'">'+op+'</select>'+inp('dist','km',52)+inp('ritmo','min/km',60)+extra+'</div>'+(mo?'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+escAttr(CP_MODELOS[mo].obs)+'</div>':'')+condPlanoHTML(b)+'</div>';
+}
 // Rampa de duração do condicionamento na fase Base (ciclos de 4 sem): 3 sem de carga (+8%/sem) + 1 de assimilação;
 // o 2º ciclo parte 12% acima do 1º (teto ~+28% em 8 sem). Retorna fator e se é semana de assimilação.
 function condFatorBase(w){
@@ -3621,7 +3699,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.9 · 08/11';
+var MOVH_VER = 'v62.0 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3934,6 +4012,18 @@ function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
   const zero = PF_MUSCULOS.filter(m => (vol[m.k]||0) === 0).map(m => m.k);
   if (zero.length) alertas.push({t:'av', v:1, x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
+  (function(){
+    const nm=x=>String((x&&x.nome)||'').replace(/\s+/g,' ').trim().toLowerCase();
+    const eCond=b=>b&&(b.id==='con'||/aer/i.test(b.tipo||''));
+    const sig=b=>[b.modelo||'',b.duracao||'',b.tiros||'',b.esf||'',b.rec||'',b.dist||'',b.ritmo||'',String(b.desc||'').trim()].join('|');
+    const rep=[];
+    for(let i=1;i<semanas.length;i++)(semanas[i].dias||[]).forEach(d=>{
+      const ant=(semanas[i-1].dias||[]).find(x=>nm(x)===nm(d));if(!ant)return;
+      const bc=(d.blocos||[]).filter(eCond),ba=(ant.blocos||[]).filter(eCond);
+      bc.forEach((b,k)=>{const a=ba[k];if(a&&sig(a)===sig(b)&&(!b.modelo||!b.progressaoAuto)){const t=(d.nome||'Dia').trim();if(rep.indexOf(t)<0)rep.push(t);}});
+    });
+    if(rep.length)alertas.push({t:'av',x:'Corrida/condicionamento IGUAL entre fases (sem progressão) em: '+rep.slice(0,4).join(', ')+(rep.length>4?'…':'')+' — defina o modelo (intervalado, contínuo, fartlek...) e ligue a progressão'});
+  })();
   const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 || (n > 0 && n < min); }).map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 ? m.k+' volume ZERO — verifique se é intencional' : m.k+' '+n+'/'+min; });
   if (baixo.length) alertas.push({t:'av', v:1, x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
   const fora = [];
@@ -4586,7 +4676,7 @@ function kbRmCJ(did,bi,g){
 let _kbCondAb=new Set();
 function kbCondTog(did,bi,on){const k=did+':'+bi;if(on)_kbCondAb.add(k);else _kbCondAb.delete(k);}
 function kbCondFields(did,bi,b){
-  const _rs=[b.tipo||'Condicionamento',b.duracao,b.zonaFC,b.titulo].filter(Boolean).map(escAttr).join(' · ');
+  const _rs=[b.tipo||'Condicionamento',(b.modelo&&CP_MODELOS[b.modelo]?CP_MODELOS[b.modelo].nome:null),b.duracao,b.zonaFC,b.titulo].filter(Boolean).map(escAttr).join(' · ');
   return `<details class="kb-cond-d"${_kbCondAb.has(did+':'+bi)?' open':''} ontoggle="kbCondTog('${did}',${bi},this.open)"><summary>${_rs}</summary><div class="kb-cond">
     <div class="kb-cond-row">
       <select class="kb-cond-sel" onchange="setBl('${did}',${bi},'tipo',this.value);kbRefresh('${did}')">
@@ -4602,6 +4692,7 @@ function kbCondFields(did,bi,b){
         <option value="Z5"${b.zonaFC==='Z5'?' selected':''}>Z5 Máximo</option>
       </select>
     </div>
+    ${condCamposHTML(did,bi,b,"kbRefresh('"+did+"')")}
     <input class="kb-cond-inp" value="${escAttr(b.titulo||'')}" placeholder="Título (ex: Corrida Zona 2)" oninput="setBl('${did}',${bi},'titulo',this.value)"/>
     <input class="kb-cond-inp" value="${escAttr(b.duracao||'')}" placeholder="Duração (ex: 20 min)" oninput="setBl('${did}',${bi},'duracao',this.value);kbAtualizarFooter('${did}')"/>
     <textarea class="kb-cond-inp" rows="2" placeholder="Descrição / observações" oninput="setBl('${did}',${bi},'desc',this.value)">${b.desc||''}</textarea>
@@ -6633,6 +6724,7 @@ function renderDia(did){
             </select>
           </div>
         </div>
+        ${condCamposHTML(did,bi,b,"renderDia('"+did+"')")}
         <div class="fr r1"><div class="fld"><span class="lbl">Descrição</span><textarea rows="7" style="min-height:140px" placeholder="Descreva o treino livremente. Pra mostrar o pace do aluno, digite só (z4) — sem escrever 'Z4' antes, o marcador já gera o rótulo sozinho." oninput="setBl('${did}',${bi},'desc',this.value)">${b.desc||''}</textarea></div></div>
         <div class="fr r1"><div class="fld url-row"><span class="lbl url-lbl">🎬 Vídeo (URL)</span><input type="text" value="${escAttr(b.url||'')}" placeholder="https://youtube.com/..." oninput="setBl('${did}',${bi},'url',this.value)"/></div></div>
         <div class="fr r1" style="align-items:center;display:flex;gap:8px;margin-top:2px">
@@ -6641,7 +6733,7 @@ function renderDia(did){
             Progressão automática (deriva da fase do mesociclo: ${semObj&&semObj.fase&&FASES_TEMPLATE[semObj.fase]?FASES_TEMPLATE[semObj.fase].emoji+' '+FASES_TEMPLATE[semObj.fase].label:'defina a fase acima'})
           </label>
         </div>
-        ${b.progressaoAuto&&semObj&&semObj.fase&&b.duracao?(()=>{const sug=condSugestao(semObj.fase,b.duracao,b.zonaFC,null,semObj.duracaoSemanas);return sug?`<div style="margin-top:6px;padding:8px 10px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs);font-size:10.5px;color:var(--t2)"><b style="color:var(--tx)">📍 Sugestão calculada:</b> ${sug.duracaoTxt} · ${sug.zonaTxt}${sug.obsTxt?' · '+sug.obsTxt:''}</div>`:'';})():''}
+        ${b.progressaoAuto&&!b.modelo&&semObj&&semObj.fase&&b.duracao?(()=>{const sug=condSugestao(semObj.fase,b.duracao,b.zonaFC,null,semObj.duracaoSemanas);return sug?`<div style="margin-top:6px;padding:8px 10px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs);font-size:10.5px;color:var(--t2)"><b style="color:var(--tx)">📍 Sugestão calculada:</b> ${sug.duracaoTxt} · ${sug.zonaTxt}${sug.obsTxt?' · '+sug.obsTxt:''}</div>`:'';})():''}
         ${mcExsHTML}
         </div>
       </div>`;
@@ -15450,6 +15542,69 @@ function aCalcularAgendaHoje(proto, semanas, dataAlvoISO){
 // Mesma lógica de condSugestao() do Gerador, replicada aqui pro app do aluno
 // (puramente informativo — deriva duração/zona sugeridas a partir da fase do
 // mesociclo, sem mudar nada do que o professor já digitou).
+// ── Plano de corrida/condicionamento por modelo (mesmo código no Gerador e no app) ──
+// Campos do bloco: modelo, duracao (tempo), dist (km), ritmo (min/km), tiros, esf, rec. Dois de (tempo, dist, ritmo) fecham o terceiro.
+// Progressão: volume antes de intensidade, +8%/sem em 3 sem de carga + 1 de assimilação (ciclo de 4); 2º ciclo parte 12% acima; teto +30%.
+// Pace automático: zonas de Daniels (VDOT do teste de 3 km do aluno) quando não há ritmo digitado.
+var CP_ZONAS=['Recuperação','Fácil','Maratona','Limiar','Intervalo','Repetição'];
+var CP_MODELOS={
+ continuo:{nome:'Contínuo',zona:1,obs:'rodagem em ritmo de conversa (zona Fácil); cerca de 80% do volume semanal deve ser fácil'},
+ regenerativo:{nome:'Regenerativo',zona:0,obs:'bem leve e sem progressão: serve para recuperar'},
+ longao:{nome:'Longão',zona:1,obs:'a sessão mais longa da semana, sempre em ritmo fácil'},
+ tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e sustentável (RPE 6-7); só com base aeróbica e sem dor'},
+ fartlek:{nome:'Fartlek',zona:3,obs:'alterna trechos fortes por percepção com trotes leves, sem relógio rígido'},
+ intervalado:{nome:'Intervalado',zona:4,obs:'tiros com recuperação ativa; aumenta o número de tiros antes de acelerar'},
+ caminhada:{nome:'Caminhada-corrida',zona:0,obs:'alterna corrida leve e caminhada; aumenta o tempo correndo aos poucos'}
+};
+function cpFator(w){w=Math.max(1,parseInt(w,10)||1);var k=(w-1)%4,c=Math.floor((w-1)/4);return{f:Math.min(1+0.12*c+(k===3?0:0.08*k),1.3),assim:k===3,ciclo:c};}
+function cpNum(x){var s=String(x==null?'':x).replace(',','.'),t='',ok=false,i,c;for(i=0;i<s.length;i++){c=s.charAt(i);if((c>='0'&&c<='9')||(c==='.'&&ok&&t.indexOf('.')<0)){t+=c;ok=true;}else if(ok)break;}return ok?parseFloat(t):null;}
+function cpRitmoSeg(r){var p=String(r||'').split(':');if(p.length<2)return null;var m=parseInt(p[0],10),q=parseInt(p[1],10);return(isNaN(m)||isNaN(q))?null:m*60+q;}
+function cpRitmoTxt(sg){sg=Math.round(sg);var q=sg%60;return Math.floor(sg/60)+':'+(q<10?'0':'')+q;}
+function cpR2(x){return Math.round(x*100)/100;}
+function cpKm(x){return String(Math.round(x*10)/10).replace('.',',');}
+function cpPlano(b,w,N,zonaSeg){
+  var mod=b&&b.modelo,M=CP_MODELOS[mod];if(!M)return null;
+  var r=cpFator(w),f=r.f,tb=cpNum(b.duracao),d0=cpNum(b.dist),rit=cpRitmoSeg(b.ritmo),auto=false;
+  var esf=cpNum(b.esf),rec=cpNum(b.rec),zi=M.zona,ser=(mod!=='intervalado'&&mod!=='caminhada');
+  if(mod==='intervalado')zi=((esf||1)<=2)?5:4;
+  if(!rit&&tb&&d0&&ser)rit=tb*60/d0;
+  if(!rit&&typeof zonaSeg==='function'){var zs=zonaSeg(zi);if(zs){rit=zs;auto=true;}}
+  if(!tb&&d0&&rit&&ser)tb=d0*rit/60;
+  var o={modelo:mod,w:w,N:N,assim:r.assim,ciclo:r.ciclo,zonaIdx:zi,ritmoSeg:rit,ritmoAuto:auto,tempo:null,dist:null,tiros:null,esf:null,rec:null,pctEsf:null,corre:null,anda:null,reps:null};
+  if(mod==='intervalado'){
+    var n0=parseInt(b.tiros,10)||4;esf=esf||1;rec=rec||(2*esf);
+    o.tiros=Math.max(n0,Math.round(n0*f));o.esf=esf;o.rec=rec;o.tempo=Math.round(10+o.tiros*(esf+rec));
+    if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
+  }else if(mod==='caminhada'){
+    var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
+    o.corre=Math.max(c0,Math.round(c0*f));o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    if(rit)o.dist=cpR2(reps*o.corre*60/rit);
+  }else if(tb){
+    o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);
+    if(mod==='fartlek'){o.pctEsf=Math.min(35,20+Math.round((f-1)*30));o.esf=Math.max(1,Math.round(o.tempo*o.pctEsf/100));}
+    if(rit)o.dist=cpR2(o.tempo*60/rit);
+  }
+  return o;
+}
+function cpResumo(p){
+  var pc=p.ritmoSeg?(cpRitmoTxt(p.ritmoSeg)+'/km'+(p.ritmoAuto?' ('+CP_ZONAS[p.zonaIdx]+')':'')):'';
+  if(p.modelo==='intervalado')return p.tiros+' x '+p.esf+' min forte + '+p.rec+' min leve'+(pc?' · tiro a '+pc:'')+' · ~'+p.tempo+' min no total';
+  if(p.modelo==='caminhada')return p.reps+' x ('+p.corre+' min corre + '+p.anda+' min anda) · '+p.tempo+' min'+(p.dist?' · ~'+cpKm(p.dist)+' km correndo':'')+(pc?' · '+pc:'');
+  var t=p.tempo+' min';
+  if(p.modelo==='fartlek')t+=' · ~'+p.esf+' min em esforço ('+p.pctEsf+'%)';
+  return t+(p.dist?' · ~'+cpKm(p.dist)+' km':'')+(pc?' · ritmo '+pc:'');
+}
+function cpObs(p){
+  var M=CP_MODELOS[p.modelo];
+  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assimilação: mantém o patamar de partida do ciclo, sem aumentar':(p.w>1?'semana de carga: +8% sobre a anterior':'semana de partida'));
+  return fase+'; '+M.obs+'; dor ou RPE 9+: repita a semana anterior';
+}
+function cpSemanaGlobal(inicio,sems){
+  var N=0,i;for(i=0;i<(sems||[]).length;i++)N+=parseInt(sems[i].duracaoSemanas,10)||4;if(!N)N=1;
+  var w=1;if(inicio){var d=Math.floor((new Date()-new Date(inicio+'T00:00:00'))/604800000)+1;w=Math.min(Math.max(d,1),N);}
+  return{w:w,N:N};
+}
+function cpZonaSeg(i){var z=(typeof aZonasAtuais==='function')?aZonasAtuais():null;if(!z||!z[i])return null;return cpRitmoSeg(z[i].pace);}
 function aCondFatorBase(w){
   w = Math.max(1, parseInt(w) || 1); const k = (w-1)%4, c = Math.floor((w-1)/4);
   return { f: 1 + 0.12*c + (k===3 ? 0 : 0.08*k), assim: k===3, ciclo: c };
@@ -15497,7 +15652,12 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
     // mostrar "Z4" nos dois lugares parecia informação duplicada/conflitante.
     const zonaChip = b.zonaFC ? '<span class="cond-chip">💓 '+aEsc(A_ZONA_FC_LABEL[b.zonaFC]||b.zonaFC)+'</span>' : '';
     let progHTML = '';
-    if (b.progressaoAuto && faseAtual) {
+    if (b.progressaoAuto && b.modelo && typeof cpPlano === 'function') {
+      const g = cpSemanaGlobal(aProtocolo && aProtocolo.data_inicio, (aProtocolo && aProtocolo.conteudo && aProtocolo.conteudo.semanas) || []);
+      const pl = cpPlano(b, g.w, g.N, cpZonaSeg);
+      if (pl && pl.tempo) progHTML = '<div class="cond-prog">📍 Hoje (semana ' + g.w + '/' + g.N + '): ' + aEsc(cpResumo(pl)) + '</div><div class="cond-prog" style="opacity:.75;font-size:11px">' + aEsc(cpObs(pl)) + '</div>';
+    }
+    if (!progHTML && b.progressaoAuto && faseAtual) {
       const sug = aCondSugestao(faseAtual, b.duracao, b.zonaFC, semanaDentroFase, duracaoSemanas);
       if (sug) {
         progHTML = '<div class="cond-prog">📍 Hoje: ' + aEsc(sug.duracaoTxt) + ' · ' + aEsc(sug.zonaTxt) + (sug.obsTxt ? ' — ' + aEsc(sug.obsTxt) : '') + '</div>';
