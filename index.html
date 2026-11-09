@@ -850,7 +850,15 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 .hm-k b{display:block;font-size:18px;font-weight:700;line-height:1.1;font-family:var(--font-d)}
 .hm-k span{font-size:10px;color:var(--t2);line-height:1.2}
 .hm-k.r b{color:#FF5A66}.hm-k.o b{color:#FFA35A}.hm-k.g b{color:#4DCBA0}
-.hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:12px}
+.hm-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:12px;align-items:start}
+.hm-col{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media(max-width:900px){.hm-grid{grid-template-columns:minmax(0,1fr)}}
+.hm-fr{display:flex;align-items:center;gap:8px;width:100%;padding:6px 2px;border:0;border-top:1px solid var(--bd2);background:none;color:inherit;font:inherit;font-size:12px;text-align:left;cursor:pointer}
+.hm-fr:first-of-type{border-top:0}.hm-fr:hover{background:var(--cl)}.hm-fr .tm{flex:0 0 34px;text-align:right;font-size:10.5px;color:var(--t3);font-variant-numeric:tabular-nums}
+.hm-fr b{white-space:nowrap}.hm-fr .bds{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.hm-bd{font-size:10.5px;padding:1px 8px;border-radius:99px;white-space:nowrap;background:color-mix(in srgb,var(--c,#888) 18%,transparent);border:1px solid color-mix(in srgb,var(--c,#888) 42%,transparent);color:var(--tx)}
+.hm-sem summary{cursor:pointer;color:var(--t3);font-size:11px;padding:8px 0 2px;border-top:1px dashed var(--bd2);margin-top:6px;list-style:none}.hm-sem summary::-webkit-details-marker{display:none}
+.hm-sem summary b{color:var(--t2);font-weight:600}.hm-sem .hm-it{opacity:.75}.hm-k.m{opacity:.7}
 .hm-c{margin:0!important}
 .hm-c h3{font-size:13px;font-weight:700;margin:0 0 8px;display:flex;align-items:center;gap:6px}
 .hm-c h3 .sp{flex:1}
@@ -3699,7 +3707,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.4 · 09/11';
+var MOVH_VER = 'v62.5 · 09/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3772,7 +3780,7 @@ async function homeAgendaCarregar(){
   homeAg = ag;
 }
 // Cache do último render da Início: aparece na hora e é trocado pelo dado novo quando chega.
-var homeVivo = false, HOME_CK = 'movh-home-cache-v1';
+var homeVivo = false, HOME_CK = 'movh-home-cache-v2';
 function homeCacheSalvar(){
   try { if (!mbProfessor) return; localStorage.setItem(HOME_CK, JSON.stringify({ pid: mbProfessor.id, ts: Date.now(), t: (document.getElementById('home-title') || {}).textContent || '', k: document.getElementById('home-kpis').innerHTML, g: document.getElementById('home-grid').innerHTML })); } catch(e){}
 }
@@ -3817,9 +3825,9 @@ function homeVencerHTML(at){
   const linhas=L.map(x=>{
     const n=(x.a.nome||'Aluno').split(' ');const nm=n[0]+(n[1]?' '+n[1]:'');
     const prim=x.tem?b('bp','🗂️ Editar próxima fase','' + x.a.id,'prox','Abre a próxima fase do treino no Quadro'):b('bp','✨ Próxima fase','' + x.a.id,'prox','Gera o rascunho da próxima fase (inativo) e abre no Quadro');
-    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':'')+'</span><span class="t" style="display:flex;gap:6px">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+prim+'</span></div>';
+    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':'')+'</span><span class="t" style="display:flex;gap:6px">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰</span></span></div>';
   }).join('');
-  return '<section class="card hm-c" style="grid-column:1/-1"><h3>🏁 Treinos a vencer (até 7 dias) <span class="sp"></span><small style="color:var(--t3);font-weight:500">'+L.length+'</small></h3>'+linhas+'</section>';
+  return linhas;
 }
 async function homeAbrirFase(alunoId,modo){
   if(!(await mbCarregarProtoAluno(alunoId)))return;
@@ -3830,6 +3838,25 @@ async function homeAbrirFase(alunoId,modo){
   }
   if(semanas[idx])nav('kb-'+semanas[idx].id);
   notify('Fase atual aberta no Quadro.');
+}
+function homeFeedHTML(gr){
+  const hh = mbFeedHH, agora = Date.now();
+  const B = (c, txt, tip) => '<span class="hm-bd" style="--c:' + c + '" title="' + escAttr(tip || '') + '">' + escAttr(txt) + '</span>';
+  return gr.map(g => {
+    const ev = g.evs.slice().sort((x, y) => new Date(y.t) - new Date(x.t));
+    const done = ev.some(e => e.i === '✅'), tip = ev.map(e => hh(e.t) + ' ' + e.x).join('\n');
+    const live = !done && ev.some(e => (e.i === '👁' || e.i === '🏋️') && agora - new Date(e.t).getTime() < 3 * 3600000);
+    const pick = i => ev.find(e => e.i === i), bd = [];
+    const dor = pick('⚠️'); if (dor) bd.push(B('#E11D2E', '⚠️ ' + String(dor.x).replace('relatou ', '').slice(0, 30), tip));
+    if (live) bd.push(B('#1A9E72', '🟢 treinando agora', tip));
+    const ok = pick('✅'); if (ok) bd.push(B('#1A9E72', '✅ concluiu ' + hh(ok.t), tip));
+    const pr = pick('🏆'); if (pr) bd.push(B('#D9A21B', '🏆 ' + pr.x, tip));
+    const ts = pick('🏃'); if (ts) bd.push(B('#3580D8', '🏃 ' + ts.x, tip));
+    const rg = pick('🏋️'); if (rg) bd.push(B('#2E8F6B', '🏋️ ' + String(rg.s || rg.x).replace('registrou ', ''), tip));
+    ['🆕', '📝', '🔔'].forEach(i => { const e = pick(i); if (e) bd.push(B('#3580D8', i + ' ' + e.s, tip)); });
+    if (!live && !ok) { const v = pick('👁'), a = pick('👀'); if (v) bd.push(B('#888', '👁 viu o treino ' + hh(v.t), tip)); else if (a) bd.push(B('#888', '👀 abriu o app ' + hh(a.t), tip)); }
+    return '<button type="button" class="hm-fr" data-id="' + escAttr(g.id || '') + '" onclick="homeIrAluno(this.dataset.id)" title="' + escAttr(tip) + '"><span class="tm">' + mbTempoC(g.t) + '</span><b>' + escAttr(g.a) + '</b><span class="bds">' + bd.join('') + '</span></button>';
+  }).join('');
 }
 async function homeIrAluno(id){ nav('alunos'); await mbCarregarPainelAlunos(); mbIrParaAluno(id); }
 async function homeIrColetiva(key){ coletivasModo = 'coletivas'; nav('coletivas'); await mbCarregarAulasColetivas(); coletivasIrParaData(key); }
@@ -3850,11 +3877,15 @@ function homeRender(){
   const dem = alertas.filter(x => HM_DEM.indexOf(x.i) >= 0), idsDem = {}; dem.forEach(x => idsDem[x.aid] = 1);
   semT.forEach(a => { if (!idsDem[a.id]) dem.push({ n:1, i:'🕐', t:(a.nome || 'Aluno').split(' ')[0] + ' · aguardando treino', aid:a.id }); });
   const outros = alertas.filter(x => HM_DEM.indexOf(x.i) < 0 && !(x.i === '🏁' && x.n === 3));
+  const semSinal = outros.filter(x => x.i === '🔴'), resto = outros.filter(x => x.i !== '🔴');
+  const treinHoje = at.filter(a => { try { return mbPresenca(a).nv === 'ok'; } catch(e){ return false; } }).length;
   const kp = (cls, n, l) => '<button type="button" class="hm-k ' + cls + '" onclick="nav(\'alunos\')"><b>' + n + '</b><span>' + l + '</span></button>';
-  K.innerHTML = kp('g', at.length, 'alunos ativos') + kp('r', v7, 'vencendo em até 7 dias') + kp('o', v14, 'vencendo em 8–14 dias') + kp('', semT.length, 'sem treino ativo') + kp(dem.length ? 'o' : '', dem.length, 'demandas') + kp('', sess, 'treinos no mês');
+  K.innerHTML = kp('g', at.length, 'alunos ativos') + kp('g', treinHoje, 'treinaram hoje') + kp('r', v7, 'vencendo em até 7 dias') + kp('o', v14, 'vencendo em 8–14 dias') + kp(dem.length ? 'o' : '', dem.length, 'demandas') + kp('m', semSinal.length, 'sem sinal há 5d+');
   const it = (x) => '<button type="button" class="hm-it n' + x.n + '" data-id="' + escAttr(x.aid || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>' + x.i + '</span><span>' + escAttr(x.t) + '</span>' + ((x.i === '⏰' || x.i === '🏁' || x.i === '💠') ? '<span class="t"><span class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.aid || '') + '" onclick="event.stopPropagation();mbCobrar(this.dataset.id)">💰 Cobrar</span></span>' : '') + '</button>';
   const cDem = '<section class="card hm-c"><h3>📥 Demandas <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + dem.length + '</small></h3>' + (dem.length ? dem.slice(0, 8).map(it).join('') : '<div class="hm-vz">Nada pendente. 🎉</div>') + '</section>';
-  const cAt = '<section class="card hm-c"><h3>⏳ Vencimentos e atenção <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + outros.length + '</small></h3>' + (outros.length ? outros.slice(0, 8).map(it).join('') : '<div class="hm-vz">Sem vencimentos próximos.</div>') + '</section>';
+  const vL = homeVencerHTML(at), nV = homeVencerLista(at).length;
+  const semH = semSinal.length ? '<details class="hm-sem"><summary>😴 <b>' + semSinal.length + ' aluno' + (semSinal.length > 1 ? 's' : '') + ' sem sinal há 5d+</b> · ' + semSinal.slice(0, 4).map(x => escAttr(x.t.split(' · ')[0])).join(', ') + (semSinal.length > 4 ? '…' : '') + '</summary>' + semSinal.map(it).join('') + '</details>' : '';
+  const cAt = '<section class="card hm-c"><h3>⏳ Vencimentos e atenção <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nV + resto.length) + '</small></h3>' + vL + resto.slice(0, 8).map(it).join('') + ((!vL && !resto.length) ? '<div class="hm-vz">Sem vencimentos próximos.</div>' : '') + semH + '</section>';
   const dia = (off, rot) => {
     const d = new Date(); d.setDate(d.getDate() + off); const k = coletivasDateKey(d);
     const col = (homeAg.col && homeAg.col[k]) || [], per = (homeAg.per || []).filter(x => x.dados && (x.dados[k] || []).length);
@@ -3866,11 +3897,11 @@ function homeRender(){
     return s;
   };
   const cAg = '<section class="card hm-c"><h3>🗓️ Agenda</h3>' + dia(0, 'Hoje') + dia(1, 'Amanhã') + '</section>';
-  const gr = mbFeedGrupos('todos').slice(0, 10), hh = mbFeedHH;
-  const cAc = '<section class="card hm-c"><h3>🔔 Alunos recentes <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + gr.length + '</small></h3>' + (gr.length ? '<div class="al-feed-list">' + gr.map(g => '<button type="button" class="al-feed-it al-grp" data-id="' + escAttr(g.id || '') + '" onclick="homeIrAluno(this.dataset.id)" title="' + escAttr(g.evs.map(e => hh(e.t) + ' ' + e.a + ' ' + e.x).join('\n')) + '"><span class="al-feed-t">' + mbTempoC(g.t) + '</span><b class="al-g-n">' + escAttr(g.a) + '</b><span class="al-g-ev">' + g.evs.map(e => '<span class="al-g-i">' + e.i + ' ' + escAttr(g.evs.length === 1 ? e.x : e.s) + ' <i>' + hh(e.t) + '</i></span>').join('') + '</span></button>').join('') + '</div>' : '<div class="hm-vz">Sem atividade nos últimos dias.</div>') + '</section>';
+  const gr = mbFeedGrupos('todos').filter(g => Date.now() - new Date(g.t).getTime() < 86400000 || g.evs.some(e => e.i !== '👀' && e.i !== '👁')).slice(0, 12); // some o que é só "abriu o app" de dias atrás
+  const cAc = '<section class="card hm-c"><h3>🔔 Alunos recentes <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + gr.length + '</small></h3>' + (gr.length ? '<div class="hm-fl">' + homeFeedHTML(gr) + '</div>' : '<div class="hm-vz">Sem atividade nos últimos dias.</div>') + '</section>';
   const fix = (notasCache || []).filter(n => n.fixada).slice(0, 5);
   const cNo = '<section class="card hm-c"><h3>📝 Notas fixadas <span class="sp"></span>' + notasBtn('geral', '', 'Geral') + '</h3>' + (!notasOk ? '<div class="hm-vz">⚠️ Falta rodar o SQL de Notas (Configuração › Geral › Copiar SQL das policies RLS).</div>' : (fix.length ? fix.map(n => '<button type="button" class="hm-it" data-i="' + escAttr(n.id) + '" onclick="notasAbrirNota(this.dataset.i)"><span style="width:4px;align-self:stretch;border-radius:3px;background:' + (n.cor || 'var(--bd)') + '"></span><span><b>' + escAttr(n.titulo || '') + '</b> ' + escAttr(String(n.texto || '').split('\n')[0].slice(0, 80)) + '</span></button>').join('') : '<div class="hm-vz">Fixe uma nota (📌) para ela aparecer aqui.</div>')) + '</section>';
-  G.innerHTML = homeVencerHTML(at) + cDem + cAt + cAg + cAc + cNo;
+  G.innerHTML = '<div class="hm-col">' + cAc + cAg + '</div><div class="hm-col">' + cAt + cDem + cNo + '</div>';
 }
 
 // ── Notas (por contexto: geral, aluno, dia, exercício) + atalho para o Google Keep ──
@@ -8958,6 +8989,7 @@ async function mbCarregarPainelAlunos() {
       .in('aluno_id', alunoIds)
       .eq('status', 'pendente')
       .order('solicitado_em', { ascending: false }));
+    P.k10 = Q(() => mbClient.from('testes_fisicos').select('aluno_id, data, padrao_movimento, valor, unidade, distancia_km').in('aluno_id', alunoIds).gte('data', new Date(Date.now() - 14*86400000).toISOString().slice(0,10)).order('data', { ascending: false }));
     P.k6 = Q(() => mbClient.from('pagamentos_pix').select('id, aluno_id, plano_nome, dias, valor, criado_em').in('aluno_id', alunoIds).eq('status', 'pendente').order('criado_em', { ascending: false }));
     P.k7 = Q(() => mbClient.from('rpe_sessoes')
       .select('id, aluno_id, rpe, dor_obs, dor_exercicios, criado_em')
@@ -9083,6 +9115,8 @@ async function mbCarregarPainelAlunos() {
   const registrosMap = {};
   registrosData.forEach(r => { (registrosMap[r.aluno_id] = registrosMap[r.aluno_id] || []).push(r); });
 
+  let testesRec = [];
+  if (alunoIds.length > 0) { const { data: tr } = await P.k10; testesRec = tr || []; }
   mbPainelAlunos = alunos.map(a => ({
     ...a,
     _lixeira: !!a.na_lixeira,
@@ -9099,7 +9133,7 @@ async function mbCarregarPainelAlunos() {
     registrosCarga: registrosMap[a.id] || []
   }));
 
-  mbMontarAtividade(alunos, sessoesMesData, registrosData, dorData, { anamneses: anamnesesData, solic: solicMudancaData });
+  mbMontarAtividade(alunos, sessoesMesData, registrosData, dorData, { anamneses: anamnesesData, solic: solicMudancaData, testes: testesRec });
   document.getElementById('alunos-loading').style.display = 'none';
   document.getElementById('alunos-content').style.display = 'block';
   renderPainelAlunos();
@@ -9161,8 +9195,28 @@ function mbMontarAtividade(alunos, sessoes, registros, dores, extra){
       g.x = 'registrou ' + g.n + (g.n > 1 ? ' cargas' : ' carga') + ' · ' + (g.r.exercicio_nome || '') + (g.r.carga != null ? ' ' + g.r.carga + 'kg' : '') + (g.r.reps != null ? '×' + g.r.reps : '') + (g.n > 1 ? ' e +' + (g.n - 1) : '');
     });
   });
-  const KIND = { '⚠️':'a', '🔔':'a', '🆕':'a', '✅':'t', '🏋️':'t' };
-  const SH = { '✅':'treino concluído', '⚠️':'dor', '🔔':'pediu novo treino', '🆕':'novo cadastro', '📝':'anamnese', '👁':'abriu o treino', '👀':'abriu o app' };
+  // 🏆 PR de carga: carga mais alta do exercício na janela de 30 dias, batida nos últimos 7 dias (precisa de registro anterior)
+  Object.keys(por).forEach(id => {
+    const ex = {};
+    por[id].forEach(r => { const k = String(r.exercicio_nome || '').trim().toLowerCase(); if (k) (ex[k] = ex[k] || []).push(r); });
+    Object.keys(ex).forEach(k => {
+      const L = ex[k].map(r => ({ r: r, c: parseFloat(String(r.carga).replace(',', '.')), t: new Date(r.criado_em).getTime() })).filter(x => x.c > 0).sort((x, y) => x.t - y.t);
+      if (L.length < 2) return;
+      let mx = 0, best = null;
+      L.forEach(x => { if (mx && x.c > mx && x.t >= lim7) best = x; if (x.c > mx) mx = x.c; });
+      if (best) ev.push({ t: best.r.criado_em, i: '🏆', a: nome(id), id: id, x: 'PR ' + String(best.r.exercicio_nome).slice(0, 18) + ' ' + best.c + 'kg' });
+    });
+  });
+  // 🏃 testes físicos recentes (3 km e demais)
+  (extra.testes || []).forEach(r => {
+    if (!r.data) return;
+    let x;
+    if (r.unidade === 'tempo') { const sg = Math.round(Number(r.valor) || 0); x = (r.distancia_km ? String(r.distancia_km).replace('.', ',') + ' km' : 'teste') + ' ' + Math.floor(sg / 60) + ':' + String(sg % 60).padStart(2, '0'); }
+    else x = String(r.padrao_movimento || 'teste').slice(0, 18) + ' ' + r.valor + (r.unidade === 'kg' ? 'kg' : (r.unidade === 'segundos' ? 's' : ''));
+    ev.push({ t: r.data + 'T12:00:00', i: '🏃', a: nome(r.aluno_id), id: r.aluno_id, x: x });
+  });
+  const KIND = { '⚠️':'a', '🔔':'a', '🆕':'a', '✅':'t', '🏋️':'t', '🏆':'t', '🏃':'t' };
+  const SH = { '🏆':'PR', '🏃':'teste', '✅':'treino concluído', '⚠️':'dor', '🔔':'pediu novo treino', '🆕':'novo cadastro', '📝':'anamnese', '👁':'abriu o treino', '👀':'abriu o app' };
   ev.forEach(e => { e.k = KIND[e.i] || 'v'; e.s = SH[e.i] || String(e.x || '').split(' · ')[0]; });
   ev.sort((a, b) => new Date(b.t) - new Date(a.t));
   window._mbEv = ev;
