@@ -12812,11 +12812,14 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 #treinoScreen .toprow #tRegistroBtn{grid-column:1;grid-row:2;justify-self:start}
 #treinoScreen .toprow #banner-renovar{grid-column:1/5;grid-row:3}
 #treinoScreen .toprow .dm{width:32px;height:32px;font-size:15px;padding:0}
-.inst-box{display:flex;gap:10px;align-items:center;margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card);font-size:13px;line-height:1.4;color:var(--tx)}
+.inst-box{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card);font-size:13px;line-height:1.4;color:var(--tx)}
 .inst-box .inst-ic{font-size:22px;flex:none}
 .inst-box .inst-tx{flex:1;min-width:0}
 .inst-box .inst-bt{display:flex;flex-direction:column;gap:6px;flex:none}
 .inst-box button{border:none;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:var(--P);color:#fff}
+.inst-box .inst-passos{display:none;flex:1 1 100%;padding-top:8px;border-top:1px solid var(--bd);font-size:12.5px;line-height:1.5}
+.inst-box .inst-passos ol{padding-left:20px;margin:0 0 4px}
+.inst-box .inst-passos li{margin:3px 0}
 .inst-box button.inst-sec{background:transparent;color:var(--t2);font-weight:600;padding:2px 6px}
 #treinoScreen .alunolbl,#tHeaderToggle{display:none!important}
 .semana-strip-dia{padding:3px 0!important;min-height:0!important;line-height:1.15!important;border-radius:12px!important}
@@ -13446,13 +13449,38 @@ function aInstStandalone(){
 function aInstFechar(){ var b = document.getElementById('aInstBox'); if (b) b.remove(); }
 function aInstAdiar(){ try { localStorage.setItem('movh-install-adiar', String(Date.now() + 7 * 86400000)); } catch(x) {} aInstFechar(); }
 function aInstFeito(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); }
+function aInstSO(){
+  var ua = navigator.userAgent || '';
+  return {
+    ios: /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+    and: /Android/.test(ua),
+    inapp: /Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|Twitter/.test(ua)
+  };
+}
+function aInstPassos(so, en){
+  var p;
+  if (so.ios && so.inapp) p = en
+    ? ['You are inside another app. Tap <b>⋯</b> (or the compass icon) and choose <b>Open in Safari</b>.', 'Then come back here and tap <b>Install</b> again.']
+    : ['Você está dentro de outro app. Toque em <b>⋯</b> (ou no ícone de bússola) e em <b>Abrir no Safari</b>.', 'Depois volte aqui e toque em <b>Instalar</b> de novo.'];
+  else if (so.ios) p = en
+    ? ['Tap <b>Share</b> ⬆️ (bottom bar of Safari; if you do not see it, tap ⋯ then Share).', 'Scroll and tap <b>Add to Home Screen</b>.', 'Tap <b>Add</b>. If <b>Open as Web App</b> shows up, keep it on.', 'Open <b>MOVH</b> from the new icon and sign in (first time only).']
+    : ['Toque em <b>Compartilhar</b> ⬆️ (barra de baixo do Safari; se não aparecer, toque em ⋯ e depois em Compartilhar).', 'Role a lista e toque em <b>Adicionar à Tela de Início</b>.', 'Toque em <b>Adicionar</b>. Se aparecer <b>Abrir como app</b>, deixe ligado.', 'Abra o <b>MOVH</b> pelo ícone novo e entre com seu e-mail e senha (só na primeira vez).'];
+  else p = en
+    ? ['Tap the browser menu <b>⋮</b> (Chrome).', 'Choose <b>Install app</b> (or <b>Add to Home screen</b>).', 'Confirm with <b>Install</b>.', 'Open <b>MOVH</b> from the new icon. Sign in if asked.']
+    : ['Toque no menu <b>⋮</b> do navegador (Chrome).', 'Escolha <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).', 'Confirme em <b>Instalar</b>.', 'Abra o <b>MOVH</b> pelo ícone novo. Se pedir, entre com seu e-mail e senha.'];
+  return '<ol>' + p.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ol>';
+}
 function aInstallClick(){
-  if (!aInstEvt) return;
-  var ev = aInstEvt; aInstEvt = null;
-  try {
-    ev.prompt();
-    ev.userChoice.then(function(c){ if (c && c.outcome === 'accepted') aInstFeito(); else aInstAdiar(); }).catch(function(){ aInstAdiar(); });
-  } catch(x) { aInstAdiar(); }
+  if (aInstEvt) {
+    var ev = aInstEvt; aInstEvt = null;
+    try {
+      ev.prompt();
+      ev.userChoice.then(function(c){ if (c && c.outcome === 'accepted') aInstFeito(); else aInstAdiar(); }).catch(function(){ aInstAdiar(); });
+    } catch(x) { aInstAdiar(); }
+    return;
+  }
+  var pn = document.getElementById('aInstPassos');
+  if (pn) pn.style.display = (pn.style.display === 'block') ? 'none' : 'block';
 }
 function aInstallInit(){
   try {
@@ -13462,29 +13490,22 @@ function aInstallInit(){
     if (localStorage.getItem('movh-install') === 'done') return;
     var adiar = parseInt(localStorage.getItem('movh-install-adiar') || '0', 10);
     if (adiar && Date.now() < adiar) return;
-    var ua = navigator.userAgent || '';
-    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    var and = /Android/.test(ua);
-    var en = (typeof aLang !== 'undefined' && aLang === 'en');
-    var msg, ic = '📲', go = '';
-    if (aInstEvt) {
-      msg = en ? '<b>Install MOVH</b> on your phone: opens full screen, like an app.' : '<b>Instale o MOVH</b> no celular: abre direto, em tela cheia, como um app.';
-      go = '<button onclick="aInstallClick()">' + (en ? 'Install' : 'Instalar') + '</button>';
-    } else if (ios) {
-      msg = en ? '<b>Install MOVH</b>: tap <b>Share</b> (or ⋯ then Share) and choose <b>Add to Home Screen</b>.'
-               : '<b>Instale o MOVH</b>: toque em <b>Compartilhar</b> (ou em ⋯ e depois Compartilhar) e escolha <b>Adicionar à Tela de Início</b>.';
-    } else if (and) {
-      if (aInstWait !== 'done') {
-        if (!aInstWait) { aInstWait = 'w'; setTimeout(function(){ aInstWait = 'done'; aInstallInit(); }, 4000); }
-        return;
-      }
-      msg = en ? '<b>Install MOVH</b>: tap the browser menu ⋮ and choose <b>Install app</b> (or <b>Add to Home screen</b>).'
-               : '<b>Instale o MOVH</b>: toque no menu ⋮ do navegador e escolha <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).';
-    } else { return; }
+    var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
+    if (!aInstEvt) {
+      if (so.and) {
+        if (aInstWait !== 'done') {
+          if (!aInstWait) { aInstWait = 'w'; setTimeout(function(){ aInstWait = 'done'; aInstallInit(); }, 4000); }
+          return;
+        }
+      } else if (!so.ios) { return; }
+    }
     var box = document.createElement('div'); box.id = 'aInstBox'; box.className = 'inst-box';
-    box.innerHTML = '<span class="inst-ic">' + ic + '</span><div class="inst-tx">' + msg + '</div><div class="inst-bt">' + go
-      + '<button class="inst-sec" onclick="aInstAdiar()">' + (en ? 'Not now' : 'Agora não') + '</button>'
-      + (go ? '' : '<button class="inst-sec" onclick="aInstFeito()">' + (en ? 'Already did' : 'Já instalei') + '</button>') + '</div>';
+    box.innerHTML = '<span class="inst-ic">📲</span><div class="inst-tx">'
+      + (en ? '<b>Install MOVH</b> on your phone: opens full screen, like an app.' : '<b>Instale o MOVH</b> no celular: abre direto, em tela cheia, como um app.')
+      + '</div><div class="inst-bt"><button onclick="aInstallClick()">' + (en ? 'Install' : 'Instalar') + '</button>'
+      + '<button class="inst-sec" onclick="aInstAdiar()">' + (en ? 'Not now' : 'Agora não') + '</button></div>'
+      + '<div id="aInstPassos" class="inst-passos">' + aInstPassos(so, en)
+      + '<button class="inst-sec" onclick="aInstFeito()">' + (en ? 'Already installed' : 'Já instalei') + '</button></div>';
     var w = document.querySelector('#treinoScreen .wrap'); if (w) w.insertBefore(box, w.firstChild);
   } catch(x) {}
 }
