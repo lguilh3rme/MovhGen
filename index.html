@@ -2115,7 +2115,13 @@ function setSemFoco(sid,campo,v){
 // a partir da fase do mesociclo (mesmo sistema usado na musculação), sem exigir
 // que o professor digite nada extra além de marcar "progressão automática".
 // Puramente informativo — não altera o que já está digitado em duracao/zonaFC.
-function condSugestao(faseKey, duracaoBase, zonaBase){
+// Rampa de duração do condicionamento na fase Base (ciclos de 4 sem): 3 sem de carga (+8%/sem) + 1 de assimilação;
+// o 2º ciclo parte 12% acima do 1º (teto ~+28% em 8 sem). Retorna fator e se é semana de assimilação.
+function condFatorBase(w){
+  w=Math.max(1,parseInt(w)||1);const k=(w-1)%4,c=Math.floor((w-1)/4);
+  return{f:1+0.12*c+(k===3?0:0.08*k),assim:k===3,ciclo:c};
+}
+function condSugestao(faseKey, duracaoBase, zonaBase, sem, durSem){
   const ft=FASES_TEMPLATE[faseKey];
   if(!ft)return null;
   const m=String(duracaoBase||'').match(/(\d+)/);
@@ -2128,6 +2134,12 @@ function condSugestao(faseKey, duracaoBase, zonaBase){
     zonaSug=zonas[Math.max(zIdx-1,0)]; obsTxt='foco em técnica e condicionamento inicial (iniciante/retorno)';
   } else if(faseKey==='base'){
     minutos=minBase; zonaSug=zonaBase||'Z2'; obsTxt='ritmo constante, construção de base (hard sets)';
+    if(minBase){
+      const N=parseInt(durSem)||8,w=parseInt(sem)||0,mm=x=>Math.min(Math.round(minBase*condFatorBase(x).f),Math.round(minBase*1.3));
+      const regra='+8%/sem de duração (sem 4 e 8 = assimilação); ~80% em Z1–Z2 (fala frases curtas); dor ou RPE ≥9: repita a semana anterior';
+      if(w){const r=condFatorBase(w);minutos=mm(w);obsTxt=(r.assim?'semana de assimilação: consolida, só Z2, sem intervalado':'semana de carga '+w+'/'+N+(w>1?': +8% sobre a anterior':': duração de partida'))+'; ~80% em Z1–Z2'+((!r.assim&&r.ciclo>=1)?'; opcional 1 sessão/sem de qualidade Z4 (4 × 3-4 min, 2-3 min leve) se RPE ≤7 e sem dor':'')+'; dor ou RPE ≥9: repita a semana anterior';}
+      else{let pk=1;for(let x=2;x<=N;x++){if(mm(x)>mm(pk))pk=x;}return{duracaoTxt:mm(1)+' min (sem 1) → pico '+mm(pk)+' min (sem '+pk+')',zonaTxt:zonaSug,obsTxt:regra};}
+    }
   }
   return{
     duracaoTxt:minutos?minutos+' min':(duracaoBase||'—'),
@@ -2325,7 +2337,7 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">✅ Treino ativo do aluno</span>':'<span class="pb-badge pb-rasc">📝 Rascunho inativo · não está em vigor</span>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">✅ Treino ativo'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':'<span class="pb-badge pb-rasc">📝 Rascunho inativo · não está em vigor</span>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 function pbProximaFase(){
   if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
@@ -3609,7 +3621,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v61.8 · 08/11';
+var MOVH_VER = 'v61.9 · 08/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4046,6 +4058,15 @@ function faseDatasDe(arr,ini){
   return out;
 }
 function kbFaseDatas(){return faseDatasDe(semanas,(typeof mbProtoDataInicio!=='undefined')?mbProtoDataInicio:null);}
+// Período do treino (início = data_inicio; fim = fimPrevisto manual ou soma das fases). Retorna texto 'dd/mm/aa → dd/mm/aa' ou ''.
+function mbPeriodoTxt(ini,c){
+  if(!ini)return '';
+  c=c||{};const f2=d=>String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+String(d.getFullYear()).slice(2);
+  const a=new Date(ini+'T00:00:00');let b=null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(c.fimPrevisto||''))b=new Date(c.fimPrevisto+'T00:00:00');
+  else{const ds=faseDatasDe(c.semanas||[],ini),u=ds.length?ds[ds.length-1].b:null;if(u)b=u;}
+  return f2(a)+(b?' → '+f2(b):'');
+}
 // índice da fase vigente por data: a que contém hoje; vencido → última; ainda não começou → primeira
 function faseIdxHoje(datas){
   const h=new Date();h.setHours(0,0,0,0);
@@ -6620,7 +6641,7 @@ function renderDia(did){
             Progressão automática (deriva da fase do mesociclo: ${semObj&&semObj.fase&&FASES_TEMPLATE[semObj.fase]?FASES_TEMPLATE[semObj.fase].emoji+' '+FASES_TEMPLATE[semObj.fase].label:'defina a fase acima'})
           </label>
         </div>
-        ${b.progressaoAuto&&semObj&&semObj.fase&&b.duracao?(()=>{const sug=condSugestao(semObj.fase,b.duracao,b.zonaFC);return sug?`<div style="margin-top:6px;padding:8px 10px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs);font-size:10.5px;color:var(--t2)"><b style="color:var(--tx)">📍 Sugestão calculada:</b> ${sug.duracaoTxt} · ${sug.zonaTxt}${sug.obsTxt?' · '+sug.obsTxt:''}</div>`:'';})():''}
+        ${b.progressaoAuto&&semObj&&semObj.fase&&b.duracao?(()=>{const sug=condSugestao(semObj.fase,b.duracao,b.zonaFC,null,semObj.duracaoSemanas);return sug?`<div style="margin-top:6px;padding:8px 10px;background:var(--cl);border:1px solid var(--bd2);border-radius:var(--rs);font-size:10.5px;color:var(--t2)"><b style="color:var(--tx)">📍 Sugestão calculada:</b> ${sug.duracaoTxt} · ${sug.zonaTxt}${sug.obsTxt?' · '+sug.obsTxt:''}</div>`:'';})():''}
         ${mcExsHTML}
         </div>
       </div>`;
@@ -10945,7 +10966,7 @@ async function mbGerenciarProtocolos(alunoId) {
     html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:linear-gradient(135deg,rgba(8,80,64,.12),rgba(8,80,64,.04));border:1px solid #9ad8c2;margin-bottom:10px">
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:700;color:var(--tx)">${escAttr(nome)} <span style="font-size:9px;background:#E0F5EE;color:#085040;padding:2px 6px;border-radius:99px;font-weight:700;margin-left:6px">✅ ATIVO</span></div>
-        <div style="font-size:10px;color:var(--t3);margin-top:2px">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · criado ${criado}${fimTxt}</div>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · ${ativo.data_inicio?('📅 '+mbPeriodoTxt(ativo.data_inicio,c)):('criado '+criado)}${fimTxt.replace(/^ · fim previsto [0-9\/]+/,'')}</div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${ativo.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>
@@ -15429,7 +15450,11 @@ function aCalcularAgendaHoje(proto, semanas, dataAlvoISO){
 // Mesma lógica de condSugestao() do Gerador, replicada aqui pro app do aluno
 // (puramente informativo — deriva duração/zona sugeridas a partir da fase do
 // mesociclo, sem mudar nada do que o professor já digitou).
-function aCondSugestao(faseKey, duracaoBase, zonaBase){
+function aCondFatorBase(w){
+  w = Math.max(1, parseInt(w) || 1); const k = (w-1)%4, c = Math.floor((w-1)/4);
+  return { f: 1 + 0.12*c + (k===3 ? 0 : 0.08*k), assim: k===3, ciclo: c };
+}
+function aCondSugestao(faseKey, duracaoBase, zonaBase, sem, durSem){
   const ft = aFasesTemplate()[faseKey];
   if (!ft) return null;
   const m = String(duracaoBase||'').match(/(\\d+)/);
@@ -15439,6 +15464,12 @@ function aCondSugestao(faseKey, duracaoBase, zonaBase){
   let minutos = minBase, zonaSug = zonaBase || 'Z2', obsTxt = '';
   if (faseKey === 'base') {
     minutos = minBase; zonaSug = zonaBase || 'Z2'; obsTxt = 'ritmo constante, construção de base';
+    const w = parseInt(sem) || 0;
+    if (minBase && w) {
+      const N = parseInt(durSem) || 8, r = aCondFatorBase(w);
+      minutos = Math.min(Math.round(minBase*r.f), Math.round(minBase*1.3));
+      obsTxt = (r.assim ? 'semana de assimilação: consolida, só Z2, sem intervalado' : 'semana de carga ' + w + '/' + N + (w > 1 ? ': +8% sobre a anterior' : ': duração de partida')) + '; ~80% em Z1–Z2 (fala frases curtas)' + ((!r.assim && r.ciclo >= 1) ? '; opcional 1 sessão/sem de qualidade Z4 (4 × 3-4 min, 2-3 min leve) se RPE ≤7 e sem dor' : '') + '; dor ou RPE ≥9: repita a semana anterior';
+    }
   } else if (faseKey === 'intensificacao') {
     minutos = minBase ? Math.max(10, Math.round(minBase*0.85)) : minBase;
     zonaSug = zonas[Math.min(zIdx+1,4)]; obsTxt = 'menos duração, mais intensidade';
@@ -15467,7 +15498,7 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
     const zonaChip = b.zonaFC ? '<span class="cond-chip">💓 '+aEsc(A_ZONA_FC_LABEL[b.zonaFC]||b.zonaFC)+'</span>' : '';
     let progHTML = '';
     if (b.progressaoAuto && faseAtual) {
-      const sug = aCondSugestao(faseAtual, b.duracao, b.zonaFC);
+      const sug = aCondSugestao(faseAtual, b.duracao, b.zonaFC, semanaDentroFase, duracaoSemanas);
       if (sug) {
         progHTML = '<div class="cond-prog">📍 Hoje: ' + aEsc(sug.duracaoTxt) + ' · ' + aEsc(sug.zonaTxt) + (sug.obsTxt ? ' — ' + aEsc(sug.obsTxt) : '') + '</div>';
       }
