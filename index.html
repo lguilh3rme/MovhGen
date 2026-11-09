@@ -12802,6 +12802,8 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .toprow{position:static!important;justify-content:flex-end;margin:0 0 6px}
 body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .regbtn{padding:6px 12px!important;font-size:12px!important}
+#treinoScreen .toprow #tInstBtn{grid-column:1;grid-row:2;justify-self:start;animation:none!important;box-shadow:none!important;background:transparent!important;color:var(--Pd)!important;border:1px solid color-mix(in srgb,var(--P) 55%,transparent)!important}
+#treinoScreen .toprow #tRegistroBtn[style*="inline-block"] ~ #tInstBtn{grid-row:3}
 /* v62.2: topo em grade — 1) saudação + 🔄 + tema + ❌; 2) registro/aviso à esquerda e relógio sob os botões; 3) aviso de renovação. Rola com a página (static) */
 #treinoScreen .toprow{position:static!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto auto auto;column-gap:8px;row-gap:4px;align-items:center;padding:10px 12px 0!important;margin:0 0 6px}
 #treinoScreen .toprow #tSaudacaoTitulo{grid-column:1;grid-row:1;margin:0!important;font-size:17px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -13108,6 +13110,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
   <div class="toprow">
     <div class="pt" id="tSaudacaoTitulo">Bom treino! 👊</div>
     <button id="tRegistroBtn" class="regbtn" style="display:none" onclick="aIrParaRegistro()">Fazer o registro</button>
+    <button id="tInstBtn" class="regbtn instbtn" style="display:none" onclick="aInstallClick()">📲 Instalar</button>
     <button id="banner-renovar" style="display:none" class="banner-renovar" onclick="aAbrirRenovar()" title="Renovar agora">
       <span id="banner-renovar-txt">⚠️ Acesso vence em breve</span>
     </button>
@@ -13474,7 +13477,8 @@ if ('serviceWorker' in navigator) window.addEventListener('load', function(){ na
 function aInstStandalone(){
   try { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch(x) { return false; }
 }
-function aInstFechar(){ var b = document.getElementById('aInstBox'); if (b) b.remove(); }
+var aInstAguardando = false;
+function aInstFechar(){ var b = document.getElementById('tInstBtn'); if (b) b.style.display = 'none'; var o = document.getElementById('aInstBox'); if (o) o.remove(); }
 function aInstAdiar(){ try { localStorage.setItem('movh-install-adiar', String(Date.now() + 7 * 86400000)); } catch(x) {} aInstFechar(); }
 function aInstFeito(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); }
 function aInstSO(){
@@ -13485,9 +13489,17 @@ function aInstSO(){
     inapp: /Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|Twitter/.test(ua)
   };
 }
-// Android: o diálogo nativo de instalação abre sozinho no primeiro toque do aluno (o navegador exige um toque).
-// iOS: a Apple não permite instalar por código; o botão Instalar abre direto o menu Compartilhar.
+// Botão "Instalar" na linha do topo (igual ao "Fazer o registro"), só aparece se precisar.
+// Android: abre o diálogo nativo e some sozinho ao instalar. iOS: abre o Compartilhar e o botão vira
+// "Já instalei" (a Apple não avisa a instalação); o app aberto pela tela de início nunca mostra o botão.
+function aToastApp(msg){
+  var t = document.getElementById('aToastApp');
+  if (!t) { t = document.createElement('div'); t.id = 'aToastApp'; t.style.cssText = 'position:fixed;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:900;background:var(--tx);color:var(--bg);border-radius:12px;padding:10px 14px;font-size:13px;text-align:center;display:none;max-width:380px;margin:0 auto'; document.body.appendChild(t); }
+  t.textContent = msg; t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(function(){ t.style.display = 'none'; }, 4000);
+}
 function aInstallClick(){
+  var en = (typeof aLang !== 'undefined' && aLang === 'en');
+  if (aInstAguardando) { aInstFeito(); return; }
   if (aInstEvt) {
     var ev = aInstEvt; aInstEvt = null;
     try {
@@ -13496,33 +13508,25 @@ function aInstallClick(){
     } catch(x) { aInstAdiar(); }
     return;
   }
-  var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
-  var dica = document.getElementById('aInstDica');
-  if (dica) dica.innerHTML = so.inapp ? (en ? 'Open this link in Safari to install.' : 'Abra este link no Safari para instalar.')
-    : (en ? 'Now tap <b>Add to Home Screen</b> (scroll the list).' : 'Agora toque em <b>Adicionar à Tela de Início</b> (role a lista).');
-  if (!so.inapp && navigator.share) { try { navigator.share({ title: 'MOVH', url: location.href.split('#')[0] }).catch(function(){}); } catch(x) {} }
+  var so = aInstSO();
+  if (so.inapp) { aToastApp(en ? 'Open this link in Safari to install.' : 'Abra este link no Safari para instalar.'); return; }
+  aToastApp(en ? 'Tap Add to Home Screen (scroll the list).' : 'Toque em Adicionar à Tela de Início (role a lista).');
+  if (navigator.share) { try { navigator.share({ title: 'MOVH', url: location.href.split('#')[0] }).catch(function(){}); } catch(x) {} }
+  aInstAguardando = true;
+  var b = document.getElementById('tInstBtn'); if (b) b.textContent = en ? '✓ Installed' : '✓ Já instalei';
   try { localStorage.setItem('movh-install-adiar', String(Date.now() + 3 * 86400000)); } catch(x) {}
 }
 function aInstallInit(){
   try {
-    if (document.getElementById('aInstBox') || aInstStandalone()) return;
+    var b = document.getElementById('tInstBtn'); if (!b) return;
     var ts = document.getElementById('treinoScreen');
-    if (!ts || getComputedStyle(ts).display === 'none') return;
-    if (localStorage.getItem('movh-install') === 'done') return;
-    var adiar = parseInt(localStorage.getItem('movh-install-adiar') || '0', 10);
-    if (adiar && Date.now() < adiar) return;
     var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
-    if (so.and && aInstEvt) {
-      if (!aInstArmado) { aInstArmado = true; document.addEventListener('click', aInstallClick, { capture: true, once: true }); }
-      return;
-    }
-    if (!so.ios) return;
-    var box = document.createElement('div'); box.id = 'aInstBox'; box.className = 'inst-box';
-    box.innerHTML = '<span class="inst-ic">📲</span><div class="inst-tx">'
-      + (en ? '<b>Install MOVH</b> on your phone: opens full screen, like an app.' : '<b>Instale o MOVH</b> no celular: abre direto, em tela cheia, como um app.')
-      + '<div id="aInstDica" class="inst-dica"></div></div><div class="inst-bt"><button onclick="aInstallClick()">' + (en ? 'Install' : 'Instalar') + '</button>'
-      + '<button class="inst-sec" onclick="aInstAdiar()">' + (en ? 'Not now' : 'Agora não') + '</button></div>';
-    var w = document.querySelector('#treinoScreen .wrap'); if (w) w.insertBefore(box, w.firstChild);
+    var adiar = parseInt(localStorage.getItem('movh-install-adiar') || '0', 10);
+    var esconde = aInstStandalone() || !ts || getComputedStyle(ts).display === 'none' || localStorage.getItem('movh-install') === 'done'
+      || (adiar && Date.now() < adiar && !aInstAguardando) || !(so.ios || (so.and && aInstEvt));
+    if (esconde) { b.style.display = 'none'; return; }
+    b.style.display = 'inline-block';
+    if (!aInstAguardando) b.textContent = '📲 ' + (en ? 'Install' : 'Instalar');
   } catch(x) {}
 }
 // Saudação do topo: começa em 17px e encolhe (até 12px) só o necessário para caber ao lado dos botões.
@@ -14489,7 +14493,7 @@ function aSeriesChaveHoje(){ const h=new Date(); return 'movh-series-'+h.getFull
 function aSeriesSalvar(){ if (window._movhPreview) return; try { localStorage.setItem(aSeriesChaveHoje(), JSON.stringify(aSeriesFeitas)); } catch(e){} }
 function aIniciarDescanso(txtOriginal, nomeExercicio, eid){
   const segundos = aParseTempoParaSegundos(txtOriginal);
-  if (!segundos || segundos <= 0) { notify(aLang==='en' ? "Couldn't read this rest time." : 'Não consegui entender esse tempo de descanso.'); return; }
+  if (!segundos || segundos <= 0) { aToastApp(aLang==='en' ? "Couldn't read this rest time." : 'Não consegui entender esse tempo de descanso.'); return; }
   if ('Notification' in window && Notification.permission === 'default') {
     try { Notification.requestPermission(); } catch(e){}
   }
