@@ -12817,9 +12817,7 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .inst-box .inst-tx{flex:1;min-width:0}
 .inst-box .inst-bt{display:flex;flex-direction:column;gap:6px;flex:none}
 .inst-box button{border:none;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;background:var(--P);color:#fff}
-.inst-box .inst-passos{display:none;flex:1 1 100%;padding-top:8px;border-top:1px solid var(--bd);font-size:12.5px;line-height:1.5}
-.inst-box .inst-passos ol{padding-left:20px;margin:0 0 4px}
-.inst-box .inst-passos li{margin:3px 0}
+.inst-box .inst-dica{margin-top:4px;font-size:12px;color:var(--t2)}
 .inst-box button.inst-sec{background:transparent;color:var(--t2);font-weight:600;padding:2px 6px}
 #treinoScreen .alunolbl,#tHeaderToggle{display:none!important}
 .semana-strip-dia{padding:3px 0!important;min-height:0!important;line-height:1.15!important;border-radius:12px!important}
@@ -13439,7 +13437,7 @@ function aAtualizarRelogio(){
   if (elAuthTop) { elAuthTop.textContent = txt; elAuthTop.style.color = cor; }
 }
 // ── Instalar como app (PWA): Android = botão nativo; iOS = passo a passo; some quando já está instalado ──
-var aInstEvt = null, aInstWait = '';
+var aInstEvt = null, aInstArmado = false;
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); aInstEvt = e; try { aInstallInit(); } catch(x) {} });
 window.addEventListener('appinstalled', function(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); });
 if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
@@ -13457,19 +13455,8 @@ function aInstSO(){
     inapp: /Instagram|FBAN|FBAV|FB_IAB|Snapchat|TikTok|Twitter/.test(ua)
   };
 }
-function aInstPassos(so, en){
-  var p;
-  if (so.ios && so.inapp) p = en
-    ? ['You are inside another app. Tap <b>⋯</b> (or the compass icon) and choose <b>Open in Safari</b>.', 'Then come back here and tap <b>Install</b> again.']
-    : ['Você está dentro de outro app. Toque em <b>⋯</b> (ou no ícone de bússola) e em <b>Abrir no Safari</b>.', 'Depois volte aqui e toque em <b>Instalar</b> de novo.'];
-  else if (so.ios) p = en
-    ? ['Tap <b>Share</b> ⬆️ (bottom bar of Safari; if you do not see it, tap ⋯ then Share).', 'Scroll and tap <b>Add to Home Screen</b>.', 'Tap <b>Add</b>. If <b>Open as Web App</b> shows up, keep it on.', 'Open <b>MOVH</b> from the new icon and sign in (first time only).']
-    : ['Toque em <b>Compartilhar</b> ⬆️ (barra de baixo do Safari; se não aparecer, toque em ⋯ e depois em Compartilhar).', 'Role a lista e toque em <b>Adicionar à Tela de Início</b>.', 'Toque em <b>Adicionar</b>. Se aparecer <b>Abrir como app</b>, deixe ligado.', 'Abra o <b>MOVH</b> pelo ícone novo e entre com seu e-mail e senha (só na primeira vez).'];
-  else p = en
-    ? ['Tap the browser menu <b>⋮</b> (Chrome).', 'Choose <b>Install app</b> (or <b>Add to Home screen</b>).', 'Confirm with <b>Install</b>.', 'Open <b>MOVH</b> from the new icon. Sign in if asked.']
-    : ['Toque no menu <b>⋮</b> do navegador (Chrome).', 'Escolha <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>).', 'Confirme em <b>Instalar</b>.', 'Abra o <b>MOVH</b> pelo ícone novo. Se pedir, entre com seu e-mail e senha.'];
-  return '<ol>' + p.map(function(t){ return '<li>' + t + '</li>'; }).join('') + '</ol>';
-}
+// Android: o diálogo nativo de instalação abre sozinho no primeiro toque do aluno (o navegador exige um toque).
+// iOS: a Apple não permite instalar por código; o botão Instalar abre direto o menu Compartilhar.
 function aInstallClick(){
   if (aInstEvt) {
     var ev = aInstEvt; aInstEvt = null;
@@ -13479,8 +13466,12 @@ function aInstallClick(){
     } catch(x) { aInstAdiar(); }
     return;
   }
-  var pn = document.getElementById('aInstPassos');
-  if (pn) pn.style.display = (pn.style.display === 'block') ? 'none' : 'block';
+  var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
+  var dica = document.getElementById('aInstDica');
+  if (dica) dica.innerHTML = so.inapp ? (en ? 'Open this link in Safari to install.' : 'Abra este link no Safari para instalar.')
+    : (en ? 'Now tap <b>Add to Home Screen</b> (scroll the list).' : 'Agora toque em <b>Adicionar à Tela de Início</b> (role a lista).');
+  if (!so.inapp && navigator.share) { try { navigator.share({ title: 'MOVH', url: location.href.split('#')[0] }).catch(function(){}); } catch(x) {} }
+  try { localStorage.setItem('movh-install-adiar', String(Date.now() + 3 * 86400000)); } catch(x) {}
 }
 function aInstallInit(){
   try {
@@ -13491,21 +13482,16 @@ function aInstallInit(){
     var adiar = parseInt(localStorage.getItem('movh-install-adiar') || '0', 10);
     if (adiar && Date.now() < adiar) return;
     var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
-    if (!aInstEvt) {
-      if (so.and) {
-        if (aInstWait !== 'done') {
-          if (!aInstWait) { aInstWait = 'w'; setTimeout(function(){ aInstWait = 'done'; aInstallInit(); }, 4000); }
-          return;
-        }
-      } else if (!so.ios) { return; }
+    if (so.and && aInstEvt) {
+      if (!aInstArmado) { aInstArmado = true; document.addEventListener('click', aInstallClick, { capture: true, once: true }); }
+      return;
     }
+    if (!so.ios) return;
     var box = document.createElement('div'); box.id = 'aInstBox'; box.className = 'inst-box';
     box.innerHTML = '<span class="inst-ic">📲</span><div class="inst-tx">'
       + (en ? '<b>Install MOVH</b> on your phone: opens full screen, like an app.' : '<b>Instale o MOVH</b> no celular: abre direto, em tela cheia, como um app.')
-      + '</div><div class="inst-bt"><button onclick="aInstallClick()">' + (en ? 'Install' : 'Instalar') + '</button>'
-      + '<button class="inst-sec" onclick="aInstAdiar()">' + (en ? 'Not now' : 'Agora não') + '</button></div>'
-      + '<div id="aInstPassos" class="inst-passos">' + aInstPassos(so, en)
-      + '<button class="inst-sec" onclick="aInstFeito()">' + (en ? 'Already installed' : 'Já instalei') + '</button></div>';
+      + '<div id="aInstDica" class="inst-dica"></div></div><div class="inst-bt"><button onclick="aInstallClick()">' + (en ? 'Install' : 'Instalar') + '</button>'
+      + '<button class="inst-sec" onclick="aInstAdiar()">' + (en ? 'Not now' : 'Agora não') + '</button></div>';
     var w = document.querySelector('#treinoScreen .wrap'); if (w) w.insertBefore(box, w.firstChild);
   } catch(x) {}
 }
