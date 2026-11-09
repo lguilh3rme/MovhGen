@@ -13495,7 +13495,19 @@ function aInstallInit(){
     var w = document.querySelector('#treinoScreen .wrap'); if (w) w.insertBefore(box, w.firstChild);
   } catch(x) {}
 }
-setInterval(function(){ aInstallInit(); }, 3000);
+// Saudação do topo: começa em 17px e encolhe (até 12px) só o necessário para caber ao lado dos botões.
+function aFitSaudacao(el){
+  try {
+    if (!el || !el.clientWidth) return;
+    var chave = el.textContent + '|' + el.clientWidth;
+    if (el.getAttribute('data-fit') === chave) return;
+    var f = 17; el.style.setProperty('font-size', f + 'px', 'important');
+    while (f > 12 && el.scrollWidth > el.clientWidth + 1) { f--; el.style.setProperty('font-size', f + 'px', 'important'); }
+    el.setAttribute('data-fit', chave);
+  } catch(x) {}
+}
+window.addEventListener('resize', function(){ aFitSaudacao(document.getElementById('tSaudacaoTitulo')); });
+setInterval(function(){ aInstallInit(); aFitSaudacao(document.getElementById('tSaudacaoTitulo')); }, 3000);
 function aAtualizarSaudacao(){
   const h = new Date().getHours();
   const nomeCompleto = (aAlunoRow && aAlunoRow.nome) ? aAlunoRow.nome.trim() : '';
@@ -13509,7 +13521,7 @@ function aAtualizarSaudacao(){
   msg = msg + (primeiroNome ? ', ' + primeiroNome : '') + '! 👊';
   const el = document.getElementById('tSaudacaoTitulo');
   if (el) el.textContent = msg;
-  try { aInstallInit(); } catch(x) {}
+  try { aFitSaudacao(el); aInstallInit(); } catch(x) {}
 }
 function aShowTelARenovar(fim){
   // Remove qualquer tela de renovação existente
