@@ -105,6 +105,7 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 
 ## 13. Lições de processo (consolidado)
 - `[skip netlify]` não evita deploy do app; hospedar só-Gerador no GitHub Pages.
+- v62.4 (Início rápida): `mbCarregarPainelAlunos` dispara as 9 consultas dependentes de `alunoIds` em paralelo (`Q`/`P`); `homeCarregar` roda painel+agenda+notas juntos; `mbRefresh` inicia a Início logo após o login; último render fica em `localStorage` (`movh-home-cache-v1`, 12 h, limpo no logout) e pinta na hora. Teste com latência simulada de 150 ms/consulta: 1971 ms → 311 ms (13 consultas, mesmos números). Ao mexer na Início, manter `homeCacheSalvar()` só no fim do `homeCarregar` (nunca em `homeRender`, que roda com dado parcial).
 - Antes de afirmar "o app mostra X", considerar a progressão automática por fase (`progressaoAuto`) e o piso de séries (`Math.min(2, p.sets)`).
 - Estado/versão: o rótulo `MOVH_VER` é a prova do que está no ar (Ctrl+F5 no GitHub Pages leva ~1 min).
 - Segurança: chaves secretas só em Supabase secrets/Edge Functions, nunca em HTML público.
