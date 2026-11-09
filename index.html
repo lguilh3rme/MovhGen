@@ -13028,6 +13028,36 @@ body.xo-open #movh-descanso-widget{display:none!important}
 .xo-vid.xo-sh{width:min(100%,calc(40vh * 9 / 16));aspect-ratio:9/16;max-height:none;margin:0 auto 10px}
 .xo-fac img{width:100%;height:100%;object-fit:cover;display:block}
 .xo-fac .xo-playbtn{display:grid;place-items:center;background:rgba(0,0,0,.25)}
+/* v62.3: modo exercício inline + anéis de progresso */
+.ec-chip-progresso .sx-cnt{display:none!important}
+.ec .ec-done-wrap{display:none!important}
+.ec .ec-name-row{display:flex!important;align-items:center;gap:6px}
+.ec .ec-n{flex:1 1 auto;min-width:0;cursor:pointer}
+.ec-ring{flex:none;width:34px;height:34px;margin:-6px -6px -6px auto;padding:0;border:0;background:none;position:relative;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ec-ring::before{content:"";position:absolute;left:6px;top:6px;width:22px;height:22px;border-radius:50%;background:conic-gradient(var(--G) var(--p,0%),var(--bd) 0);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));transition:background .25s}
+.ec-ring::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:4.5px;border-left:2px solid var(--G);border-bottom:2px solid var(--G);transform:translate(-50%,-65%) rotate(-45deg);opacity:.4}
+.ec-ring:active::before{transform:scale(.88)}
+.ec.done .ec-ring::before{-webkit-mask:none;mask:none;background:var(--G);box-shadow:0 0 0 3px color-mix(in srgb,var(--G) 18%,transparent)}
+.ec.done .ec-ring::after{border-color:#06210f;opacity:1}
+.bh .bloco-done-btn{border:0!important;background:conic-gradient(var(--G) var(--bp,0%),var(--bd) 0)!important;position:relative}
+.bh .bloco-done-btn::before{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--card)}
+.bh .bloco-done-btn::after{position:relative;z-index:1}
+.bloco.bloco-concluido .bh .bloco-done-btn{background:var(--G)!important}
+.bloco.bloco-concluido .bh .bloco-done-btn::before{background:var(--G)}
+.bloco.bloco-concluido .bh .bloco-done-btn::after{opacity:1}
+.ec.xi-open{background:color-mix(in srgb,var(--P) 7%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--P) 55%,transparent);border-radius:12px}
+.xi{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.xi-dots{display:flex;gap:8px;flex-wrap:wrap}
+.xi .xo-dot{width:34px;height:34px;font-size:14px}
+.xi .xo-dot.cur{animation:ecDica 1.6s ease-in-out infinite}
+.xi-row{display:flex;align-items:center;gap:6px}
+.xi-b{flex:none;width:34px;height:36px;border-radius:10px;border:1px solid var(--bd);background:var(--cl,var(--bd));color:var(--tx);font-size:18px;font-weight:800;cursor:pointer;font-family:inherit;padding:0}
+.xi-c{flex:none;width:86px;height:36px;display:flex;align-items:center;gap:3px;border:1px solid var(--bd);border-radius:10px;background:var(--card);padding:0 8px;box-sizing:border-box}
+.xi-c input{width:100%;min-width:0;border:0;background:transparent;color:var(--tx);font-size:16px;font-weight:800;font-family:inherit;text-align:right;outline:none;padding:0;margin:0;-moz-appearance:textfield}
+.xi-c span{font-size:11px;color:var(--t2);font-weight:700}
+.xi .xo-btn.xi-go{flex:1;min-width:0;height:36px;padding:0 8px!important;font-size:13.5px!important;border-radius:10px!important}
+.xi .xo-btn.xi-go.ok{background:var(--G);color:#06210f}
+.xi .xo-info{text-align:left;margin:0;font-size:11.5px}
 .xo-fac .xo-playbtn i{width:52px;height:52px;border-radius:50%;background:rgba(214,40,57,.95);color:#fff;font-style:normal;font-size:18px;display:grid;place-items:center}
 </style>
 </head>
@@ -14482,6 +14512,7 @@ function aSeriesAtualizarUI(eid){
   const contTxt = document.getElementById(eid + '-series-count');
   if (contTxt) contTxt.textContent = (total && feitas >= total ? '✓ ' : '') + feitas + (contTxt.classList.contains('sx-cnt') ? '/' : '/' + total);
   badge.style.setProperty('--fill', (total ? Math.min(100, (feitas/total)*100) : 0) + '%');
+  const rg = document.getElementById(eid + '-ring'); if (rg) rg.style.setProperty('--p', (total ? Math.min(100, (feitas/total)*100) : 0) + '%');
   badge.classList.toggle('ec-chip-completo', !!total && feitas >= total);
   const card = document.getElementById(eid);
   if (card) aAtualizarBlocoProgresso(card.closest('.bloco'));
@@ -14616,35 +14647,44 @@ function aXoBarraProximo(){
   if (!box) return;
   const todos = [].slice.call(document.querySelectorAll('#tDashConteudo .ec'));
   const prox = todos.find(function(c){ return !c.classList.contains('done'); });
-  if (!prox || !todos.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  if (!prox || !todos.length || document.getElementById('aXi')) { box.style.display = 'none'; box.innerHTML = ''; return; }
   const i = aXoInfo(prox.id);
   const ult = aUltimaCargaPorExercicio[i.nome];
   const sub = (ult && ult.carga != null) ? ((aLang==='en'?'last load ':'última carga ') + ult.carga + ' kg') : (i.total ? i.total + ' ' + (aLang==='en'?'sets':'séries') : '');
   box.innerHTML = '<div class="xn-t"><b>' + aEsc(i.nome) + '</b><span>' + aEsc(sub) + '</span></div><button class="xo-btn" data-eid="' + prox.id + '" onclick="aXoAbrir(this.dataset.eid)">' + (aLang==='en'?'Start':'Iniciar') + '</button>';
   box.style.display = 'flex';
 }
+// Modo exercício INLINE: abre dentro do próprio cartão (sem tela separada)
 function aXoAbrir(eid){
-  aXoEid = eid; aXoVid = false; aXoPlay = false;
-  const el = document.getElementById('aXo');
-  if (!el) return;
-  el.style.display = 'flex';
-  document.body.classList.add('xo-open');
+  const card = document.getElementById(eid);
+  if (!card) return;
+  aXoEid = eid;
+  const body = card.closest('.exl');
+  if (body && body.style.display === 'none') {
+    body.style.display = 'block';
+    const bl = card.closest('.bloco'); const arr = bl ? bl.querySelector('.bh .bt-arr') : null;
+    if (arr) arr.style.transform = 'rotate(0deg)';
+  }
   aXoRender();
-  clearInterval(aXoTimer);
-  aXoTimer = setInterval(aXoTick, 500);
+  aXoBarraProximo();
+  try { card.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e){}
+  if (aDicaSeriesAtiva()) aDicaSeriesFechar();
 }
 function aXoFechar(){
-  clearInterval(aXoTimer);
-  const el = document.getElementById('aXo');
-  if (el) { el.style.display = 'none'; el.innerHTML = ''; }
-  document.body.classList.remove('xo-open');
+  const el = document.getElementById('aXi');
+  if (el) el.remove();
+  document.querySelectorAll('.ec.xi-open').forEach(function(c){ c.classList.remove('xi-open'); });
   aXoEid = null;
-  aAtualizarProgressoSessao();
+  aXoBarraProximo();
 }
 function aXoRender(){
-  const el = document.getElementById('aXo');
   const i = aXoEid ? aXoInfo(aXoEid) : null;
-  if (!el || !i) { aXoFechar(); return; }
+  if (!i) { aXoFechar(); return; }
+  document.querySelectorAll('.ec.xi-open').forEach(function(c){ if (c !== i.card) c.classList.remove('xi-open'); });
+  i.card.classList.add('xi-open');
+  let el = document.getElementById('aXi');
+  if (!el) { el = document.createElement('div'); el.id = 'aXi'; el.className = 'xi'; }
+  if (el.parentNode !== i.card) i.card.appendChild(el);
   const tot = i.total || 1;
   const feitas = Math.min(aSeriesFeitas[aXoEid] || 0, tot);
   const completo = feitas >= tot;
@@ -14656,23 +14696,17 @@ function aXoRender(){
   let rec = 0;
   (aTodosRegistros || []).forEach(function(r){ if (r.exercicio_nome === i.nome && r.carga != null && r.carga > rec) rec = r.carga; });
   const cin = document.getElementById(aXoEid + '-carga');
-  const carga = cin && cin.value !== '' ? cin.value : '';
-  let vid = '';
-  if (i.emb) {
-    vid = '<button class="xo-vmini" data-emb="' + aEsc(i.emb) + '" data-sh="' + (i.sh ? '1' : '0') + '" onclick="aAbrirVideoModal(this.dataset.emb,this.dataset.sh==1)"><i>▶</i><div><b>' + (aLang==='en'?'Watch form':'Ver execução') + '</b><span>' + (aLang==='en'?'tap to open the video':'toque para abrir o vídeo') + '</span></div></button>';
-  }
+  let carga = cin && cin.value !== '' ? cin.value : '';
+  if (carga === '' && ult && ult.carga != null) { carga = String(ult.carga); aXoGravarCarga(carga); }
   const info = [ (ult && ult.carga != null) ? ((aLang==='en'?'Last time ':'Última vez ') + ult.carga + ' kg') : '', rec ? ('🏆 ' + (aLang==='en'?'best ':'recorde ') + rec + ' kg') : '' ].filter(Boolean).join(' · ');
+  const rotulo = completo ? (aLang==='en'?'Next exercise':'Próximo exercício') : ((aLang==='en'?'Finish set ':'Concluir série ') + (feitas + 1));
   el.innerHTML =
-    '<div class="xo-top"><button class="xo-pill" onclick="aXoFechar()">← ' + (aLang==='en'?'Workout':'Treino') + '</button><span class="xo-pill" style="cursor:default">' + feitas + ' / ' + tot + '</span></div>' +
-    vid +
-    '<h2>' + aEsc(i.nome) + '</h2>' +
-    '<div class="xo-sub">' + (i.total ? i.total + ' × ' + aEsc(i.reps) : aEsc(i.reps)) + (i.rest ? ' · ' + (aLang==='en'?'rest ':'descanso ') + aEsc(i.rest) : '') + '</div>' +
-    '<div class="xo-dots">' + dots + '</div>' +
-    '<div class="xo-carga"><div><small>' + (aLang==='en'?'LOAD':'CARGA') + '</small><strong id="aXoCarga">' + (carga !== '' ? aEsc(carga) + ' kg' : '— kg') + '</strong></div><div class="b"><button onclick="aXoAjustar(-2.5)">−</button><button onclick="aXoAjustar(2.5)">+</button></div></div>' +
-    '<div class="xo-rest" id="aXoRest" style="display:none"><small>' + (aLang==='en'?'REST':'DESCANSO') + '</small><b id="aXoRestT">0:00</b></div>' +
-    (info ? '<div class="xo-info">' + aEsc(info) + '</div>' : '') +
-    '<div class="xo-foot"><button class="xo-btn' + (completo ? ' ok' : '') + '" onclick="aXoConcluir()">' + (completo ? (aLang==='en'?'Next exercise':'Próximo exercício') : ((aLang==='en'?'Finish set ':'Concluir série ') + (feitas + 1))) + '</button></div>';
-  aXoTick();
+    '<div class="xi-dots">' + dots + '</div>' +
+    '<div class="xi-row"><button class="xi-b" aria-label="-" onclick="aXoAjustar(-2.5)">−</button>' +
+    '<label class="xi-c"><input type="number" inputmode="decimal" step="0.5" min="0" id="aXoCargaIn" placeholder="0" value="' + aEsc(carga) + '" oninput="aXoGravarCarga(this.value)"><span>kg</span></label>' +
+    '<button class="xi-b" aria-label="+" onclick="aXoAjustar(2.5)">+</button>' +
+    '<button class="xo-btn xi-go' + (completo ? ' ok' : '') + '" onclick="aXoConcluir()">' + rotulo + '</button></div>' +
+    (info ? '<div class="xo-info">' + aEsc(info) + '</div>' : '');
 }
 function aXoTick(){
   const r = document.getElementById('aXoRest');
@@ -14684,15 +14718,18 @@ function aXoTick(){
     document.getElementById('aXoRestT').textContent = m + ':' + (sg < 10 ? '0' : '') + sg;
   } else r.style.display = 'none';
 }
-function aXoAjustar(d){
+function aXoGravarCarga(v){
+  v = String(v == null ? '' : v);
   const cin = document.getElementById(aXoEid + '-carga');
-  if (!cin) return;
-  const v = Math.max(0, (parseFloat(cin.value) || 0) + d);
-  cin.value = String(v);
+  if (cin) cin.value = v;
   const sm = document.getElementById(aXoEid + '-sum');
-  if (sm) sm.textContent = '🏋️ ' + v + 'kg';
-  const out = document.getElementById('aXoCarga');
-  if (out) out.textContent = v + ' kg';
+  if (sm) sm.textContent = v === '' ? '🏋️ — kg' : '🏋️ ' + v + 'kg';
+}
+function aXoAjustar(d){
+  const inp = document.getElementById('aXoCargaIn');
+  const v = Math.max(0, Math.round(((parseFloat(inp ? inp.value : '') || 0) + d) * 100) / 100);
+  if (inp) inp.value = String(v);
+  aXoGravarCarga(String(v));
 }
 function aXoDot(n){
   n = parseInt(n, 10);
@@ -14702,20 +14739,40 @@ function aXoDot(n){
   if (n === feitas + 1 && feitas < (i.total || 1)) aXoConcluir();
   else if (n === feitas && feitas > 0) { aSeriesFeitas[aXoEid] = feitas - 1; aSeriesSalvar(); aSeriesAtualizarUI(aXoEid); aMarcarFeito(aXoEid, false); aXoRender(); }
 }
+function aXoProximo(eid){
+  const todos = [].slice.call(document.querySelectorAll('#tDashConteudo .ec'));
+  const prox = todos.find(function(c){ return c.id !== eid && !c.classList.contains('done'); });
+  if (prox) aXoAbrir(prox.id); else aXoFechar();
+}
 function aXoConcluir(){
   const i = aXoInfo(aXoEid);
   if (!i) { aXoFechar(); return; }
-  const feitas = Math.min(aSeriesFeitas[aXoEid] || 0, i.total || 1);
-  if (i.total && feitas >= i.total) {
-    const prox = aProximoPendente(aXoEid);
-    if (prox) { aXoVid = false; aXoPlay = false; aXoEid = prox.id; aXoRender(); } else aXoFechar();
-    return;
-  }
+  const eid = aXoEid;
+  const feitas = Math.min(aSeriesFeitas[eid] || 0, i.total || 1);
+  if (i.total && feitas >= i.total) { aXoProximo(eid); return; }
   const ultima = i.total && feitas + 1 >= i.total;
-  if (ultima) { try { aSalvarCarga(aXoEid, i.nome); } catch(e){} }
-  aContarSerieConcluida(aXoEid);
+  if (ultima) { try { aSalvarCarga(eid, i.nome); } catch(e){} }
+  aContarSerieConcluida(eid);
   aXoRender();
+  if (ultima) setTimeout(function(){ if (aXoEid === eid) aXoProximo(eid); }, 700);
 }
+// ✓ pequeno por exercício (anel que acompanha as séries)
+function aRingToggle(eid){
+  const cb = document.getElementById(eid + '-done');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  aToggleDone(eid);
+  if (navigator.vibrate) { try { navigator.vibrate(cb.checked ? 15 : [10,40,10]); } catch(e){} }
+  if (aXoEid === eid) { if (cb.checked) aXoProximo(eid); else aXoRender(); }
+}
+// tocar no nome do exercício abre/fecha o modo inline
+document.addEventListener('click', function(ev){
+  const n = ev.target && ev.target.closest ? ev.target.closest('.ec-n') : null;
+  if (!n) return;
+  const card = n.closest('.ec');
+  if (!card || !card.querySelector('.ec-chip-progresso')) return;
+  if (aXoEid === card.id) aXoFechar(); else aXoAbrir(card.id);
+});
 
 function aAtualizarTodosBlocos(){ document.querySelectorAll('.bloco').forEach(aAtualizarBlocoProgresso); }
 // dica de uso (some no primeiro toque ou no OK)
@@ -14726,7 +14783,6 @@ function aDicaSeriesMontar(){
   // pulso no badge de séries do 1º exercício ainda sem nenhuma série contada
   document.querySelectorAll('.ec-dica-pulse').forEach(function(x){ x.classList.remove('ec-dica-pulse'); });
   const pend = Array.prototype.find.call(document.querySelectorAll('#tDashConteudo .ec-chip-progresso'), function(c){ return !(aSeriesFeitas[c.dataset.eid] > 0) && !(c.closest('.ec') && c.closest('.ec').classList.contains('done')); });
-  if (pend) pend.classList.add('ec-dica-pulse');
   const primeiro = document.querySelector('#tDashConteudo .ec-chip-progresso');
   let d = document.getElementById('aDicaSeries');
   if (!primeiro || !aDicaSeriesAtiva()) {
@@ -14734,7 +14790,7 @@ function aDicaSeriesMontar(){
     return;
   }
   if (!d) { d = document.createElement('div'); d.id = 'aDicaSeries'; d.className = 'dica-series'; wrap.appendChild(d); }
-  d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap the <b>sets badge</b> (e.g. 4×8) after each set — it counts and fills up. At the last set the exercise is marked done.' : 'Toque no badge <b>séries × reps</b> a cada série feita: ele conta e enche. Na última, o exercício conclui.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
+  d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap <b>Start</b> or the exercise name: sets, load and rest right here.' : 'Toque em <b>Iniciar</b> ou no nome do exercício: séries, carga e descanso aqui mesmo.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
 }
 function aDicaSeriesFechar(){
   window._aDicaFechada = true;
@@ -14768,12 +14824,17 @@ function aDescansoAgendarNotificacao(){
 }
 function aDescansoFinalizar(){
   if (!aDescansoTimer) return;
-  if ('Notification' in window && Notification.permission === 'granted') {
+  if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState !== 'visible') {
+    const tit = aLang==='en' ? 'Rest done! 💪' : 'Descanso acabou! 💪';
+    const opt = { body: aDescansoTimer.nome ? ((aLang==='en'?'Back to: ':'Hora de voltar pro: ') + aDescansoTimer.nome) : '', tag: 'movh-descanso', renotify: true, vibrate: [250,120,250,120,400], icon: 'icons/icon-192.png', badge: 'icons/icon-192.png' };
+    let feito = false;
     try {
-      new Notification(aLang==='en' ? 'Rest done! 💪' : 'Descanso acabou! 💪', {
-        body: aDescansoTimer.nome ? ((aLang==='en'?'Back to: ':'Hora de voltar pro: ') + aDescansoTimer.nome) : ''
-      });
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        feito = true;
+        navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(tit, opt); }).catch(function(){ try { new Notification(tit, opt); } catch(e){} });
+      }
     } catch(e){}
+    if (!feito) { try { new Notification(tit, opt); } catch(e){} }
   }
   if (navigator.vibrate) { try { navigator.vibrate([250,120,250]); } catch(e){} }
   aTocarBeepDescanso();
@@ -14894,6 +14955,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         '<div class="ec-name-row">' +
           (emb ? '<button class="vbtn vthumb" aria-label="Vídeo" data-emb="'+aEsc(emb)+'" data-sh="'+(String(ex.url || (ex.nome && aExVideoMap[ex.nome]) || '').indexOf('/shorts/') >= 0 ? '1' : '0')+'" data-vs="'+eid+'-vs" onclick="aToggleVideo(this,this.dataset.vs,this.dataset.emb)"><span>'+(aLang==='en'?'Video':'Vídeo')+'</span><i class="vplay">▶</i></button>' : '') +
           '<span class="ec-n">'+aEsc(ex.nome)+(ex.obs ? '<span class="ec-o"> (<span class="ec-o-i">💬</span> '+aEsc(ex.obs)+')</span>' : '')+'</span>' +
+          '<button type="button" class="ec-ring" id="'+eid+'-ring" data-eid="'+eid+'" style="--p:'+seriesFillPct+'%" onclick="event.stopPropagation();aRingToggle(this.dataset.eid)" aria-label="'+aEsc(aT('marcar_feito'))+'"></button>' +
         '</div>' +
         '<div class="ec-chips">' +
           '<span class="ec-done-wrap">' +
