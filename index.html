@@ -2187,11 +2187,11 @@ function condPlanoHTML(b){
 function condCamposHTML(did,bi,b,rr){
   var mo=b.modelo||'',S="setBl('"+did+"',"+bi+",";
   var op=['<option value="">Modelo —</option>'].concat(Object.keys(CP_MODELOS).map(function(k){return '<option value="'+k+'"'+(mo===k?' selected':'')+'>'+CP_MODELOS[k].nome+'</option>';})).join('');
-  function inp(k,ph,wd){return '<input class="kb-cond-inp" style="width:'+wd+'px;min-width:0;flex:0 0 auto" value="'+escAttr(b[k]||'')+'" placeholder="'+ph+'" oninput="'+S+"'"+k+"',this.value)\" onchange=\""+rr+'"/>';}
+  function inp(k,ph,wd){return '<label style="display:flex;flex-direction:column;gap:1px;font-size:9px;color:var(--t3)">'+ph+'<input class="kb-cond-inp" style="width:'+wd+'px;min-width:0" value="'+escAttr(b[k]||'')+'" placeholder="'+ph+'" oninput="'+S+"'"+k+"',this.value)\" onchange=\""+rr+'"/></label>';}
   var extra='';
   if(mo==='intervalado')extra=inp('tiros','tiros',54)+inp('esf','min forte',66)+inp('rec','min leve',62);
   else if(mo==='caminhada')extra=inp('esf','min corre',66)+inp('rec','min anda',66);
-  return '<div style="margin:4px 0"><div class="kb-cond-row" style="flex-wrap:wrap;gap:4px"><select class="kb-cond-sel" onchange="'+S+"'modelo',this.value);if(this.value)"+S+"'progressaoAuto',true);"+rr+'">'+op+'</select>'+inp('dist','km',52)+inp('ritmo','min/km',60)+extra+'</div>'+(mo?'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+escAttr(CP_MODELOS[mo].obs)+'</div>':'')+condPlanoHTML(b)+'</div>';
+  return '<div style="margin:4px 0"><div class="kb-cond-row" style="flex-wrap:wrap;gap:4px;align-items:flex-end"><label style="display:flex;flex-direction:column;gap:1px;font-size:9px;color:var(--t3)">modelo<select class="kb-cond-sel" style="min-width:128px" onchange="'+S+"'modelo',this.value);if(this.value)"+S+"'progressaoAuto',true);"+rr+'">'+op+'</select></label>'+inp('dist','km',52)+inp('ritmo','min/km',60)+extra+'</div>'+(mo?'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+escAttr(CP_MODELOS[mo].obs)+'</div>':'')+condPlanoHTML(b)+'</div>';
 }
 // Rampa de duração do condicionamento na fase Base (ciclos de 4 sem): 3 sem de carga (+8%/sem) + 1 de assimilação;
 // o 2º ciclo parte 12% acima do 1º (teto ~+28% em 8 sem). Retorna fator e se é semana de assimilação.
@@ -3699,7 +3699,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.0 · 08/11';
+var MOVH_VER = 'v62.1 · 09/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
