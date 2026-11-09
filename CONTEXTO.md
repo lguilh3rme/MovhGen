@@ -4,7 +4,8 @@ Leia ANTES de mexer em qualquer coisa. Dono: LGuilherme (personal trainer, Caria
 Histórico detalhado de cada versão fica no git (`git log`); aqui só o ESTADO e as LIÇÕES.
 
 ## 0. EM ANDAMENTO (atualizar ANTES de cada tarefa; apagar ao concluir)
-- (nada em andamento)
+- (nada em andamento) Última entrega: **v62.2 (09/11, PR #89 mesclado + app publicado direto no main do `movh`)**: topo do app em grade (saudação 17px que encolhe até 12px para caber, 🔄, tema, ❌ com confirmação, relógio sob os botões, registro/aviso onde era o relógio); PWA (`tools/pwa/`: manifest, sw.js sem cache, ícones com a logo LG atual — decidida; `export_app.js` copia para a raiz do app); instalação automática: Android abre o diálogo nativo no primeiro toque, iOS tem card Instalar que abre o Compartilhar (`navigator.share`, não testado em iPhone real). No iOS o app instalado tem armazenamento próprio (aluno loga de novo uma vez).
+- Netlify do app: conta nova (~400 créditos), repo `movh` conectado, cada push no main publica (~15). Não abrir PR no `movh` só para ver preview (gasta crédito): publicar com push direto no main. Pendente do dono: desligar Deploy Previews/branch deploys e desvincular o projeto antigo.
 
 ## 1. Repositórios e relação
 - `lguilh3rme/MovhGen` → Gerador do professor, `index.html` único (~17k linhas) = FONTE de tudo (Gerador + app do aluno dentro do template literal de `exportarComLogin()`, ~linhas 11148–15600). Gerador hospedado no GitHub Pages: `https://lguilh3rme.github.io/MovhGen/` (também existe cópia em Cloudflare Workers `movhgen.lguilh3rme.workers.dev`).
