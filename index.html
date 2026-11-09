@@ -12802,8 +12802,8 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .toprow{position:static!important;justify-content:flex-end;margin:0 0 6px}
 body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .regbtn{padding:6px 12px!important;font-size:12px!important}
-#treinoScreen .toprow #tInstBtn{grid-column:1;grid-row:2;justify-self:start;animation:none!important;box-shadow:none!important;background:transparent!important;color:var(--Pd)!important;border:1px solid color-mix(in srgb,var(--P) 55%,transparent)!important}
-#treinoScreen .toprow #tRegistroBtn[style*="inline-block"] ~ #tInstBtn{grid-row:3}
+#treinoScreen .toprow #tAcoesTopo{grid-column:1;grid-row:2;justify-self:start;display:flex;gap:8px;align-items:center;min-width:0}
+#treinoScreen .toprow #tInstBtn{animation:none!important;box-shadow:none!important;background:transparent!important;color:var(--Pd)!important;border:1px solid color-mix(in srgb,var(--P) 55%,transparent)!important}
 /* v62.2: topo em grade — 1) saudação + 🔄 + tema + ❌; 2) registro/aviso à esquerda e relógio sob os botões; 3) aviso de renovação. Rola com a página (static) */
 #treinoScreen .toprow{position:static!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto auto auto;column-gap:8px;row-gap:4px;align-items:center;padding:10px 12px 0!important;margin:0 0 6px}
 #treinoScreen .toprow #tSaudacaoTitulo{grid-column:1;grid-row:1;margin:0!important;font-size:17px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
@@ -13109,8 +13109,8 @@ body.xo-open #movh-descanso-widget{display:none!important}
 <div id="treinoScreen" style="display:none">
   <div class="toprow">
     <div class="pt" id="tSaudacaoTitulo">Bom treino! 👊</div>
-    <button id="tRegistroBtn" class="regbtn" style="display:none" onclick="aIrParaRegistro()">Fazer o registro</button>
-    <button id="tInstBtn" class="regbtn instbtn" style="display:none" onclick="aInstallClick()">📲 Instalar</button>
+    <div id="tAcoesTopo" class="acoes-topo"><button id="tRegistroBtn" class="regbtn" style="display:none" onclick="aIrParaRegistro()">Fazer o registro</button>
+    <button id="tInstBtn" class="regbtn instbtn" style="display:none" onclick="aInstallClick()">📲 Instalar</button></div>
     <button id="banner-renovar" style="display:none" class="banner-renovar" onclick="aAbrirRenovar()" title="Renovar agora">
       <span id="banner-renovar-txt">⚠️ Acesso vence em breve</span>
     </button>
