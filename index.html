@@ -3699,7 +3699,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.3 · 09/11';
+var MOVH_VER = 'v62.4 · 09/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -3764,18 +3764,41 @@ function tbBadge(){ const b = document.getElementById('tb-bd'); if (!b) return; 
 // ── Início (dashboard) ──
 var homeAg = { col: {}, per: [] }, homeBusy = false;
 async function homeAgendaCarregar(){
-  homeAg = { col: {}, per: [] };
-  try { const r = await mbClient.from('aulas_coletivas').select('dados').eq('professor_id', mbProfessor.id).maybeSingle(); homeAg.col = (r.data && r.data.dados) || {}; } catch(e){}
-  try { const r = await mbClient.from('treinos_personal').select('aluno_id,dados').eq('professor_id', mbProfessor.id); homeAg.per = r.data || []; } catch(e){}
+  const ag = { col: {}, per: [] };
+  await Promise.all([
+    (async () => { try { const r = await mbClient.from('aulas_coletivas').select('dados').eq('professor_id', mbProfessor.id).maybeSingle(); ag.col = (r.data && r.data.dados) || {}; } catch(e){} })(),
+    (async () => { try { const r = await mbClient.from('treinos_personal').select('aluno_id,dados').eq('professor_id', mbProfessor.id); ag.per = r.data || []; } catch(e){} })()
+  ]);
+  homeAg = ag;
+}
+// Cache do último render da Início: aparece na hora e é trocado pelo dado novo quando chega.
+var homeVivo = false, HOME_CK = 'movh-home-cache-v1';
+function homeCacheSalvar(){
+  try { if (!mbProfessor) return; localStorage.setItem(HOME_CK, JSON.stringify({ pid: mbProfessor.id, ts: Date.now(), t: (document.getElementById('home-title') || {}).textContent || '', k: document.getElementById('home-kpis').innerHTML, g: document.getElementById('home-grid').innerHTML })); } catch(e){}
+}
+function homeCacheLimpar(){ homeVivo = false; try { localStorage.removeItem(HOME_CK); } catch(e){} }
+function homeCachePintar(){
+  try {
+    const c = JSON.parse(localStorage.getItem(HOME_CK) || 'null');
+    if (!c || !c.k || !c.g || Date.now() - c.ts > 12 * 3600000) return false;
+    if (mbProfessor && c.pid !== mbProfessor.id) return false;
+    document.getElementById('home-kpis').innerHTML = c.k; document.getElementById('home-grid').innerHTML = c.g;
+    const t = document.getElementById('home-title'); if (t && c.t) t.textContent = c.t;
+    const sub = document.getElementById('home-sub'); if (sub) sub.textContent = new Date().toLocaleDateString('pt-BR', { weekday:'long', day:'numeric', month:'long' }) + ' · atualizando…';
+    return true;
+  } catch(e){ return false; }
 }
 async function homeCarregar(){
   if (!document.getElementById('page-home')) return;
-  if (!mbProfessor) { homeRender(); return; }
+  let pintou = false; if (!homeVivo) pintou = homeCachePintar();
+  if (!mbProfessor) { if (!pintou) homeRender(); return; }
   if (homeBusy) return; homeBusy = true;
-  try { await mbCarregarPainelAlunos(); } catch(e){}
-  try { await homeAgendaCarregar(); } catch(e){}
-  try { await notasCarregar(); } catch(e){}
-  homeBusy = false; homeRender(); tbBadge();
+  await Promise.all([
+    mbCarregarPainelAlunos().catch(function(){}),
+    homeAgendaCarregar().catch(function(){}),
+    notasCarregar().catch(function(){})
+  ]);
+  homeBusy = false; homeVivo = true; homeRender(); tbBadge(); homeCacheSalvar();
 }
 // Treinos que acabam em até 7 dias (ou já venceram): atalho para a fase atual ou a próxima
 function homeVencerLista(at){
@@ -8693,6 +8716,7 @@ async function mbLogout() {
   await mbClient.auth.signOut();
   mbProfessor = null;
   mbAlunos = [];
+  homeCacheLimpar();
   await mbRefresh();
 }
 
@@ -8715,12 +8739,14 @@ async function mbRefresh() {
   document.getElementById('mb-prof-name').textContent = mbProfessor.nome;
   document.getElementById('mb-logged-in').style.display = 'block';
 
+  // A Início não depende de exercícios/splits: começa já, em paralelo com o resto.
+  try { const _hp0 = document.getElementById('page-home'); if (_hp0 && _hp0.classList.contains('active')) homeCarregar(); } catch (e) {}
   await mbCarregarAlunos();
   // carrega exercícios e splits do Supabase (migra na primeira vez)
   await dbCarregarExercicios();
   await sbCarregarSplits();
   try { await notasCarregar(); } catch (e) {}
-  try { const _hp = document.getElementById('page-home'); if (_hp && _hp.classList.contains('active')) homeCarregar(); } catch (e) {}
+  try { const _hp = document.getElementById('page-home'); if (_hp && _hp.classList.contains('active') && !homeBusy) homeRender(); } catch (e) {}
   // puxa o rascunho de Planos/Landing mais recente salvo por outro dispositivo,
   // se este navegador não tiver edições locais pendentes ainda não enviadas
   if (typeof plPuxarRascunhoSeNecessario === 'function') await plPuxarRascunhoSeNecessario();
@@ -8904,14 +8930,55 @@ async function mbCarregarPainelAlunos() {
   const alunos = todosAlunos || [];
   const alunoIds = alunos.map(a => a.id);
 
+  // Todas as consultas abaixo só dependem de alunoIds: disparam JUNTAS (antes eram uma atrás da outra).
+  const Q = f => { try { return Promise.resolve(f()).then(r => r || { data: null }, e => ({ data: null, error: e })); } catch (e) { return Promise.resolve({ data: null, error: e }); } };
+  const P = {};
+  if (alunoIds.length > 0) {
+    const _pIniMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+    const _pTrinta = new Date(Date.now() - 30*86400000).toISOString();
+    P.k1 = Q(() => mbClient.from('protocolos')
+      .select('id, nome, aluno_id, data_inicio, criado_em, conteudo')
+      .in('aluno_id', alunoIds)
+      .eq('ativo', true));
+    P.k2 = Q(() => mbClient.from('anamneses')
+      .select('id, aluno_id, tipo, respostas, solicitado_em, criado_em')
+      .in('aluno_id', alunoIds)
+      .order('criado_em', { ascending: false }));
+    P.k3 = Q(() => mbClient.from('avaliacoes_fisicas')
+      .select('id, aluno_id, status, data_avaliacao, solicitado_em, created_at')
+      .in('aluno_id', alunoIds)
+      .order('created_at', { ascending: false }));
+    P.k4 = Q(() => mbClient.from('testes_fisicos')
+      .select('aluno_id, data')
+      .in('aluno_id', alunoIds)
+      .eq('padrao_movimento', 'Condicionamento')
+      .order('data', { ascending: false }));
+    P.k5 = Q(() => mbClient.from('solicitacoes_treino')
+      .select('id, aluno_id, protocolo_id, dias_no_protocolo, solicitado_em, status')
+      .in('aluno_id', alunoIds)
+      .eq('status', 'pendente')
+      .order('solicitado_em', { ascending: false }));
+    P.k6 = Q(() => mbClient.from('pagamentos_pix').select('id, aluno_id, plano_nome, dias, valor, criado_em').in('aluno_id', alunoIds).eq('status', 'pendente').order('criado_em', { ascending: false }));
+    P.k7 = Q(() => mbClient.from('rpe_sessoes')
+      .select('id, aluno_id, rpe, dor_obs, dor_exercicios, criado_em')
+      .in('aluno_id', alunoIds)
+      .eq('dor', true).eq('visto', false)
+      .order('criado_em', { ascending: false }));
+    P.k8 = Q(() => mbClient.from('rpe_sessoes')
+      .select('aluno_id, criado_em')
+      .in('aluno_id', alunoIds)
+      .gte('criado_em', _pIniMes));
+    P.k9 = Q(() => mbClient.from('registros_sessao')
+      .select('aluno_id, exercicio_nome, carga, reps, criado_em')
+      .in('aluno_id', alunoIds)
+      .gte('criado_em', _pTrinta)
+      .order('criado_em', { ascending: false }));
+  }
+
   // Busca os protocolos ATIVOS (um por aluno, normalmente) de todos de uma vez.
   let protocolosAtivos = [];
   if (alunoIds.length > 0) {
-    const { data } = await mbClient
-      .from('protocolos')
-      .select('id, nome, aluno_id, data_inicio, criado_em, conteudo')
-      .in('aluno_id', alunoIds)
-      .eq('ativo', true);
+    const { data } = await P.k1;
     protocolosAtivos = data || [];
   }
   const protoMap = {};
@@ -8920,11 +8987,7 @@ async function mbCarregarPainelAlunos() {
   // Busca anamneses e PAR-Q de todos os alunos de uma vez
   let anamnesesData = [];
   if (alunoIds.length > 0) {
-    const { data: anam } = await mbClient
-      .from('anamneses')
-      .select('id, aluno_id, tipo, respostas, solicitado_em, criado_em')
-      .in('aluno_id', alunoIds)
-      .order('criado_em', { ascending: false });
+    const { data: anam } = await P.k2;
     anamnesesData = anam || [];
   }
   // Por aluno: última anamnese e último parq
@@ -8938,11 +9001,7 @@ async function mbCarregarPainelAlunos() {
   // Busca avaliações físicas/posturais de todos os alunos de uma vez
   let avaliacoesData = [];
   if (alunoIds.length > 0) {
-    const { data: aval } = await mbClient
-      .from('avaliacoes_fisicas')
-      .select('id, aluno_id, status, data_avaliacao, solicitado_em, created_at')
-      .in('aluno_id', alunoIds)
-      .order('created_at', { ascending: false });
+    const { data: aval } = await P.k3;
     avaliacoesData = aval || [];
   }
   const avalMap = {};
@@ -8955,12 +9014,7 @@ async function mbCarregarPainelAlunos() {
   // acender o aviso de reteste (janela recomendada: 6-8 semanas)
   let condicData = [];
   if (alunoIds.length > 0) {
-    const { data: cond } = await mbClient
-      .from('testes_fisicos')
-      .select('aluno_id, data')
-      .in('aluno_id', alunoIds)
-      .eq('padrao_movimento', 'Condicionamento')
-      .order('data', { ascending: false });
+    const { data: cond } = await P.k4;
     condicData = cond || [];
   }
   const condicMap = {};
@@ -8971,17 +9025,12 @@ async function mbCarregarPainelAlunos() {
   // no app do aluno). Mostradas em destaque no painel para o professor.
   let solicMudancaData = [];
   if (alunoIds.length > 0) {
-    const { data: solic } = await mbClient
-      .from('solicitacoes_treino')
-      .select('id, aluno_id, protocolo_id, dias_no_protocolo, solicitado_em, status')
-      .in('aluno_id', alunoIds)
-      .eq('status', 'pendente')
-      .order('solicitado_em', { ascending: false });
+    const { data: solic } = await P.k5;
     solicMudancaData = solic || [];
   }
   let pixData = [];
   if (alunoIds.length > 0) {
-    const { data: px } = await mbClient.from('pagamentos_pix').select('id, aluno_id, plano_nome, dias, valor, criado_em').in('aluno_id', alunoIds).eq('status', 'pendente').order('criado_em', { ascending: false });
+    const { data: px } = await P.k6;
     pixData = px || [];
   }
   const pixMap = {};
@@ -8995,12 +9044,7 @@ async function mbCarregarPainelAlunos() {
   // contagem total de pendentes.
   let dorData = [];
   if (alunoIds.length > 0) {
-    const { data: dor } = await mbClient
-      .from('rpe_sessoes')
-      .select('id, aluno_id, rpe, dor_obs, dor_exercicios, criado_em')
-      .in('aluno_id', alunoIds)
-      .eq('dor', true).eq('visto', false)
-      .order('criado_em', { ascending: false });
+    const { data: dor } = await P.k7;
     dorData = dor || [];
   }
   const dorMap = {};
@@ -9018,11 +9062,7 @@ async function mbCarregarPainelAlunos() {
   if (alunoIds.length > 0) {
     const hoje = new Date();
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString();
-    const { data: sm, error: smErr } = await mbClient
-      .from('rpe_sessoes')
-      .select('aluno_id, criado_em')
-      .in('aluno_id', alunoIds)
-      .gte('criado_em', inicioMes);
+    const { data: sm, error: smErr } = await P.k8;
     if (smErr) console.error('[MOVH] Falha ao buscar rpe_sessoes do mês (badge "x/y sessões" vai ficar zerado) — provável RLS:', smErr);
     sessoesMesData = sm || [];
   }
@@ -9036,12 +9076,7 @@ async function mbCarregarPainelAlunos() {
   let registrosData = [];
   if (alunoIds.length > 0) {
     const trintaDiasAtras = new Date(Date.now() - 30*86400000).toISOString();
-    const { data: rs, error: rsErr } = await mbClient
-      .from('registros_sessao')
-      .select('aluno_id, exercicio_nome, carga, reps, criado_em')
-      .in('aluno_id', alunoIds)
-      .gte('criado_em', trintaDiasAtras)
-      .order('criado_em', { ascending: false });
+    const { data: rs, error: rsErr } = await P.k9;
     if (rsErr) console.error('[MOVH] Falha ao buscar registros_sessao (cargas do aluno) — provável RLS:', rsErr);
     registrosData = rs || [];
   }
