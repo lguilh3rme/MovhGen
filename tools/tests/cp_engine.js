@@ -25,7 +25,7 @@ t('dist+ritmo → tempo',P({modelo:'continuo',dist:'5',ritmo:'6:00'},1).tempo===
 t('ritmo manual vence a zona',P({modelo:'continuo',duracao:'30',ritmo:'6:00'},1,z).ritmoAuto===false);
 // fartlek e caminhada
 const f=P({modelo:'fartlek',duracao:'30 min'},3);t('fartlek % esforço',f.pctEsf===25&&f.esf>0);
-const k=[1,3,5].map(w=>P({modelo:'caminhada',duracao:'20 min',esf:1,rec:2},w).corre).join();t('caminhada corre cresce',k==='1,1,1'||k==='1,1,2'||true);
+const k=[1,2,3,4,5,6,7,8,9].map(w=>P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},w).corre).join();t('caminhada: +1 min correndo por ciclo (1,1,1,1,2,2,2,2,3)',k==='1,1,1,1,2,2,2,2,3');
 t('caminhada reps fixos',P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},1).reps===7);
 // robustez
 t('sem modelo → null',P({duracao:'20 min'},1)===null);

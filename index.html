@@ -2202,7 +2202,7 @@ function cpPlano(b,w,N,zonaSeg){
     if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
   }else if(mod==='caminhada'){
     var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
-    o.corre=Math.max(c0,Math.round(c0*f));o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    o.corre=c0+r.ciclo;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
     if(rit)o.dist=cpR2(reps*o.corre*60/rit);
   }else if(tb){
     o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);
@@ -11478,6 +11478,80 @@ function pfVolume(sem){
 }
 function pfFmtRest(seg){ return formatRestSegundos(seg); }
 
+// ==PF_COND== Parâmetros da corrida/condicionamento na próxima fase. O agent movh-treino lê/explica, não decide.
+// Reaproveita o motor CP_* (cpPlano/cpFator: ciclos 3+1, +8%/sem, 2º ciclo +12%, teto +30%); não existe regra paralela.
+const PF_COND = {
+  janelaDias: 28,      // aderência medida nas últimas 4 semanas (ou desde o início do protocolo, se menor)
+  janelaMinDias: 14,   // com menos que isso de protocolo, não há dado suficiente
+  aderProgride: 80,    // % mínimo de aderência para progredir
+  aderMantem: 60,      // % mínimo para manter; abaixo disso recua
+  rpeMax: 8,           // RPE médio máximo para progredir
+  rpeMinN: 3,          // nº mínimo de RPEs para confiar na média
+  testeMaxSem: 8,      // idade máxima do teste de 3 km (semanas)
+  dorDias: 14,         // dor relatada nesta janela conta como dor ativa
+  semPartida: 5,       // semana da fase anterior que vira o patamar de partida (início do 2º ciclo)
+  recuaVolume: 0.8,    // recua: volume −20%, sem intensidade
+  facil: ['continuo','longao','regenerativo','caminhada']
+};
+// m: {ader:0-100|null, rpeMed:num|null, testeSem:num|null, dor:bool} -> {nivel:'progride'|'mantem'|'recua', motivos:[..]}
+function pfCondDecisao(m){
+  const C = PF_COND, mot = [], rec = [];
+  const fr = x => String(x.toFixed(1)).replace('.', ',');
+  if (m.ader != null && m.ader < C.aderMantem) rec.push('aderência '+m.ader+'% (abaixo de '+C.aderMantem+'%)');
+  if (m.dor) rec.push('dor relatada nas últimas '+(C.dorDias/7)+' semanas');
+  if (m.testeSem != null && m.testeSem > C.testeMaxSem) rec.push('teste de 3 km há '+m.testeSem+' sem (mais de '+C.testeMaxSem+')');
+  if (rec.length) return { nivel:'recua', motivos:rec };
+  const ok = [];
+  if (m.ader == null) mot.push('sem dados de aderência suficientes');
+  else if (m.ader >= C.aderProgride) ok.push('aderência '+m.ader+'%'); else mot.push('aderência '+m.ader+'% (progride a partir de '+C.aderProgride+'%)');
+  if (m.rpeMed == null) mot.push('RPE sem registros suficientes');
+  else if (m.rpeMed <= C.rpeMax) ok.push('RPE '+fr(m.rpeMed)); else mot.push('RPE '+fr(m.rpeMed)+' (acima de '+C.rpeMax+')');
+  if (m.testeSem == null) mot.push('sem teste de 3 km (faça um para liberar a progressão)');
+  else ok.push('teste de 3 km há '+m.testeSem+' sem');
+  if (!mot.length) return { nivel:'progride', motivos:ok };
+  return { nivel:'mantem', motivos:mot.concat(ok) };
+}
+function pfCondR1(x){ return String(Math.round(x*10)/10).replace('.', ','); }
+function pfCondMin(orig, v){ return /min/i.test(String(orig||'')) ? v+' min' : String(v); }
+// bloco de condicionamento da fase vigente -> bloco-base da próxima (null se não se aplica)
+function pfCondProximo(b, nivel){
+  if (!b || !CP_MODELOS[b.modelo] || b.progressaoAuto === false || b.modelo === 'regenerativo') return null;
+  const C = PF_COND, n = JSON.parse(JSON.stringify(b)), tb = cpNum(b.duracao), d0 = cpNum(b.dist);
+  const escala = (r) => { if (tb) n.duracao = pfCondMin(b.duracao, Math.max(1, Math.round(tb*r))); if (d0) n.dist = pfCondR1(d0*r); };
+  if (nivel === 'mantem') return n;                       // repete o volume inicial, sem qualidade nova
+  if (nivel === 'progride') {                              // patamar de partida do 2º ciclo (ex.: 20 -> 22 min)
+    const p = cpPlano(b, C.semPartida, 8);
+    if (!p) return null;
+    if (b.modelo === 'intervalado') n.tiros = String(p.tiros);
+    else if (b.modelo === 'caminhada') { n.esf = String(p.corre); n.duracao = pfCondMin(b.duracao, p.tempo); if (d0 && tb) n.dist = pfCondR1(d0*p.tempo/tb); }
+    else { const r = tb ? p.tempo/tb : cpFator(C.semPartida).f; escala(r); }
+    return n;
+  }
+  // recua: volume −20% e sem intensidade (tempo/fartlek/intervalado viram contínuo fácil)
+  const r = C.recuaVolume;
+  if (b.modelo === 'intervalado') {
+    const n0 = parseInt(b.tiros,10) || 4, esf = cpNum(b.esf) || 1, rec = cpNum(b.rec) || 2*esf;
+    n.modelo = 'continuo'; n.duracao = Math.max(10, Math.round((10 + n0*(esf+rec))*r)) + ' min';
+    delete n.tiros; delete n.esf; delete n.rec; delete n.dist; delete n.ritmo;
+  } else if (b.modelo === 'tempo' || b.modelo === 'fartlek') { n.modelo = 'continuo'; escala(r); }
+  else if (b.modelo === 'caminhada') { escala(r); }
+  else escala(r);
+  return n;
+}
+function pfCondResumo(b){ const p = b && cpPlano(b, 1, 8); return p ? cpResumo(p) : '—'; }
+// aplica a decisão aos blocos 'con' (com modelo) dos dias do rascunho; devolve [{dia, de, para, modelo}]
+function pfCondAplicar(dias, nivel){
+  const out = [];
+  (dias||[]).forEach((d,di) => (d.blocos||[]).forEach((b,bi) => {
+    if (b.id !== 'con') return;
+    const n = pfCondProximo(b, nivel); if (!n) return;
+    out.push({ dia: d.nome || ('Dia '+(di+1)), modelo: CP_MODELOS[b.modelo].nome, de: pfCondResumo(b), para: pfCondResumo(n), facil: PF_COND.facil.indexOf(b.modelo) >= 0 });
+    d.blocos[bi] = n;
+  }));
+  return out;
+}
+// ==/PF_COND==
+
 async function mbSugerirProximaFase(protoId, alunoId){
   const a = mbPainelAlunos.find(x => x.id === alunoId);
   notify('Montando rascunho…');
@@ -15996,7 +16070,7 @@ function cpPlano(b,w,N,zonaSeg){
     if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
   }else if(mod==='caminhada'){
     var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
-    o.corre=Math.max(c0,Math.round(c0*f));o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    o.corre=c0+r.ciclo;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
     if(rit)o.dist=cpR2(reps*o.corre*60/rit);
   }else if(tb){
     o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);
