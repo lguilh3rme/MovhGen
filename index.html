@@ -636,7 +636,7 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-more-r{left:auto;right:0}
 .cl-tabrow{display:flex;gap:6px;align-items:center;position:sticky;top:-1px;z-index:5;background:var(--bg);padding:2px 0 6px}
 #page-coletivas .cl-tabrow .cl-tabs{flex:1;position:static;margin:0;padding:0;background:none}
-#page-coletivas.per .cl-tab{flex:1 1 0;min-width:0;flex-direction:row;justify-content:center;gap:5px;padding:4px 6px}
+#page-coletivas .cl-tab{flex:1 1 0;min-width:0;flex-direction:row;justify-content:center;gap:5px;padding:4px 6px}
 /* v62.6 — Personal: blocos em grade, lido da esquerda para a direita (1 2 3 / 4 5 6) */
 #page-coletivas .cl-blocos.pers{column-width:auto;columns:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
 #page-coletivas .cl-blocos.pers .pcol{flex:1.25 1 380px;min-width:0;display:flex;flex-direction:column;gap:8px}
@@ -3254,10 +3254,10 @@ function coletivasRenderEditor(el, datas){
   const d = datas[keys.indexOf(coletivasDiaSel)];
   const blocos = coletivasData[coletivasDiaSel] || [];
   const label = COLETIVAS_DOW_LABEL[d.getDay()] + ', ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
-  const per = coletivasModo === 'personal';
+  const per = true; // v62.8b: a Coletiva usa o mesmo editor compacto do Personal (abas + ⋯ Dia, colunas, séries×reps, cor automática)
   const diaFerr = per ? '<button type="button" class="btn bp" style="font-size:11px;padding:4px 10px;white-space:nowrap" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\')">＋ Bloco</button>' +
     '<details class="cl-more"><summary class="btn bs" style="font-size:11px;padding:4px 10px">⋯ Dia</summary><div class="cl-more-m cl-more-r">' +
-    notasBtn('dia', personalAlunoId + '|' + coletivasDiaSel, 'Dia ' + label) +
+    notasBtn('dia', (coletivasModo === 'personal' ? personalAlunoId : 'col') + '|' + coletivasDiaSel, 'Dia ' + label) +
     '<span style="display:flex;gap:4px;align-items:center"><input type="date" id="cl-dup-data" class="cl-dup" title="Copiar este dia para a data escolhida"/><button type="button" class="btn bs" onclick="coletivasDuplicarDia()">⧉ Copiar p/ data</button></span>' +
     '<button type="button" class="btn bs" onclick="personalSepararSR()" title="Lê nomes como \'Remada: 3×8-10\' e separa séries e reps">↔ Separar séries×reps</button>' +
     '<button type="button" class="btn bs" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\',\'condicionamento\')">🔥 ＋ Condicionamento</button>' +
@@ -3266,7 +3266,7 @@ function coletivasRenderEditor(el, datas){
     '<div class="cl-day">' + (per ? '' : '<div class="cl-day-hd"><span class="cl-day-t">' + label + (coletivasDiaSel === hojeKey ? ' · hoje' : '') + '</span><span style="flex:1"></span>' +
     notasBtn('dia', (coletivasModo === 'personal' ? personalAlunoId : 'col') + '|' + coletivasDiaSel, 'Dia ' + label) + '<input type="date" id="cl-dup-data" class="cl-dup" title="Copiar este dia para a data escolhida"/><button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasDuplicarDia()">⧉ Copiar dia p/ data</button>' +
     (coletivasModo === 'personal' ? '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="personalSepararSR()" title="Lê nomes como \'Remada: 3×8-10\' e separa séries e reps">↔ Separar séries×reps</button>' : '') + '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasLimparDia()">🗑 Limpar dia</button></div>') +
-    '<div class="cl-blocos' + (coletivasModo === 'personal' ? ' pers' : '') + '">' + (blocos.length ? colPersColunas(blocos, blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
+    '<div class="cl-blocos pers">' + (blocos.length ? colPersColunas(blocos, blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
     (per ? '' : '<div class="cl-add"><button type="button" class="btn bp" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\')">＋ Bloco</button><button type="button" class="btn bs" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\',\'condicionamento\')">🔥 ＋ Condicionamento</button></div>') + '</div>';
   el.querySelectorAll('textarea.cl-ta').forEach(coletivasAuto);
 }
@@ -3274,7 +3274,6 @@ function coletivasRenderEditor(el, datas){
 // bloco com 4+ exercícios ou condicionamento vira coluna própria. b.col: 'u' coluna própria, 's' empilhar (escolha do professor)
 function colPersEhUnico(b){ if (b.col === 'u') return true; if (b.col === 's') return false; return b.tipo === 'condicionamento' || (b.exercicios || []).length > 3; }
 function colPersColunas(blocos, h){
-  if (coletivasModo !== 'personal') return h.join('');
   const cols = []; let cur = null, n = 0;
   blocos.forEach(function(b, i){
     const ne = (b.exercicios || []).length;
@@ -3285,12 +3284,12 @@ function colPersColunas(blocos, h){
 }
 function coletivasSetColuna(dia, i){ const b = coletivasData[dia][i]; b.col = colPersEhUnico(b) ? 's' : 'u'; renderColetivas(); coletivasMarcarSujo(); }
 function colPerguntaColuna(b){
-  if (coletivasModo !== 'personal' || b.col || b.tipo === 'condicionamento' || (b.exercicios || []).length < 4) return;
+  if (b.col || b.tipo === 'condicionamento' || (b.exercicios || []).length < 4) return;
   b.col = confirm('O bloco "' + (b.nome || 'sem nome') + '" já tem ' + b.exercicios.length + ' exercícios. Deixar em coluna própria?\n\nOK = coluna própria · Cancelar = continuar empilhado') ? 'u' : 's';
 }
 function colCorAuto(b){
   if (/^#[0-9a-fA-F]{6}$/.test(b.cor || '')) return b.cor;
-  return coletivasModo === 'personal' ? colCorPorNome(b) : '';
+  return colCorPorNome(b);
 }
 function colCorPorNome(b){
   const n = String(b.nome || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
@@ -3327,7 +3326,7 @@ function renderColetivasBloco(dia, i, b, total){
     '<input type="text" list="ex-datalist" class="cl-exn" placeholder="Exercício (banco ou livre)" value="' + escAttr(ex.nome || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'nome\',this.value)"/>' +
     '<button type="button" class="cl-ib" onclick="mvAbrirParaInput(this.previousElementSibling)" title="Escolher: grupo › categoria › exercício">📂</button>' +
     (ex.nome && !mvAcharEx(ex.nome) && !mvEhPausa(ex.nome) ? '<button type="button" class="cl-ib cl-new" data-n="' + escAttr(ex.nome) + '" onclick="mvCadastrar(this.dataset.n)" title="Fora do banco (sem vídeo). Toque para cadastrar">＋</button>' : '') +
-    ((coletivasModo === 'personal' && !b.conjugado) ? '<input type="text" class="cl-exs cl-sr" placeholder="3×8 a 10" title="Séries × reps. Ex.: 3×8 a 10" value="' + escAttr(colSRTxt(ex)) + '" oninput="coletivasSRInput(this,' + q + ',' + j + ')"/>' :
+    ((!b.conjugado) ? '<input type="text" class="cl-exs cl-sr" placeholder="3×8 a 10" title="Séries × reps. Ex.: 3×8 a 10" value="' + escAttr(colSRTxt(ex)) + '" oninput="coletivasSRInput(this,' + q + ',' + j + ')"/>' :
     (b.conjugado ? '' : '<input type="text" class="cl-exs" placeholder="Sér." value="' + escAttr(ex.series || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'series\',this.value)"/>') +
     '<input type="text" class="cl-exs" placeholder="Reps" value="' + escAttr(colRepsA(ex.reps || '')) + '" oninput="coletivasRepsInput(this,' + q + ',' + j + ')"/>') +
     '<button type="button" class="cl-ib cl-pl' + ((ex.url || getUrl(ex.nome || '')) ? '' : ' sem') + '" onclick="coletivasVideo(' + q + ',' + j + ')" title="Ver vídeo · editar nome/link">▶</button>' +
@@ -3338,7 +3337,7 @@ function renderColetivasBloco(dia, i, b, total){
     '<select onchange="coletivasSetBloco(' + q + ',\'tipo\',this.value)"><option value="normal"' + (!isC ? ' selected' : '') + '>🏋️ Normal</option><option value="condicionamento"' + (isC ? ' selected' : '') + '>🔥 Condicionamento</option></select>' +
     (!isC ? '<input type="text" class="cl-nome" placeholder="Nome do bloco (Aquecimento, Parte principal, Finisher…)" value="' + escAttr(b.nome || '') + '" oninput="coletivasSetBloco(' + q + ',\'nome\',this.value)"/>' : '<span style="flex:1"></span>') +
     (!isC ? '<label class="cl-conj"><input type="checkbox"' + (b.conjugado ? ' checked' : '') + ' onchange="coletivasSetBloco(' + q + ',\'conjugado\',this.checked)"/>Conj.</label>' + (b.conjugado ? '<input type="text" class="cl-exs" placeholder="Séries" title="Séries do conjugado" value="' + escAttr(b.series || '') + '" oninput="coletivasSetBloco(' + q + ',\'series\',this.value)"/>' : '') : '') +
-    (coletivasModo === 'personal' && !isC ? '<button type="button" class="cl-ib cl-colb" onclick="coletivasSetColuna(' + q + ')" title="' + (colPersEhUnico(b) ? 'Em coluna própria. Clique para empilhar com os blocos curtos' : 'Empilhado. Clique para deixar em coluna própria') + '">' + (colPersEhUnico(b) ? '▮' : '▤') + '</button>' : '') +
+    (!isC ? '<button type="button" class="cl-ib cl-colb" onclick="coletivasSetColuna(' + q + ')" title="' + (colPersEhUnico(b) ? 'Em coluna própria. Clique para empilhar com os blocos curtos' : 'Empilhado. Clique para deixar em coluna própria') + '">' + (colPersEhUnico(b) ? '▮' : '▤') + '</button>' : '') +
     '<button type="button" class="cl-ib cl-cor"' + (cor ? ' style="--cc:' + cor + '"' : '') + ' onclick="coletivasPaleta(' + q + ')" title="Cor do bloco"></button>' +
     '<button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',-1)" title="Subir bloco"' + (i === 0 ? ' disabled' : '') + '>↑</button><button type="button" class="cl-ib" onclick="coletivasMoverBloco(' + q + ',1)" title="Descer bloco"' + (i === total - 1 ? ' disabled' : '') + '>↓</button>' +
     '<button type="button" class="cl-ib" onclick="coletivasDupBloco(' + q + ')" title="Duplicar bloco">⧉</button><button type="button" class="cl-ib x" onclick="coletivasRemoverBloco(' + q + ')" title="Remover bloco">×</button></div>' + pal +
@@ -3882,7 +3881,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.8 · 10/11';
+var MOVH_VER = 'v62.9 · 10/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12907,6 +12906,10 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .treino-ok-banner{background:linear-gradient(135deg,#38a169,#276749);color:#fff;border-radius:14px;padding:16px;text-align:center;font-size:15px;font-weight:700;margin:16px 0;letter-spacing:-.01em}
 .footer{text-align:center;font-size:11px;color:var(--t3);margin-top:2rem;display:flex;flex-direction:column;align-items:center;gap:8px}
 .footer-logo{width:170px;max-width:60%;height:auto;margin:18px auto 0}
+svg.footer-logo{display:block;width:190px;max-width:70%;color:var(--tx)}
+#tFooter{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+.dm.upd{border-color:var(--P);animation:updPulse 1.3s ease-in-out infinite}
+@keyframes updPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb,var(--P) 55%,transparent)}50%{transform:scale(1.14);box-shadow:0 0 0 7px color-mix(in srgb,var(--P) 0%,transparent)}}
 .auth-logo{display:block;max-width:340px;width:92%;height:auto;margin:0 auto 14px}
 
 @media(max-width:480px){
@@ -13411,7 +13414,10 @@ body.xo-open #movh-descanso-widget{display:none!important}
 .bloco.bloco-concluido .bh .bloco-done-btn::after{opacity:1}
 .ec.xi-open{background:color-mix(in srgb,var(--P) 7%,transparent);box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--P) 55%,transparent);border-radius:12px}
 .xi{margin-top:8px;display:flex;flex-direction:column;gap:8px}
-.xi-dots{display:flex;gap:8px;flex-wrap:wrap}
+.xi-dots{display:flex;gap:8px;flex-wrap:wrap;flex:1;min-width:0}
+.xi-top{display:flex;align-items:flex-start;gap:8px}
+.xi-x{flex:none;border:1px solid var(--bd);background:var(--card);color:var(--t2);font-size:12px;font-weight:700;border-radius:10px;padding:7px 10px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.xi-x:active{transform:scale(.96)}
 .xi .xo-dot{width:34px;height:34px;font-size:14px}
 .xi .xo-dot.cur{animation:ecDica 1.6s ease-in-out infinite}
 .xi-row{display:flex;align-items:center;gap:6px}
@@ -15067,7 +15073,7 @@ function aXoRender(){
   const info = [ (ult && ult.carga != null) ? ((aLang==='en'?'Last time ':'Última vez ') + ult.carga + ' kg') : '', rec ? ('🏆 ' + (aLang==='en'?'best ':'recorde ') + rec + ' kg') : '' ].filter(Boolean).join(' · ');
   const rotulo = completo ? (aLang==='en'?'Next exercise':'Próximo exercício') : ((aLang==='en'?'Finish set ':'Concluir série ') + (feitas + 1));
   el.innerHTML =
-    '<div class="xi-dots">' + dots + '</div>' +
+    '<div class="xi-top"><div class="xi-dots">' + dots + '</div><button type="button" class="xi-x" onclick="aXoFechar()" aria-label="' + (aLang==='en'?'Exit':'Sair') + '">✕ ' + (aLang==='en'?'Exit':'Sair') + '</button></div>' +
     '<div class="xi-row"><button class="xi-b" aria-label="-" onclick="aXoAjustar(-2.5)">−</button>' +
     '<label class="xi-c"><input type="number" inputmode="decimal" step="0.5" min="0" id="aXoCargaIn" placeholder="0" value="' + aEsc(carga) + '" oninput="aXoGravarCarga(this.value)"><span>kg</span></label>' +
     '<button class="xi-b" aria-label="+" onclick="aXoAjustar(2.5)">+</button>' +
@@ -15349,9 +15355,13 @@ async function aChecarVersao(){
     if (!r.ok) return;
     const j = await r.json();
     if (!j || !j.build || j.build === A_BUILD) return;
+    // há versão nova: o 🔄 do topo pulsa até atualizar (se recarregar sozinho, a página nova já abre normal)
+    const rb = document.getElementById('tReloadBtn');
+    if (rb) { rb.classList.add('upd'); rb.title = (typeof aLang !== 'undefined' && aLang === 'en') ? 'New version: tap to update' : 'Nova versão: toque para atualizar'; }
     if (sessionStorage.getItem('movh-build-reload') === j.build) return;
     const ae = document.activeElement;
     if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA')) return;
+    if (typeof aXoEid !== 'undefined' && aXoEid) return; // não recarrega no meio do exercício: fica pulsando
     sessionStorage.setItem('movh-build-reload', j.build);
     location.reload();
   } catch(e) {}
@@ -16875,9 +16885,12 @@ function aColLogo(){
   return '<div class="col-logo"><img class="lg-claro" data-lg="c" src="' + c.src + '" alt="MOVH"/><img class="lg-escuro" data-lg="e" src="' + (e ? e.src : c.src) + '" alt="MOVH"/></div>';
 }
 function aLogoRodape(){
-  var c = document.getElementById('aLogoClaro'), e = document.getElementById('aLogoEscuro');
-  if (!c) return '';
-  return '<img class="footer-logo lg-claro" data-lg="c" src="' + c.src + '" alt="MOVH"/><img class="footer-logo lg-escuro" data-lg="e" src="' + (e ? e.src : c.src) + '" alt="MOVH"/>';
+  // LG + barras/gráfico em vermelho e "movh" embaixo (SVG: acompanha o tema claro/escuro)
+  return '<svg class="footer-logo" viewBox="0 0 200 112" role="img" aria-label="MOVH">' +
+    '<text x="8" y="64" font-family="Arial Black,Helvetica,Arial,sans-serif" font-weight="900" font-size="60" letter-spacing="-2" fill="currentColor">LG</text>' +
+    '<rect x="124" y="44" width="14" height="20" rx="3" fill="#E03131"/><rect x="144" y="28" width="14" height="36" rx="3" fill="#E03131"/><rect x="164" y="10" width="14" height="54" rx="3" fill="#E03131"/>' +
+    '<rect x="8" y="72" width="170" height="4" rx="2" fill="#E03131"/>' +
+    '<text x="93" y="104" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="22" letter-spacing="9" fill="currentColor">movh</text></svg>';
 }
 
 // Monta um pequeno gráfico de evolução (SVG puro, sem libs externas) a partir
