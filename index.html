@@ -621,6 +621,31 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 #page-coletivas .cl-addex{margin:0 0 4px}
 #page-coletivas .cl-tabs{position:sticky;top:-1px;z-index:5;background:var(--bg);padding:4px 0 6px}
 @media(min-width:1000px){#page-coletivas .cl-blocos{column-width:500px;column-gap:10px}#page-coletivas .cl-vazio{column-span:all}}
+/* v62.6 — Personal: blocos em grade, lido da esquerda para a direita (1 2 3 / 4 5 6) */
+#page-coletivas .cl-blocos.pers{column-width:auto;columns:auto;display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+#page-coletivas .cl-blocos.pers .pcol{flex:1.25 1 380px;min-width:0;display:flex;flex-direction:column;gap:8px}
+#page-coletivas .cl-blocos.pers .pcol:first-child{flex:.85 1 320px}
+#page-coletivas .cl-blocos.pers .cl-bloco{margin-bottom:0}
+#page-coletivas .cl-blocos.pers .cl-vazio{flex:1 1 100%}
+#page-coletivas .cl-blocos.pers .cl-ta{min-height:34px}
+#page-coletivas .cl-blocos.pers .cl-bloco{padding:7px 8px}
+#page-coletivas .cl-blocos.pers .cl-ex{gap:3px;margin-bottom:3px}
+#page-coletivas .cl-blocos.pers .cl-exn{min-width:90px;padding:4px 6px;font-size:12.5px}
+#page-coletivas .cl-blocos.pers input.cl-exs{padding:4px 2px;font-size:12.5px}
+#page-coletivas .cl-blocos.pers input.cl-exs.cl-sr{width:88px!important;flex:0 0 88px}
+#page-coletivas .cl-blocos.pers input.cl-exs[placeholder="Sér."]{width:36px!important;flex:0 0 36px}
+#page-coletivas .cl-blocos.pers input.cl-exs[placeholder="Reps"]{width:74px!important;flex:0 0 74px}
+#page-coletivas .cl-blocos.pers .cl-ex .cl-ib{width:22px;height:22px;flex:0 0 22px;font-size:11px;border-radius:6px}
+#page-coletivas .cl-blocos.pers .cl-ex .cl-ib[title="Subir"],#page-coletivas .cl-blocos.pers .cl-ex .cl-ib[title="Descer"],#page-coletivas .cl-blocos.pers .cl-ex .cl-ib.x{display:none}
+#page-coletivas .cl-blocos.pers .cl-ex:hover .cl-ib[title="Subir"],#page-coletivas .cl-blocos.pers .cl-ex:hover .cl-ib[title="Descer"],#page-coletivas .cl-blocos.pers .cl-ex:hover .cl-ib.x,#page-coletivas .cl-blocos.pers .cl-ex:focus-within .cl-ib[title="Subir"],#page-coletivas .cl-blocos.pers .cl-ex:focus-within .cl-ib[title="Descer"],#page-coletivas .cl-blocos.pers .cl-ex:focus-within .cl-ib.x{display:inline-block}
+#page-coletivas .cl-blocos.pers .cl-bhd{gap:4px;margin-bottom:5px}
+#page-coletivas .cl-blocos.pers .cl-bhd .cl-ib{width:22px;height:22px;flex:0 0 22px;font-size:11px}
+#page-coletivas .cl-blocos.pers .cl-bhd{flex-wrap:nowrap}
+#page-coletivas .cl-blocos.pers .cl-bhd select{width:56px;padding:3px 2px;font-size:11px}
+#page-coletivas .cl-blocos.pers .cl-bhd .cl-ib:not(.cl-cor){display:none}
+#page-coletivas .cl-blocos.pers .cl-bloco:hover .cl-bhd .cl-ib:not(.cl-cor),#page-coletivas .cl-blocos.pers .cl-bloco:focus-within .cl-bhd .cl-ib:not(.cl-cor){display:inline-block}
+#page-coletivas .cl-blocos.pers .cl-conj{font-size:10.5px}
+#page-coletivas .cl-blocos.pers .cl-nome{min-width:120px;font-size:12.5px;padding:4px 6px}
 .cl-day-hd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .cl-day-t{font-size:15px;font-weight:800}
 .cl-dup{width:auto!important;font-size:11px;padding:3px 6px}
@@ -3197,10 +3222,32 @@ function coletivasRenderEditor(el, datas){
   el.innerHTML = '<div class="cl-tabs">' + tabs + '</div>' +
     '<div class="cl-day"><div class="cl-day-hd"><span class="cl-day-t">' + label + (coletivasDiaSel === hojeKey ? ' · hoje' : '') + '</span><span style="flex:1"></span>' +
     notasBtn('dia', (coletivasModo === 'personal' ? personalAlunoId : 'col') + '|' + coletivasDiaSel, 'Dia ' + label) + '<input type="date" id="cl-dup-data" class="cl-dup" title="Copiar este dia para a data escolhida"/><button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasDuplicarDia()">⧉ Copiar dia p/ data</button>' +
-    '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasLimparDia()">🗑 Limpar dia</button></div>' +
-    '<div class="cl-blocos">' + (blocos.length ? blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length)).join('') : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
+    (coletivasModo === 'personal' ? '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="personalSepararSR()" title="Lê nomes como \'Remada: 3×8-10\' e separa séries e reps">↔ Separar séries×reps</button>' : '') + '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasLimparDia()">🗑 Limpar dia</button></div>' +
+    '<div class="cl-blocos' + (coletivasModo === 'personal' ? ' pers' : '') + '">' + (blocos.length ? colPersColunas(blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
     '<div class="cl-add"><button type="button" class="btn bp" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\')">＋ Bloco</button><button type="button" class="btn bs" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\',\'condicionamento\')">🔥 ＋ Condicionamento</button></div></div>';
   el.querySelectorAll('textarea.cl-ta').forEach(coletivasAuto);
+}
+// Personal: blocos 1 e 2 (curtos) empilhados na 1ª coluna; do 3º em diante, uma coluna por bloco
+function colPersColunas(h){
+  if (coletivasModo !== 'personal') return h.join('');
+  return [h.slice(0, 2)].concat(h.slice(2).map(function(x){ return [x]; })).map(function(c){ return '<div class="pcol">' + c.join('') + '</div>'; }).join('');
+}
+function colSRNorm(v){
+  v = String(v == null ? '' : v); const m = v.match(/^\s*(\d+)\s*[xX×]\s*(.*)$/);
+  if (m) { const r = colRepsA(m[2]); return { ser: m[1], reps: r, txt: m[1] + '×' + r }; }
+  const r = colRepsA(v); return { ser: '', reps: r, txt: r };
+}
+function colSRTxt(ex){ const r = colRepsA(ex.reps || ''); return ex.series ? ex.series + '×' + r : r; }
+function coletivasSRInput(el, dia, i, j){
+  const pos = el.selectionStart, ant = colSRNorm(el.value.slice(0, pos)).txt, n = colSRNorm(el.value);
+  if (n.txt !== el.value) { el.value = n.txt; try { el.setSelectionRange(ant.length, ant.length); } catch(e){} }
+  const ex = coletivasData[dia][i].exercicios[j]; ex.series = n.ser; ex.reps = n.reps; coletivasMarcarSujo();
+}
+function colRepsA(s){ s = String(s == null ? '' : s); if (/\d\s*[-–—]\s*\d\s*[-–—]\s*\d/.test(s)) return s; return s.replace(/(\d)\s*[-–—]\s*(?=\d)/g, '$1 a '); }
+function coletivasRepsInput(el, dia, i, j){
+  const pos = el.selectionStart, antes = colRepsA(el.value.slice(0, pos)), novo = colRepsA(el.value);
+  if (novo !== el.value) { el.value = novo; try { el.setSelectionRange(antes.length, antes.length); } catch(e){} }
+  coletivasSetEx(dia, i, j, 'reps', novo);
 }
 function renderColetivasBloco(dia, i, b, total){
   const isC = b.tipo === 'condicionamento';
@@ -3211,8 +3258,9 @@ function renderColetivasBloco(dia, i, b, total){
     '<input type="text" list="ex-datalist" class="cl-exn" placeholder="Exercício (banco ou livre)" value="' + escAttr(ex.nome || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'nome\',this.value)"/>' +
     '<button type="button" class="cl-ib" onclick="mvAbrirParaInput(this.previousElementSibling)" title="Escolher: grupo › categoria › exercício">📂</button>' +
     (ex.nome && !mvAcharEx(ex.nome) && !mvEhPausa(ex.nome) ? '<button type="button" class="cl-ib cl-new" data-n="' + escAttr(ex.nome) + '" onclick="mvCadastrar(this.dataset.n)" title="Fora do banco (sem vídeo). Toque para cadastrar">＋</button>' : '') +
+    ((coletivasModo === 'personal' && !b.conjugado) ? '<input type="text" class="cl-exs cl-sr" placeholder="3×8 a 10" title="Séries × reps. Ex.: 3×8 a 10" value="' + escAttr(colSRTxt(ex)) + '" oninput="coletivasSRInput(this,' + q + ',' + j + ')"/>' :
     (b.conjugado ? '' : '<input type="text" class="cl-exs" placeholder="Sér." value="' + escAttr(ex.series || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'series\',this.value)"/>') +
-    '<input type="text" class="cl-exs" placeholder="Reps" value="' + escAttr(ex.reps || '') + '" oninput="coletivasSetEx(' + q + ',' + j + ',\'reps\',this.value)"/>' +
+    '<input type="text" class="cl-exs" placeholder="Reps" value="' + escAttr(colRepsA(ex.reps || '')) + '" oninput="coletivasRepsInput(this,' + q + ',' + j + ')"/>') +
     '<button type="button" class="cl-ib cl-pl' + ((ex.url || getUrl(ex.nome || '')) ? '' : ' sem') + '" onclick="coletivasVideo(' + q + ',' + j + ')" title="Ver vídeo · editar nome/link">▶</button>' +
     '<button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',-1)" title="Subir">↑</button><button type="button" class="cl-ib" onclick="coletivasMoverEx(' + q + ',' + j + ',1)" title="Descer">↓</button>' +
     '<button type="button" class="cl-ib x" onclick="coletivasRemoverEx(' + q + ',' + j + ')" title="Remover">×</button></div>').join('');
@@ -3243,6 +3291,21 @@ function coletivasDuplicarDia(){
   coletivasData[dst] = JSON.parse(JSON.stringify(src)).map(b => { b.id = 'b' + Date.now().toString(36) + Math.random().toString(36).slice(2,6); return b; });
   coletivasMarcarSujo(); notify('Dia copiado para ' + dst.split('-').reverse().join('/') + '.');
   coletivasIrParaData(dst);
+}
+function personalSepararSR(){
+  _mvIdx = null; let n = 0;
+  Object.keys(coletivasData || {}).forEach(function(d){ (coletivasData[d] || []).forEach(function(b){
+    if (b.tipo === 'condicionamento') return;
+    (b.exercicios || []).forEach(function(ex){
+      if (!ex.nome || ex.series || ex.reps) return;
+      const r = colSplitSR(ex.nome); if (!r) return;
+      const a = mvAcharEx(r.nome); ex.nome = a ? a.n : r.nome; ex.series = r.series; ex.reps = r.reps;
+      if (r.extra) b.detalhes = (b.detalhes ? b.detalhes + '\n' : '') + ex.nome + ': ' + r.extra;
+      n++;
+    });
+  }); });
+  if (n) { renderColetivas(); coletivasMarcarSujo(); }
+  notify(n ? n + ' exercício(s) separados em séries × reps. Confira e salve.' : 'Nada para separar: os exercícios já têm séries/reps ou não trazem "3×8".');
 }
 function coletivasLimparDia(){ if (!(coletivasData[coletivasDiaSel] || []).length) return; if (!confirm('Remover todos os blocos deste dia?')) return; coletivasData[coletivasDiaSel] = []; renderColetivas(); coletivasMarcarSujo(); }
 window.addEventListener('beforeunload', function(e){ if (typeof coletivasSujo !== 'undefined' && coletivasSujo) { e.preventDefault(); e.returnValue = ''; } });
@@ -3360,10 +3423,20 @@ function colEhInstrucao(linha){
   const n=colNorm(linha);
   return COL_RE_FMT.test(n)||/^(obs|nota|dica|observ)/.test(n)||/^\(.*\)$/.test(linha.trim());
 }
+function colSplitSR(txt){
+  const m = String(txt || '').trim().match(/^(.+?)\s*[:\-–—]?\s*(\d{1,2})\s*[x×X]\s*(\d+(?:\s*(?:[-–—]|a)\s*\d+)?)(\s*(?:\/\s*lado|por lado|cada lado|\/\s*perna))?\s*(?:[.,;:]\s*)?(.*)$/i);
+  if (!m) return null;
+  const nome = m[1].replace(/[\s:.,;\-–—]+$/, '').trim();
+  if (!nome) return null;
+  const lado = m[4] ? ' por lado' : '';
+  return { nome: nome, series: m[2], reps: colRepsA(m[3]) + lado, extra: (m[5] || '').replace(/[\s.]+$/, '').trim() };
+}
 function coletivasParseLinhaExercicio(linha){
   let m=linha.match(/^([A-Za-z]\d+)\s+(.+?)\s+(\d+)\s*[x×]\s*([\d/’”"'.\s]+)$/);
   if(m)return {label:m[1].toUpperCase(),nome:m[2].trim(),series:m[3],reps:m[4].trim()};
   if(mvAcharEx(linha))return {label:null,nome:linha.trim(),series:'',reps:''};
+  const sr=colSplitSR(linha);
+  if(sr)return {label:null,nome:sr.nome,series:sr.series,reps:sr.reps,extra:sr.extra};
   m=linha.match(/^(.+?)\s+(\d+)\s*[x×]\s*([\d/’”"'.\s]+)$/);
   if(m)return {label:null,nome:m[1].trim(),series:m[2],reps:m[3].trim()};
   m=linha.match(/^(.+?)\s+(\d+(?:\/\d+)*\s*['′’"”]{0,2})$/);
@@ -3422,6 +3495,7 @@ function coletivasParsearDia(linhas){
         return;
       }
       cur.exercicios.push(colExFinal({nome:ex.nome,series:ex.series,reps:ex.reps}));
+      if(ex.extra)cur.detalhes=(cur.detalhes?cur.detalhes+'\n':'')+ex.nome+': '+ex.extra;
     });
   });
   if(pend.length&&!blocos.length){cur=novo({tipo:'normal',nome:'Treino'});cur.detalhes=pend.join('\n');}
@@ -3684,7 +3758,7 @@ function personalPubRender(){
     if (isC && b.formato) h += '<div class="pp-d"><b>Formato:</b> ' + ppEsc(b.formato) + '</div>';
     if (isC && b.materiais) h += '<div class="pp-d"><b>Materiais:</b> ' + ppEsc(b.materiais) + '</div>';
     (b.exercicios || []).forEach(function(ex){ if (!ex.nome) return;
-      const sr = b.conjugado ? (ex.reps ? ppEsc(ex.reps) + ' reps' : '') : ((ex.series || ex.reps) ? ppEsc(ex.series || '') + (ex.series && ex.reps ? '×' : '') + ppEsc(ex.reps || '') : '');
+      const sr = b.conjugado ? (ex.reps ? ppEsc(colRepsA(ex.reps)) + ' reps' : '') : ((ex.series || ex.reps) ? ppEsc(ex.series || '') + (ex.series && ex.reps ? '×' : '') + ppEsc(colRepsA(ex.reps || '')) : '');
       const pl = (ex.url && /^https?:\/\//i.test(ex.url)) ? '<button type="button" class="pp-pl" data-u="' + ppEsc(ex.url) + '" onclick="personalPubPlay(this)" aria-label="Vídeo">▶</button>' : '';
       let reg = '';
       if (ppAlunoId && ppAlunoId !== 'x') {
@@ -3707,7 +3781,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.5 · 09/11';
+var MOVH_VER = 'v62.6 · 09/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
