@@ -1501,6 +1501,15 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
       </div>
       <div style="font-size:9px;color:var(--t3);margin-top:8px">Simulação — cores exatas do tema (claro/escuro) podem variar um pouco no app real.</div>
     </div>
+    <div class="card" style="max-width:420px;flex:1;min-width:300px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px">🦶 Logo do rodapé do app</div>
+      <div style="font-size:10.5px;color:var(--t3);margin-bottom:10px">Aparece no fim do treino do aluno. Escolha no mesmo esquema do login. "Igual ao login" acompanha a logo do login. Para criar uma nova, envie e ajuste lá em cima, salve em "Minhas logos" e escolha aqui. Vale na próxima abertura do app, sem exportar de novo.</div>
+      <div id="logo-rodape-opts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+      <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:14px;text-align:center">
+        <img id="logo-rodape-prev" style="max-width:170px;width:60%;height:auto" alt="Logo do rodapé"/>
+        <div id="logo-rodape-label" style="font-size:10.5px;color:var(--t3);margin-top:6px"></div>
+      </div>
+    </div>
   </div>
 </div>
 <div class="page" id="page-coletivas">
@@ -2698,13 +2707,39 @@ function logoParesAtuais(){
   if (k === 'antiga') return { c: DEFAULT_LOGIN_LOGO, e: DEFAULT_LOGIN_LOGO };
   const p = LOGO_PRONTAS[k] || LOGO_PRONTAS.lg16; return { c: p.c, e: p.e };
 }
+// Logo do rodapé do app: '' = igual ao login · 'p:<preset>' · 's:<id da logo salva>'
+function logoRodapeLer(){ try { return localStorage.getItem('movh_logo_rodape') || ''; } catch(e) { return ''; } }
+function logoRodapePares(){
+  const v = logoRodapeLer(); if (!v) return null;
+  if (v.indexOf('p:') === 0) { const k = v.slice(2); if (k === 'antiga') return { c: DEFAULT_LOGIN_LOGO, e: DEFAULT_LOGIN_LOGO }; const p = LOGO_PRONTAS[k]; return p ? { c: p.c, e: p.e } : null; }
+  if (v.indexOf('s:') === 0) { const l = logoSalvasLer().find(function(x){ return x.id === v.slice(2); }); return l ? { c: l.src, e: l.src } : null; }
+  return null;
+}
+function logoRodapeEscolher(v){
+  try { if (v) localStorage.setItem('movh_logo_rodape', v); else localStorage.removeItem('movh_logo_rodape'); } catch(e) {}
+  renderLogoRodape(); logoPublicar();
+}
+function renderLogoRodape(){
+  const box = document.getElementById('logo-rodape-opts'); if (!box) return;
+  const cur = logoRodapePares() ? logoRodapeLer() : '';
+  const op = function(v, src, nome){ return '<button type="button" class="logo-opt' + (cur === v ? ' on' : '') + '" data-v="' + String(v).replace(/"/g,'') + '" onclick="logoRodapeEscolher(this.dataset.v)" title="Usar no rodapé"><img src="' + src + '" alt=""/><span>' + String(nome).replace(/</g,'&lt;') + '</span></button>'; };
+  const ids = ['lg16','lg15','lg15r','lgv','movhv','lg16o','lg15o'].filter(function(k){ return LOGO_PRONTAS[k]; });
+  box.innerHTML = op('', logoAtivaSrc(), 'Igual ao login · padrão') +
+    ids.map(function(k){ return op('p:' + k, LOGO_PRONTAS[k].c, LOGO_PRONTAS[k].n); }).join('') +
+    op('p:antiga', DEFAULT_LOGIN_LOGO, 'Antiga') +
+    logoSalvasLer().map(function(l){ return op('s:' + l.id, l.src, l.n); }).join('');
+  const par = logoRodapePares();
+  const prev = document.getElementById('logo-rodape-prev'), lb = document.getElementById('logo-rodape-label');
+  if (prev) prev.src = par ? par.c : logoAtivaSrc();
+  if (lb) lb.textContent = par ? 'Em uso no rodapé: logo escolhida' : 'Em uso no rodapé: igual ao login';
+}
 async function logoPublicar(){
   if (!mbProfessor || !mbProfessor.id) { notify('Logo salva aqui. Para valer no app online, entre na sua conta (Configuração) e salve de novo.'); return false; }
   try {
     const r0 = await mbClient.from('landing_config').select('config').eq('professor_id', mbProfessor.id).maybeSingle();
     if (r0.error) throw r0.error;
     const par = logoParesAtuais();
-    const row = { professor_id: mbProfessor.id, config: Object.assign({}, (r0.data && r0.data.config) || {}, { logo_login: { c: par.c, e: par.e, t: Date.now() } }), updated_at: new Date().toISOString() };
+    const row = { professor_id: mbProfessor.id, config: Object.assign({}, (r0.data && r0.data.config) || {}, { logo_login: { c: par.c, e: par.e, t: Date.now() }, logo_rodape: (function(){ const rp = logoRodapePares(); return rp ? { c: rp.c, e: rp.e, t: Date.now() } : null; })() }), updated_at: new Date().toISOString() };
     const r = await mbClient.from('landing_config').upsert(row, { onConflict: 'professor_id' });
     if (r.error) throw r.error;
     notify('✅ Logo publicada: o app dos alunos passa a usar na próxima abertura.');
@@ -2752,6 +2787,7 @@ function renderLogoBranding(){
   if (salvarBtn) salvarBtn.disabled = true;
   const fileInput = document.getElementById('logo-upload-input');
   if (fileInput) fileInput.value = '';
+  renderLogoRodape();
 }
 
 function logoUploadPreview(input){
@@ -3881,7 +3917,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.9 · 10/11';
+var MOVH_VER = 'v62.10 · 10/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12906,7 +12942,6 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .treino-ok-banner{background:linear-gradient(135deg,#38a169,#276749);color:#fff;border-radius:14px;padding:16px;text-align:center;font-size:15px;font-weight:700;margin:16px 0;letter-spacing:-.01em}
 .footer{text-align:center;font-size:11px;color:var(--t3);margin-top:2rem;display:flex;flex-direction:column;align-items:center;gap:8px}
 .footer-logo{width:170px;max-width:60%;height:auto;margin:18px auto 0}
-svg.footer-logo{display:block;width:190px;max-width:70%;color:var(--tx)}
 #tFooter{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
 .dm.upd{border-color:var(--P);animation:updPulse 1.3s ease-in-out infinite}
 @keyframes updPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 color-mix(in srgb,var(--P) 55%,transparent)}50%{transform:scale(1.14);box-shadow:0 0 0 7px color-mix(in srgb,var(--P) 0%,transparent)}}
@@ -15374,6 +15409,16 @@ function aLogoAplicar(j){
     if (e) e.src = j.e || j.c;
     document.querySelectorAll('img[data-lg="c"]').forEach(function(x){ x.src = j.c; });
     document.querySelectorAll('img[data-lg="e"]').forEach(function(x){ x.src = j.e || j.c; });
+    aLogoRodapeAplicar(null, j);
+  } catch(x) {}
+}
+// rodapé: usa a logo própria (logo_rodape) se houver; senão acompanha a do login
+function aLogoRodapeAplicar(r, j){
+  try {
+    var f = (r && r.c) ? r : (aLogoRodapeFonte() || j);
+    if (!f || !f.c) return;
+    document.querySelectorAll('img[data-lr="c"]').forEach(function(x){ x.src = f.c; });
+    document.querySelectorAll('img[data-lr="e"]').forEach(function(x){ x.src = f.e || f.c; });
   } catch(x) {}
 }
 async function aLogoRemota(){
@@ -15381,8 +15426,15 @@ async function aLogoRemota(){
   try {
     var r = await aClient.from('landing_config').select('config').limit(5);
     var rows = (r && r.data) || [], j = null;
-    for (var i = 0; i < rows.length; i++) { var l = rows[i].config && rows[i].config.logo_login; if (l && l.c && (!j || (l.t || 0) > (j.t || 0))) j = l; }
+    var rr = null, achouCfg = false;
+    for (var i = 0; i < rows.length; i++) {
+      var cf = rows[i].config || {}; achouCfg = true;
+      var l = cf.logo_login; if (l && l.c && (!j || (l.t || 0) > (j.t || 0))) j = l;
+      var lr = cf.logo_rodape; if (lr && lr.c && (!rr || (lr.t || 0) > (rr.t || 0))) rr = lr;
+    }
+    if (achouCfg) { try { if (rr) localStorage.setItem('movh-logo-rodape', JSON.stringify(rr)); else localStorage.removeItem('movh-logo-rodape'); } catch(x) {} }
     if (j) { aLogoAplicar(j); try { localStorage.setItem('movh-logo-login', JSON.stringify(j)); } catch(x) {} }
+    aLogoRodapeAplicar(rr, j);
   } catch(x) {}
 }
 window.addEventListener('load', function(){ aLogoRemota(); });
@@ -16882,15 +16934,17 @@ function aColLogo(){
   var c = document.getElementById('aLogoClaro'), e = document.getElementById('aLogoEscuro');
   if (!c) return '';
   if (document.querySelector('#tFooter .footer-logo')) return '';
-  return '<div class="col-logo"><img class="lg-claro" data-lg="c" src="' + c.src + '" alt="MOVH"/><img class="lg-escuro" data-lg="e" src="' + (e ? e.src : c.src) + '" alt="MOVH"/></div>';
+  var r = aLogoRodapeFonte();
+  return '<div class="col-logo"><img class="lg-claro" data-lr="c" src="' + (r ? r.c : c.src) + '" alt="MOVH"/><img class="lg-escuro" data-lr="e" src="' + (r ? (r.e || r.c) : (e ? e.src : c.src)) + '" alt="MOVH"/></div>';
 }
+function aLogoRodapeFonte(){ try { var r = JSON.parse(localStorage.getItem('movh-logo-rodape') || 'null'); if (r && r.c) return r; } catch(x) {} return null; }
 function aLogoRodape(){
-  // LG + barras/gráfico em vermelho e "movh" embaixo (SVG: acompanha o tema claro/escuro)
-  return '<svg class="footer-logo" viewBox="0 0 200 112" role="img" aria-label="MOVH">' +
-    '<text x="8" y="64" font-family="Arial Black,Helvetica,Arial,sans-serif" font-weight="900" font-size="60" letter-spacing="-2" fill="currentColor">LG</text>' +
-    '<rect x="124" y="44" width="14" height="20" rx="3" fill="#E03131"/><rect x="144" y="28" width="14" height="36" rx="3" fill="#E03131"/><rect x="164" y="10" width="14" height="54" rx="3" fill="#E03131"/>' +
-    '<rect x="8" y="72" width="170" height="4" rx="2" fill="#E03131"/>' +
-    '<text x="93" y="104" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="22" letter-spacing="9" fill="currentColor">movh</text></svg>';
+  // logo do rodapé: a escolhida em "Logo do rodapé" no Gerador; sem escolha, a mesma do login
+  var c = document.getElementById('aLogoClaro'), e = document.getElementById('aLogoEscuro');
+  var r = aLogoRodapeFonte();
+  if (!r && !c) return '';
+  var sc = r ? r.c : c.src, se = r ? (r.e || r.c) : (e ? e.src : c.src);
+  return '<img class="footer-logo lg-claro" data-lr="c" src="' + sc + '" alt="MOVH"/><img class="footer-logo lg-escuro" data-lr="e" src="' + se + '" alt="MOVH"/>';
 }
 
 // Monta um pequeno gráfico de evolução (SVG puro, sem libs externas) a partir
