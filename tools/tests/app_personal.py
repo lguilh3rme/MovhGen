@@ -37,13 +37,33 @@ with sync_playwright() as p:
       await aPersonalVerificar(); o.erroRLS=getComputedStyle(document.getElementById('tBtnPersonal')).display;
       aClient.from=()=>tabela('tk1');
       await aPersonalVerificar(); o.liberado=getComputedStyle(document.getElementById('tBtnPersonal')).display;
-      aVerPersonal();
+      const hj=aColetivasDateKey(new Date()); const ont=new Date(); ont.setDate(ont.getDate()-1); const ok_=aColetivasDateKey(ont);
+      const chamadas=[]; window.__chamadas=chamadas;
+      const dados={}; dados[hj]=[{id:'b1',nome:'Peito',exercicios:[{nome:'Supino reto',series:'3',reps:'10'}]}];
+      aClient.rpc=(fn,args)=>{chamadas.push([fn,args]);
+        if(fn==='get_personal_painel')return Promise.resolve({data:{alunos:[{id:'a1',nome:'Ana',dados:dados},{id:'a2',nome:'Beto',dados:{}}]},error:null});
+        if(fn==='get_personal_registros')return Promise.resolve({data:[{data:ok_,chave:'b1|supino reto',exercicio:'Supino reto',carga:'40kg',obs:'ok',feito:true}],error:null});
+        if(fn==='salvar_personal_registro')return Promise.resolve({data:true,error:null});
+        return Promise.resolve({data:null,error:null});};
+      aPerSemana=null; aPerDia=null; aVerPersonal(); await new Promise(r=>setTimeout(r,400));
+      const box=document.getElementById('tPersonalConteudo');
       o.tela=document.getElementById('tPersonal').style.display+'/'+document.getElementById('tDashboard').style.display;
-      o.src=(document.querySelector('#tPersonalConteudo iframe')||{}).src||'';
+      o.visual=box.querySelectorAll('.semana-strip-dia').length+':'+box.querySelectorAll('.bloco').length+':'+box.querySelectorAll('select.pr-sel option').length;
+      o.ultima=(box.querySelector('.pr-last')||{}).textContent||'';
+      o.semIframe=!box.querySelector('iframe');
+      const inp=box.querySelector('.pr-carga'); inp.value='50'; inp.dispatchEvent(new Event('change',{bubbles:true}));
+      await new Promise(r=>setTimeout(r,200));
+      const sv=chamadas.filter(c=>c[0]==='salvar_personal_registro').pop();
+      o.salvou=!!sv&&sv[1].p_token==='tk1'&&sv[1].p_aluno==='a1'&&sv[1].p_chave==='b1|supino reto'&&sv[1].p_carga==='50'&&sv[1].p_data===hj&&sv[1].p_feito===false;
+      o.status=box.querySelector('.pr-st').textContent;
+      box.querySelector('.pr-obsb').click(); o.obsAbre=box.querySelector('.pr-obs').style.display;
+      const ck=box.querySelector('.pr-ck'); ck.checked=true; ck.dispatchEvent(new Event('change',{bubbles:true})); await new Promise(r=>setTimeout(r,200));
+      const sv2=chamadas.filter(c=>c[0]==='salvar_personal_registro').pop(); o.feito=sv2[1].p_feito===true&&sv2[1].p_carga==='50';
+      await aPerTrocarAluno('a2'); o.outro=document.getElementById('tPersonalConteudo').textContent.indexOf('Sem treino neste dia')>=0;
       aVoltarHoje(); o.voltou=document.getElementById('tPersonal').style.display+'/'+document.getElementById('tDashboard').style.display;
       return o;}""")
-    ok=(r['outroEmail']=='none' and r['criaToken'].startswith('block') and r['erroRLS']=='none' and r['liberado']=='block' and r['tela']=='block/none' and 'personal/?personal=tk1' in r['src'] and r['voltou']=='none/block')
-    print('OK' if ok else 'FAIL','Personal: libera só o e-mail do professor com token; some em outro e-mail/erro de RLS; abre e volta',r)
+    ok=(r['outroEmail']=='none' and r['criaToken'].startswith('block') and r['erroRLS']=='none' and r['liberado']=='block' and r['tela']=='block/none' and r['visual']=='7:1:2' and 'Última: 40kg' in r['ultima'] and r['semIframe'] and r['salvou'] and r['status']=='✓' and r['obsAbre']=='block' and r['feito'] and r['outro'] and r['voltou']=='none/block')
+    print('OK' if ok else 'FAIL','Personal: libera só o professor; visual das coletivas (7 dias, bloco, aluno); Última carga; salva carga/obs/feito nas RPCs; troca de aluno; volta',r)
     m=pg.evaluate("""()=>{const d=document.getElementById('tDashboard'),f=document.getElementById('tFooter'),a=d.querySelector('.dash-actions');
       return {padDash:getComputedStyle(d).paddingBottom,gapAcoesRodape:Math.round(f.getBoundingClientRect().top-a.getBoundingClientRect().bottom),padFooter:getComputedStyle(f).paddingBottom,
         btnConcl:!!document.querySelector('.concl-btn'),conclW:document.querySelector('.concl-btn')?Math.round(document.querySelector('.concl-btn').getBoundingClientRect().width):0}}""")
