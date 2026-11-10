@@ -3882,7 +3882,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.7 · 09/11';
+var MOVH_VER = 'v62.8 · 10/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -11497,16 +11497,16 @@ const PF_COND = {
 function pfCondDecisao(m){
   const C = PF_COND, mot = [], rec = [];
   const fr = x => String(x.toFixed(1)).replace('.', ',');
-  if (m.ader != null && m.ader < C.aderMantem) rec.push('aderência '+m.ader+'% (abaixo de '+C.aderMantem+'%)');
+  if (m.ader != null && m.ader < C.aderMantem) rec.push('aderência '+m.ader+'%, abaixo de '+C.aderMantem+'%');
   if (m.dor) rec.push('dor relatada nas últimas '+(C.dorDias/7)+' semanas');
-  if (m.testeSem != null && m.testeSem > C.testeMaxSem) rec.push('teste de 3 km há '+m.testeSem+' sem (mais de '+C.testeMaxSem+')');
+  if (m.testeSem != null && m.testeSem > C.testeMaxSem) rec.push('teste de 3 km há '+m.testeSem+' sem, mais de '+C.testeMaxSem);
   if (rec.length) return { nivel:'recua', motivos:rec };
   const ok = [];
   if (m.ader == null) mot.push('sem dados de aderência suficientes');
-  else if (m.ader >= C.aderProgride) ok.push('aderência '+m.ader+'%'); else mot.push('aderência '+m.ader+'% (progride a partir de '+C.aderProgride+'%)');
+  else if (m.ader >= C.aderProgride) ok.push('aderência '+m.ader+'%'); else mot.push('aderência '+m.ader+'%, progride a partir de '+C.aderProgride+'%');
   if (m.rpeMed == null) mot.push('RPE sem registros suficientes');
-  else if (m.rpeMed <= C.rpeMax) ok.push('RPE '+fr(m.rpeMed)); else mot.push('RPE '+fr(m.rpeMed)+' (acima de '+C.rpeMax+')');
-  if (m.testeSem == null) mot.push('sem teste de 3 km (faça um para liberar a progressão)');
+  else if (m.rpeMed <= C.rpeMax) ok.push('RPE '+fr(m.rpeMed)); else mot.push('RPE '+fr(m.rpeMed)+', acima de '+C.rpeMax);
+  if (m.testeSem == null) mot.push('sem teste de 3 km, faça um para liberar a progressão');
   else ok.push('teste de 3 km há '+m.testeSem+' sem');
   if (!mot.length) return { nivel:'progride', motivos:ok };
   return { nivel:'mantem', motivos:mot.concat(ok) };
@@ -11557,11 +11557,12 @@ async function mbSugerirProximaFase(protoId, alunoId){
   notify('Montando rascunho…');
   try {
     const desde = new Date(Date.now() - 70*86400000).toISOString();
-    const [pr, an, rp, rg] = await Promise.all([
+    const [pr, an, rp, rg, ts] = await Promise.all([
       mbClient.from('protocolos').select('id, conteudo, data_inicio').eq('id', protoId).maybeSingle(),
       mbClient.from('anamneses').select('respostas').eq('aluno_id', alunoId).eq('tipo','anamnese').not('respostas','is',null).order('criado_em',{ascending:false}).limit(1),
-      mbClient.from('rpe_sessoes').select('rpe').eq('aluno_id', alunoId).order('criado_em',{ascending:false}).limit(5),
-      mbClient.from('registros_sessao').select('criado_em').eq('aluno_id', alunoId).gte('criado_em', desde)
+      mbClient.from('rpe_sessoes').select('rpe, dor, criado_em').eq('aluno_id', alunoId).gte('criado_em', desde).order('criado_em',{ascending:false}).limit(80),
+      mbClient.from('registros_sessao').select('criado_em').eq('aluno_id', alunoId).gte('criado_em', desde),
+      mbClient.from('testes_fisicos').select('data').eq('aluno_id', alunoId).eq('padrao_movimento','Condicionamento').order('data',{ascending:false}).limit(1)
     ]);
     if (pr.error || !pr.data) throw (pr.error || new Error('protocolo não encontrado'));
     const c = pr.data.conteudo || {}, sems = c.semanas || [];
@@ -11620,8 +11621,30 @@ async function mbSugerirProximaFase(protoId, alunoId){
         if (b.id === 'pri') { const o = (b.obs||'').trim(); b.obs = /progress[aã]o dupla/i.test(o) ? o : (o ? o+'\n' : '') + REGRA_BASE; }
       });
     });
-    // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
+    // corrida/condicionamento: progride, mantém ou recua conforme aderência, RPE, dor e teste de 3 km (PF_COND)
     const alertas = [];
+    const _hoje = Date.now(), _dia = 86400000;
+    const _diasPorSem = (vig.dias || []).length || 1;
+    const _desdeIni = pr.data.data_inicio ? Math.floor((_hoje - new Date(pr.data.data_inicio+'T00:00:00')) / _dia) : PF_COND.janelaDias;
+    const _janela = Math.min(PF_COND.janelaDias, _desdeIni);
+    const _feitos = new Set();
+    (rp.data||[]).concat(rg.data||[]).forEach(r => { if (r.criado_em && (_hoje - new Date(r.criado_em).getTime()) <= _janela*_dia) _feitos.add(String(r.criado_em).slice(0,10)); });
+    const aderPct = _janela >= PF_COND.janelaMinDias ? Math.min(100, Math.round(100 * _feitos.size / (_diasPorSem * _janela / 7))) : null;
+    const _rpesC = (rp.data||[]).filter(r => r.rpe != null).slice(0, 10);
+    const rpeCond = _rpesC.length >= PF_COND.rpeMinN ? _rpesC.reduce((x,r) => x + r.rpe, 0) / _rpesC.length : null;
+    const dorAtiva = (rp.data||[]).some(r => r.dor === true && (_hoje - new Date(r.criado_em).getTime()) <= PF_COND.dorDias*_dia);
+    const _t3 = Array.isArray(ts.data) && ts.data[0] && ts.data[0].data ? ts.data[0].data : null;
+    const teste3Sem = _t3 ? Math.max(0, Math.floor((_hoje - new Date(_t3+'T00:00:00')) / (7*_dia))) : null;
+    const condDec = pfCondDecisao({ ader: aderPct, rpeMed: rpeCond, testeSem: teste3Sem, dor: dorAtiva });
+    const condMud = pfCondAplicar(sem.dias, condDec.nivel);
+    if (condMud.length) {
+      const rot = { progride:'Corrida: progride', mantem:'Corrida: mantém', recua:'Corrida: recua −20%, sem intensidade' }[condDec.nivel];
+      alertas.push({ t: condDec.nivel === 'progride' ? 'ok' : 'av', x: rot + ' (' + condDec.motivos.join(' · ') + ')' });
+      condMud.forEach(m => alertas.push({ t:'ok', x: m.dia + ' · ' + m.modelo + ': ' + m.de + ' → ' + m.para }));
+      if (condDec.nivel === 'recua') alertas.push({ t:'av', x:'Demanda: refazer o teste de 3 km antes de voltar a subir o volume' });
+      if (condDec.nivel === 'progride' && condMud.every(m => m.facil)) alertas.push({ t:'ok', x:'Já fechou uma fase inteira em ritmo Fácil: pode incluir 1 sessão de qualidade por semana (Limiar ou Intervalo, pace do VDOT atual), à mão' });
+    }
+    // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
     const vol0 = pfVolume(sem);
     PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0, min: m.volMin || 10})).filter(x => x.n < x.min).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
       // dia de destino: o dia do mesmo "tipo" (empurrar/puxar) que já tem mais exercícios dele; empate -> dia com menos exercícios
@@ -11642,7 +11665,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
     if (hits.length) alertas.push({t:'av', x:'Anamnese cita: '+hits.join(', ')+' — confira exercícios e volume dessas regiões'});
     // RPE e registros
-    const rpes = (rp.data||[]).filter(r => r.rpe != null);
+    const rpes = (rp.data||[]).filter(r => r.rpe != null).slice(0, 5);
     const rpeMed = rpes.length >= 3 ? rpes.reduce((x,r) => x + r.rpe, 0) / rpes.length : null;
     if (rpeMed != null && rpeMed >= 9) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões muito puxadas — considere reduzir volume'});
     if (rpeMed != null && rpeMed <= 4) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões leves — pode apertar a carga'});
@@ -11650,7 +11673,8 @@ async function mbSugerirProximaFase(protoId, alunoId){
     if (diasReg < 15) alertas.push({t:'av', x:'Poucos registros: '+diasReg+' dia(s) com carga em 10 semanas — peça ao menos 3 por semana (a progressão dupla depende deles)'});
     _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: iniIso, alertas,
       ctx: [['Fase vigente', (vig.nome||'—')+' · semana '+semAtual+' de '+total], ['Histórico', sems.length+' mesociclo'+(sems.length!==1?'s':'')+' · '+total+' sem'],
-            ['Nível', resp && resp.tempo_treino ? String(resp.tempo_treino) : '—'], ['RPE médio', rpeMed != null ? rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', diasReg+' dia(s)']] };
+            ['Nível', resp && resp.tempo_treino ? String(resp.tempo_treino) : '—'], ['RPE médio', rpeMed != null ? rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', diasReg+' dia(s)']]
+        .concat(condMud.length ? [['Aderência (4 sem)', aderPct != null ? aderPct+'%' : 'sem dados'], ['Teste de 3 km', teste3Sem != null ? 'há '+teste3Sem+' sem' : 'nenhum']] : []) };
     pfRender();
   } catch (e) { notify('Erro ao montar rascunho: ' + (e.message || e)); }
 }
