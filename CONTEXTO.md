@@ -156,3 +156,10 @@ Plano (uma rodada): `ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jso
 - ALERTA: a `asaasKey` de produção (sem uso, a cobrança já passa pela Edge Function) foi removida do HTML, mas continua no histórico do Git: revogar/gerar nova no painel do Asaas e atualizar o secret `ASAAS_API_KEY` no Supabase.
 - Lição: teste visual da landing com Playwright, bloqueando requisições externas (`file://` + `route.abort`).
 
+## 17. Base teórica e leituras (09/11/2026)
+- `docs/base-teorica.md`: fontes científicas curadas (força/hipertrofia, híbrido, corrida/condicionamento, circuitos/funcional/CrossFit/kettlebell), com "o que sustenta no MOVH" e status de verificação (nenhuma teve o texto completo lido). O `movh-treino` lê junto com `docs/aprendizados-treino.md` (plugin 1.0.11). Serve para justificar, não para decidir.
+- Lacunas abertas: mobilidade/ativação, cadência 3-1-1 do tensional, avaliação física (teste de 3 km), gestão de carga e lesão na corrida, core, idosos/retorno, livros-base. Daniels, Seiler e magic.training não foram reverificados.
+- A conferir no código: contagem de volume com séries indiretas (0,5) segundo Pelland 2026 (não implementado); intervalado de tiros de 1 min versus a evidência de intervalos ≥2 min (caso do Natan); coerência do "mínimo ~10 séries" com a faixa citada na Análise técnica.
+- Bot de leituras: repo separado `lguilh3rme/movh-leituras` (GitHub Action semanal consulta o PubMed e grava `inbox.md`; sem IA e sem custo). Fica fora do MovhGen de propósito: commits semanais aqui disparariam deploys. Rotina: revisão mensal colando o `inbox.md` na conversa, aprovar/descartar, passar o aprovado para a base teórica com status e só depois mexer em regra (§0 → código).
+- Livros: guardar só resumo próprio com capítulo/página, nunca trechos copiados.
+- AÇÃO DO USUÁRIO: revogar o token GitHub colado no chat de 09/11/2026.
