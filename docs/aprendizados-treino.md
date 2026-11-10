@@ -10,6 +10,7 @@ Arquivo vivo: a cada aula/atendimento relevante, acrescentar uma linha no Diári
 - Se faltar dado (duração, nº de kettlebells e pesos, nível da turma), perguntar uma vez e seguir com suposição explícita.
 
 ## Diário (acrescentar no topo)
+- 09/11: criada `docs/base-teorica.md` (fontes científicas curadas) e o repo `movh-leituras` (busca semanal no PubMed para curadoria mensal).
 - 05/11 quinta: kettlebell swing russo funcionou muito bem com a turma.
 - 09/11: pedido de opção que suba a frequência cardíaca para variar nas terças (snatch/clean/swing americano/intervalado 40/20). Rascunho de terça 10/11 gerado e colado no Gerador; resultado da aula ainda por registrar.
 - Personais: Chris (individual) e Marcos + Paulo (dupla) a montar com a ficha do aluno.
