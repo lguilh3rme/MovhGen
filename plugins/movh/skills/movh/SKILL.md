@@ -50,6 +50,7 @@ Sem `$GITHUB_TOKEN` não há push: entregar `index.html` + patch (`git diff`) do
 `movh-treino` (montar/revisar protocolos; conhece a fase única base 8 sem e a progressão dupla; lê `docs/aprendizados-treino.md` e `docs/base-teorica.md`) e `movh-gestao` (vencimentos, cobrança, mensagens). Só leem e sugerem. Dúvida de treino → movh-treino; cobrança/renovação → movh-gestao.
 
 ## Testes (da raiz do MovhGen, caminhos ABSOLUTOS)
+ATALHO: `bash tools/run_all.sh` roda a suíte inteira (sintaxe, export, 10 testes) e imprime só PASS/FAIL com as contagens esperadas (`-v` mostra detalhe). Publicar o app: `bash tools/release.sh` (ensaio: export, A_BUILD==version.json, cmp com o clone do `movh`; diz IDÊNTICO e não gasta crédito) e `bash tools/release.sh --push -m "texto"` (commit + push direto no main do `movh`; exporte `MOVH_TRAILER` com as linhas de atribuição). Lista detalhada abaixo só para depurar um teste.
 `node --check` do maior `<script>` extraído; `python3 tools/tests/reg_all.py $PWD/index.html $PWD/tools/tests/gpage.py <dir>` (38 OK), `bulk.py` (mesmos args, 26 OK), `kbm.py` (20 OK), `t.py`/`reg.py` com o app exportado. `kbm.py` abre `/home/claude/movhgen/index.html` (minúsculo): `ln -sfn /home/claude/MovhGen /home/claude/movhgen`. `t.py` imprime OK e depois um `FAIL` esperado (caminho de erro; igual no app em produção). Feature nova: teste curto com o stub de `gpage.py`; depois de `nav('home')` esperar ~1,5 s antes de injetar dados simulados (o carregamento sobrescreve).
 
 ## No terminal local (Claude Code)
