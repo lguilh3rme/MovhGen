@@ -3917,7 +3917,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.14 · 10/11';
+var MOVH_VER = 'v62.15 · 11/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -11817,7 +11817,7 @@ const MB_ANAM_LABELS = {
   objetivo: {emagrecimento:'Emagrecimento', hipertrofia:'Hipertrofia', forca:'Força', condicionamento:'Condicionamento', reabilitacao:'Reabilitação', outro:'Outro'},
   tempo_treino: {iniciante:'Iniciante (<6 meses)', intermediario:'Intermediário (6m–2a)', avancado:'Avançado (>2 anos)'},
   interesse_corrida: {sim:'Sim, quero trabalhar corrida', nao:'Não, foco só em força/estética'},
-  pratica_corrida: {sim:'Sim, já corre', nao:'Não corre atualmente'},
+  pratica_corrida: {sim:'Sim', nao:'Não'},
   nivel_corrida: {iniciante:'Iniciante (0–6 meses)', intermediario:'Intermediário (6m–2a)', avancado:'Avançado (2+ anos)'},
   dias_semana: {2:'2 dias', 3:'3 dias', 4:'4 dias', 5:'5 dias', 6:'6 dias'},
   duracao_sessao: {30:'Até 30 min', 45:'45 min', 60:'1 hora', 90:'1h30+'},
@@ -11868,7 +11868,7 @@ function mbVerAnamnese(alunoId) {
   // aAnamSubmit() no app do aluno. Todos os grupos/campos do form aparecem aqui.
   const grupos = [
     { titulo: '📋 Dados pessoais', campos: [
-      ['Nome completo', r.nome], ['WhatsApp / Celular', r.whatsapp], ['Data de nascimento', r.nascimento],
+      ['Nome', r.nome], ['WhatsApp', r.whatsapp], ['Data de nascimento', r.nascimento],
       ['Sexo biológico', mbAnamLabel('sexo', r.sexo)],
       ['Altura', r.altura ? r.altura + ' cm' : ''], ['Peso', r.peso ? r.peso + ' kg' : '']
     ]},
@@ -11876,8 +11876,9 @@ function mbVerAnamnese(alunoId) {
       ['Objetivo principal', mbAnamLabel('objetivo', r.objetivo)],
       ['Tempo de treino', mbAnamLabel('tempo_treino', r.tempo_treino)],
       ['Interesse em corrida', mbAnamLabel('interesse_corrida', r.interesse_corrida)],
-      ['Já pratica corrida', mbAnamLabel('pratica_corrida', r.pratica_corrida)],
-      ['Nível atual de corrida', mbAnamLabel('nivel_corrida', r.nivel_corrida)],
+      ['Corre com frequência', mbAnamLabel('pratica_corrida', r.pratica_corrida)],
+      ['Há quanto tempo corre', mbAnamLabel('nivel_corrida', r.nivel_corrida)],
+      ['Média de km por corrida', r.corrida_km ? r.corrida_km + ' km' : ''],
       ['Mais detalhes', r.objetivo_detalhe]
     ]},
     { titulo: '📅 Disponibilidade', campos: [
@@ -12950,11 +12951,12 @@ body.xo-bar #tFooter{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
 .pdiv-row .pdiv{margin-top:0;min-width:0}
 #tFaseBadgeSlot{margin-left:auto;flex:none}
 #tFaseBadgeSlot .fase-badge{margin:0!important;padding:4px 10px}
-body #treinoScreen .toprow{position:sticky!important;top:0;z-index:30;background:var(--bg);padding-bottom:6px!important;margin:0 0 4px!important;border-bottom:1px solid var(--bd)}
-#treinoScreen .toprow #tLinhaAlertas{grid-column:1/5;grid-row:2;display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:nowrap}
-#treinoScreen .toprow #tLinhaAlertas #tAcoesTopo{display:flex;gap:6px;flex:none;grid-column:auto;grid-row:auto}
-#treinoScreen .toprow #tLinhaAlertas #banner-renovar{flex:none;grid-column:auto;grid-row:auto;padding:3px 9px}
-#treinoScreen .toprow #tLinhaAlertas #tRelogioTop{flex:none;margin-left:auto;grid-column:auto;grid-row:auto;font-size:12px;min-width:0}
+body #treinoScreen .toprow{position:static!important;padding-bottom:0!important;margin:0 0 2px!important}
+/* v62.15: só a linha relógio+alertas acompanha a rolagem, translúcida; saudação e botões rolam embora */
+body #treinoScreen #tLinhaAlertas{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:nowrap;padding:6px 12px;margin:0 0 4px;background:color-mix(in srgb,var(--bg) 70%,transparent);-webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2);border-bottom:1px solid color-mix(in srgb,var(--bd) 55%,transparent)}
+#treinoScreen #tLinhaAlertas #tAcoesTopo{display:flex;gap:6px;flex:none;grid-column:auto;grid-row:auto}
+#treinoScreen #tLinhaAlertas #banner-renovar{flex:none;grid-column:auto;grid-row:auto;padding:3px 9px}
+#treinoScreen #tLinhaAlertas #tRelogioTop{flex:none;margin:0 2px 0 0;text-align:left;font-size:12px;min-width:0;white-space:nowrap}
 #tNotifs{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;overflow-x:auto;scrollbar-width:none}
 #tNotifs::-webkit-scrollbar{display:none}
 .nt-b{display:inline-flex;align-items:center;flex:none;border:1px solid #F59E0B;background:#FFF8E1;color:#7A4A00;border-radius:99px;font-size:10.5px;font-weight:700;white-space:nowrap;overflow:hidden}
@@ -13246,17 +13248,17 @@ button:active,.ec-chip[role=button]:active,.vbtn:active{transform:scale(.96)}
 .toprow{position:static!important;justify-content:flex-end;margin:0 0 6px}
 body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .regbtn{padding:6px 12px!important;font-size:12px!important}
-#treinoScreen .toprow #tAcoesTopo{grid-column:1;grid-row:2;justify-self:start;display:flex;gap:8px;align-items:center;min-width:0}
-#treinoScreen .toprow #tInstBtn{animation:none!important;box-shadow:none!important;background:transparent!important;color:var(--Pd)!important;border:1px solid color-mix(in srgb,var(--P) 55%,transparent)!important}
+#treinoScreen #tAcoesTopo{grid-column:1;grid-row:2;justify-self:start;display:flex;gap:8px;align-items:center;min-width:0}
+#treinoScreen #tInstBtn{animation:none!important;box-shadow:none!important;background:transparent!important;color:var(--Pd)!important;border:1px solid color-mix(in srgb,var(--P) 55%,transparent)!important}
 /* v62.2: topo em grade — 1) saudação + 🔄 + tema + ❌; 2) registro/aviso à esquerda e relógio sob os botões; 3) aviso de renovação. Rola com a página (static) */
 #treinoScreen .toprow{position:static!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto auto auto;column-gap:8px;row-gap:4px;align-items:center;padding:10px 12px 0!important;margin:0 0 6px}
 #treinoScreen .toprow #tSaudacaoTitulo{grid-column:1;grid-row:1;margin:0!important;font-size:17px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 #treinoScreen .toprow #tReloadBtn{grid-column:2;grid-row:1}
 #treinoScreen .toprow #themeBtn{grid-column:3;grid-row:1}
 #treinoScreen .toprow #tSairBtn{grid-column:4;grid-row:1;margin:0}
-#treinoScreen .toprow #tRelogioTop{grid-column:2/5;grid-row:2;justify-self:end;min-width:0;text-align:right;font-size:13px}
-#treinoScreen .toprow #tRegistroBtn{grid-column:1;grid-row:2;justify-self:start}
-#treinoScreen .toprow #banner-renovar{grid-column:1/5;grid-row:3}
+#treinoScreen #tRelogioTop{grid-column:2/5;grid-row:2;justify-self:end;min-width:0;text-align:right;font-size:13px}
+#treinoScreen #tRegistroBtn{grid-column:1;grid-row:2;justify-self:start}
+#treinoScreen #banner-renovar{grid-column:1/5;grid-row:3}
 #treinoScreen .toprow .dm{width:32px;height:32px;font-size:15px;padding:0}
 .inst-box{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;padding:10px 12px;border:1px solid var(--bd);border-radius:12px;background:var(--card);font-size:13px;line-height:1.4;color:var(--tx)}
 .inst-box .inst-ic{font-size:22px;flex:none}
@@ -13559,15 +13561,15 @@ body.xo-open #movh-descanso-widget{display:none!important}
     <button class="dm" id="tReloadBtn" onclick="location.reload()" title="Recarregar" aria-label="Recarregar">🔄</button>
     <button class="dm" id="themeBtn" onclick="aToggleTheme()" title="Alternar tema">🌙</button>
     <button class="dm" id="tSairBtn" onclick="aLogoutConfirma()" title="Sair" aria-label="Sair">❌</button>
-    <div id="tLinhaAlertas">
+  </div>
+  <div id="tLinhaAlertas">
+      <span id="tRelogioTop" class="relogio-top"></span>
       <div id="tAcoesTopo" class="acoes-topo"><button id="tRegistroBtn" class="regbtn" style="display:none" onclick="aIrParaRegistro()">Fazer o registro</button>
       <button id="tInstBtn" class="regbtn instbtn" style="display:none" onclick="aInstallClick()">📲 Instalar</button></div>
       <button id="banner-renovar" style="display:none" class="banner-renovar" onclick="aAbrirRenovar()" title="Renovar agora">
         <span id="banner-renovar-txt">⚠️ Acesso vence em breve</span>
       </button>
       <div id="tNotifs"></div>
-      <span id="tRelogioTop" class="relogio-top"></span>
-    </div>
   </div>
   <div class="wrap">
     <div class="ph">
@@ -13920,7 +13922,18 @@ function aAtualizarRelogio(){
   const el = document.getElementById('tRelogio');
   if (el) el.textContent = txt;
   const elTop = document.getElementById('tRelogioTop');
-  if (elTop) { elTop.textContent = txt; elTop.style.color = cor; }
+  if (elTop) {
+    // descanso em andamento: 💤 + contagem regressiva no lugar da hora (aDescansoTimer é let declarado mais abaixo: try/catch por causa da TDZ)
+    let rest = 0;
+    try { rest = aDescansoTimer && aDescansoTimer.fim ? Math.ceil((aDescansoTimer.fim - Date.now()) / 1000) : 0; } catch(x) {}
+    if (rest > 0) {
+      elTop.textContent = '💤 ' + Math.floor(rest / 60) + ':' + String(rest % 60).padStart(2, '0');
+      elTop.style.color = rest <= 5 ? '#B5121B' : 'var(--P)';
+    } else {
+      elTop.textContent = (now.getHours() >= 6 && now.getHours() < 18 ? '☀️ ' : '🌙 ') + txt;
+      elTop.style.color = cor;
+    }
+  }
   const elAuthTop = document.getElementById('authRelogioTop');
   if (elAuthTop) { elAuthTop.textContent = txt; elAuthTop.style.color = cor; }
 }
@@ -14641,7 +14654,7 @@ async function aBoot(sessionParam){
   const anamneseFeita = !!(ultimaAnamnese && ultimaAnamnese.respostas);
   const parqPendente = anamneses && anamneses.find(x => x.tipo === 'parq' && !x.respostas);
   const anamneseRec = anamneses && anamneses.find(x => x.tipo === 'anamnese' && x.respostas);
-  window._aInteresseCorrida = anamneseRec ? (anamneseRec.respostas.interesse_corrida || '') : '';
+  window._aInteresseCorrida = anamneseRec ? (anamneseRec.respostas.interesse_corrida || (anamneseRec.respostas.pratica_corrida === 'nao' ? 'nao' : '')) : '';
 
   // Se nunca fez anamnese → mostrar tela de anamnese ANTES do treino
   if (!anamneseFeita) {
@@ -15258,20 +15271,22 @@ function aDicaSeriesFechar(){
   aDicaSeriesMontar();
 }
 function aTocarBeepDescanso(){
+  // sino de ringue (fim de round): 3 batidas rápidas + a última ressoando; síntese por WebAudio (sem arquivo)
   try {
     const ctx = aAudioCtxDescanso || new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === 'suspended') ctx.resume();
-    [0, 0.18].forEach(function(t){
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime + t);
-      gain.gain.exponentialRampToValueAtTime(0.3, ctx.currentTime + t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + t + 0.16);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(ctx.currentTime + t);
-      osc.stop(ctx.currentTime + t + 0.18);
+    const base = 1046, parc = [[1, 1], [2.76, 0.55], [5.4, 0.3], [8.93, 0.14]];
+    [[0, 0.7], [0.2, 0.7], [0.4, 1.9]].forEach(function(b){
+      parc.forEach(function(p){
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.value = base * p[0];
+        const t0 = ctx.currentTime + b[0];
+        gain.gain.setValueAtTime(0.0001, t0);
+        gain.gain.exponentialRampToValueAtTime(0.32 * p[1], t0 + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + b[1] / (p[0] > 3 ? 2.2 : 1));
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(t0); osc.stop(t0 + b[1] + 0.05);
+      });
     });
   } catch(e){}
 }
@@ -15337,7 +15352,8 @@ function aAtualizarWidgetDescanso(){
   if (restanteMs <= 0) { aFecharWidgetDescanso(); return; }
   const restanteS = Math.ceil(restanteMs/1000);
   const m = Math.floor(restanteS/60), s = restanteS%60;
-  w.innerHTML = '<span class="dw-tempo">⏱ ' + m + ':' + String(s).padStart(2,'0') + '</span>' +
+  try { aAtualizarRelogio(); } catch(e){}
+  w.innerHTML = '<span class="dw-tempo">💤 ' + m + ':' + String(s).padStart(2,'0') + '</span>' +
     (aDescansoTimer.nome ? '<span class="dw-nome">' + aEsc(aDescansoTimer.nome) + '</span>' : '') +
     '<button onclick="aAjustarDescanso(15)">+15s</button>' +
     '<button onclick="aFecharWidgetDescanso()">✕</button>';
@@ -15349,6 +15365,7 @@ function aFecharWidgetDescanso(){
   const w = document.getElementById('movh-descanso-widget');
   if (w) w.style.display = 'none';
   aDescansoTimer = null;
+  try { aAtualizarRelogio(); } catch(e){}
 }
 function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSemanas, emConj){
   const emb = aEmbedUrl(ex.url || (ex.nome && aExVideoMap[ex.nome]) || '');
@@ -17676,10 +17693,10 @@ function aAnamStep(n) {
   document.querySelectorAll('.anam-step').forEach(s => s.style.display = 'none');
   const el = document.getElementById('anam-step-'+n);
   if (el) el.style.display = 'block';
-  document.getElementById('anam-progress').textContent = 'Passo ' + n + ' de 5';
+  document.getElementById('anam-progress').textContent = 'Passo ' + n + ' de 3';
   document.getElementById('anam-prev').style.visibility = n > 1 ? 'visible' : 'hidden';
-  document.getElementById('anam-next').style.display = n < 5 ? 'inline-flex' : 'none';
-  document.getElementById('anam-submit').style.display = n === 5 ? 'inline-flex' : 'none';
+  document.getElementById('anam-next').style.display = n < 3 ? 'inline-flex' : 'none';
+  document.getElementById('anam-submit').style.display = n === 3 ? 'inline-flex' : 'none';
   window._anamStep = n;
 }
 // Mostra o campo "Nível atual de corrida" só se o aluno disse que já
@@ -17690,6 +17707,8 @@ function aToggleNivelCorrida(val){
   if (val !== 'sim') {
     const sel = document.querySelector('select[name="nivel_corrida"]');
     if (sel) sel.value = '';
+    const km = document.querySelector('input[name="corrida_km"]');
+    if (km) km.value = '';
   }
 }
 async function aAnamSubmit() {
@@ -17697,8 +17716,6 @@ async function aAnamSubmit() {
   document.querySelectorAll('.anam-step input, .anam-step textarea, .anam-step select').forEach(el => {
     if (el.name) r[el.name] = el.type === 'checkbox' ? el.checked : el.value;
   });
-  // dias disponíveis (botões toggle)
-  r.dias = [...document.querySelectorAll('.anam-dia-btn.sel')].map(b => b.dataset.d).join(', ');
   const { error } = await aClient.from('anamneses').insert({
     aluno_id: aAlunoRow.id, tipo: 'anamnese', respostas: r
   });
@@ -17758,45 +17775,35 @@ aBoot();
 <div id="anamneseScreen" style="display:none;min-height:100vh;align-items:flex-start;justify-content:center;padding:1.5rem;background:linear-gradient(165deg,var(--bg) 0%,var(--Pl) 130%)">
   <div style="background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:1.85rem;max-width:480px;width:100%;box-shadow:0 8px 28px rgba(20,16,50,.09);margin-top:2rem">
     <div style="font-family:var(--font-d);font-size:18px;font-weight:800;margin-bottom:4px">Bem-vindo(a)! 👋</div>
-    <div style="font-size:12px;color:var(--t2);margin-bottom:1.25rem">Antes de começar, precisamos te conhecer. São 5 passos rápidos.</div>
-    <div style="font-size:11px;font-weight:700;color:var(--Pd);margin-bottom:1rem" id="anam-progress">Passo 1 de 5</div>
-    <div class="anam-step" id="anam-step-1">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">📋 Dados pessoais</div>
-      <div class="fld"><label>Nome completo</label><input type="text" name="nome" placeholder="Seu nome"></div>
-      <div class="fld"><label>WhatsApp / Celular</label><input type="tel" name="whatsapp" placeholder="(00) 00000-0000"></div>
+    <div style="font-size:12px;color:var(--t2);margin-bottom:1.25rem">Antes de começar, precisamos te conhecer. São só 3 passos rápidos.</div>
+    <div style="font-size:11px;font-weight:700;color:var(--Pd);margin-bottom:1rem" id="anam-progress">Passo 1 de 3</div>
+        <div class="anam-step" id="anam-step-1">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">📋 Você</div>
+      <div class="fld"><label>Nome</label><input type="text" name="nome" placeholder="Seu nome"></div>
+      <div class="fld"><label>WhatsApp</label><input type="tel" name="whatsapp" placeholder="(00) 00000-0000"></div>
       <div class="fld"><label>Data de nascimento</label><input type="date" name="nascimento"></div>
       <div class="fld"><label>Sexo biológico</label><select name="sexo" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="masculino">Masculino</option><option value="feminino">Feminino</option><option value="outro">Outro</option></select></div>
       <div class="fld"><label>Altura (cm)</label><input type="number" name="altura" placeholder="170" min="100" max="250"></div>
       <div class="fld"><label>Peso (kg)</label><input type="number" name="peso" placeholder="70" min="30" max="300" step="0.1"></div>
     </div>
     <div class="anam-step" id="anam-step-2" style="display:none">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">🎯 Objetivo</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">🎯 Objetivo e rotina</div>
       <div class="fld"><label>Objetivo principal</label><select name="objetivo" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="emagrecimento">Emagrecimento</option><option value="hipertrofia">Hipertrofia</option><option value="forca">Força</option><option value="condicionamento">Condicionamento</option><option value="reabilitacao">Reabilitação</option><option value="outro">Outro</option></select></div>
-      <div class="fld"><label>Tempo de treino</label><select name="tempo_treino" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="iniciante">Iniciante (&lt;6 meses)</option><option value="intermediario">Intermediário (6m–2a)</option><option value="avancado">Avançado (&gt;2 anos)</option></select></div>
-      <div class="fld"><label>Tem interesse em treinar corrida?</label><select name="interesse_corrida" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="sim">Sim, quero trabalhar corrida</option><option value="nao">Não, foco só em força/estética</option></select></div>
-      <div class="fld"><label>Já pratica corrida atualmente?</label><select name="pratica_corrida" onchange="aToggleNivelCorrida(this.value)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="sim">Sim, já corro</option><option value="nao">Não corro atualmente</option></select></div>
-      <div class="fld" id="fld-nivel-corrida" style="display:none"><label>Nível atual de corrida</label><select name="nivel_corrida" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="iniciante">Iniciante (0–6 meses de corrida)</option><option value="intermediario">Intermediário (6 meses – 2 anos)</option><option value="avancado">Avançado (2+ anos)</option></select></div>
-      <div class="fld"><label>Mais detalhes (opcional)</label><textarea name="objetivo_detalhe" rows="3" placeholder="Ex: quero emagrecer 5kg…" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit;resize:vertical"></textarea></div>
+      <div class="fld"><label>Há quanto tempo treina?</label><select name="tempo_treino" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="iniciante">Iniciante (&lt;6 meses)</option><option value="intermediario">Intermediário (6m–2a)</option><option value="avancado">Avançado (&gt;2 anos)</option></select></div>
+      <div class="fld"><label>Quantos dias por semana quer treinar?</label><select name="dias_semana" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="2">2 dias</option><option value="3">3 dias</option><option value="4">4 dias</option><option value="5">5 dias</option><option value="6">6 dias</option></select></div>
+      <div class="fld"><label>Tempo por sessão</label><select name="duracao_sessao" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="30">Até 30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1h30+</option></select></div>
+      <div class="fld"><label>Você corre com frequência?</label><select name="pratica_corrida" onchange="aToggleNivelCorrida(this.value)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+      <div id="fld-nivel-corrida" style="display:none">
+      <div class="fld"><label>Há quanto tempo corre?</label><select name="nivel_corrida" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="iniciante">Iniciante (0–6 meses)</option><option value="intermediario">Intermediário (6 meses – 2 anos)</option><option value="avancado">Avançado (2+ anos)</option></select></div>
+      <div class="fld"><label>Média de km por corrida</label><input type="number" name="corrida_km" placeholder="5" min="0" max="100" step="0.5" inputmode="decimal"></div>
+      </div>
     </div>
     <div class="anam-step" id="anam-step-3" style="display:none">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">📅 Disponibilidade</div>
-      <div class="fld"><label>Dias por semana</label><select name="dias_semana" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="2">2 dias</option><option value="3">3 dias</option><option value="4">4 dias</option><option value="5">5 dias</option><option value="6">6 dias</option></select></div>
-      <div class="fld"><label>Quais dias?</label><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px"><button type="button" class="anam-dia-btn" data-d="Segunda" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Seg</button><button type="button" class="anam-dia-btn" data-d="Terça" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Ter</button><button type="button" class="anam-dia-btn" data-d="Quarta" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Qua</button><button type="button" class="anam-dia-btn" data-d="Quinta" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Qui</button><button type="button" class="anam-dia-btn" data-d="Sexta" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Sex</button><button type="button" class="anam-dia-btn" data-d="Sábado" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Sáb</button><button type="button" class="anam-dia-btn" data-d="Domingo" onclick="this.classList.toggle('sel')" style="padding:6px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--t2);cursor:pointer;font-size:12px;font-weight:600">Dom</button></div></div>
-      <div class="fld"><label>Tempo por sessão</label><select name="duracao_sessao" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="30">Até 30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1h30+</option></select></div>
-    </div>
-    <div class="anam-step" id="anam-step-4" style="display:none">
       <div style="font-size:14px;font-weight:700;margin-bottom:12px">❤️ Saúde</div>
-      <div class="fld"><label>Condições de saúde ou lesões?</label><textarea name="condicoes_saude" rows="3" placeholder="Ex: hérnia, joelho operado… (vazio se não tiver)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit;resize:vertical"></textarea></div>
-      <div class="fld"><label>Medicamentos que afetam o treino?</label><textarea name="medicamentos" rows="2" placeholder="(opcional)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit;resize:vertical"></textarea></div>
-      <div class="fld"><label>Restrições alimentares?</label><textarea name="restricoes" rows="2" placeholder="(opcional)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit;resize:vertical"></textarea></div>
+      <div class="fld"><label>Lesões, dores, condições de saúde ou medicamentos?</label><textarea name="condicoes_saude" rows="3" placeholder="Ex: joelho operado, hérnia… (deixe vazio se não tiver)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"></textarea></div>
+      <div class="fld"><label>Algo mais que eu deva saber? (opcional)</label><textarea name="observacoes" rows="3" placeholder="Qualquer info relevante…" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"></textarea></div>
     </div>
-    <div class="anam-step" id="anam-step-5" style="display:none">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">🌙 Estilo de vida</div>
-      <div class="fld"><label>Qualidade do sono</label><select name="sono" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="otimo">Ótimo</option><option value="bom">Bom</option><option value="regular">Regular</option><option value="ruim">Ruim</option></select></div>
-      <div class="fld"><label>Nível de estresse</label><select name="estresse" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="baixo">Baixo</option><option value="moderado">Moderado</option><option value="alto">Alto</option><option value="muito_alto">Muito alto</option></select></div>
-      <div class="fld"><label>Algo mais para o professor saber?</label><textarea name="observacoes" rows="3" placeholder="Qualquer info relevante…" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit;resize:vertical"></textarea></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;gap:8px">
       <button id="anam-prev" onclick="aAnamStep(window._anamStep-1)" style="visibility:hidden;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--t2)">‹ Anterior</button>
       <button id="anam-next" onclick="aAnamStep(window._anamStep+1)" style="display:inline-flex;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--P);color:#fff">Próximo ›</button>
       <button id="anam-submit" onclick="aAnamSubmit()" style="display:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--G);color:#fff">✓ Concluir</button>
@@ -17845,7 +17852,6 @@ aBoot();
     <div style="font-size:14px;opacity:.9;line-height:1.6">Suas informações foram salvas. Preparando seu treino…</div>
   </div>
 </div>
-<style>.anam-dia-btn.sel{background:var(--P)!important;color:#fff!important;border-color:var(--P)!important}<\/style>
 <div id="a-video-modal" onclick="aFecharVideoModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;padding:16px">
   <div id="a-video-wrap" onclick="event.stopPropagation()" style="width:min(92vw,840px);position:relative">
     <button onclick="aFecharVideoModal()" style="position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:28px;line-height:1;cursor:pointer">&#x2715;</button>
