@@ -3917,7 +3917,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.13 · 10/11';
+var MOVH_VER = 'v62.14 · 10/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12946,6 +12946,10 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 #tFooter .footer-logo{width:150px;max-width:50%;margin:6px auto 0}
 body.xo-bar #tFooter{padding-bottom:calc(86px + env(safe-area-inset-bottom))}
 .concl-wrap{margin:16px 0 4px}
+.pdiv-row{display:flex;align-items:center;gap:8px;margin-top:5px;min-height:0}
+.pdiv-row .pdiv{margin-top:0;min-width:0}
+#tFaseBadgeSlot{margin-left:auto;flex:none}
+#tFaseBadgeSlot .fase-badge{margin:0!important;padding:4px 10px}
 body #treinoScreen .toprow{position:sticky!important;top:0;z-index:30;background:var(--bg);padding-bottom:6px!important;margin:0 0 4px!important;border-bottom:1px solid var(--bd)}
 #treinoScreen .toprow #tLinhaAlertas{grid-column:1/5;grid-row:2;display:flex;align-items:center;gap:6px;min-width:0;flex-wrap:nowrap}
 #treinoScreen .toprow #tLinhaAlertas #tAcoesTopo{display:flex;gap:6px;flex:none;grid-column:auto;grid-row:auto}
@@ -13574,7 +13578,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
       <div id="tProtoNome" style="display:none"></div>
       <div id="tHeaderRecolhivel">
         <div class="pd" id="tProtoDesc"></div>
-        <div class="pdiv" id="tProtoDiv" style="display:none"></div>
+        <div class="pdiv-row"><div class="pdiv" id="tProtoDiv" style="display:none"></div><span id="tFaseBadgeSlot"></span></div>
         <div class="alunolbl"><span id="tLogadoComo">Logado como</span> <span id="tAlunoNome">—</span></div>
         <div class="semana-strip" id="tSemanaStrip"></div>
       </div>
@@ -15996,6 +16000,8 @@ function aToggleTimelinePeriodizacao(btn){
 // Linha de badges do dia: só o badge de fase (data e "periodização prevista" saíram na v49).
 function aMontarLinhaBadges(semanaAtual){
   const b = aMontarBadgeFase(semanaAtual, 'dash');
+  const slot = document.getElementById('tFaseBadgeSlot');
+  if (slot) { slot.innerHTML = b; return ''; } // v62.14: o badge de fase mora na linha da divisão, no cabeçalho
   return b ? '<div class="dash-badges-row">' + b + '</div>' : '';
 }
 // Badge compacto e clicável ("📈 Periodização prevista ▾") — mesmo padrão do
@@ -16464,8 +16470,9 @@ function aMontarDashboardHoje(semanas, agenda){
   let h = aMontarLinhaBadges(semanaAtual);
   h += aMontarCardFase(semanaAtual, agenda.semanaDentroFase, 'dash');
   h += aMontarTimelinePeriodizacao(semanas, agenda.semanaGlobal, 'dash');
-  h += '<div class="dash-semfase">' + aEsc(semanaAtual.nome) + (diaHoje.sub ? ' · ' + aEsc(diaHoje.sub) : '') + '</div>';
-  h += '<div class="pt" style="font-size:17px;margin-bottom:12px">' + aEsc(diaHoje.nome) + (diaHoje.diaSemana ? ' <span style="font-weight:400;color:var(--t3);font-size:14px">(' + aEsc(aDiaExibicao(diaHoje.diaSemana)) + ')</span>' : '') + '</div>';
+  const _dsx = diaHoje.diaSemana ? aDiaExibicao(diaHoje.diaSemana) : '';
+  const _rep = _dsx && String(_dsx).trim().toLowerCase() === String(diaHoje.nome || '').trim().toLowerCase();
+  h += '<div class="pt" title="' + aAttr(diaHoje.sub || '') + '" style="font-size:17px;margin-bottom:8px">' + aEsc(diaHoje.nome) + (diaHoje.diaSemana && !_rep ? ' <span style="font-weight:400;color:var(--t3);font-size:14px">(' + aEsc(aDiaExibicao(diaHoje.diaSemana)) + ')</span>' : '') + '</div>';
   if (usandoSubstituto) {
     h += '<div class="dash-banner-teste" style="background:var(--Pl);color:var(--Pd)"><span>🔀 ' +
       (aLang==='en' ? 'Running a different workout today, by your choice.' : 'Você escolheu rodar esse treino hoje, fora da rotina normal.') +

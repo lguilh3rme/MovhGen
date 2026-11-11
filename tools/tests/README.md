@@ -10,3 +10,4 @@ Obs: botões com animação infinita precisam de `click(force=True)`. `alert/con
 - `node tools/tests/cp_engine.js index.html` → motor de corrida (`cpPlano`, 19 OK); `node tools/tests/pf_cond.js index.html` → decisão progride/mantém/recua (`PF_COND`, 33 OK)
 - `python3 tools/tests/prox_fase.py $PWD/index.html` → Próxima fase → Editar no Quadro (8 OK); `python3 tools/tests/prox_cond.py $PWD/index.html` → corrida na Próxima fase com aderência/RPE/dor/teste simulados (14 OK)
 - `python3 tools/tests/app_personal.py <app.html>` → app do aluno: botão Personal (só e-mail liberado + professor dono do token), rodapé sem espaço morto, botão concluir (3 OK)
+- `python3 tools/tests/app_header.py <app.html>` → cabeçalho do aluno: badge de fase na linha da divisão, sem linha de descrição da fase (2 OK)
