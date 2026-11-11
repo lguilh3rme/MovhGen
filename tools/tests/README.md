@@ -1,3 +1,5 @@
+**Atalho: `bash tools/run_all.sh` roda tudo e imprime só o resumo; `bash tools/release.sh [--push]` publica o app no `movh`.**
+
 # Testes (Playwright + Chromium, Supabase simulado)
 Rodar da raiz do repo MovhGen. Cada script imprime OK/FAIL.
 - `python3 tools/tests/reg_all.py index.html tools/tests/gpage.py /tmp` → 10 páginas, editor, kanban, dock, exportação (desktop + mobile)
