@@ -1731,6 +1731,21 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
   </div>
 </div>
 
+<!-- Modal: Mapa do aluno (editor) -->
+<div class="mbg" id="modal-mapa-editor">
+  <div class="modal" style="max-width:640px">
+    <h3 id="mb-mapa-titulo">🗺️ Mapa do aluno</h3>
+    <div style="font-size:10.5px;color:var(--t3);margin-bottom:6px">Tudo aqui é o que o aluno vai ver no app e no PDF. Edite à vontade; só vai para o aluno quando você publicar.</div>
+    <div id="mb-mapa-body"></div>
+    <div class="mfoot">
+      <button class="btn bs" onclick="mbMapaPDF()">📄 PDF</button>
+      <button class="btn bs" onclick="mbMapaSalvar(false)">💾 Salvar rascunho</button>
+      <button class="btn bp" onclick="mbMapaSalvar(true)">🚀 Publicar para o aluno</button>
+      <button class="btn bs" onclick="closeM('modal-mapa-editor')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Editor de pontos posturais (detecção automática + ajuste manual) -->
 <div class="mbg" id="modal-aval-editor">
   <div class="modal" style="max-width:920px">
@@ -10240,6 +10255,7 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     const pdfHtml = v.status === 'confirmada' ? `
       <div style="margin-top:8px">
         <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbAvalGerarPDF('${v.id}')">📄 Gerar PDF</button>
+        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ Mapa do aluno</button>
       </div>` : '';
     const diagnosticoHtml = v.diagnostico ? `<div style="font-size:10.5px;color:var(--tx);margin-top:6px;white-space:pre-wrap">${escAttr(v.diagnostico)}</div>` : '';
     return `<div style="padding:8px 0;border-bottom:1px solid var(--bd)">
@@ -10251,6 +10267,190 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     ${fotosHtml}${antroHtml}${diagnosticoHtml}${editorHtml}${manualHtml}${pdfHtml}
   </div>`;
   }).join('');
+}
+
+// ══ MAPA DO ALUNO (editor do professor) ══
+// Guarda tudo em avaliacoes_fisicas.mapa (jsonb). Sem a coluna, o editor avisa e mostra o SQL; nada mais quebra.
+let _mbMapa = null;
+const MAPA_VISTAS = [['frontal', 'Frontal'], ['posterior', 'Posterior'], ['lateral_d', 'Lateral D'], ['lateral_e', 'Lateral E']];
+const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nNOTIFY pgrst, \'reload schema\';';
+function mbMapaPadrao(row) {
+  const ach = Array.isArray(row.achados) ? row.achados : [];
+  const bom = ach.filter(a => a.sev === 'ok').map(a => a.texto);
+  const mel = ach.filter(a => a.sev !== 'ok').sort((a, b) => (a.sev === 'critico' ? 0 : 1) - (b.sev === 'critico' ? 0 : 1)).slice(0, 3).map(a => a.texto);
+  const ini = row.data_avaliacao || (row.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+  return {
+    v: 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
+    depende: ['3 treinos por semana, registrados no app', 'Dormir 7 a 8 horas e beber água ao longo do dia', 'Avisar dor ou desconforto no mesmo dia'],
+    marcos: [
+      { sem: 0, titulo: 'Avaliação inicial', texto: 'Fotos posturais, medidas e testes.' },
+      { sem: 4, titulo: 'Check da semana 4', texto: 'Medidas, cargas e frequência.' },
+      { sem: 8, titulo: 'Check da semana 8', texto: 'Medidas, cargas e ajuste do treino.' },
+      { sem: 12, titulo: 'Reavaliação final', texto: 'Mesmas fotos e medidas, relatório antes e depois.' }
+    ],
+    fotos: Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, { show: true, rot: 0, zoom: 1, src: null }])),
+    publicado: false
+  };
+}
+function mbMapaDataMarco(m, sem) {
+  const d = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d)) return '';
+  d.setDate(d.getDate() + (Number(sem) || 0) * 7);
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+}
+async function mbMapaAbrir(avalId) {
+  const row = (_mbAvaliacoesCache || []).find(v => v.id === avalId);
+  if (!row) { notify('Avaliação não encontrada.'); return; }
+  const def = mbMapaPadrao(row);
+  let salvo = null, colOk = true;
+  try {
+    const r = await mbClient.from('avaliacoes_fisicas').select('mapa').eq('id', avalId).maybeSingle();
+    if (r.error) colOk = false; else salvo = r.data && r.data.mapa;
+  } catch (e) { colOk = false; }
+  const m = Object.assign({}, def, salvo || {});
+  m.fotos = Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, Object.assign({}, def.fotos[k], (salvo && salvo.fotos && salvo.fotos[k]) || {})]));
+  _mbMapa = { avalId, alunoId: _mbAvaliacoesAlunoId, row, m, colOk, urls: {}, cache: {}, prev: false };
+  const t = document.getElementById('mb-aval-titulo');
+  document.getElementById('mb-mapa-titulo').textContent = '🗺️ Mapa do aluno' + (t ? ' — ' + t.textContent.replace(/^.*?—\s*/, '') : '');
+  openM('modal-mapa-editor');
+  document.getElementById('mb-mapa-body').innerHTML = '<div style="font-size:11px;color:var(--t3)">Carregando…</div>';
+  await mbMapaCarregarUrls();
+  mbMapaRender();
+}
+function mbMapaFotosDaVista(k) {
+  return (_mbAvaliacoesCache || []).filter(v => v['foto_' + k + '_path']).map(v => ({ path: v['foto_' + k + '_path'], data: v.data_avaliacao || (v.created_at || '').slice(0, 10) }));
+}
+async function mbMapaCarregarUrls() {
+  const paths = [...new Set(MAPA_VISTAS.flatMap(([k]) => mbMapaFotosDaVista(k).map(f => f.path)))];
+  if (!paths.length) return;
+  try {
+    const { data } = await mbClient.storage.from('avaliacoes').createSignedUrls(paths, 3600);
+    (data || []).forEach(s => { if (s && s.path && s.signedUrl) _mbMapa.urls[s.path] = s.signedUrl; });
+  } catch (e) {}
+}
+function mbMapaSrc(k) { const f = _mbMapa.m.fotos[k]; return f.src || _mbMapa.row['foto_' + k + '_path'] || null; }
+// Gera a foto já girada/ampliada em 3:4 (usada no editor, na prévia e no PDF)
+async function mbMapaFotoUrl(k) {
+  const f = _mbMapa.m.fotos[k], src = mbMapaSrc(k), url = src && _mbMapa.urls[src];
+  if (!url) return null;
+  const ck = [src, f.rot, f.zoom].join('|');
+  if (_mbMapa.cache[ck]) return _mbMapa.cache[ck];
+  try {
+    const img = await new Promise((ok, er) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = er; i.src = url; });
+    const W = 300, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d'); x.fillStyle = '#1a2438'; x.fillRect(0, 0, W, H);
+    x.translate(W / 2, H / 2); x.rotate((f.rot || 0) * Math.PI / 180);
+    const giro = (f.rot || 0) % 180 !== 0, iw = giro ? img.height : img.width, ih = giro ? img.width : img.height;
+    const s = Math.max(W / iw, H / ih) * (f.zoom || 1); x.scale(s, s); x.drawImage(img, -img.width / 2, -img.height / 2);
+    return (_mbMapa.cache[ck] = c.toDataURL('image/jpeg', 0.82));
+  } catch (e) { return null; }
+}
+function mbMapaSet(k, v) { _mbMapa.m[k] = v; }
+function mbMapaLista(k, txt) { _mbMapa.m[k] = String(txt).split('\n').map(s => s.trim()).filter(Boolean); }
+function mbMapaMarco(i, campo, v) { _mbMapa.m.marcos[i][campo] = campo === 'sem' ? (Number(v) || 0) : v; }
+function mbMapaMarcoAdd() { _mbMapa.m.marcos.push({ sem: 6, titulo: 'Novo marco', texto: '' }); mbMapaRender(); }
+function mbMapaMarcoDel(i) { _mbMapa.m.marcos.splice(i, 1); mbMapaRender(); }
+function mbMapaFoto(k, campo, v) {
+  const f = _mbMapa.m.fotos[k];
+  if (campo === 'show') f.show = !!v; else if (campo === 'zoom') f.zoom = Number(v) || 1; else if (campo === 'src') f.src = v || null;
+  else if (campo === 'rot') f.rot = ((f.rot || 0) + 90) % 360;
+  mbMapaAtualizarFotos();
+}
+async function mbMapaAtualizarFotos() {
+  for (const [k] of MAPA_VISTAS) {
+    const el = document.getElementById('mapa-ft-' + k); if (!el) continue;
+    const u = await mbMapaFotoUrl(k);
+    el.innerHTML = u ? '<img src="' + u + '" style="width:100%;display:block;border-radius:8px' + (_mbMapa.m.fotos[k].show ? '' : ';opacity:.3') + '">' : '<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto</div>';
+  }
+  if (_mbMapa.prev) mbMapaPrevia();
+}
+function mbMapaTogglePrevia() { _mbMapa.prev = !_mbMapa.prev; document.getElementById('mb-mapa-prev').style.display = _mbMapa.prev ? 'block' : 'none'; if (_mbMapa.prev) mbMapaPrevia(); }
+async function mbMapaPrevia() {
+  const imgs = {}; for (const [k] of MAPA_VISTAS) if (_mbMapa.m.fotos[k].show) imgs[k] = await mbMapaFotoUrl(k);
+  document.getElementById('mb-mapa-prev').innerHTML = mbMapaHtmlAluno(_mbMapa.m, _mbMapa.row, imgs);
+}
+// Exatamente o que o aluno vê (cores fixas do app)
+function mbMapaHtmlAluno(m, row, imgs) {
+  const li = a => (a || []).map(t => `<div style="font-size:12px;color:#9AA3BD;padding:4px 0 4px 14px;position:relative;line-height:1.4"><span style="position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:#D62839"></span>${escAttr(t)}</div>`).join('');
+  const box = (tit, inner) => `<div style="background:#111A2E;border:1px solid #1F2B45;border-radius:14px;padding:14px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#9AA3BD;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">${tit}</div>${inner}</div>`;
+  const fotos = MAPA_VISTAS.filter(([k]) => imgs[k]).map(([k, n]) => `<div style="flex:1;text-align:center;font-size:9.5px;color:#6B7699"><img src="${imgs[k]}" style="width:100%;border-radius:7px;border:1px solid #1F2B45;display:block;margin-bottom:3px">${n}</div>`).join('');
+  const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
+    .map(x => `<div style="flex:1;background:#0B1220;border-radius:10px;padding:8px"><div style="font-size:10px;color:#6B7699">${x[0]}</div><b style="font-size:15px">${x[1]}</b></div>`).join('');
+  const marcos = (m.marcos || []).slice().sort((a, b) => a.sem - b.sem).map(x => `<div style="display:flex;gap:10px;padding:6px 0;border-top:1px solid #1F2B45"><div style="min-width:46px;font-size:11px;font-weight:700;color:#FF4D5A">Sem ${x.sem}<div style="font-weight:500;color:#6B7699">${mbMapaDataMarco(m, x.sem)}</div></div><div><div style="font-size:13px;font-weight:700">${escAttr(x.titulo)}</div><div style="font-size:11.5px;color:#9AA3BD">${escAttr(x.texto)}</div></div></div>`).join('');
+  return `<div style="background:#0B1220;color:#F3EAD8;border-radius:14px;padding:14px;max-width:390px;margin:0 auto;font-family:inherit">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #D62839;padding-bottom:8px;margin-bottom:12px"><div style="font-size:22px;font-weight:900">MOV<span style="color:#D62839">H</span></div><div style="font-size:10.5px;color:#6B7699;text-align:right">Seu Mapa<br>${escAttr(row.data_avaliacao || '')}</div></div>
+    ${box('Objetivo e prazo', `<div style="font-size:17px;font-weight:800">${escAttr(m.objetivo || 'Defina o objetivo')}</div><div style="font-size:12px;color:#9AA3BD;margin-top:3px">${m.semanas} semanas · reavaliação na semana ${m.semanas}</div>`)}
+    ${med ? `<div style="display:flex;gap:8px;margin-bottom:10px">${med}</div>` : ''}
+    ${fotos ? box('Postura', `<div style="display:flex;gap:6px">${fotos}</div>`) : ''}
+    ${(m.bom || []).length ? box('O que está bom', li(m.bom)) : ''}
+    ${(m.melhorar || []).length ? box('O que vamos melhorar primeiro', li(m.melhorar)) : ''}
+    ${box('Seu caminho', marcos)}
+    ${(m.depende || []).length ? box('O que depende de você', li(m.depende)) : ''}
+  </div>`;
+}
+function mbMapaRender() {
+  const M = _mbMapa, m = M.m, E = escAttr;
+  const inp = 'width:100%;font-size:11px;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--ip);color:var(--tx);box-sizing:border-box';
+  const lab = 'font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:12px 0 4px';
+  const ta = (k, rows) => `<textarea oninput="mbMapaLista('${k}',this.value)" rows="${rows}" style="${inp};font-family:inherit">${E((m[k] || []).join('\n'))}</textarea>`;
+  const marcos = m.marcos.map((x, i) => `<div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start">
+      <input type="number" min="0" value="${x.sem}" oninput="mbMapaMarco(${i},'sem',this.value)" style="${inp};width:54px" title="Semana">
+      <div style="flex:1"><input value="${E(x.titulo)}" oninput="mbMapaMarco(${i},'titulo',this.value)" style="${inp};margin-bottom:4px"><input value="${E(x.texto)}" oninput="mbMapaMarco(${i},'texto',this.value)" style="${inp}"></div>
+      <button class="btn bs" style="font-size:10px;padding:4px 8px" onclick="mbMapaMarcoDel(${i})" title="Remover">✕</button></div>`).join('');
+  const fotos = MAPA_VISTAS.map(([k, n]) => {
+    const f = m.fotos[k], opts = mbMapaFotosDaVista(k), atual = mbMapaSrc(k);
+    return `<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;margin-bottom:3px">${n}</div><div id="mapa-ft-${k}"></div>
+      <label style="font-size:10px;display:block;margin-top:4px"><input type="checkbox" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar</label>
+      <button class="btn bs" style="font-size:10px;padding:3px 8px;margin:3px 0" onclick="mbMapaFoto('${k}','rot')">↻ girar</button>
+      <input type="range" min="1" max="1.6" step="0.05" value="${f.zoom}" oninput="mbMapaFoto('${k}','zoom',this.value)" style="width:100%" title="Zoom">
+      ${opts.length > 1 ? `<select onchange="mbMapaFoto('${k}','src',this.value)" style="${inp};margin-top:3px">${opts.map(o => `<option value="${E(o.path)}" ${o.path === atual ? 'selected' : ''}>${E(o.data)}</option>`).join('')}</select>` : ''}</div>`;
+  }).join('');
+  document.getElementById('mb-mapa-body').innerHTML = `
+    ${M.colOk ? '' : `<div style="font-size:10.5px;background:#3a1f1f;border:1px solid #c0392b;border-radius:8px;padding:8px;margin-bottom:8px">Falta a coluna <b>mapa</b> no banco: você ainda pode editar e gerar o PDF, mas só salva depois de rodar este SQL no Supabase.<pre style="font-size:10px;white-space:pre-wrap;margin:6px 0 4px">${E(MAPA_SQL)}</pre><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="navigator.clipboard.writeText(MAPA_SQL).then(()=>notify('SQL copiado!'))">Copiar SQL</button></div>`}
+    <div style="${lab}">Objetivo</div><input value="${E(m.objetivo)}" oninput="mbMapaSet('objetivo',this.value)" placeholder="Ex.: Recomposição corporal" style="${inp}">
+    <div style="display:flex;gap:8px"><div style="flex:1"><div style="${lab}">Prazo (semanas)</div><input type="number" min="4" max="52" value="${m.semanas}" oninput="mbMapaSet('semanas',Number(this.value)||12)" style="${inp}"></div>
+    <div style="flex:1"><div style="${lab}">Início</div><input type="date" value="${E(m.inicio)}" oninput="mbMapaSet('inicio',this.value)" style="${inp}"></div></div>
+    <div style="${lab}">Fotos que o aluno vê</div><div style="display:flex;gap:6px">${fotos}</div>
+    <div style="${lab}">O que está bom <span style="font-weight:400;text-transform:none">(uma frase por linha)</span></div>${ta('bom', 3)}
+    <div style="${lab}">O que vamos melhorar primeiro</div>${ta('melhorar', 4)}
+    <div style="${lab}">Marcos do caminho</div>${marcos}<button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbMapaMarcoAdd()">+ marco</button>
+    <div style="${lab}">O que depende do aluno</div>${ta('depende', 3)}
+    <div style="margin-top:12px"><button class="btn bs" style="font-size:10.5px;padding:5px 12px" onclick="mbMapaTogglePrevia()">👁 Ver como o aluno vê</button></div>
+    <div id="mb-mapa-prev" style="display:${M.prev ? 'block' : 'none'};margin-top:8px"></div>
+    <div style="font-size:10px;color:var(--t3);margin-top:8px">${m.publicado ? '✅ Publicado: o aluno já vê este Mapa no app.' : 'Rascunho: o aluno só vê depois de publicar.'}</div>`;
+  mbMapaAtualizarFotos();
+}
+async function mbMapaSalvar(publicar) {
+  const M = _mbMapa; if (!M) return;
+  if (publicar !== undefined) M.m.publicado = !!publicar;
+  M.m.atualizado_em = new Date().toISOString();
+  const { error } = await mbClient.from('avaliacoes_fisicas').update({ mapa: M.m }).eq('id', M.avalId);
+  if (error) { M.colOk = false; mbMapaRender(); notify(/mapa/i.test(error.message) ? 'Falta criar a coluna "mapa" no banco (SQL no topo).' : 'Erro ao salvar: ' + error.message); return; }
+  M.colOk = true; mbMapaRender();
+  notify(M.m.publicado ? 'Mapa publicado! O aluno vê no app.' : 'Rascunho do Mapa salvo.');
+}
+async function mbMapaPDF() {
+  const M = _mbMapa; if (!M) return;
+  const m = M.m, row = M.row;
+  try {
+    const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm');
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    const mg = 44, lw = W - mg * 2; let y = 0;
+    const nova = h => { if (y + h > H - mg) { doc.addPage(); y = mg; } };
+    doc.setFillColor(214, 40, 57); doc.rect(0, 0, W, 84, 'F'); doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.text('MOVH', mg, 42);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text('Mapa do aluno · ' + (row.data_avaliacao || ''), mg, 64); y = 112;
+    const tit = t => { nova(30); doc.setTextColor(214, 40, 57); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(t, mg, y); y += 16; };
+    const par = (t, sz) => { doc.setTextColor(40, 40, 40); doc.setFont('helvetica', 'normal'); doc.setFontSize(sz || 10); doc.splitTextToSize(t, lw).forEach(l => { nova(14); doc.text(l, mg, y); y += 14; }); };
+    tit('Objetivo e prazo'); doc.setFont('helvetica', 'bold'); par(m.objetivo || '—', 13); par(m.semanas + ' semanas · reavaliação na semana ' + m.semanas, 10); y += 6;
+    const ft = []; for (const [k, n] of MAPA_VISTAS) if (m.fotos[k].show) { const u = await mbMapaFotoUrl(k); if (u) ft.push([u, n]); }
+    if (ft.length) { tit('Postura'); const cw = (lw - (ft.length - 1) * 8) / ft.length, ch = cw * 4 / 3; nova(ch + 20);
+      ft.forEach((f, i) => { const x = mg + i * (cw + 8); doc.addImage(f[0], 'JPEG', x, y, cw, ch); doc.setFontSize(8); doc.setTextColor(110, 110, 110); doc.text(f[1], x, y + ch + 11); }); y += ch + 24; }
+    if ((m.bom || []).length) { tit('O que está bom'); m.bom.forEach(t => par('• ' + t)); y += 6; }
+    if ((m.melhorar || []).length) { tit('O que vamos melhorar primeiro'); m.melhorar.forEach(t => par('• ' + t)); y += 6; }
+    tit('Seu caminho'); m.marcos.slice().sort((a, b) => a.sem - b.sem).forEach(x => par('Semana ' + x.sem + ' (' + mbMapaDataMarco(m, x.sem) + ') — ' + x.titulo + '. ' + x.texto)); y += 6;
+    if ((m.depende || []).length) { tit('O que depende de você'); m.depende.forEach(t => par('• ' + t)); }
+    doc.save('mapa-' + (row.data_avaliacao || 'aluno') + '.pdf');
+  } catch (e) { notify('Não consegui gerar o PDF: ' + e.message); }
 }
 
 async function mbFinalizarAvaliacao(avaliacaoId) {
@@ -18242,6 +18442,8 @@ function copiarSQLRLS(){
     'DROP POLICY IF EXISTS "professor gerencia notas" ON notas;',
     'CREATE POLICY "professor gerencia notas" ON notas FOR ALL',
     '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
+    '-- Mapa do aluno (editor do Gerador): meta, marcos, textos e fotos escolhidas',
+    'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
