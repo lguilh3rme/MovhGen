@@ -1791,6 +1791,70 @@ function pickE(e){document.getElementById('cfg-icone').value=e;document.getEleme
 function toggleEP(){const p=document.getElementById('ep');if(p.style.display==='none'||!p.style.display){buildEP();p.style.display='block';}else p.style.display='none';}
 document.addEventListener('click',e=>{const p=document.getElementById('ep');if(p&&!p.contains(e.target)&&!e.target.closest('.ep-wrap'))p.style.display='none';});
 
+// ══ CONFIG DO PROFESSOR (professores.config) ══
+// Guarda no banco o que antes ficava só no navegador: presets, modelos de condicionamento, logo, idioma e tema.
+// Falha em silêncio se a coluna não existir. Nunca guardar chaves de pagamento aqui.
+var CFG_LS = { presets:'mova_pre', modelos_condic:'mova_modelos_condic', lang:'movh_lang', theme:'mova_theme', logo_preset:'movh_logo_preset', logo_custom:'movh_logo_custom' };
+var cfgAplicando = false, cfgTimer = null, cfgPronto = false;
+function cfgLerLocal(){
+  var o = {};
+  Object.keys(CFG_LS).forEach(function(k){
+    try {
+      var v = localStorage.getItem(CFG_LS[k]);
+      if (k === 'logo_custom') { if (v && v.length > 200000) return; o[k] = v || ''; return; }
+      if (v === null) return;
+      o[k] = (k === 'presets' || k === 'modelos_condic') ? JSON.parse(v) : v;
+    } catch(e) {}
+  });
+  return o;
+}
+function cfgAgendar(){
+  if (!cfgPronto || cfgAplicando || typeof mbProfessor === 'undefined' || !mbProfessor) return;
+  clearTimeout(cfgTimer);
+  cfgTimer = setTimeout(cfgSalvarAgora, 1500);
+}
+async function cfgSalvarAgora(){
+  try {
+    if (!mbProfessor || !mbProfessor.id) return;
+    await mbClient.from('professores').update({ config: cfgLerLocal() }).eq('id', mbProfessor.id);
+  } catch(e) {}
+}
+async function cfgProfAplicar(prof){
+  cfgPronto = false;
+  var remoto = (prof && prof.config && typeof prof.config === 'object') ? prof.config : null;
+  if (!prof || !('config' in prof)) return; // coluna ainda não existe: segue só com o local
+  var local = cfgLerLocal(), faltaNoRemoto = false;
+  cfgAplicando = true;
+  try {
+    Object.keys(CFG_LS).forEach(function(k){
+      if (remoto && Object.prototype.hasOwnProperty.call(remoto, k)) {
+        var v = remoto[k];
+        if (k === 'logo_custom' && !v) { localStorage.removeItem(CFG_LS[k]); return; }
+        localStorage.setItem(CFG_LS[k], (typeof v === 'string') ? v : JSON.stringify(v));
+      } else if (Object.prototype.hasOwnProperty.call(local, k)) { faltaNoRemoto = true; }
+    });
+  } catch(e) {}
+  cfgAplicando = false;
+  try { MODELOS_CONDIC = loadModelosCondic(); } catch(e) {}
+  try {
+    mbLang = localStorage.getItem('movh_lang') || 'pt';
+    var lb = document.getElementById('langTogBtn'); if (lb) lb.textContent = mbLang === 'pt' ? '🇧🇷' : '🇬🇧';
+    var t = localStorage.getItem('mova_theme'); var dark = (t === null) ? true : (t === 'dark');
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+    var db = document.getElementById('dmbtn'); if (db) db.textContent = dark ? '☀️' : '🌙';
+  } catch(e) {}
+  try { if (typeof renderPre === 'function') renderPre(); } catch(e) {}
+  try { if (typeof renderLogoBranding === 'function') renderLogoBranding(); } catch(e) {}
+  cfgPronto = true;
+  if (!remoto || !Object.keys(remoto).length || faltaNoRemoto) cfgSalvarAgora();
+}
+(function(){
+  var si = Storage.prototype.setItem, ri = Storage.prototype.removeItem;
+  var ks = Object.keys(CFG_LS).map(function(k){ return CFG_LS[k]; });
+  Storage.prototype.setItem = function(k){ var r = si.apply(this, arguments); if (this === window.localStorage && ks.indexOf(k) > -1) cfgAgendar(); return r; };
+  Storage.prototype.removeItem = function(k){ var r = ri.apply(this, arguments); if (this === window.localStorage && ks.indexOf(k) > -1) cfgAgendar(); return r; };
+})();
+
 // ══ LANG TOGGLE (PT/EN) ══
 let mbLang = localStorage.getItem('movh_lang') || 'pt';
 function mbExNome(ex){ return mbLang==='en' ? (ex.nome_en||ex.n) : (ex.nome_pt||ex.n); }
@@ -3917,7 +3981,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.15 · 11/11';
+var MOVH_VER = 'v62.16 · 12/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8976,6 +9040,7 @@ async function mbRefresh() {
 
   const { data: prof } = await mbClient.from('professores').select('*').eq('id', session.user.id).maybeSingle();
   mbProfessor = prof || { id: session.user.id, nome: session.user.email, email: session.user.email };
+  try { await cfgProfAplicar(prof); } catch (e) {}
   try { if (localStorage.getItem('movh_planos_pub_pend') === '1') setTimeout(plPlanosPublicar, 2500); } catch (e) {}
   document.getElementById('mb-prof-name').textContent = mbProfessor.nome;
   document.getElementById('mb-logged-in').style.display = 'block';
@@ -18079,6 +18144,33 @@ function copiarSQLRLS(){
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS treino_visto_em timestamptz;',
     '-- OFERTA DE COBRANÇA mostrada no app do aluno (botão 💰 Cobrar)',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS cobranca jsonb;',
+    '-- PREFERÊNCIAS do professor (presets, modelos, logo, idioma, tema) — não guardar chaves de pagamento',
+    'ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jsonb DEFAULT \'{}\'::jsonb;',
+    '-- "Seu caminho" no app do aluno',
+    'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;',
+    '-- PROTEÇÃO: o aluno não altera acesso, cobrança nem vínculo (professor, service role e SQL Editor passam)',
+    'CREATE OR REPLACE FUNCTION public.alunos_protege_colunas() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$',
+    'DECLARE v_prof uuid; v_eh_prof boolean;',
+    'BEGIN',
+    '  IF auth.uid() IS NULL THEN RETURN NEW; END IF;',
+    '  v_prof := CASE WHEN TG_OP = \'INSERT\' THEN NEW.professor_id ELSE OLD.professor_id END;',
+    '  v_eh_prof := (v_prof = auth.uid()) OR EXISTS (SELECT 1 FROM public.professores p WHERE p.id = v_prof AND p.auth_id = auth.uid());',
+    '  IF v_eh_prof THEN RETURN NEW; END IF;',
+    '  IF TG_OP = \'INSERT\' THEN',
+    '    NEW.acesso_inicio := NULL; NEW.acesso_fim := NULL; NEW.cobranca := NULL; NEW.caminho_ativo := false;',
+    '    NEW.na_lixeira := false; NEW.avulso_link := NULL; NEW.mostra_aulas_coletivas := false;',
+    '    RETURN NEW;',
+    '  END IF;',
+    '  IF NEW.professor_id IS DISTINCT FROM OLD.professor_id OR NEW.ativo IS DISTINCT FROM OLD.ativo',
+    '     OR NEW.na_lixeira IS DISTINCT FROM OLD.na_lixeira OR NEW.acesso_inicio IS DISTINCT FROM OLD.acesso_inicio',
+    '     OR NEW.acesso_fim IS DISTINCT FROM OLD.acesso_fim OR NEW.cobranca IS DISTINCT FROM OLD.cobranca',
+    '     OR NEW.caminho_ativo IS DISTINCT FROM OLD.caminho_ativo OR NEW.avulso_link IS DISTINCT FROM OLD.avulso_link',
+    '     OR NEW.mostra_aulas_coletivas IS DISTINCT FROM OLD.mostra_aulas_coletivas',
+    '  THEN RAISE EXCEPTION \'aluno não pode alterar acesso, cobrança ou vínculo\' USING ERRCODE = \'42501\'; END IF;',
+    '  RETURN NEW;',
+    'END; $$;',
+    'DROP TRIGGER IF EXISTS trg_alunos_protege_colunas ON public.alunos;',
+    'CREATE TRIGGER trg_alunos_protege_colunas BEFORE INSERT OR UPDATE ON public.alunos FOR EACH ROW EXECUTE FUNCTION public.alunos_protege_colunas();',
     '',
     '-- PIX próprio: aluno avisa "já paguei", professor confirma e o acesso é liberado',
     'CREATE TABLE IF NOT EXISTS pagamentos_pix (',
