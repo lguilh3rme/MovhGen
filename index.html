@@ -9738,6 +9738,7 @@ function renderPainelAlunos() {
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Pedir ao aluno que preencha a anamnese">📋 Pedir anamnese</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️ Testes${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
         ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸 Avaliações${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-caminho="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Mostrar o Caminho (Mapa, marcos e progresso do programa) no app deste aluno">🧭 Caminho</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Pedir fotos de avaliação física/postural">📸 Pedir avaliação</button>
         ${solicMudanca ? `<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#FF8A00;color:#fff;border-color:#FF8A00;font-weight:700" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'atendida')" title="Marcar como atendida (já criei/ajustei o novo protocolo)">✅ Atendida</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;background:var(--P);color:#fff;border-color:var(--P);font-weight:700" data-id="${solicMudanca.id}" data-aluno="${a.id}" onclick="mbAtenderECriarProtocolo(this.dataset.id,this.dataset.aluno)" title="Marca como atendida e já abre a tela de criação de protocolo com este aluno selecionado">🗂️ Criar protocolo</button>
@@ -10269,11 +10270,43 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
   }).join('');
 }
 
+// ══ CAMINHO POR ALUNO (chave mestra; padrão desligada) ══
+// Coluna alunos.caminho_ativo lida/gravada à parte do carregamento principal: sem a coluna, nada quebra (o botão avisa).
+let _mbCaminho = null, _mbCaminhoOk = true;
+async function mbCaminhoCarregar(forcar) {
+  if (_mbCaminho && !forcar) return;
+  _mbCaminho = {}; _mbCaminhoOk = true;
+  try {
+    const { data, error } = await mbClient.from('alunos').select('id, caminho_ativo');
+    if (error) _mbCaminhoOk = false; else (data || []).forEach(r => { _mbCaminho[r.id] = !!r.caminho_ativo; });
+  } catch (e) { _mbCaminhoOk = false; }
+}
+async function mbCaminhoAtualizarBotoes() {
+  await mbCaminhoCarregar();
+  document.querySelectorAll('[data-caminho]').forEach(b => {
+    const on = !!_mbCaminho[b.dataset.caminho];
+    b.textContent = '🧭 Caminho: ' + (on ? 'ligado' : 'desligado');
+    b.style.color = on ? 'var(--G,#1A9E72)' : 'var(--t3)';
+    b.style.fontWeight = on ? '700' : '400';
+  });
+}
+async function mbCaminhoToggle(alunoId) {
+  await mbCaminhoCarregar();
+  if (!_mbCaminhoOk) { try { navigator.clipboard.writeText(MAPA_SQL).catch(() => {}); } catch (e) {} notify('Falta criar a coluna no banco. O SQL foi copiado: rode no Supabase e tente de novo.'); return; }
+  const novo = !_mbCaminho[alunoId];
+  const { error } = await mbClient.from('alunos').update({ caminho_ativo: novo }).eq('id', alunoId);
+  if (error) { notify('Erro ao salvar: ' + error.message); return; }
+  _mbCaminho[alunoId] = novo; mbCaminhoAtualizarBotoes();
+  notify(novo ? 'Caminho ligado para este aluno.' : 'Caminho desligado para este aluno.');
+}
+const _renderPainelAlunosOrig = renderPainelAlunos;
+renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this, arguments); try { mbCaminhoAtualizarBotoes(); } catch (e) {} return r; };
+
 // ══ MAPA DO ALUNO (editor do professor) ══
 // Guarda tudo em avaliacoes_fisicas.mapa (jsonb). Sem a coluna, o editor avisa e mostra o SQL; nada mais quebra.
 let _mbMapa = null;
 const MAPA_VISTAS = [['frontal', 'Frontal'], ['posterior', 'Posterior'], ['lateral_d', 'Lateral D'], ['lateral_e', 'Lateral E']];
-const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nNOTIFY pgrst, \'reload schema\';';
+const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;\nNOTIFY pgrst, \'reload schema\';';
 function mbMapaPadrao(row) {
   const ach = Array.isArray(row.achados) ? row.achados : [];
   const bom = ach.filter(a => a.sev === 'ok').map(a => a.texto);
@@ -10313,7 +10346,7 @@ async function mbMapaAbrir(avalId) {
   document.getElementById('mb-mapa-titulo').textContent = '🗺️ Mapa do aluno' + (t ? ' — ' + t.textContent.replace(/^.*?—\s*/, '') : '');
   openM('modal-mapa-editor');
   document.getElementById('mb-mapa-body').innerHTML = '<div style="font-size:11px;color:var(--t3)">Carregando…</div>';
-  await mbMapaCarregarUrls();
+  await mbMapaCarregarUrls(); await mbCaminhoCarregar();
   mbMapaRender();
 }
 function mbMapaFotosDaVista(k) {
@@ -10405,7 +10438,8 @@ function mbMapaRender() {
       ${opts.length > 1 ? `<select onchange="mbMapaFoto('${k}','src',this.value)" style="${inp};margin-top:3px">${opts.map(o => `<option value="${E(o.path)}" ${o.path === atual ? 'selected' : ''}>${E(o.data)}</option>`).join('')}</select>` : ''}</div>`;
   }).join('');
   document.getElementById('mb-mapa-body').innerHTML = `
-    ${M.colOk ? '' : `<div style="font-size:10.5px;background:#3a1f1f;border:1px solid #c0392b;border-radius:8px;padding:8px;margin-bottom:8px">Falta a coluna <b>mapa</b> no banco: você ainda pode editar e gerar o PDF, mas só salva depois de rodar este SQL no Supabase.<pre style="font-size:10px;white-space:pre-wrap;margin:6px 0 4px">${E(MAPA_SQL)}</pre><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="navigator.clipboard.writeText(MAPA_SQL).then(()=>notify('SQL copiado!'))">Copiar SQL</button></div>`}
+    <div style="font-size:10.5px;margin-bottom:6px">🧭 Caminho no app deste aluno: <b>${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'ligado' : 'desligado'}</b> <button class="btn bs" style="font-size:10px;padding:2px 8px;margin-left:4px" onclick="mbCaminhoToggle(_mbMapa.alunoId).then(mbMapaRender)">${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'desligar' : 'ligar'}</button></div>
+    ${M.colOk ? '' : `<div style="font-size:10.5px;background:#3a1f1f;border:1px solid #c0392b;border-radius:8px;padding:8px;margin-bottom:8px">Falta a coluna <b>mapa</b> no banco: você ainda pode editar e gerar o PDF, mas só salva depois de rodar este SQL no Supabase.<pre style="font-size:10px;white-space:pre-wrap;margin:6px 0 4px">${E(MAPA_SQL)}</pre><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="navigator.clipboard.writeText(MAPA_SQL).then(()=>notify('SQL copiado!')).catch(()=>{})">Copiar SQL</button></div>`}
     <div style="${lab}">Objetivo</div><input value="${E(m.objetivo)}" oninput="mbMapaSet('objetivo',this.value)" placeholder="Ex.: Recomposição corporal" style="${inp}">
     <div style="display:flex;gap:8px"><div style="flex:1"><div style="${lab}">Prazo (semanas)</div><input type="number" min="4" max="52" value="${m.semanas}" oninput="mbMapaSet('semanas',Number(this.value)||12)" style="${inp}"></div>
     <div style="flex:1"><div style="${lab}">Início</div><input type="date" value="${E(m.inicio)}" oninput="mbMapaSet('inicio',this.value)" style="${inp}"></div></div>
@@ -16185,23 +16219,31 @@ function aToggleBloco(id, header){
 // (em semanas de calendário) de cada fase.
 const FASES_TEMPLATE_PT = {
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (última série 1)', carga:'Progressão dupla', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
-    progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'] },
+    progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'],
+    humano:['Esforço: termine cada série sentindo que ainda dava para fazer mais 2 repetições (na última série, 1).','Como evoluir: quando fizer o máximo de repetições em todas as séries e ainda sobrar fôlego, suba o menor peso possível.','Descanso: 2 min nos exercícios grandes e 1 min nos menores.'] },
   intensificacao: { label:'Intensificação', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderado', descanso:'Maior',
-    progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'] },
+    progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'],
+    humano:['Esforço: mais pesado; termine as séries sentindo que dava para fazer de 1 a 3 repetições a mais.','Como evoluir: na semana 1 suba o peso, na 2 mantenha e capriche na execução, na 3 chegue mais perto do limite.','Descanso: um pouco maior entre as séries.'] },
   densidade: { label:'Densidade', emoji:'🟡', rpe:'7–9', rir:'1–2', carga:'Moderada (~65–80%)', volume:'Moderado/Alto', descanso:'Curto',
-    progressao:['Reduz descanso','Mantém carga moderada, aumenta esforço total'] },
+    progressao:['Reduz descanso','Mantém carga moderada, aumenta esforço total'],
+    humano:['Esforço: peso moderado, séries mais cheias.','Como evoluir: descanse menos entre as séries, mantendo o mesmo peso.','Descanso: curto.'] },
   deload: { label:'Deload', emoji:'⚫', rpe:'4–6', rir:'4–6', carga:'~50–60%', volume:'Baixo', descanso:'Livre',
-    progressao:['Reduz tudo (carga + volume)','Mantém padrão de movimento'] }
+    progressao:['Reduz tudo (carga + volume)','Mantém padrão de movimento'],
+    humano:['Esforço: leve; termine as séries sobrando bastante, com 4 a 6 repetições a mais.','Como evoluir: semana de recuperação, sem aumentar o peso.','Descanso: livre.'] }
 };
 const FASES_TEMPLATE_EN = {
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (last set 1)', carga:'Double progression', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
-    progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'] },
+    progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'],
+    humano:['Effort: finish each set feeling you could still do 2 more reps (1 on the last set).','How to progress: when you hit the top reps on every set and still have energy left, go up by the smallest weight step.','Rest: 2 min on big lifts and 1 min on smaller ones.'] },
   intensificacao: { label:'Intensification', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderate', descanso:'Longer',
-    progressao:['Week 1: raise load','Week 2: keep load + refine form','Week 3: approach failure (RIR 1–2)'] },
+    progressao:['Week 1: raise load','Week 2: keep load + refine form','Week 3: approach failure (RIR 1–2)'],
+    humano:['Effort: heavier; finish sets feeling you could do 1 to 3 more reps.','How to progress: week 1 go up in weight, week 2 hold and polish form, week 3 get closer to your limit.','Rest: a bit longer between sets.'] },
   densidade: { label:'Density', emoji:'🟡', rpe:'7–9', rir:'1–2', carga:'Moderate (~65–80%)', volume:'Moderate/High', descanso:'Short',
-    progressao:['Cut rest time','Keep load moderate, raise total effort'] },
+    progressao:['Cut rest time','Keep load moderate, raise total effort'],
+    humano:['Effort: moderate weight, fuller sets.','How to progress: rest less between sets, same weight.','Rest: short.'] },
   deload: { label:'Deload', emoji:'⚫', rpe:'4–6', rir:'4–6', carga:'~50–60%', volume:'Low', descanso:'Free',
-    progressao:['Reduce everything (load + volume)','Keep the movement pattern'] }
+    progressao:['Reduce everything (load + volume)','Keep the movement pattern'],
+    humano:['Effort: light; finish sets with plenty left, 4 to 6 more reps.','How to progress: recovery week, do not add weight.','Rest: free.'] }
 };
 function aFasesTemplate(){ return aLang === 'en' ? FASES_TEMPLATE_EN : FASES_TEMPLATE_PT; }
 
@@ -16623,6 +16665,12 @@ function aMontarCardFase(semana, semanaDentroFase, ctxPrefix){
   const ft = FT[semana.fase];
   const detId = aFaseDetId(ctxPrefix);
   const helpId = 'th-' + detId;
+  if (ft.humano) {
+    return '<div class="fase-card" id="' + detId + '" style="display:none">' +
+      '<div class="fase-tag">' + ft.emoji + ' ' + aEsc(ft.label) + '</div>' +
+      '<ul class="fase-hum" style="margin:6px 0 0;padding-left:16px;font-size:12px;line-height:1.5;color:var(--t2)">' + ft.humano.map(function(t){ return '<li>' + aEsc(t) + '</li>'; }).join('') + '</ul>' +
+    '</div>';
+  }
   return '<div class="fase-card" id="' + detId + '" style="display:none">' +
     '<div class="fase-tag">' + ft.emoji + ' ' + aEsc(ft.label) + '</div>' +
     '<div class="fase-params">RPE ' + aEsc(ft.rpe) + ' · RIR ' + aEsc(ft.rir) + ' · ' + aEsc(aT('carga')) + ' ' + aEsc(ft.carga) + ' · ' + aEsc(aT('volume_titulo')) + ' ' + aEsc(ft.volume) + ' · ' + aEsc(aT('descanso_titulo')) + ' ' + aEsc(ft.descanso) +
@@ -18444,6 +18492,8 @@ function copiarSQLRLS(){
     '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
     '-- Mapa do aluno (editor do Gerador): meta, marcos, textos e fotos escolhidas',
     'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;',
+    '-- Caminho por aluno (chave mestra, padrão desligada): o app só mostra o caminho/Mapa quando está ligada',
+    'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
