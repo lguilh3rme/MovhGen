@@ -10897,50 +10897,53 @@ function mbAvalGerarAchados() {
   const lat = mbAvalMetricasLateralCombinada(ed);
   const ant = mbAvalAntropometria(ed);
   const achados = [];
-  const checar = (val, area, contexto) => {
+  const checar = (val, area, txt) => {
     if (val === undefined) return;
     const abs = Math.abs(val);
-    if (abs <= 3) achados.push({ area, sev: 'ok', texto: `${area} bem alinhado(a), sem sinal relevante de desnível.`, detalhe: `diferença de ${abs.toFixed(1)}°` });
-    else if (abs <= 7) achados.push({ area, sev: 'atencao', texto: `${area} com leve desnível — vale observar, mas não é motivo de alarme.`, detalhe: `diferença de ${abs.toFixed(1)}°` });
-    else achados.push({ area, sev: 'critico', texto: `${area} com desnível perceptível — geralmente ligado a compensações do dia a dia (${contexto}). Vamos priorizar isso nas primeiras semanas.`, detalhe: `diferença de ${abs.toFixed(1)}°` });
+    const detalhe = `Diferença de ${abs.toFixed(1)}° (até 3° é considerado alinhado)`;
+    if (abs <= 3) achados.push({ area, sev: 'ok', texto: txt.ok, detalhe });
+    else if (abs <= 7) achados.push({ area, sev: 'atencao', texto: txt.leve, detalhe });
+    else achados.push({ area, sev: 'critico', texto: txt.forte, detalhe });
   };
-  checar(front.ombro, 'Ombros (vista frontal)', 'mochila/bolsa sempre do mesmo lado, postura ao sentar');
-  checar(front.quadril, 'Quadril (vista frontal)', 'apoio de peso predominante numa perna');
-  checar(post.ombro, 'Ombros (vista posterior)', 'mochila/bolsa sempre do mesmo lado, postura ao sentar');
-  checar(post.quadril, 'Quadril (vista posterior)', 'apoio de peso predominante numa perna');
+  const TXT_OMBROS = { ok: 'Seus ombros estão alinhados, na mesma altura.', leve: 'Um ombro está um pouco mais alto que o outro. É uma diferença pequena e comum; vamos apenas acompanhar.', forte: 'Um ombro está mais alto que o outro. Costuma vir de hábitos, como carregar a bolsa sempre do mesmo lado ou o jeito de sentar. Nas primeiras semanas vamos treinar para equilibrar os dois lados.' };
+  const TXT_QUADRIL = { ok: 'Seu quadril está nivelado.', leve: 'O quadril está um pouco desnivelado. É uma diferença pequena; vamos apenas acompanhar.', forte: 'O quadril está desnivelado. Costuma vir de apoiar o peso sempre numa perna só. Vamos fortalecer os dois lados e treinar o equilíbrio para nivelar.' };
+  checar(front.ombro, 'Ombros (vista frontal)', TXT_OMBROS);
+  checar(front.quadril, 'Quadril (vista frontal)', TXT_QUADRIL);
+  checar(post.ombro, 'Ombros (vista posterior)', TXT_OMBROS);
+  checar(post.quadril, 'Quadril (vista posterior)', TXT_QUADRIL);
   if (front.joelhoRatio !== undefined) {
-    if (front.joelhoRatio < 0.85) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Os joelhos tendem a se aproximar um do outro ao ficar em pé (padrão valgo) — trabalhável com fortalecimento de glúteo médio.', detalhe: `razão ${front.joelhoRatio.toFixed(2)}` });
-    else if (front.joelhoRatio > 1.15) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Os joelhos tendem a se afastar um do outro ao ficar em pé (padrão varo) — vale atenção na técnica de agachamento.', detalhe: `razão ${front.joelhoRatio.toFixed(2)}` });
-    else achados.push({ area: 'Joelhos', sev: 'ok', texto: 'Alinhamento de joelhos dentro do esperado.', detalhe: `razão ${front.joelhoRatio.toFixed(2)}` });
+    if (front.joelhoRatio < 0.85) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Seus joelhos tendem a ir para dentro quando você fica em pé ou agacha. Vamos fortalecer o glúteo para ajudar a manter os joelhos alinhados.', detalhe: `Medida: ${front.joelhoRatio.toFixed(2)} (o ideal fica entre 0,85 e 1,15)` });
+    else if (front.joelhoRatio > 1.15) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Seus joelhos tendem a ficar mais abertos quando você fica em pé. No agachamento vamos cuidar da técnica para manter os joelhos na direção dos pés.', detalhe: `Medida: ${front.joelhoRatio.toFixed(2)} (o ideal fica entre 0,85 e 1,15)` });
+    else achados.push({ area: 'Joelhos', sev: 'ok', texto: 'Seus joelhos estão bem alinhados.', detalhe: `Medida: ${front.joelhoRatio.toFixed(2)} (o ideal fica entre 0,85 e 1,15)` });
   }
   if (lat.cva !== undefined) {
     const cva = lat.cva;
-    if (cva >= 53) achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Cabeça bem alinhada com o resto do corpo.', detalhe: `ângulo craniovertebral aprox. ${cva.toFixed(0)}°` });
-    else if (cva >= 45) achados.push({ area: 'Cabeça (lateral)', sev: 'atencao', texto: 'A cabeça tende a ficar levemente projetada à frente do corpo — associado a tempo de tela. Fortalecimento de cervical profunda e alongamento de peitoral ajudam.', detalhe: `ângulo craniovertebral aprox. ${cva.toFixed(0)}°` });
-    else achados.push({ area: 'Cabeça (lateral)', sev: 'critico', texto: 'A cabeça está claramente projetada à frente do corpo — geralmente ligado a tempo de tela prolongado. Fortalecimento de cervical profunda e mobilidade torácica vão ser prioridade nas primeiras semanas.', detalhe: `ângulo craniovertebral aprox. ${cva.toFixed(0)}°` });
+    if (cva >= 53) achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Sua cabeça está bem alinhada com o corpo.', detalhe: `Ângulo da cabeça: cerca de ${cva.toFixed(0)}° (acima de 53° é considerado alinhado)` });
+    else if (cva >= 45) achados.push({ area: 'Cabeça (lateral)', sev: 'atencao', texto: 'Sua cabeça fica um pouco à frente do corpo, comum em quem passa muito tempo no celular ou no computador. Vamos fortalecer o pescoço e soltar o peito.', detalhe: `Ângulo da cabeça: cerca de ${cva.toFixed(0)}° (acima de 53° é considerado alinhado)` });
+    else achados.push({ area: 'Cabeça (lateral)', sev: 'critico', texto: 'Sua cabeça fica bem à frente do corpo, comum em quem passa muitas horas no celular ou no computador. Nas primeiras semanas vamos priorizar o fortalecimento do pescoço e a mobilidade das costas.', detalhe: `Ângulo da cabeça: cerca de ${cva.toFixed(0)}° (acima de 53° é considerado alinhado)` });
   } else if (lat.orelha !== undefined) {
     // Fallback pra avaliações antigas sem pontos suficientes pro cálculo do CVA
     const abs = Math.abs(lat.orelha);
-    if (abs > 25) achados.push({ area: 'Cabeça (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'A cabeça tende a ficar projetada à frente do corpo — associado a tempo de tela. Fortalecimento de cervical profunda e alongamento de peitoral ajudam.', detalhe: `desvio de ${abs.toFixed(0)}px` });
-    else achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Cabeça bem alinhada com o resto do corpo.', detalhe: `desvio de ${abs.toFixed(0)}px` });
+    if (abs > 25) achados.push({ area: 'Cabeça (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Sua cabeça fica à frente do corpo, comum em quem passa muito tempo no celular ou no computador. Vamos fortalecer o pescoço e soltar o peito.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
+    else achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Sua cabeça está bem alinhada com o corpo.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
   }
   if (lat.ombro !== undefined) {
     const abs = Math.abs(lat.ombro);
-    if (abs > 25) achados.push({ area: 'Ombro (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Ombros projetados à frente da linha do corpo — padrão comum de quem passa muito tempo sentado. Mobilidade torácica e fortalecimento de costas ajudam.', detalhe: `desvio de ${abs.toFixed(0)}px` });
+    if (abs > 25) achados.push({ area: 'Ombro (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Seus ombros ficam à frente da linha do corpo, comum em quem passa muito tempo sentado. Vamos fortalecer as costas e soltar o peito.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
   }
   if (lat.quadril !== undefined) {
     const abs = Math.abs(lat.quadril);
-    if (abs > 25) achados.push({ area: 'Quadril (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'O quadril está deslocado em relação à linha de equilíbrio do corpo — vale investigar mobilidade de tornozelo e força de core.', detalhe: `desvio de ${abs.toFixed(0)}px` });
+    if (abs > 25) achados.push({ area: 'Quadril (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Seu quadril está fora da linha de equilíbrio do corpo. Vamos trabalhar a mobilidade do tornozelo e a força do abdômen e da região central do corpo.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
   }
   const composicao = [];
-  if (ant.imc) composicao.push(`IMC atual ${ant.imc.toFixed(1)} — faixa de "${ant.imcClasse}". O IMC é só um ponto de partida, não diferencia massa muscular de gordura.`);
-  if (ant.rcq) composicao.push(`Relação cintura/quadril (RCQ) de ${ant.rcq.toFixed(2)}, ${ant.rcqClasse === 'dentro da referência' ? 'dentro da referência esperada' : 'acima da referência esperada — vale reforçar isso na estratégia de treino e alimentação'}.`);
+  if (ant.imc) composicao.push(`IMC de ${ant.imc.toFixed(1)} (${ant.imcClasse}). É só um ponto de partida: o IMC não separa músculo de gordura.`);
+  if (ant.rcq) composicao.push(`Relação cintura/quadril (RCQ): ${ant.rcq.toFixed(2)}, ${ant.rcqClasse === 'dentro da referência' ? 'dentro do esperado. Essa medida mostra como a gordura está distribuída e diz mais sobre saúde do que o peso sozinho' : 'acima do esperado. Vamos incluir isso na estratégia de treino e alimentação'}.`);
   const propTM = mbAvalProporcaoTroncoMembros(ed);
   let propTMClasse = null;
   if (propTM != null) {
     propTMClasse = propTM < 0.48 ? 'pernas relativamente longas' : propTM > 0.58 ? 'tronco relativamente longo' : 'proporção comum';
-    const nota = propTM < 0.48 ? 'tronco relativamente curto e pernas/fêmur relativamente longos — tende a pedir mais inclinação de tronco no agachamento e no levantamento terra' : propTM > 0.58 ? 'tronco relativamente longo e pernas/fêmur relativamente curtos — tende a permitir uma postura mais ereta no agachamento e no levantamento terra' : 'proporção tronco/pernas dentro da faixa mais comum';
-    composicao.push(`Proporção tronco/membros inferiores de ${propTM.toFixed(2)} — ${nota}.`);
+    const nota = propTM < 0.48 ? 'suas pernas são proporcionalmente longas. No agachamento e no levantamento terra é normal inclinar um pouco mais o tronco; vamos ajustar a técnica ao seu corpo' : propTM > 0.58 ? 'seu tronco é proporcionalmente longo, o que costuma facilitar uma postura mais ereta no agachamento e no levantamento terra' : 'proporção comum entre tronco e pernas';
+    composicao.push(`Proporção tronco/pernas de ${propTM.toFixed(2)}: ${nota}.`);
   }
   // Versão estruturada (não só texto) — salva à parte pra virar badges
   // clicáveis no app do aluno sem precisar re-parsear pontos por lá.
@@ -10964,9 +10967,9 @@ function mbAvalMontarPreviewHTML(achados, composicao) {
     <span>${icone[a.sev]}</span><span style="font-size:11px;line-height:1.5">${escAttr(a.texto)}<span style="display:block;color:var(--t3);font-size:9.5px;margin-top:2px">${escAttr(a.detalhe || '')}</span></span></div>`;
   const compHtml = composicao.length ? `<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">Composição corporal</div>${composicao.map(t => `<div style="font-size:11px;padding:4px 0;color:var(--tx)">◆ ${escAttr(t)}</div>`).join('')}</div>` : '';
   return `${compHtml}
-    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">Pontos fortes</div>
+    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">O que está bom</div>
     ${fortes.length ? fortes.map(card).join('') : '<div style="color:var(--t3);font-size:11px">nenhum ainda</div>'}
-    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px">Pontos de melhoria</div>
+    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px">O que vamos melhorar</div>
     ${melhorar.length ? melhorar.map(card).join('') : '<div style="color:var(--t3);font-size:11px">nenhum ponto de atenção</div>'}`;
 }
 
@@ -10981,9 +10984,10 @@ function mbAvalDiagnosticoTexto(achados, composicao) {
   const linhas = [];
   composicao.forEach(t => linhas.push(t));
   const fortes = achados.filter(a => a.sev === 'ok');
-  const melhorar = achados.filter(a => a.sev !== 'ok');
-  if (fortes.length) { linhas.push(''); linhas.push('Pontos fortes:'); fortes.forEach(a => linhas.push('• ' + a.texto)); }
-  if (melhorar.length) { linhas.push(''); linhas.push('Pontos de melhoria:'); melhorar.forEach(a => linhas.push('• ' + a.texto)); }
+  const melhorar = achados.filter(a => a.sev !== 'ok').sort((a, b) => (a.sev === 'critico' ? 0 : 1) - (b.sev === 'critico' ? 0 : 1));
+  if (fortes.length) { linhas.push(''); linhas.push('O que está bom:'); fortes.forEach(a => linhas.push('• ' + a.texto)); }
+  if (melhorar.length) { linhas.push(''); linhas.push('O que vamos melhorar primeiro:'); melhorar.slice(0, 3).forEach(a => linhas.push('• ' + a.texto)); }
+  if (melhorar.length > 3) { linhas.push(''); linhas.push('Também vamos acompanhar:'); melhorar.slice(3).forEach(a => linhas.push('• ' + a.texto)); }
   return linhas.join('\n');
 }
 
