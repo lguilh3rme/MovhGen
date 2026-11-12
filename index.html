@@ -13207,6 +13207,24 @@ body #treinoScreen #tLinhaAlertas{position:sticky;top:0;z-index:30;display:flex;
 .dash-actions{flex-wrap:wrap}
 .dash-actions .vksbtn{width:auto;flex:1 1 0;min-width:0}
 #tBtnPersonal{flex:1 1 100%;font-weight:700;border-color:color-mix(in srgb,var(--P) 45%,var(--bd))}
+.cam-card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:12px 0 8px;cursor:pointer}
+.cam-top{display:flex;justify-content:space-between;align-items:center;font-size:14px}.cam-top span{font-size:12px;color:var(--t2)}
+.cam-bar{height:4px;border-radius:99px;background:var(--bd);margin-top:9px;overflow:hidden}.cam-bar i{display:block;height:100%;background:var(--P);border-radius:99px}
+.cam-prox{font-size:11.5px;color:var(--t2);margin-top:7px}
+.cam-hd{display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px;font-size:17px}
+.cam-chip{font-size:11px;font-weight:700;color:var(--t2);border:1px solid var(--bd);border-radius:99px;padding:3px 10px}
+.cam-box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+.cam-box h4{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}
+.cam-big{font-size:18px;font-weight:800}.cam-sub{font-size:12px;color:var(--t2);margin-top:3px}
+.cam-tl{position:relative;margin-left:6px}.cam-tl:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--bd)}
+.cam-st{position:relative;padding-left:30px;margin-bottom:14px}.cam-st:last-child{margin-bottom:0}
+.cam-dot{position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--bd)}
+.cam-st.ok .cam-dot{background:var(--G);border-color:var(--G)}.cam-st.now .cam-dot{background:var(--P);border-color:var(--P);box-shadow:0 0 0 4px color-mix(in srgb,var(--P) 25%,transparent)}
+.cam-st b{font-size:13.5px}.cam-d{font-size:11px;color:var(--t3);margin-top:1px}.cam-st p{font-size:12px;color:var(--t2);margin:3px 0 0;line-height:1.4}
+.cam-link{width:100%;margin:0 0 10px;text-align:left}
+.cam-meds{display:flex;gap:8px;margin-bottom:10px}.cam-med{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px}.cam-med small{display:block;font-size:10px;color:var(--t3)}.cam-med b{font-size:15px}
+.cam-fts{display:flex;gap:6px}.cam-ft{flex:1;text-align:center;font-size:9.5px;color:var(--t3)}.cam-ft img{width:100%;border-radius:7px;border:1px solid var(--bd);display:block;margin-bottom:3px}
+.cam-li{font-size:12.5px;color:var(--t2);padding:4px 0 4px 14px;position:relative;line-height:1.4}.cam-li:before{content:"";position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--P)}
 .pr-top{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 .pr-top .pr-sel,.pr-top .pr-nome{flex:1;min-width:0;margin:0}
 .pr-nome{font-weight:800;font-size:14px}
@@ -13832,6 +13850,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
       </div>
       <div id="tDashConteudo"></div>
       <div class="xo-next" id="aXoNext"></div>
+      <div class="cam-card" id="tCaminhoCard" style="display:none" onclick="aVerCaminho()" role="button"></div>
       <div class="dash-actions">
         <button class="vksbtn" id="tBtnProgresso" onclick="aVerProgresso()">📈 Meu progresso</button>
         <button class="vksbtn" id="tBtnColetivas" onclick="aVerColetivas()" style="display:none">🤸 Aulas coletivas</button>
@@ -13850,6 +13869,11 @@ body.xo-open #movh-descanso-widget{display:none!important}
     <div id="tProgresso" style="display:none">
       <button class="vhbtn tBtnVoltar" onclick="aVoltarHoje()">‹ Voltar para hoje</button>
       <div id="tProgressoConteudo"></div>
+    </div>
+
+    <div id="tCaminho" style="display:none">
+      <button class="vhbtn tBtnVoltar" onclick="aVoltarHoje()">‹ Voltar para hoje</button>
+      <div id="tCaminhoConteudo"></div>
     </div>
 
     <div id="tColetivas" style="display:none">
@@ -14973,6 +14997,7 @@ async function aBoot(sessionParam){
   aAvaliacoesFisicas = avals || [];
 
   aRenderProtocolo(proto);
+  try { aCaminhoCarregar(); } catch (e) {}
 }
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -16780,7 +16805,109 @@ function aVerSemanaCompleta(){
   document.getElementById('tSemanaCompleta').style.display = 'block';
   aHeaderForcar(true);
 }
+// ── Caminho (Mapa do aluno): card na Início + tela própria ──
+// Só aparece com alunos.caminho_ativo ligado E um Mapa publicado pelo professor (avaliacoes_fisicas.mapa.publicado).
+let aCaminhoMapa = null, aCaminhoRow = null, aCaminhoUrls = {}, aCaminhoImgs = {};
+const A_CAM_VISTAS = [['frontal','Frontal'],['posterior','Posterior'],['lateral_d','Lateral D'],['lateral_e','Lateral E']];
+function aCaminhoDiaMarco(m, sem){
+  const d = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d)) return null;
+  d.setDate(d.getDate() + (Number(sem) || 0) * 7); return d;
+}
+function aCaminhoFmt(d){ return d ? String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') : ''; }
+function aCaminhoSemana(m){
+  const d0 = new Date((m.inicio || '') + 'T12:00:00'); const tot = m.semanas || 12;
+  if (isNaN(d0)) return 1;
+  const dias = Math.floor((Date.now() - d0.getTime()) / 86400000);
+  return Math.min(Math.max(Math.floor(dias / 7) + 1, 1), tot);
+}
+function aCaminhoFase(m, sem){
+  const t = m.semanas || 12;
+  return sem <= Math.round(t / 3) ? 'Começo' : (sem <= Math.round(t * 2 / 3) ? 'Meio' : 'Fim');
+}
+async function aCaminhoCarregar(){
+  aCaminhoMapa = null; aCaminhoRow = null;
+  const card = document.getElementById('tCaminhoCard'); if (card) card.style.display = 'none';
+  if (!aAlunoRow || !aAlunoRow.id || !aAlunoRow.caminho_ativo) return;
+  try {
+    const r = await aClient.from('avaliacoes_fisicas')
+      .select('id, data_avaliacao, created_at, mapa, peso, cintura, quadril, foto_frontal_path, foto_posterior_path, foto_lateral_d_path, foto_lateral_e_path')
+      .eq('aluno_id', aAlunoRow.id).eq('status', 'confirmada').not('mapa', 'is', null)
+      .order('created_at', { ascending: false }).limit(5);
+    if (r.error) return;
+    const row = (r.data || []).find(function(x){ return x.mapa && x.mapa.publicado; });
+    if (!row) return;
+    aCaminhoRow = row; aCaminhoMapa = row.mapa;
+  } catch (e) { return; }
+  aCaminhoRenderCard();
+}
+function aCaminhoRenderCard(){
+  const card = document.getElementById('tCaminhoCard'); const m = aCaminhoMapa;
+  if (!card || !m) return;
+  const sem = aCaminhoSemana(m), tot = m.semanas || 12;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDiaMarco(m, x.sem); return d && d >= hoje; });
+  card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
+    '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
+    (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDiaMarco(m, prox.sem)) + '</div>' : '');
+  card.style.display = 'block';
+}
+async function aCaminhoFotoUrl(k){
+  const m = aCaminhoMapa, row = aCaminhoRow; const f = (m.fotos && m.fotos[k]) || {};
+  if (f.show === false) return null;
+  const src = f.src || row['foto_' + k + '_path']; const url = src && aCaminhoUrls[src]; if (!url) return null;
+  const ck = [src, f.rot, f.zoom].join('|'); if (aCaminhoImgs[ck]) return aCaminhoImgs[ck];
+  try {
+    const img = await new Promise(function(ok, er){ const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function(){ ok(i); }; i.onerror = er; i.src = url; });
+    const W = 300, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d'); x.fillStyle = '#1a2438'; x.fillRect(0, 0, W, H);
+    x.translate(W / 2, H / 2); x.rotate((f.rot || 0) * Math.PI / 180);
+    const giro = (f.rot || 0) % 180 !== 0, iw = giro ? img.height : img.width, ih = giro ? img.width : img.height;
+    const s = Math.max(W / iw, H / ih) * (f.zoom || 1); x.scale(s, s); x.drawImage(img, -img.width / 2, -img.height / 2);
+    return (aCaminhoImgs[ck] = c.toDataURL('image/jpeg', 0.82));
+  } catch (e) { return null; }
+}
+function aCaminhoLista(arr){
+  return (arr || []).map(function(t){ return '<div class="cam-li">' + aEsc(t) + '</div>'; }).join('');
+}
+function aCaminhoBox(tit, inner){ return '<div class="cam-box"><h4>' + tit + '</h4>' + inner + '</div>'; }
+async function aVerCaminho(){
+  const m = aCaminhoMapa, row = aCaminhoRow; if (!m) return;
+  ['tDashboard','tSemanaCompleta','tProgresso','tColetivas','tPersonal'].forEach(function(id){ const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  document.getElementById('tCaminho').style.display = 'block';
+  aHeaderForcar(true);
+  const sem = aCaminhoSemana(m), tot = m.semanas || 12, fase = aCaminhoFase(m, sem);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const marcos = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; });
+  let achouAtual = false;
+  const tl = marcos.map(function(x){
+    const d = aCaminhoDiaMarco(m, x.sem); const feito = d && d < hoje;
+    let cls = feito ? 'ok' : ''; if (!feito && !achouAtual) { cls = 'now'; achouAtual = true; }
+    return '<div class="cam-st ' + cls + '"><span class="cam-dot"></span><b>' + aEsc(x.titulo) + '</b><div class="cam-d">Semana ' + x.sem + ' · ' + aCaminhoFmt(d) + (feito ? ' · feito' : '') + '</div>' + (x.texto ? '<p>' + aEsc(x.texto) + '</p>' : '') + '</div>';
+  }).join('');
+  const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
+    .map(function(x){ return '<div class="cam-med"><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('');
+  document.getElementById('tCaminhoConteudo').innerHTML =
+    '<div class="cam-hd"><b>🧭 Seu caminho</b><span class="cam-chip">Semana ' + sem + ' de ' + tot + ' · ' + fase + '</span></div>' +
+    aCaminhoBox('Sua meta', '<div class="cam-big">' + aEsc(m.objetivo || 'Seu objetivo') + '</div><div class="cam-sub">' + tot + ' semanas · reavaliação na semana ' + tot + '</div><div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>') +
+    aCaminhoBox('Marcos', '<div class="cam-tl">' + tl + '</div>') +
+    '<button class="vksbtn cam-link" onclick="aVerProgresso()">📈 Cargas e histórico ›</button>' +
+    (med ? '<div class="cam-meds">' + med + '</div>' : '') +
+    '<div id="tCamFotos"></div>' +
+    ((m.bom || []).length ? aCaminhoBox('O que está bom', aCaminhoLista(m.bom)) : '') +
+    ((m.melhorar || []).length ? aCaminhoBox('O que vamos melhorar primeiro', aCaminhoLista(m.melhorar)) : '') +
+    ((m.depende || []).length ? aCaminhoBox('O que depende de você', aCaminhoLista(m.depende)) : '');
+  window.scrollTo(0, 0);
+  try {
+    const paths = []; A_CAM_VISTAS.forEach(function(v){ const f = (m.fotos && m.fotos[v[0]]) || {}; const p = f.src || row['foto_' + v[0] + '_path']; if (p && paths.indexOf(p) < 0) paths.push(p); });
+    if (paths.length) { const r = await aClient.storage.from('avaliacoes').createSignedUrls(paths, 3600); (r.data || []).forEach(function(s){ if (s && s.path && s.signedUrl) aCaminhoUrls[s.path] = s.signedUrl; }); }
+    const fts = [];
+    for (const v of A_CAM_VISTAS) { const u = await aCaminhoFotoUrl(v[0]); if (u) fts.push('<div class="cam-ft"><img src="' + u + '" alt="">' + v[1] + '</div>'); }
+    const box = document.getElementById('tCamFotos');
+    if (box && fts.length) box.innerHTML = aCaminhoBox('Postura', '<div class="cam-fts">' + fts.join('') + '</div>');
+  } catch (e) {}
+}
 function aVoltarHoje(){
+  { const _tc = document.getElementById('tCaminho'); if (_tc) _tc.style.display = 'none'; }
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tProgresso').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
@@ -17137,6 +17264,7 @@ function aMontarNotifs(){
   }).join('');
 }
 function aVerProgresso(){
+  { const _tc = document.getElementById('tCaminho'); if (_tc) _tc.style.display = 'none'; }
   document.getElementById('tDashboard').style.display = 'none';
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
