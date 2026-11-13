@@ -3996,7 +3996,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.2 · 13/11';
+var MOVH_VER = 'v63.3 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9790,7 +9790,7 @@ function renderPainelAlunos() {
            style="font-size:11px;padding:4px 10px;color:var(--G);border-color:var(--G)">↩ Restaurar</button>
          <button class="btn" title="Excluir permanentemente" data-id="${a.id}" onclick="mbExcluirDefinitivo(this.dataset.id)"
            style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#c03030;border-color:#f0b0b0">✕ Excluir</button>`
-      : `${btnsProto}<button type="button" class="bsm" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="font-size:10px;white-space:nowrap">🧭 Caminho</button><button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
+      : `${btnsProto}<button type="button" class="btn bs" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="font-size:10px;padding:3px 8px;white-space:nowrap;width:auto;flex:none">🧭 Caminho</button><button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
          <label class="toggle-sw" title="${bloqueado?'Liberar acesso':'Bloquear acesso'}" style="margin-right:2px">
            <input type="checkbox" ${bloqueado?'':'checked'} data-id="${a.id}" onchange="mbToggleAlunoAtivo(this.dataset.id,this.checked)"/>
            <span class="toggle-sw-slider"></span>
@@ -9806,34 +9806,30 @@ function renderPainelAlunos() {
 
     // Rodapé do card (só para alunos fora da lixeira) — ultra-compacto
     const rodape = lixeira ? '' : `
-      <div class="al-rodape" style="margin-top:6px;padding-top:6px;border-top:1px solid var(--bd2);display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-        <span style="font-size:10px;color:var(--t3);white-space:nowrap;font-weight:600">Acesso</span>
-        <input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
-          style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Início"/>
-        <span style="font-size:9px;color:var(--t3)">→</span>
-        <input type="date" id="af-${a.id}" value="${escAttr(fimAtual)}"
-          style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Fim"/>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbSalvarPeriodo(this.dataset.id)">💾</button>
-        <button class="btn bp" style="font-size:9px;padding:2px 9px;font-weight:700" data-id="${a.id}" onclick="mbCobrar(this.dataset.id)" title="Cobrar por Pix e WhatsApp com os valores da aba Planos">💰 Cobrar</button>
-        <span style="flex:1"></span>
-        ${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese respondida">📋 Anamnese</button>` : ''}
+      <div class="al-rodape" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--bd2);flex-direction:column;align-items:stretch;gap:7px!important">
+        ${(solicMudanca||alertaDor)?`<div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="width:92px;flex:none;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">Atenção</span>${solicMudanca?`<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#FF8A00;color:#fff;border-color:#FF8A00;font-weight:700" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'atendida')" title="Marcar como atendida (já criei/ajustei o novo protocolo)">✅ Atendida</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;background:var(--P);color:#fff;border-color:var(--P);font-weight:700" data-id="${solicMudanca.id}" data-aluno="${a.id}" onclick="mbAtenderECriarProtocolo(this.dataset.id,this.dataset.aluno)" title="Marca como atendida e já abre a tela de criação de protocolo com este aluno selecionado">🗂️ Criar protocolo</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'dispensada')" title="Dispensar solicitação">✖ Dispensar</button>`:''}${alertaDor?`<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#D64545;color:#fff;border-color:#D64545;font-weight:700" data-id="${a.id}" onclick="mbMarcarDorVista(this.dataset.id)" title="${escAttr(dorExsTxt||'sem detalhes adicionais')}">👁️ Visto</button>`:''}</div>`:''}
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center"><span style="width:92px;flex:none;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">Acesso</span>
+
+<input type="date" id="ai-${a.id}" value="${escAttr(inicioAtual)}"
+style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Início"/>
+<span style="font-size:9px;color:var(--t3)">→</span>
+<input type="date" id="af-${a.id}" value="${escAttr(fimAtual)}"
+style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4px;background:var(--ip);color:var(--tx);width:100px" title="Fim"/>
+<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbSalvarPeriodo(this.dataset.id)">💾</button>
+<button class="btn bp" style="font-size:9px;padding:2px 9px;font-weight:700" data-id="${a.id}" onclick="mbCobrar(this.dataset.id)" title="Cobrar por Pix e WhatsApp com os valores da aba Planos">💰 Cobrar</button>
+        </div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="width:92px;flex:none;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">Avaliação</span>
+        ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸 Avaliações${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Pedir fotos de avaliação física/postural">📸 Pedir avaliação</button>
+        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️ Testes${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="width:92px;flex:none;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">Fichas</span>${anamnese && anamnese.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" onclick="mbVerAnamnese(this.dataset.id)" title="Ver anamnese respondida">📋 Anamnese</button>` : ''}
         ${parq && parq.respostas ? `<button class="btn bs" style="font-size:9px;padding:2px 7px${Object.values(parq.respostas||{}).some(v=>v===true||v==='sim')?';border-color:#e44;color:#c03030':''}" data-id="${a.id}" onclick="mbVerParq(this.dataset.id)" title="Ver PAR-Q respondido">🩺 PAR-Q</button>` : ''}
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarParq(this.dataset.id)" title="Pedir ao aluno que preencha o PAR-Q">🩺 Pedir PAR-Q</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Pedir ao aluno que preencha a anamnese">📋 Pedir anamnese</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️ Testes${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
-        ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸 Avaliações${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
-        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-caminho="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Mostrar o Caminho (Mapa, marcos e progresso do programa) no app deste aluno">🧭 Caminho</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Pedir fotos de avaliação física/postural">📸 Pedir avaliação</button>
-        ${solicMudanca ? `<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#FF8A00;color:#fff;border-color:#FF8A00;font-weight:700" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'atendida')" title="Marcar como atendida (já criei/ajustei o novo protocolo)">✅ Atendida</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;background:var(--P);color:#fff;border-color:var(--P);font-weight:700" data-id="${solicMudanca.id}" data-aluno="${a.id}" onclick="mbAtenderECriarProtocolo(this.dataset.id,this.dataset.aluno)" title="Marca como atendida e já abre a tela de criação de protocolo com este aluno selecionado">🗂️ Criar protocolo</button>
-        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'dispensada')" title="Dispensar solicitação">✖ Dispensar</button>` : ''}
-        ${alertaDor ? `<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#D64545;color:#fff;border-color:#D64545;font-weight:700" data-id="${a.id}" onclick="mbMarcarDorVista(this.dataset.id)" title="${escAttr(dorExsTxt||'sem detalhes adicionais')}">👁️ Visto</button>` : ''}
-        <label class="toggle-sw" style="margin-left:2px" title="${a.mostra_aulas_coletivas?'Desativar aba de aulas coletivas no app deste aluno':'Mostrar aba de aulas coletivas no app deste aluno'}">
-          <input type="checkbox" ${a.mostra_aulas_coletivas?'checked':''} data-id="${a.id}" onchange="mbToggleAulasColetivasAluno(this.dataset.id,this.checked)"/>
-          <span class="toggle-sw-slider"></span>
-        </label>
-        <span style="font-size:9px;color:var(--t3)">🤸 Coletivas</span>
-        ${notasBtn('aluno',a.id,a.nome)}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Pedir ao aluno que preencha a anamnese">📋 Pedir anamnese</button></div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center"><span style="width:92px;flex:none;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">No app do aluno</span><button class="btn bs" style="font-size:9px;padding:2px 7px" data-caminho="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Mostrar o Caminho (Mapa, marcos e progresso do programa) no app deste aluno">🧭 Caminho</button><label class="toggle-sw" style="margin-left:2px" title="${a.mostra_aulas_coletivas?'Desativar aba de aulas coletivas no app deste aluno':'Mostrar aba de aulas coletivas no app deste aluno'}"> <input type="checkbox" ${a.mostra_aulas_coletivas?'checked':''} data-id="${a.id}" onchange="mbToggleAulasColetivasAluno(this.dataset.id,this.checked)"/> <span class="toggle-sw-slider"></span> </label> <span style="font-size:9px;color:var(--t3)">🤸 Coletivas</span>
+        ${notasBtn('aluno',a.id,a.nome)}</div>
       </div>`;
 
     return `<div id="al-${a.id}" class="card aluno-row${bloqueado?' aluno-row-bloqueado':''}${lixeira?' aluno-row-lixeira':''}${fimNivel}"
