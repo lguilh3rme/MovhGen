@@ -1731,6 +1731,21 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
   </div>
 </div>
 
+<!-- Modal: Mapa do aluno (editor) -->
+<div class="mbg" id="modal-mapa-editor">
+  <div class="modal" style="max-width:640px">
+    <h3 id="mb-mapa-titulo">🗺️ Mapa do aluno</h3>
+    <div style="font-size:10.5px;color:var(--t3);margin-bottom:6px">Tudo aqui é o que o aluno vai ver no app e no PDF. Edite à vontade; só vai para o aluno quando você publicar.</div>
+    <div id="mb-mapa-body"></div>
+    <div class="mfoot">
+      <button class="btn bs" onclick="mbMapaPDF()">📄 PDF</button>
+      <button class="btn bs" onclick="mbMapaSalvar(false)">💾 Salvar rascunho</button>
+      <button class="btn bp" onclick="mbMapaSalvar(true)">🚀 Publicar para o aluno</button>
+      <button class="btn bs" onclick="closeM('modal-mapa-editor')">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Editor de pontos posturais (detecção automática + ajuste manual) -->
 <div class="mbg" id="modal-aval-editor">
   <div class="modal" style="max-width:920px">
@@ -3981,7 +3996,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v62.16 · 12/11';
+var MOVH_VER = 'v63.0 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9788,6 +9803,7 @@ function renderPainelAlunos() {
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAnamnese(this.dataset.id)" title="Pedir ao aluno que preencha a anamnese">📋 Pedir anamnese</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirTestes(this.dataset.id,this.dataset.nome)" title="${mbSemanasDesde(a.ultimoCondicData)>=6?'Reteste de condicionamento recomendado (' + mbSemanasDesde(a.ultimoCondicData) + ' semanas)':'Testes de RM / condicionamento'}">🏋️ Testes${mbSemanasDesde(a.ultimoCondicData)>=6?' ⏳':''}</button>
         ${(a.avaliacoes && a.avaliacoes.length) ? `<button class="btn bs" style="font-size:9px;padding:2px 7px" data-id="${a.id}" data-nome="${escAttr(a.nome)}" onclick="mbAbrirAvaliacoes(this.dataset.id,this.dataset.nome)" title="Ver avaliações físicas">📸 Avaliações${a.avaliacoes.some(v=>v.status==='solicitada')?' ⏳':''}</button>` : ''}
+        <button class="btn bs" style="font-size:9px;padding:2px 7px" data-caminho="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Mostrar o Caminho (Mapa, marcos e progresso do programa) no app deste aluno">🧭 Caminho</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;color:var(--t3)" data-id="${a.id}" onclick="mbSolicitarAvaliacaoFisica(this.dataset.id)" title="Pedir fotos de avaliação física/postural">📸 Pedir avaliação</button>
         ${solicMudanca ? `<button class="btn bs" style="font-size:9px;padding:2px 7px;background:#FF8A00;color:#fff;border-color:#FF8A00;font-weight:700" data-id="${solicMudanca.id}" onclick="mbAtenderSolicitacaoMudanca(this.dataset.id,'atendida')" title="Marcar como atendida (já criei/ajustei o novo protocolo)">✅ Atendida</button>
         <button class="btn bs" style="font-size:9px;padding:2px 7px;background:var(--P);color:#fff;border-color:var(--P);font-weight:700" data-id="${solicMudanca.id}" data-aluno="${a.id}" onclick="mbAtenderECriarProtocolo(this.dataset.id,this.dataset.aluno)" title="Marca como atendida e já abre a tela de criação de protocolo com este aluno selecionado">🗂️ Criar protocolo</button>
@@ -10305,6 +10321,7 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     const pdfHtml = v.status === 'confirmada' ? `
       <div style="margin-top:8px">
         <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbAvalGerarPDF('${v.id}')">📄 Gerar PDF</button>
+        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ Mapa do aluno</button>
       </div>` : '';
     const diagnosticoHtml = v.diagnostico ? `<div style="font-size:10.5px;color:var(--tx);margin-top:6px;white-space:pre-wrap">${escAttr(v.diagnostico)}</div>` : '';
     return `<div style="padding:8px 0;border-bottom:1px solid var(--bd)">
@@ -10316,6 +10333,231 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     ${fotosHtml}${antroHtml}${diagnosticoHtml}${editorHtml}${manualHtml}${pdfHtml}
   </div>`;
   }).join('');
+}
+
+// ══ CAMINHO POR ALUNO (chave mestra; padrão desligada) ══
+// Coluna alunos.caminho_ativo lida/gravada à parte do carregamento principal: sem a coluna, nada quebra (o botão avisa).
+let _mbCaminho = null, _mbCaminhoOk = true;
+async function mbCaminhoCarregar(forcar) {
+  if (_mbCaminho && !forcar) return;
+  _mbCaminho = {}; _mbCaminhoOk = true;
+  try {
+    const { data, error } = await mbClient.from('alunos').select('id, caminho_ativo');
+    if (error) _mbCaminhoOk = false; else (data || []).forEach(r => { _mbCaminho[r.id] = !!r.caminho_ativo; });
+  } catch (e) { _mbCaminhoOk = false; }
+}
+async function mbCaminhoAtualizarBotoes() {
+  await mbCaminhoCarregar();
+  document.querySelectorAll('[data-caminho]').forEach(b => {
+    const on = !!_mbCaminho[b.dataset.caminho];
+    b.textContent = '🧭 Caminho: ' + (on ? 'ligado' : 'desligado');
+    b.style.color = on ? 'var(--G,#1A9E72)' : 'var(--t3)';
+    b.style.fontWeight = on ? '700' : '400';
+  });
+}
+async function mbCaminhoToggle(alunoId) {
+  await mbCaminhoCarregar();
+  if (!_mbCaminhoOk) { try { navigator.clipboard.writeText(MAPA_SQL).catch(() => {}); } catch (e) {} notify('Falta criar a coluna no banco. O SQL foi copiado: rode no Supabase e tente de novo.'); return; }
+  const novo = !_mbCaminho[alunoId];
+  const { error } = await mbClient.from('alunos').update({ caminho_ativo: novo }).eq('id', alunoId);
+  if (error) { notify('Erro ao salvar: ' + error.message); return; }
+  _mbCaminho[alunoId] = novo; mbCaminhoAtualizarBotoes();
+  notify(novo ? 'Caminho ligado para este aluno.' : 'Caminho desligado para este aluno.');
+}
+const _renderPainelAlunosOrig = renderPainelAlunos;
+renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this, arguments); try { mbCaminhoAtualizarBotoes(); } catch (e) {} return r; };
+
+// ══ MAPA DO ALUNO (editor do professor) ══
+// Guarda tudo em avaliacoes_fisicas.mapa (jsonb). Sem a coluna, o editor avisa e mostra o SQL; nada mais quebra.
+let _mbMapa = null;
+const MAPA_VISTAS = [['frontal', 'Frontal'], ['posterior', 'Posterior'], ['lateral_d', 'Lateral D'], ['lateral_e', 'Lateral E']];
+const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;\nNOTIFY pgrst, \'reload schema\';';
+function mbMapaPadrao(row) {
+  const ach = Array.isArray(row.achados) ? row.achados : [];
+  const bom = ach.filter(a => a.sev === 'ok').map(a => a.texto);
+  const mel = ach.filter(a => a.sev !== 'ok').sort((a, b) => (a.sev === 'critico' ? 0 : 1) - (b.sev === 'critico' ? 0 : 1)).slice(0, 3).map(a => a.texto);
+  const ini = row.data_avaliacao || (row.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+  return {
+    v: 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
+    depende: ['3 treinos por semana, registrados no app', 'Dormir 7 a 8 horas e beber água ao longo do dia', 'Avisar dor ou desconforto no mesmo dia'],
+    marcos: [
+      { sem: 0, titulo: 'Avaliação inicial', texto: 'Fotos posturais, medidas e testes.' },
+      { sem: 4, titulo: 'Check da semana 4', texto: 'Medidas, cargas e frequência.' },
+      { sem: 8, titulo: 'Check da semana 8', texto: 'Medidas, cargas e ajuste do treino.' },
+      { sem: 12, titulo: 'Reavaliação final', texto: 'Mesmas fotos e medidas, relatório antes e depois.' }
+    ],
+    fotos: Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, { show: true, rot: 0, zoom: 1, src: null }])),
+    publicado: false
+  };
+}
+function mbMapaDataMarco(m, sem) {
+  const d = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d)) return '';
+  d.setDate(d.getDate() + (Number(sem) || 0) * 7);
+  return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+}
+async function mbMapaAbrir(avalId) {
+  const row = (_mbAvaliacoesCache || []).find(v => v.id === avalId);
+  if (!row) { notify('Avaliação não encontrada.'); return; }
+  const def = mbMapaPadrao(row);
+  let salvo = null, colOk = true;
+  try {
+    const r = await mbClient.from('avaliacoes_fisicas').select('mapa').eq('id', avalId).maybeSingle();
+    if (r.error) colOk = false; else salvo = r.data && r.data.mapa;
+  } catch (e) { colOk = false; }
+  // Integra com o treino: sem Mapa salvo, a semana 0 do caminho = início do protocolo do aluno (se houver)
+  if (!salvo) {
+    try {
+      const pr = await mbClient.from('protocolos').select('data_inicio').eq('aluno_id', _mbAvaliacoesAlunoId).not('data_inicio', 'is', null).order('created_at', { ascending: false }).limit(1);
+      const di = pr && pr.data && pr.data[0] && pr.data[0].data_inicio;
+      if (di && /^\d{4}-\d{2}-\d{2}/.test(di)) def.inicio = di.slice(0, 10);
+    } catch (e) {}
+  }
+  const m = Object.assign({}, def, salvo || {});
+  m.fotos = Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, Object.assign({}, def.fotos[k], (salvo && salvo.fotos && salvo.fotos[k]) || {})]));
+  _mbMapa = { avalId, alunoId: _mbAvaliacoesAlunoId, row, m, colOk, urls: {}, cache: {}, prev: false };
+  const t = document.getElementById('mb-aval-titulo');
+  document.getElementById('mb-mapa-titulo').textContent = '🗺️ Mapa do aluno' + (t ? ' — ' + t.textContent.replace(/^.*?—\s*/, '') : '');
+  openM('modal-mapa-editor');
+  document.getElementById('mb-mapa-body').innerHTML = '<div style="font-size:11px;color:var(--t3)">Carregando…</div>';
+  await mbMapaCarregarUrls(); await mbCaminhoCarregar();
+  mbMapaRender();
+}
+function mbMapaFotosDaVista(k) {
+  return (_mbAvaliacoesCache || []).filter(v => v['foto_' + k + '_path']).map(v => ({ path: v['foto_' + k + '_path'], data: v.data_avaliacao || (v.created_at || '').slice(0, 10) }));
+}
+async function mbMapaCarregarUrls() {
+  const paths = [...new Set(MAPA_VISTAS.flatMap(([k]) => mbMapaFotosDaVista(k).map(f => f.path)))];
+  if (!paths.length) return;
+  try {
+    const { data } = await mbClient.storage.from('avaliacoes').createSignedUrls(paths, 3600);
+    (data || []).forEach(s => { if (s && s.path && s.signedUrl) _mbMapa.urls[s.path] = s.signedUrl; });
+  } catch (e) {}
+}
+function mbMapaSrc(k) { const f = _mbMapa.m.fotos[k]; return f.src || _mbMapa.row['foto_' + k + '_path'] || null; }
+// Gera a foto já girada/ampliada em 3:4 (usada no editor, na prévia e no PDF)
+async function mbMapaFotoUrl(k) {
+  const f = _mbMapa.m.fotos[k], src = mbMapaSrc(k), url = src && _mbMapa.urls[src];
+  if (!url) return null;
+  const ck = [src, f.rot, f.zoom].join('|');
+  if (_mbMapa.cache[ck]) return _mbMapa.cache[ck];
+  try {
+    const img = await new Promise((ok, er) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = er; i.src = url; });
+    const W = 300, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d'); x.fillStyle = '#1a2438'; x.fillRect(0, 0, W, H);
+    x.translate(W / 2, H / 2); x.rotate((f.rot || 0) * Math.PI / 180);
+    const giro = (f.rot || 0) % 180 !== 0, iw = giro ? img.height : img.width, ih = giro ? img.width : img.height;
+    const s = Math.max(W / iw, H / ih) * (f.zoom || 1); x.scale(s, s); x.drawImage(img, -img.width / 2, -img.height / 2);
+    return (_mbMapa.cache[ck] = c.toDataURL('image/jpeg', 0.82));
+  } catch (e) { return null; }
+}
+function mbMapaSet(k, v) { _mbMapa.m[k] = v; }
+function mbMapaLista(k, txt) { _mbMapa.m[k] = String(txt).split('\n').map(s => s.trim()).filter(Boolean); }
+function mbMapaMarco(i, campo, v) { _mbMapa.m.marcos[i][campo] = campo === 'sem' ? (Number(v) || 0) : v; }
+function mbMapaMarcoAdd() { _mbMapa.m.marcos.push({ sem: 6, titulo: 'Novo marco', texto: '' }); mbMapaRender(); }
+function mbMapaMarcoDel(i) { _mbMapa.m.marcos.splice(i, 1); mbMapaRender(); }
+function mbMapaFoto(k, campo, v) {
+  const f = _mbMapa.m.fotos[k];
+  if (campo === 'show') f.show = !!v; else if (campo === 'zoom') f.zoom = Number(v) || 1; else if (campo === 'src') f.src = v || null;
+  else if (campo === 'rot') f.rot = ((f.rot || 0) + 90) % 360;
+  mbMapaAtualizarFotos();
+}
+async function mbMapaAtualizarFotos() {
+  for (const [k] of MAPA_VISTAS) {
+    const el = document.getElementById('mapa-ft-' + k); if (!el) continue;
+    const u = await mbMapaFotoUrl(k);
+    el.innerHTML = u ? '<img src="' + u + '" style="width:100%;display:block;border-radius:8px' + (_mbMapa.m.fotos[k].show ? '' : ';opacity:.3') + '">' : '<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto</div>';
+  }
+  if (_mbMapa.prev) mbMapaPrevia();
+}
+function mbMapaTogglePrevia() { _mbMapa.prev = !_mbMapa.prev; document.getElementById('mb-mapa-prev').style.display = _mbMapa.prev ? 'block' : 'none'; if (_mbMapa.prev) mbMapaPrevia(); }
+async function mbMapaPrevia() {
+  const imgs = {}; for (const [k] of MAPA_VISTAS) if (_mbMapa.m.fotos[k].show) imgs[k] = await mbMapaFotoUrl(k);
+  document.getElementById('mb-mapa-prev').innerHTML = mbMapaHtmlAluno(_mbMapa.m, _mbMapa.row, imgs);
+}
+// Exatamente o que o aluno vê (cores fixas do app)
+function mbMapaHtmlAluno(m, row, imgs) {
+  const li = a => (a || []).map(t => `<div style="font-size:12px;color:#9AA3BD;padding:4px 0 4px 14px;position:relative;line-height:1.4"><span style="position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:#D62839"></span>${escAttr(t)}</div>`).join('');
+  const box = (tit, inner) => `<div style="background:#111A2E;border:1px solid #1F2B45;border-radius:14px;padding:14px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#9AA3BD;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">${tit}</div>${inner}</div>`;
+  const fotos = MAPA_VISTAS.filter(([k]) => imgs[k]).map(([k, n]) => `<div style="flex:1;text-align:center;font-size:9.5px;color:#6B7699"><img src="${imgs[k]}" style="width:100%;border-radius:7px;border:1px solid #1F2B45;display:block;margin-bottom:3px">${n}</div>`).join('');
+  const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
+    .map(x => `<div style="flex:1;background:#0B1220;border-radius:10px;padding:8px"><div style="font-size:10px;color:#6B7699">${x[0]}</div><b style="font-size:15px">${x[1]}</b></div>`).join('');
+  const marcos = (m.marcos || []).slice().sort((a, b) => a.sem - b.sem).map(x => `<div style="display:flex;gap:10px;padding:6px 0;border-top:1px solid #1F2B45"><div style="min-width:46px;font-size:11px;font-weight:700;color:#FF4D5A">Sem ${x.sem}<div style="font-weight:500;color:#6B7699">${mbMapaDataMarco(m, x.sem)}</div></div><div><div style="font-size:13px;font-weight:700">${escAttr(x.titulo)}</div><div style="font-size:11.5px;color:#9AA3BD">${escAttr(x.texto)}</div></div></div>`).join('');
+  return `<div style="background:#0B1220;color:#F3EAD8;border-radius:14px;padding:14px;max-width:390px;margin:0 auto;font-family:inherit">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #D62839;padding-bottom:8px;margin-bottom:12px"><div style="font-size:22px;font-weight:900">MOV<span style="color:#D62839">H</span></div><div style="font-size:10.5px;color:#6B7699;text-align:right">Seu Mapa<br>${escAttr(row.data_avaliacao || '')}</div></div>
+    ${box('Objetivo e prazo', `<div style="font-size:17px;font-weight:800">${escAttr(m.objetivo || 'Defina o objetivo')}</div><div style="font-size:12px;color:#9AA3BD;margin-top:3px">${m.semanas} semanas · reavaliação na semana ${m.semanas}</div>`)}
+    ${med ? `<div style="display:flex;gap:8px;margin-bottom:10px">${med}</div>` : ''}
+    ${fotos ? box('Postura', `<div style="display:flex;gap:6px">${fotos}</div>`) : ''}
+    ${(m.bom || []).length ? box('O que está bom', li(m.bom)) : ''}
+    ${(m.melhorar || []).length ? box('O que vamos melhorar primeiro', li(m.melhorar)) : ''}
+    ${box('Seu caminho', marcos)}
+    ${(m.depende || []).length ? box('O que depende de você', li(m.depende)) : ''}
+  </div>`;
+}
+function mbMapaRender() {
+  const M = _mbMapa, m = M.m, E = escAttr;
+  const inp = 'width:100%;font-size:11px;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--ip);color:var(--tx);box-sizing:border-box';
+  const lab = 'font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:12px 0 4px';
+  const ta = (k, rows) => `<textarea oninput="mbMapaLista('${k}',this.value)" rows="${rows}" style="${inp};font-family:inherit">${E((m[k] || []).join('\n'))}</textarea>`;
+  const marcos = m.marcos.map((x, i) => `<div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start">
+      <input type="number" min="0" value="${x.sem}" oninput="mbMapaMarco(${i},'sem',this.value)" style="${inp};width:54px" title="Semana">
+      <div style="flex:1"><input value="${E(x.titulo)}" oninput="mbMapaMarco(${i},'titulo',this.value)" style="${inp};margin-bottom:4px"><input value="${E(x.texto)}" oninput="mbMapaMarco(${i},'texto',this.value)" style="${inp}"></div>
+      <button class="btn bs" style="font-size:10px;padding:4px 8px" onclick="mbMapaMarcoDel(${i})" title="Remover">✕</button></div>`).join('');
+  const fotos = MAPA_VISTAS.map(([k, n]) => {
+    const f = m.fotos[k], opts = mbMapaFotosDaVista(k), atual = mbMapaSrc(k);
+    return `<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;margin-bottom:3px">${n}</div><div id="mapa-ft-${k}"></div>
+      <label style="font-size:10px;display:block;margin-top:4px"><input type="checkbox" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar</label>
+      <button class="btn bs" style="font-size:10px;padding:3px 8px;margin:3px 0" onclick="mbMapaFoto('${k}','rot')">↻ girar</button>
+      <input type="range" min="1" max="1.6" step="0.05" value="${f.zoom}" oninput="mbMapaFoto('${k}','zoom',this.value)" style="width:100%" title="Zoom">
+      ${opts.length > 1 ? `<select onchange="mbMapaFoto('${k}','src',this.value)" style="${inp};margin-top:3px">${opts.map(o => `<option value="${E(o.path)}" ${o.path === atual ? 'selected' : ''}>${E(o.data)}</option>`).join('')}</select>` : ''}</div>`;
+  }).join('');
+  document.getElementById('mb-mapa-body').innerHTML = `
+    <div style="font-size:10.5px;margin-bottom:6px">🧭 Caminho no app deste aluno: <b>${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'ligado' : 'desligado'}</b> <button class="btn bs" style="font-size:10px;padding:2px 8px;margin-left:4px" onclick="mbCaminhoToggle(_mbMapa.alunoId).then(mbMapaRender)">${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'desligar' : 'ligar'}</button></div>
+    ${M.colOk ? '' : `<div style="font-size:10.5px;background:#3a1f1f;border:1px solid #c0392b;border-radius:8px;padding:8px;margin-bottom:8px">Falta a coluna <b>mapa</b> no banco: você ainda pode editar e gerar o PDF, mas só salva depois de rodar este SQL no Supabase.<pre style="font-size:10px;white-space:pre-wrap;margin:6px 0 4px">${E(MAPA_SQL)}</pre><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="navigator.clipboard.writeText(MAPA_SQL).then(()=>notify('SQL copiado!')).catch(()=>{})">Copiar SQL</button></div>`}
+    <div style="${lab}">Objetivo</div><input value="${E(m.objetivo)}" oninput="mbMapaSet('objetivo',this.value)" placeholder="Ex.: Recomposição corporal" style="${inp}">
+    <div style="display:flex;gap:8px"><div style="flex:1"><div style="${lab}">Prazo (semanas)</div><input type="number" min="4" max="52" value="${m.semanas}" oninput="mbMapaSet('semanas',Number(this.value)||12)" style="${inp}"></div>
+    <div style="flex:1"><div style="${lab}">Início</div><input type="date" value="${E(m.inicio)}" oninput="mbMapaSet('inicio',this.value)" style="${inp}"></div></div>
+    <div style="${lab}">Fotos que o aluno vê</div><div style="display:flex;gap:6px">${fotos}</div>
+    <div style="${lab}">O que está bom <span style="font-weight:400;text-transform:none">(uma frase por linha)</span></div>${ta('bom', 3)}
+    <div style="${lab}">O que vamos melhorar primeiro</div>${ta('melhorar', 4)}
+    <div style="${lab}">Marcos do caminho</div>${marcos}<button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbMapaMarcoAdd()">+ marco</button>
+    <div style="${lab}">O que depende do aluno</div>${ta('depende', 3)}
+    <div style="margin-top:12px"><button class="btn bs" style="font-size:10.5px;padding:5px 12px" onclick="mbMapaTogglePrevia()">👁 Ver como o aluno vê</button></div>
+    <div id="mb-mapa-prev" style="display:${M.prev ? 'block' : 'none'};margin-top:8px"></div>
+    <div style="font-size:10px;color:var(--t3);margin-top:8px">${m.publicado ? '✅ Publicado: o aluno já vê este Mapa no app.' : 'Rascunho: o aluno só vê depois de publicar.'}</div>`;
+  mbMapaAtualizarFotos();
+}
+async function mbMapaSalvar(publicar) {
+  const M = _mbMapa; if (!M) return;
+  if (publicar !== undefined) M.m.publicado = !!publicar;
+  M.m.atualizado_em = new Date().toISOString();
+  const { error } = await mbClient.from('avaliacoes_fisicas').update({ mapa: M.m }).eq('id', M.avalId);
+  if (error) { M.colOk = false; mbMapaRender(); notify(/mapa/i.test(error.message) ? 'Falta criar a coluna "mapa" no banco (SQL no topo).' : 'Erro ao salvar: ' + error.message); return; }
+  M.colOk = true; mbMapaRender();
+  notify(M.m.publicado ? 'Mapa publicado! O aluno vê no app.' : 'Rascunho do Mapa salvo.');
+}
+async function mbMapaPDF() {
+  const M = _mbMapa; if (!M) return;
+  const m = M.m, row = M.row;
+  try {
+    const { jsPDF } = await import('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/+esm');
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' }), W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    const mg = 44, lw = W - mg * 2; let y = 0;
+    const nova = h => { if (y + h > H - mg) { doc.addPage(); y = mg; } };
+    doc.setFillColor(214, 40, 57); doc.rect(0, 0, W, 84, 'F'); doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.text('MOVH', mg, 42);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.text('Mapa do aluno · ' + (row.data_avaliacao || ''), mg, 64); y = 112;
+    const tit = t => { nova(30); doc.setTextColor(214, 40, 57); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(t, mg, y); y += 16; };
+    const par = (t, sz) => { doc.setTextColor(40, 40, 40); doc.setFont('helvetica', 'normal'); doc.setFontSize(sz || 10); doc.splitTextToSize(t, lw).forEach(l => { nova(14); doc.text(l, mg, y); y += 14; }); };
+    tit('Objetivo e prazo'); doc.setFont('helvetica', 'bold'); par(m.objetivo || '—', 13); par(m.semanas + ' semanas · reavaliação na semana ' + m.semanas, 10); y += 6;
+    const ft = []; for (const [k, n] of MAPA_VISTAS) if (m.fotos[k].show) { const u = await mbMapaFotoUrl(k); if (u) ft.push([u, n]); }
+    if (ft.length) { tit('Postura'); const cw = (lw - (ft.length - 1) * 8) / ft.length, ch = cw * 4 / 3; nova(ch + 20);
+      ft.forEach((f, i) => { const x = mg + i * (cw + 8); doc.addImage(f[0], 'JPEG', x, y, cw, ch); doc.setFontSize(8); doc.setTextColor(110, 110, 110); doc.text(f[1], x, y + ch + 11); }); y += ch + 24; }
+    if ((m.bom || []).length) { tit('O que está bom'); m.bom.forEach(t => par('• ' + t)); y += 6; }
+    if ((m.melhorar || []).length) { tit('O que vamos melhorar primeiro'); m.melhorar.forEach(t => par('• ' + t)); y += 6; }
+    tit('Seu caminho'); m.marcos.slice().sort((a, b) => a.sem - b.sem).forEach(x => par('Semana ' + x.sem + ' (' + mbMapaDataMarco(m, x.sem) + ') — ' + x.titulo + '. ' + x.texto)); y += 6;
+    if ((m.depende || []).length) { tit('O que depende de você'); m.depende.forEach(t => par('• ' + t)); }
+    doc.save('mapa-' + (row.data_avaliacao || 'aluno') + '.pdf');
+  } catch (e) { notify('Não consegui gerar o PDF: ' + e.message); }
 }
 
 async function mbFinalizarAvaliacao(avaliacaoId) {
@@ -10962,50 +11204,53 @@ function mbAvalGerarAchados() {
   const lat = mbAvalMetricasLateralCombinada(ed);
   const ant = mbAvalAntropometria(ed);
   const achados = [];
-  const checar = (val, area, contexto) => {
+  const checar = (val, area, txt) => {
     if (val === undefined) return;
     const abs = Math.abs(val);
-    if (abs <= 3) achados.push({ area, sev: 'ok', texto: `${area} bem alinhado(a), sem sinal relevante de desnível.`, detalhe: `diferença de ${abs.toFixed(1)}°` });
-    else if (abs <= 7) achados.push({ area, sev: 'atencao', texto: `${area} com leve desnível — vale observar, mas não é motivo de alarme.`, detalhe: `diferença de ${abs.toFixed(1)}°` });
-    else achados.push({ area, sev: 'critico', texto: `${area} com desnível perceptível — geralmente ligado a compensações do dia a dia (${contexto}). Vamos priorizar isso nas primeiras semanas.`, detalhe: `diferença de ${abs.toFixed(1)}°` });
+    const detalhe = `Diferença de ${abs.toFixed(1)}° (até 3° é considerado alinhado)`;
+    if (abs <= 3) achados.push({ area, sev: 'ok', texto: txt.ok, detalhe });
+    else if (abs <= 7) achados.push({ area, sev: 'atencao', texto: txt.leve, detalhe });
+    else achados.push({ area, sev: 'critico', texto: txt.forte, detalhe });
   };
-  checar(front.ombro, 'Ombros (vista frontal)', 'mochila/bolsa sempre do mesmo lado, postura ao sentar');
-  checar(front.quadril, 'Quadril (vista frontal)', 'apoio de peso predominante numa perna');
-  checar(post.ombro, 'Ombros (vista posterior)', 'mochila/bolsa sempre do mesmo lado, postura ao sentar');
-  checar(post.quadril, 'Quadril (vista posterior)', 'apoio de peso predominante numa perna');
+  const TXT_OMBROS = { ok: 'Seus ombros estão alinhados, na mesma altura.', leve: 'Um ombro está um pouco mais alto que o outro. É uma diferença pequena e comum; vamos apenas acompanhar.', forte: 'Um ombro está mais alto que o outro. Costuma vir de hábitos, como carregar a bolsa sempre do mesmo lado ou o jeito de sentar. Nas primeiras semanas vamos treinar para equilibrar os dois lados.' };
+  const TXT_QUADRIL = { ok: 'Seu quadril está nivelado.', leve: 'O quadril está um pouco desnivelado. É uma diferença pequena; vamos apenas acompanhar.', forte: 'O quadril está desnivelado. Costuma vir de apoiar o peso sempre numa perna só. Vamos fortalecer os dois lados e treinar o equilíbrio para nivelar.' };
+  checar(front.ombro, 'Ombros (vista frontal)', TXT_OMBROS);
+  checar(front.quadril, 'Quadril (vista frontal)', TXT_QUADRIL);
+  checar(post.ombro, 'Ombros (vista posterior)', TXT_OMBROS);
+  checar(post.quadril, 'Quadril (vista posterior)', TXT_QUADRIL);
   if (front.joelhoRatio !== undefined) {
-    if (front.joelhoRatio < 0.85) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Os joelhos tendem a se aproximar um do outro ao ficar em pé (padrão valgo) — trabalhável com fortalecimento de glúteo médio.', detalhe: `razão ${front.joelhoRatio.toFixed(2)}` });
-    else if (front.joelhoRatio > 1.15) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Os joelhos tendem a se afastar um do outro ao ficar em pé (padrão varo) — vale atenção na técnica de agachamento.', detalhe: `razão ${front.joelhoRatio.toFixed(2)}` });
-    else achados.push({ area: 'Joelhos', sev: 'ok', texto: 'Alinhamento de joelhos dentro do esperado.', detalhe: `razão ${front.joelhoRatio.toFixed(2)}` });
+    if (front.joelhoRatio < 0.85) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Seus joelhos tendem a ir para dentro quando você fica em pé ou agacha. Vamos fortalecer o glúteo para ajudar a manter os joelhos alinhados.', detalhe: `Medida: ${front.joelhoRatio.toFixed(2)} (o ideal fica entre 0,85 e 1,15)` });
+    else if (front.joelhoRatio > 1.15) achados.push({ area: 'Joelhos', sev: 'atencao', texto: 'Seus joelhos tendem a ficar mais abertos quando você fica em pé. No agachamento vamos cuidar da técnica para manter os joelhos na direção dos pés.', detalhe: `Medida: ${front.joelhoRatio.toFixed(2)} (o ideal fica entre 0,85 e 1,15)` });
+    else achados.push({ area: 'Joelhos', sev: 'ok', texto: 'Seus joelhos estão bem alinhados.', detalhe: `Medida: ${front.joelhoRatio.toFixed(2)} (o ideal fica entre 0,85 e 1,15)` });
   }
   if (lat.cva !== undefined) {
     const cva = lat.cva;
-    if (cva >= 53) achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Cabeça bem alinhada com o resto do corpo.', detalhe: `ângulo craniovertebral aprox. ${cva.toFixed(0)}°` });
-    else if (cva >= 45) achados.push({ area: 'Cabeça (lateral)', sev: 'atencao', texto: 'A cabeça tende a ficar levemente projetada à frente do corpo — associado a tempo de tela. Fortalecimento de cervical profunda e alongamento de peitoral ajudam.', detalhe: `ângulo craniovertebral aprox. ${cva.toFixed(0)}°` });
-    else achados.push({ area: 'Cabeça (lateral)', sev: 'critico', texto: 'A cabeça está claramente projetada à frente do corpo — geralmente ligado a tempo de tela prolongado. Fortalecimento de cervical profunda e mobilidade torácica vão ser prioridade nas primeiras semanas.', detalhe: `ângulo craniovertebral aprox. ${cva.toFixed(0)}°` });
+    if (cva >= 53) achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Sua cabeça está bem alinhada com o corpo.', detalhe: `Ângulo da cabeça: cerca de ${cva.toFixed(0)}° (acima de 53° é considerado alinhado)` });
+    else if (cva >= 45) achados.push({ area: 'Cabeça (lateral)', sev: 'atencao', texto: 'Sua cabeça fica um pouco à frente do corpo, comum em quem passa muito tempo no celular ou no computador. Vamos fortalecer o pescoço e soltar o peito.', detalhe: `Ângulo da cabeça: cerca de ${cva.toFixed(0)}° (acima de 53° é considerado alinhado)` });
+    else achados.push({ area: 'Cabeça (lateral)', sev: 'critico', texto: 'Sua cabeça fica bem à frente do corpo, comum em quem passa muitas horas no celular ou no computador. Nas primeiras semanas vamos priorizar o fortalecimento do pescoço e a mobilidade das costas.', detalhe: `Ângulo da cabeça: cerca de ${cva.toFixed(0)}° (acima de 53° é considerado alinhado)` });
   } else if (lat.orelha !== undefined) {
     // Fallback pra avaliações antigas sem pontos suficientes pro cálculo do CVA
     const abs = Math.abs(lat.orelha);
-    if (abs > 25) achados.push({ area: 'Cabeça (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'A cabeça tende a ficar projetada à frente do corpo — associado a tempo de tela. Fortalecimento de cervical profunda e alongamento de peitoral ajudam.', detalhe: `desvio de ${abs.toFixed(0)}px` });
-    else achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Cabeça bem alinhada com o resto do corpo.', detalhe: `desvio de ${abs.toFixed(0)}px` });
+    if (abs > 25) achados.push({ area: 'Cabeça (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Sua cabeça fica à frente do corpo, comum em quem passa muito tempo no celular ou no computador. Vamos fortalecer o pescoço e soltar o peito.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
+    else achados.push({ area: 'Cabeça (lateral)', sev: 'ok', texto: 'Sua cabeça está bem alinhada com o corpo.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
   }
   if (lat.ombro !== undefined) {
     const abs = Math.abs(lat.ombro);
-    if (abs > 25) achados.push({ area: 'Ombro (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Ombros projetados à frente da linha do corpo — padrão comum de quem passa muito tempo sentado. Mobilidade torácica e fortalecimento de costas ajudam.', detalhe: `desvio de ${abs.toFixed(0)}px` });
+    if (abs > 25) achados.push({ area: 'Ombro (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Seus ombros ficam à frente da linha do corpo, comum em quem passa muito tempo sentado. Vamos fortalecer as costas e soltar o peito.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
   }
   if (lat.quadril !== undefined) {
     const abs = Math.abs(lat.quadril);
-    if (abs > 25) achados.push({ area: 'Quadril (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'O quadril está deslocado em relação à linha de equilíbrio do corpo — vale investigar mobilidade de tornozelo e força de core.', detalhe: `desvio de ${abs.toFixed(0)}px` });
+    if (abs > 25) achados.push({ area: 'Quadril (lateral)', sev: abs > 45 ? 'critico' : 'atencao', texto: 'Seu quadril está fora da linha de equilíbrio do corpo. Vamos trabalhar a mobilidade do tornozelo e a força do abdômen e da região central do corpo.', detalhe: `Desvio medido na foto: ${abs.toFixed(0)} (acima de 25 merece atenção)` });
   }
   const composicao = [];
-  if (ant.imc) composicao.push(`IMC atual ${ant.imc.toFixed(1)} — faixa de "${ant.imcClasse}". O IMC é só um ponto de partida, não diferencia massa muscular de gordura.`);
-  if (ant.rcq) composicao.push(`Relação cintura/quadril (RCQ) de ${ant.rcq.toFixed(2)}, ${ant.rcqClasse === 'dentro da referência' ? 'dentro da referência esperada' : 'acima da referência esperada — vale reforçar isso na estratégia de treino e alimentação'}.`);
+  if (ant.imc) composicao.push(`IMC de ${ant.imc.toFixed(1)} (${ant.imcClasse}). É só um ponto de partida: o IMC não separa músculo de gordura.`);
+  if (ant.rcq) composicao.push(`Relação cintura/quadril (RCQ): ${ant.rcq.toFixed(2)}, ${ant.rcqClasse === 'dentro da referência' ? 'dentro do esperado. Essa medida mostra como a gordura está distribuída e diz mais sobre saúde do que o peso sozinho' : 'acima do esperado. Vamos incluir isso na estratégia de treino e alimentação'}.`);
   const propTM = mbAvalProporcaoTroncoMembros(ed);
   let propTMClasse = null;
   if (propTM != null) {
     propTMClasse = propTM < 0.48 ? 'pernas relativamente longas' : propTM > 0.58 ? 'tronco relativamente longo' : 'proporção comum';
-    const nota = propTM < 0.48 ? 'tronco relativamente curto e pernas/fêmur relativamente longos — tende a pedir mais inclinação de tronco no agachamento e no levantamento terra' : propTM > 0.58 ? 'tronco relativamente longo e pernas/fêmur relativamente curtos — tende a permitir uma postura mais ereta no agachamento e no levantamento terra' : 'proporção tronco/pernas dentro da faixa mais comum';
-    composicao.push(`Proporção tronco/membros inferiores de ${propTM.toFixed(2)} — ${nota}.`);
+    const nota = propTM < 0.48 ? 'suas pernas são proporcionalmente longas. No agachamento e no levantamento terra é normal inclinar um pouco mais o tronco; vamos ajustar a técnica ao seu corpo' : propTM > 0.58 ? 'seu tronco é proporcionalmente longo, o que costuma facilitar uma postura mais ereta no agachamento e no levantamento terra' : 'proporção comum entre tronco e pernas';
+    composicao.push(`Proporção tronco/pernas de ${propTM.toFixed(2)}: ${nota}.`);
   }
   // Versão estruturada (não só texto) — salva à parte pra virar badges
   // clicáveis no app do aluno sem precisar re-parsear pontos por lá.
@@ -11029,9 +11274,9 @@ function mbAvalMontarPreviewHTML(achados, composicao) {
     <span>${icone[a.sev]}</span><span style="font-size:11px;line-height:1.5">${escAttr(a.texto)}<span style="display:block;color:var(--t3);font-size:9.5px;margin-top:2px">${escAttr(a.detalhe || '')}</span></span></div>`;
   const compHtml = composicao.length ? `<div style="margin-bottom:10px"><div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">Composição corporal</div>${composicao.map(t => `<div style="font-size:11px;padding:4px 0;color:var(--tx)">◆ ${escAttr(t)}</div>`).join('')}</div>` : '';
   return `${compHtml}
-    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">Pontos fortes</div>
+    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">O que está bom</div>
     ${fortes.length ? fortes.map(card).join('') : '<div style="color:var(--t3);font-size:11px">nenhum ainda</div>'}
-    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px">Pontos de melhoria</div>
+    <div style="font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px">O que vamos melhorar</div>
     ${melhorar.length ? melhorar.map(card).join('') : '<div style="color:var(--t3);font-size:11px">nenhum ponto de atenção</div>'}`;
 }
 
@@ -11046,9 +11291,10 @@ function mbAvalDiagnosticoTexto(achados, composicao) {
   const linhas = [];
   composicao.forEach(t => linhas.push(t));
   const fortes = achados.filter(a => a.sev === 'ok');
-  const melhorar = achados.filter(a => a.sev !== 'ok');
-  if (fortes.length) { linhas.push(''); linhas.push('Pontos fortes:'); fortes.forEach(a => linhas.push('• ' + a.texto)); }
-  if (melhorar.length) { linhas.push(''); linhas.push('Pontos de melhoria:'); melhorar.forEach(a => linhas.push('• ' + a.texto)); }
+  const melhorar = achados.filter(a => a.sev !== 'ok').sort((a, b) => (a.sev === 'critico' ? 0 : 1) - (b.sev === 'critico' ? 0 : 1));
+  if (fortes.length) { linhas.push(''); linhas.push('O que está bom:'); fortes.forEach(a => linhas.push('• ' + a.texto)); }
+  if (melhorar.length) { linhas.push(''); linhas.push('O que vamos melhorar primeiro:'); melhorar.slice(0, 3).forEach(a => linhas.push('• ' + a.texto)); }
+  if (melhorar.length > 3) { linhas.push(''); linhas.push('Também vamos acompanhar:'); melhorar.slice(3).forEach(a => linhas.push('• ' + a.texto)); }
   return linhas.join('\n');
 }
 
@@ -13034,6 +13280,24 @@ body #treinoScreen #tLinhaAlertas{position:sticky;top:0;z-index:30;display:flex;
 .dash-actions{flex-wrap:wrap}
 .dash-actions .vksbtn{width:auto;flex:1 1 0;min-width:0}
 #tBtnPersonal{flex:1 1 100%;font-weight:700;border-color:color-mix(in srgb,var(--P) 45%,var(--bd))}
+.cam-card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 14px;margin:12px 0 8px;cursor:pointer}
+.cam-top{display:flex;justify-content:space-between;align-items:center;font-size:14px}.cam-top span{font-size:12px;color:var(--t2)}
+.cam-bar{height:4px;border-radius:99px;background:var(--bd);margin-top:9px;overflow:hidden}.cam-bar i{display:block;height:100%;background:var(--P);border-radius:99px}
+.cam-prox{font-size:11.5px;color:var(--t2);margin-top:7px}
+.cam-hd{display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px;font-size:17px}
+.cam-chip{font-size:11px;font-weight:700;color:var(--t2);border:1px solid var(--bd);border-radius:99px;padding:3px 10px}
+.cam-box{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+.cam-box h4{font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.06em;text-transform:uppercase;margin:0 0 8px}
+.cam-big{font-size:18px;font-weight:800}.cam-sub{font-size:12px;color:var(--t2);margin-top:3px}
+.cam-tl{position:relative;margin-left:6px}.cam-tl:before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--bd)}
+.cam-st{position:relative;padding-left:30px;margin-bottom:14px}.cam-st:last-child{margin-bottom:0}
+.cam-dot{position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--bd)}
+.cam-st.ok .cam-dot{background:var(--G);border-color:var(--G)}.cam-st.now .cam-dot{background:var(--P);border-color:var(--P);box-shadow:0 0 0 4px color-mix(in srgb,var(--P) 25%,transparent)}
+.cam-st b{font-size:13.5px}.cam-d{font-size:11px;color:var(--t3);margin-top:1px}.cam-st p{font-size:12px;color:var(--t2);margin:3px 0 0;line-height:1.4}
+.cam-link{width:100%;margin:0 0 10px;text-align:left}
+.cam-meds{display:flex;gap:8px;margin-bottom:10px}.cam-med{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px}.cam-med small{display:block;font-size:10px;color:var(--t3)}.cam-med b{font-size:15px}
+.cam-fts{display:flex;gap:6px}.cam-ft{flex:1;text-align:center;font-size:9.5px;color:var(--t3)}.cam-ft img{width:100%;border-radius:7px;border:1px solid var(--bd);display:block;margin-bottom:3px}
+.cam-li{font-size:12.5px;color:var(--t2);padding:4px 0 4px 14px;position:relative;line-height:1.4}.cam-li:before{content:"";position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--P)}
 .pr-top{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 .pr-top .pr-sel,.pr-top .pr-nome{flex:1;min-width:0;margin:0}
 .pr-nome{font-weight:800;font-size:14px}
@@ -13659,6 +13923,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
       </div>
       <div id="tDashConteudo"></div>
       <div class="xo-next" id="aXoNext"></div>
+      <div class="cam-card" id="tCaminhoCard" style="display:none" onclick="aVerCaminho()" role="button"></div>
       <div class="dash-actions">
         <button class="vksbtn" id="tBtnProgresso" onclick="aVerProgresso()">📈 Meu progresso</button>
         <button class="vksbtn" id="tBtnColetivas" onclick="aVerColetivas()" style="display:none">🤸 Aulas coletivas</button>
@@ -13677,6 +13942,11 @@ body.xo-open #movh-descanso-widget{display:none!important}
     <div id="tProgresso" style="display:none">
       <button class="vhbtn tBtnVoltar" onclick="aVoltarHoje()">‹ Voltar para hoje</button>
       <div id="tProgressoConteudo"></div>
+    </div>
+
+    <div id="tCaminho" style="display:none">
+      <button class="vhbtn tBtnVoltar" onclick="aVoltarHoje()">‹ Voltar para hoje</button>
+      <div id="tCaminhoConteudo"></div>
     </div>
 
     <div id="tColetivas" style="display:none">
@@ -14800,6 +15070,7 @@ async function aBoot(sessionParam){
   aAvaliacoesFisicas = avals || [];
 
   aRenderProtocolo(proto);
+  try { aCaminhoCarregar(); } catch (e) {}
 }
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -16046,23 +16317,31 @@ function aToggleBloco(id, header){
 // (em semanas de calendário) de cada fase.
 const FASES_TEMPLATE_PT = {
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (última série 1)', carga:'Progressão dupla', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
-    progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'] },
+    progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'],
+    humano:['Esforço: termine cada série sentindo que ainda dava para fazer mais 2 repetições (na última série, 1).','Como evoluir: quando fizer o máximo de repetições em todas as séries e ainda sobrar fôlego, suba o menor peso possível.','Descanso: 2 min nos exercícios grandes e 1 min nos menores.'] },
   intensificacao: { label:'Intensificação', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderado', descanso:'Maior',
-    progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'] },
+    progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'],
+    humano:['Esforço: mais pesado; termine as séries sentindo que dava para fazer de 1 a 3 repetições a mais.','Como evoluir: na semana 1 suba o peso, na 2 mantenha e capriche na execução, na 3 chegue mais perto do limite.','Descanso: um pouco maior entre as séries.'] },
   densidade: { label:'Densidade', emoji:'🟡', rpe:'7–9', rir:'1–2', carga:'Moderada (~65–80%)', volume:'Moderado/Alto', descanso:'Curto',
-    progressao:['Reduz descanso','Mantém carga moderada, aumenta esforço total'] },
+    progressao:['Reduz descanso','Mantém carga moderada, aumenta esforço total'],
+    humano:['Esforço: peso moderado, séries mais cheias.','Como evoluir: descanse menos entre as séries, mantendo o mesmo peso.','Descanso: curto.'] },
   deload: { label:'Deload', emoji:'⚫', rpe:'4–6', rir:'4–6', carga:'~50–60%', volume:'Baixo', descanso:'Livre',
-    progressao:['Reduz tudo (carga + volume)','Mantém padrão de movimento'] }
+    progressao:['Reduz tudo (carga + volume)','Mantém padrão de movimento'],
+    humano:['Esforço: leve; termine as séries sobrando bastante, com 4 a 6 repetições a mais.','Como evoluir: semana de recuperação, sem aumentar o peso.','Descanso: livre.'] }
 };
 const FASES_TEMPLATE_EN = {
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (last set 1)', carga:'Double progression', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
-    progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'] },
+    progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'],
+    humano:['Effort: finish each set feeling you could still do 2 more reps (1 on the last set).','How to progress: when you hit the top reps on every set and still have energy left, go up by the smallest weight step.','Rest: 2 min on big lifts and 1 min on smaller ones.'] },
   intensificacao: { label:'Intensification', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderate', descanso:'Longer',
-    progressao:['Week 1: raise load','Week 2: keep load + refine form','Week 3: approach failure (RIR 1–2)'] },
+    progressao:['Week 1: raise load','Week 2: keep load + refine form','Week 3: approach failure (RIR 1–2)'],
+    humano:['Effort: heavier; finish sets feeling you could do 1 to 3 more reps.','How to progress: week 1 go up in weight, week 2 hold and polish form, week 3 get closer to your limit.','Rest: a bit longer between sets.'] },
   densidade: { label:'Density', emoji:'🟡', rpe:'7–9', rir:'1–2', carga:'Moderate (~65–80%)', volume:'Moderate/High', descanso:'Short',
-    progressao:['Cut rest time','Keep load moderate, raise total effort'] },
+    progressao:['Cut rest time','Keep load moderate, raise total effort'],
+    humano:['Effort: moderate weight, fuller sets.','How to progress: rest less between sets, same weight.','Rest: short.'] },
   deload: { label:'Deload', emoji:'⚫', rpe:'4–6', rir:'4–6', carga:'~50–60%', volume:'Low', descanso:'Free',
-    progressao:['Reduce everything (load + volume)','Keep the movement pattern'] }
+    progressao:['Reduce everything (load + volume)','Keep the movement pattern'],
+    humano:['Effort: light; finish sets with plenty left, 4 to 6 more reps.','How to progress: recovery week, do not add weight.','Rest: free.'] }
 };
 function aFasesTemplate(){ return aLang === 'en' ? FASES_TEMPLATE_EN : FASES_TEMPLATE_PT; }
 
@@ -16484,6 +16763,12 @@ function aMontarCardFase(semana, semanaDentroFase, ctxPrefix){
   const ft = FT[semana.fase];
   const detId = aFaseDetId(ctxPrefix);
   const helpId = 'th-' + detId;
+  if (ft.humano) {
+    return '<div class="fase-card" id="' + detId + '" style="display:none">' +
+      '<div class="fase-tag">' + ft.emoji + ' ' + aEsc(ft.label) + '</div>' +
+      '<ul class="fase-hum" style="margin:6px 0 0;padding-left:16px;font-size:12px;line-height:1.5;color:var(--t2)">' + ft.humano.map(function(t){ return '<li>' + aEsc(t) + '</li>'; }).join('') + '</ul>' +
+    '</div>';
+  }
   return '<div class="fase-card" id="' + detId + '" style="display:none">' +
     '<div class="fase-tag">' + ft.emoji + ' ' + aEsc(ft.label) + '</div>' +
     '<div class="fase-params">RPE ' + aEsc(ft.rpe) + ' · RIR ' + aEsc(ft.rir) + ' · ' + aEsc(aT('carga')) + ' ' + aEsc(ft.carga) + ' · ' + aEsc(aT('volume_titulo')) + ' ' + aEsc(ft.volume) + ' · ' + aEsc(aT('descanso_titulo')) + ' ' + aEsc(ft.descanso) +
@@ -16593,7 +16878,109 @@ function aVerSemanaCompleta(){
   document.getElementById('tSemanaCompleta').style.display = 'block';
   aHeaderForcar(true);
 }
+// ── Caminho (Mapa do aluno): card na Início + tela própria ──
+// Só aparece com alunos.caminho_ativo ligado E um Mapa publicado pelo professor (avaliacoes_fisicas.mapa.publicado).
+let aCaminhoMapa = null, aCaminhoRow = null, aCaminhoUrls = {}, aCaminhoImgs = {};
+const A_CAM_VISTAS = [['frontal','Frontal'],['posterior','Posterior'],['lateral_d','Lateral D'],['lateral_e','Lateral E']];
+function aCaminhoDiaMarco(m, sem){
+  const d = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d)) return null;
+  d.setDate(d.getDate() + (Number(sem) || 0) * 7); return d;
+}
+function aCaminhoFmt(d){ return d ? String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') : ''; }
+function aCaminhoSemana(m){
+  const d0 = new Date((m.inicio || '') + 'T12:00:00'); const tot = m.semanas || 12;
+  if (isNaN(d0)) return 1;
+  const dias = Math.floor((Date.now() - d0.getTime()) / 86400000);
+  return Math.min(Math.max(Math.floor(dias / 7) + 1, 1), tot);
+}
+function aCaminhoFase(m, sem){
+  const t = m.semanas || 12;
+  return sem <= Math.round(t / 3) ? 'Começo' : (sem <= Math.round(t * 2 / 3) ? 'Meio' : 'Fim');
+}
+async function aCaminhoCarregar(){
+  aCaminhoMapa = null; aCaminhoRow = null;
+  const card = document.getElementById('tCaminhoCard'); if (card) card.style.display = 'none';
+  if (!aAlunoRow || !aAlunoRow.id || !aAlunoRow.caminho_ativo) return;
+  try {
+    const r = await aClient.from('avaliacoes_fisicas')
+      .select('id, data_avaliacao, created_at, mapa, peso, cintura, quadril, foto_frontal_path, foto_posterior_path, foto_lateral_d_path, foto_lateral_e_path')
+      .eq('aluno_id', aAlunoRow.id).eq('status', 'confirmada').not('mapa', 'is', null)
+      .order('created_at', { ascending: false }).limit(5);
+    if (r.error) return;
+    const row = (r.data || []).find(function(x){ return x.mapa && x.mapa.publicado; });
+    if (!row) return;
+    aCaminhoRow = row; aCaminhoMapa = row.mapa;
+  } catch (e) { return; }
+  aCaminhoRenderCard();
+}
+function aCaminhoRenderCard(){
+  const card = document.getElementById('tCaminhoCard'); const m = aCaminhoMapa;
+  if (!card || !m) return;
+  const sem = aCaminhoSemana(m), tot = m.semanas || 12;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDiaMarco(m, x.sem); return d && d >= hoje; });
+  card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
+    '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
+    (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDiaMarco(m, prox.sem)) + '</div>' : '');
+  card.style.display = 'block';
+}
+async function aCaminhoFotoUrl(k){
+  const m = aCaminhoMapa, row = aCaminhoRow; const f = (m.fotos && m.fotos[k]) || {};
+  if (f.show === false) return null;
+  const src = f.src || row['foto_' + k + '_path']; const url = src && aCaminhoUrls[src]; if (!url) return null;
+  const ck = [src, f.rot, f.zoom].join('|'); if (aCaminhoImgs[ck]) return aCaminhoImgs[ck];
+  try {
+    const img = await new Promise(function(ok, er){ const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function(){ ok(i); }; i.onerror = er; i.src = url; });
+    const W = 300, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const x = c.getContext('2d'); x.fillStyle = '#1a2438'; x.fillRect(0, 0, W, H);
+    x.translate(W / 2, H / 2); x.rotate((f.rot || 0) * Math.PI / 180);
+    const giro = (f.rot || 0) % 180 !== 0, iw = giro ? img.height : img.width, ih = giro ? img.width : img.height;
+    const s = Math.max(W / iw, H / ih) * (f.zoom || 1); x.scale(s, s); x.drawImage(img, -img.width / 2, -img.height / 2);
+    return (aCaminhoImgs[ck] = c.toDataURL('image/jpeg', 0.82));
+  } catch (e) { return null; }
+}
+function aCaminhoLista(arr){
+  return (arr || []).map(function(t){ return '<div class="cam-li">' + aEsc(t) + '</div>'; }).join('');
+}
+function aCaminhoBox(tit, inner){ return '<div class="cam-box"><h4>' + tit + '</h4>' + inner + '</div>'; }
+async function aVerCaminho(){
+  const m = aCaminhoMapa, row = aCaminhoRow; if (!m) return;
+  ['tDashboard','tSemanaCompleta','tProgresso','tColetivas','tPersonal'].forEach(function(id){ const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  document.getElementById('tCaminho').style.display = 'block';
+  aHeaderForcar(true);
+  const sem = aCaminhoSemana(m), tot = m.semanas || 12, fase = aCaminhoFase(m, sem);
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const marcos = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; });
+  let achouAtual = false;
+  const tl = marcos.map(function(x){
+    const d = aCaminhoDiaMarco(m, x.sem); const feito = d && d < hoje;
+    let cls = feito ? 'ok' : ''; if (!feito && !achouAtual) { cls = 'now'; achouAtual = true; }
+    return '<div class="cam-st ' + cls + '"><span class="cam-dot"></span><b>' + aEsc(x.titulo) + '</b><div class="cam-d">Semana ' + x.sem + ' · ' + aCaminhoFmt(d) + (feito ? ' · feito' : '') + '</div>' + (x.texto ? '<p>' + aEsc(x.texto) + '</p>' : '') + '</div>';
+  }).join('');
+  const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
+    .map(function(x){ return '<div class="cam-med"><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('');
+  document.getElementById('tCaminhoConteudo').innerHTML =
+    '<div class="cam-hd"><b>🧭 Seu caminho</b><span class="cam-chip">Semana ' + sem + ' de ' + tot + ' · ' + fase + '</span></div>' +
+    aCaminhoBox('Sua meta', '<div class="cam-big">' + aEsc(m.objetivo || 'Seu objetivo') + '</div><div class="cam-sub">' + tot + ' semanas · reavaliação na semana ' + tot + '</div><div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>') +
+    aCaminhoBox('Marcos', '<div class="cam-tl">' + tl + '</div>') +
+    '<button class="vksbtn cam-link" onclick="aVerProgresso()">📈 Cargas e histórico ›</button>' +
+    (med ? '<div class="cam-meds">' + med + '</div>' : '') +
+    '<div id="tCamFotos"></div>' +
+    ((m.bom || []).length ? aCaminhoBox('O que está bom', aCaminhoLista(m.bom)) : '') +
+    ((m.melhorar || []).length ? aCaminhoBox('O que vamos melhorar primeiro', aCaminhoLista(m.melhorar)) : '') +
+    ((m.depende || []).length ? aCaminhoBox('O que depende de você', aCaminhoLista(m.depende)) : '');
+  window.scrollTo(0, 0);
+  try {
+    const paths = []; A_CAM_VISTAS.forEach(function(v){ const f = (m.fotos && m.fotos[v[0]]) || {}; const p = f.src || row['foto_' + v[0] + '_path']; if (p && paths.indexOf(p) < 0) paths.push(p); });
+    if (paths.length) { const r = await aClient.storage.from('avaliacoes').createSignedUrls(paths, 3600); (r.data || []).forEach(function(s){ if (s && s.path && s.signedUrl) aCaminhoUrls[s.path] = s.signedUrl; }); }
+    const fts = [];
+    for (const v of A_CAM_VISTAS) { const u = await aCaminhoFotoUrl(v[0]); if (u) fts.push('<div class="cam-ft"><img src="' + u + '" alt="">' + v[1] + '</div>'); }
+    const box = document.getElementById('tCamFotos');
+    if (box && fts.length) box.innerHTML = aCaminhoBox('Postura', '<div class="cam-fts">' + fts.join('') + '</div>');
+  } catch (e) {}
+}
 function aVoltarHoje(){
+  { const _tc = document.getElementById('tCaminho'); if (_tc) _tc.style.display = 'none'; }
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tProgresso').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
@@ -16950,6 +17337,7 @@ function aMontarNotifs(){
   }).join('');
 }
 function aVerProgresso(){
+  { const _tc = document.getElementById('tCaminho'); if (_tc) _tc.style.display = 'none'; }
   document.getElementById('tDashboard').style.display = 'none';
   document.getElementById('tSemanaCompleta').style.display = 'none';
   document.getElementById('tColetivas').style.display = 'none';
@@ -18330,6 +18718,10 @@ function copiarSQLRLS(){
     'DROP POLICY IF EXISTS "professor gerencia notas" ON notas;',
     'CREATE POLICY "professor gerencia notas" ON notas FOR ALL',
     '  USING (professor_id = auth.uid()) WITH CHECK (professor_id = auth.uid());',
+    '-- Mapa do aluno (editor do Gerador): meta, marcos, textos e fotos escolhidas',
+    'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;',
+    '-- Caminho por aluno (chave mestra, padrão desligada): o app só mostra o caminho/Mapa quando está ligada',
+    'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
