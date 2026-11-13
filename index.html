@@ -3996,7 +3996,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.0 · 13/11';
+var MOVH_VER = 'v63.1 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9771,7 +9771,7 @@ function renderPainelAlunos() {
            style="font-size:11px;padding:4px 10px;color:var(--G);border-color:var(--G)">↩ Restaurar</button>
          <button class="btn" title="Excluir permanentemente" data-id="${a.id}" onclick="mbExcluirDefinitivo(this.dataset.id)"
            style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#c03030;border-color:#f0b0b0">✕ Excluir</button>`
-      : `${btnsProto}<button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
+      : `${btnsProto}<button type="button" class="bsm" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="font-size:10px;white-space:nowrap">🧭 Caminho</button><button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
          <label class="toggle-sw" title="${bloqueado?'Liberar acesso':'Bloquear acesso'}" style="margin-right:2px">
            <input type="checkbox" ${bloqueado?'':'checked'} data-id="${a.id}" onchange="mbToggleAlunoAtivo(this.dataset.id,this.checked)"/>
            <span class="toggle-sw-slider"></span>
@@ -10353,6 +10353,12 @@ async function mbCaminhoAtualizarBotoes() {
     b.textContent = '🧭 Caminho: ' + (on ? 'ligado' : 'desligado');
     b.style.color = on ? 'var(--G,#1A9E72)' : 'var(--t3)';
     b.style.fontWeight = on ? '700' : '400';
+  });
+  document.querySelectorAll('[data-caminho-mini]').forEach(b => {
+    const on = !!_mbCaminho[b.dataset.caminhoMini];
+    b.textContent = on ? '🧭 Caminho ✓' : '🧭 Caminho';
+    b.style.color = on ? 'var(--G,#1A9E72)' : 'var(--t3)'; b.style.fontWeight = on ? '700' : '400';
+    b.title = 'Caminho (Mapa) no app deste aluno: ' + (on ? 'LIGADO' : 'desligado') + ' — toque para ' + (on ? 'desligar' : 'ligar');
   });
 }
 async function mbCaminhoToggle(alunoId) {
