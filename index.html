@@ -3996,7 +3996,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.3 · 13/11';
+var MOVH_VER = 'v63.4 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -10385,8 +10385,37 @@ async function mbCaminhoToggle(alunoId) {
   _mbCaminho[alunoId] = novo; mbCaminhoAtualizarBotoes();
   notify(novo ? 'Caminho ligado para este aluno.' : 'Caminho desligado para este aluno.');
 }
+// ── Fila de treinos: quem precisa de treino novo / progressão, em ordem de urgência ──
+function mbFilaItens() {
+  const h = new Date(); h.setHours(0, 0, 0, 0); const out = [];
+  (mbPainelAlunos || []).forEach(a => {
+    if (a._lixeira || a.ativo === false || !a.protocoloAtivo || !a.protocoloAtivo.data_inicio) return;
+    const f = mbPrevisaoFim(a); if (!f) return;
+    const d = Math.ceil((f - h) / 86400000);
+    const cc = a.protocoloAtivo._conteudo || a.protocoloAtivo.conteudo || {}, ss = cc.semanas || [];
+    const tot = ss.reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || (ss.length * 4);
+    const sem = Math.max(1, Math.floor((h - new Date(a.protocoloAtivo.data_inicio + 'T00:00:00')) / (7 * 86400000)) + 1);
+    out.push({ a, d, sem: Math.min(sem, tot), tot });
+  });
+  return out.sort((x, y) => x.d - y.d);
+}
+function mbFilaRender() {
+  const tab = document.getElementById('alunos-tabela'); if (!tab) return;
+  let box = document.getElementById('al-fila');
+  if (!box) { box = document.createElement('details'); box.id = 'al-fila'; box.open = true; box.className = 'card'; box.style.cssText = 'margin-bottom:8px;padding:8px 12px'; tab.parentNode.insertBefore(box, tab); }
+  const it = mbFilaItens(); const venc = it.filter(x => x.d <= 0), prox = it.filter(x => x.d > 0 && x.d <= 21), resto = it.length - venc.length - prox.length;
+  const linha = x => { const a = x.a, n = escAttr(a.nome || 'Aluno');
+    const txt = x.d <= 0 ? 'venceu há ' + Math.abs(x.d) + ' dia(s)' : 'acaba em ' + x.d + ' dia(s)';
+    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--bd2)"><b style="min-width:130px;font-size:12px">' + n + '</b>' +
+      '<span style="font-size:11px;color:var(--t3);flex:1;min-width:150px">semana ' + x.sem + ' de ' + x.tot + ' · ' + txt + '</span>' +
+      '<button class="btn bp" style="font-size:10px;padding:3px 9px" onclick="mbSugerirProximaFase(\'' + a.protocoloAtivo.id + '\',\'' + a.id + '\')" title="Gera o rascunho da próxima fase para você revisar">✨ Próxima fase</button>' +
+      '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="var e=document.getElementById(\'al-' + a.id + '\');if(e){e.classList.add(\'al-open\');e.scrollIntoView({block:\'center\'});}">Abrir aluno</button></div>'; };
+  const bloco = (t, l) => l.length ? '<div style="margin-top:6px"><div style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">' + t + ' (' + l.length + ')</div>' + l.map(linha).join('') + '</div>' : '';
+  box.innerHTML = '<summary style="cursor:pointer;font-weight:700;font-size:12px">📋 Fila de treinos <span style="font-weight:400;color:var(--t3)">— ' + (venc.length + prox.length) + ' precisam de atenção' + (resto ? ' · ' + resto + ' em andamento' : '') + '</span></summary>' +
+    (bloco('Vencidos: precisam de treino novo', venc) + bloco('Fecham em até 3 semanas: progredir', prox) || '<div style="font-size:11px;color:var(--t3);margin-top:6px">Nenhum treino vencendo nas próximas 3 semanas.</div>');
+}
 const _renderPainelAlunosOrig = renderPainelAlunos;
-renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this, arguments); try { mbCaminhoAtualizarBotoes(); } catch (e) {} return r; };
+renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this, arguments); try { mbCaminhoAtualizarBotoes(); } catch (e) {} try { mbFilaRender(); } catch (e) {} return r; };
 
 // ══ MAPA DO ALUNO (editor do professor) ══
 // Guarda tudo em avaliacoes_fisicas.mapa (jsonb). Sem a coluna, o editor avisa e mostra o SQL; nada mais quebra.
