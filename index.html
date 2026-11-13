@@ -3996,7 +3996,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.4 · 13/11';
+var MOVH_VER = 'v63.5 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -10409,6 +10409,7 @@ function mbFilaRender() {
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--bd2)"><b style="min-width:130px;font-size:12px">' + n + '</b>' +
       '<span style="font-size:11px;color:var(--t3);flex:1;min-width:150px">semana ' + x.sem + ' de ' + x.tot + ' · ' + txt + '</span>' +
       '<button class="btn bp" style="font-size:10px;padding:3px 9px" onclick="mbSugerirProximaFase(\'' + a.protocoloAtivo.id + '\',\'' + a.id + '\')" title="Gera o rascunho da próxima fase para você revisar">✨ Próxima fase</button>' +
+      (x.d <= 0 ? '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="mbCobrar(\'' + a.id + '\')" title="Abre a oferta de renovação/reativação por Pix e WhatsApp, com os valores da aba Planos">💰 Oferecer</button>' : '') +
       '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="var e=document.getElementById(\'al-' + a.id + '\');if(e){e.classList.add(\'al-open\');e.scrollIntoView({block:\'center\'});}">Abrir aluno</button></div>'; };
   const bloco = (t, l) => l.length ? '<div style="margin-top:6px"><div style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">' + t + ' (' + l.length + ')</div>' + l.map(linha).join('') + '</div>' : '';
   box.innerHTML = '<summary style="cursor:pointer;font-weight:700;font-size:12px">📋 Fila de treinos <span style="font-weight:400;color:var(--t3)">— ' + (venc.length + prox.length) + ' precisam de atenção' + (resto ? ' · ' + resto + ' em andamento' : '') + '</span></summary>' +
