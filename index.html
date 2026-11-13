@@ -1704,6 +1704,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div id="cob-ctx" style="font-size:11px;color:var(--t3);margin-bottom:8px"></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
       <select class="ie" id="cob-plano" style="flex:1;min-width:150px" onchange="mbCobrarAtualizar(true)"></select>
+      <select class="ie" id="cob-meses" style="display:none;width:auto" title="Duração do programa" onchange="mbCobrarAtualizar(true)"><option value="1">1 mês</option><option value="2">2 meses</option><option value="3" selected>3 meses</option></select>
       <input class="ie" id="cob-valor" type="number" step="0.01" style="width:90px" title="Valor (R$) — ajuste se precisar" oninput="mbCobrarAtualizar()"/>
       <select class="ie" id="cob-chave" style="min-width:110px" onchange="mbCobrarAtualizar()"></select>
     </div>
@@ -3996,7 +3997,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.6 · 13/11';
+var MOVH_VER = 'v63.7 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9936,7 +9937,7 @@ async function mbCobrar(alunoId){
   document.getElementById('cob-titulo').textContent = '💰 Cobrar — ' + a.nome;
   const ctxTxt = { novo: 'Cadastrou e ainda não tem acesso pago: plano novo.', renovacao: 'Acesso ' + (a.acesso_fim ? 'até ' + mbCobrarDataBR(a.acesso_fim) : '') + ': renovação.', reativacao: 'Acesso venceu em ' + mbCobrarDataBR(a.acesso_fim) + ' (mais de 7 dias): reativação.' }[sit];
   document.getElementById('cob-ctx').textContent = ctxTxt + ' Valores vêm da aba Planos.';
-  const _optPl = p => `<option value="${escAttr(p.id)}"${p.id === sug.id ? ' selected' : ''}>${escAttr(p.nome)} · ${p.dias}d · ${mbCobrarFmt(p.precoBR)}</option>`;
+  const _optPl = p => `<option value="${escAttr(p.id)}"${p.id === sug.id ? ' selected' : ''}>${escAttr(p.nome)} · ${p.mensal ? mbCobrarFmt(p.mensal) + '/mês' : p.dias + 'd · ' + mbCobrarFmt(p.precoBR)}</option>`;
   const _grupos = [...new Set(PL_PRESENCIAL.map(x => x.grupo))];
   document.getElementById('cob-plano').innerHTML = '<optgroup label="Online (aba Planos)">' + ativos.map(_optPl).join('') + '</optgroup>' + _grupos.map(g => '<optgroup label="' + escAttr(g) + '">' + PL_PRESENCIAL.filter(x => x.grupo === g).map(_optPl).join('') + '</optgroup>').join('');
   document.getElementById('cob-chave').innerHTML = pix ? pix.itens.map((x, i) => `<option value="${i}">${escAttr(x.banco || ('Pix ' + (i + 1)))}</option>`).join('') : '<option value="">sem Pix</option>';
@@ -9949,10 +9950,18 @@ async function mbCobrar(alunoId){
   mbCobrarAtualizar(false);
   openM('modal-cobrar');
 }
-function mbCobrarPlano(){ const id = document.getElementById('cob-plano').value; return plPlanos.find(p => p.id === id) || PL_PRESENCIAL.find(p => p.id === id); }
+function mbCobrarPlano(){
+  const id = document.getElementById('cob-plano').value; const pl = plPlanos.find(p => p.id === id) || PL_PRESENCIAL.find(p => p.id === id);
+  if (pl && pl.mensal) { // programa: o valor e o acesso acompanham os meses escolhidos (1 a 3), sem desconto
+    const el = document.getElementById('cob-meses'), m = Math.min(3, Math.max(1, Number(el && el.value) || pl.meses || 3));
+    return Object.assign({}, pl, { meses: m, dias: 30 * m, precoBR: pl.mensal * m, nome: pl.nome + ' · ' + m + (m > 1 ? ' meses' : ' mês') });
+  }
+  return pl;
+}
 function mbCobrarAtualizar(trocouPlano){
   if (!_cob) return;
   const pl = mbCobrarPlano(); if (!pl) return;
+  { const em = document.getElementById('cob-meses'); if (em) em.style.display = pl.mensal ? '' : 'none'; }
   if (trocouPlano) document.getElementById('cob-valor').value = pl.precoBR;
   const valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
   const a = _cob.a, nome = String(a.nome || '').trim().split(/\s+/)[0] || 'tudo bem';
@@ -18812,8 +18821,8 @@ const PL_PRESENCIAL = [
   { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
   { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
   { id:'pr_i_12',grupo:'Presencial individual',      nome:'Presencial · 12 sessões',                  dias:30, precoBR:816 },
-  { id:'pg_i_8', grupo:'Programa de 12 semanas (presencial)', nome:'Programa 12 semanas · 8 sessões/mês (avaliação e reavaliação inclusas)',  dias:90, precoBR:1728 },
-  { id:'pg_i_12',grupo:'Programa de 12 semanas (presencial)', nome:'Programa 12 semanas · 12 sessões/mês (avaliação e reavaliação inclusas)', dias:90, precoBR:2448 },
+  { id:'pg_i_8', grupo:'Programa (1 a 3 meses, presencial)', nome:'Programa · 8 sessões/mês (avaliação e reavaliação inclusas)',  dias:90, mensal:576, meses:3, precoBR:1728 },
+  { id:'pg_i_12',grupo:'Programa (1 a 3 meses, presencial)', nome:'Programa · 12 sessões/mês (avaliação e reavaliação inclusas)', dias:90, mensal:816, meses:3, precoBR:2448 },
   { id:'pr_d_ad',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Adaptação (4 sessões)', dias:30, precoBR:180 },
   { id:'pr_d_av',grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · Sessão avulsa',       dias:7,  precoBR:70 },
   { id:'pr_d_8', grupo:'Presencial dupla (por pessoa)', nome:'Presencial dupla · 8 sessões',           dias:30, precoBR:528 },
