@@ -10339,6 +10339,14 @@ async function mbMapaAbrir(avalId) {
     const r = await mbClient.from('avaliacoes_fisicas').select('mapa').eq('id', avalId).maybeSingle();
     if (r.error) colOk = false; else salvo = r.data && r.data.mapa;
   } catch (e) { colOk = false; }
+  // Integra com o treino: sem Mapa salvo, a semana 0 do caminho = início do protocolo do aluno (se houver)
+  if (!salvo) {
+    try {
+      const pr = await mbClient.from('protocolos').select('data_inicio').eq('aluno_id', _mbAvaliacoesAlunoId).not('data_inicio', 'is', null).order('created_at', { ascending: false }).limit(1);
+      const di = pr && pr.data && pr.data[0] && pr.data[0].data_inicio;
+      if (di && /^\d{4}-\d{2}-\d{2}/.test(di)) def.inicio = di.slice(0, 10);
+    } catch (e) {}
+  }
   const m = Object.assign({}, def, salvo || {});
   m.fotos = Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, Object.assign({}, def.fotos[k], (salvo && salvo.fotos && salvo.fotos[k]) || {})]));
   _mbMapa = { avalId, alunoId: _mbAvaliacoesAlunoId, row, m, colOk, urls: {}, cache: {}, prev: false };
