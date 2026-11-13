@@ -3996,7 +3996,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.1 · 13/11';
+var MOVH_VER = 'v63.2 · 13/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -5620,6 +5620,24 @@ function montarTimelinePeriodizacao(lista, semanaAtualGlobal, detalhado){
   </div>`;
 }
 
+// ── Programa de 12 semanas: completa com 'Consolidação' e agenda a reavaliação na semana 12 ──
+function mbPrograma12(){
+  const dur = x => parseInt(x.duracaoSemanas, 10) || 4;
+  let total = (semanas || []).reduce((n, x) => n + dur(x), 0);
+  if (!semanas || !semanas.length) { notify('Monte o treino base antes (8 semanas).'); return; }
+  const msg = [];
+  if (total < 12) {
+    const orig = semanas[semanas.length - 1];
+    const cl = JSON.parse(JSON.stringify(orig)); const sid = 's' + sc++;
+    cl.id = sid; cl.nome = 'Consolidação'; cl.duracaoSemanas = 12 - total;
+    (cl.dias || []).forEach(d => { d.id = sid + 'd' + dc++; });
+    semanas.push(cl); total = 12; msg.push('Consolidação de ' + cl.duracaoSemanas + ' sem. criada (cópia do último treino: ajuste os exercícios)');
+  } else if (total > 12) { msg.push('protocolo já passa de 12 semanas (' + total + '): só agendei os testes'); }
+  const alvo = Math.min(total, 12) - 1;
+  const tem = tipo => (testesAgendados || []).some(t => t.semana === alvo && (t.tipo || 'condicionamento') === tipo);
+  if (!tem('condicionamento')) { testesAgendados.push({ semana: alvo, dia: 'Quarta', tipo: 'condicionamento' }); msg.push('teste de condicionamento na semana 12'); }
+  renderAll(); notify(msg.length ? msg.join(' · ') : 'Já está no formato de 12 semanas.');
+}
 // ── Testes agendados (config) ──
 // Substitui o antigo checkbox "este dia é de teste" (ficava no template do
 // dia e repetia toda semana em microciclos >1 semana). Agora é um evento
@@ -5646,6 +5664,7 @@ function montarTestesAgendadosUI(totalSemanas){
     <div style="font-size:9.5px;color:var(--t3);margin-bottom:2px">Aparece pro aluno só na semana e dia marcados aqui — não repete nas demais semanas do microciclo.</div>
     ${linhas}
     <button class="btn bs" style="font-size:10.5px;padding:4px 10px;margin-top:6px" onclick="testesAgendados.push({semana:0,dia:'Quarta',tipo:'condicionamento'});renderAll()">+ Agendar teste</button>
+    <button class="btn bs" style="font-size:10.5px;padding:4px 10px;margin-top:6px" onclick="mbPrograma12()" title="Completa o protocolo até 12 semanas (Consolidação) e agenda os testes e a reavaliação na semana 12">🗓️ Programa de 12 semanas</button>
   </div>`;
 }
 
