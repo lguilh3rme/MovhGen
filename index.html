@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.0 · 14/11';
+var MOVH_VER = 'v64.1 · 14/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4654,7 +4654,7 @@ function renderKanbanSemanaUm(sid){
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
-      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button></div>
+      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
     </div>
     <div id="kb-analise-wrap">${kbAnaliseHTML(sem)}</div>
     <div class="kb-board" style="--kbn:${sem.dias.length}">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
@@ -6172,6 +6172,21 @@ function mbAplicarColarTreino(){
   const st = _colStats || { ok:0, novos:[] };
   notify(parsed.length + ' dia(s) criado(s) · ' + st.ok + ' exercício(s) do banco com vídeo' + (st.novos.length ? ' · ' + st.novos.length + ' fora do banco (sem vídeo)' : '') + '. Confira séries e dia da semana.');
   renderKanbanSemana(s.id);
+}
+// Treino de chegada: sessão 1 pensada para achar a carga (2 séries, sobrando 3-4 reps). Semana 1 = repetir.
+function mbModeloChegada(sid){
+  const sm = semanas.find(x => x.id === sid); if (!sm) return;
+  const mk = (nome, series, reps) => { const a = mvAcharEx(nome); return mbExProto({ nome: a ? a.n : nome, series: series, reps: reps }, 0); };
+  const atv = nb('atv'); atv.nome = 'Mobilidade e ativação';
+  atv.exercicios = [mk('Prancha','2','20 a 30 s'), mk('Elevação pélvica','2','12')];
+  const pri = nb('pri'); pri.nome = 'Bloco Principal';
+  pri.obs = 'Treino de chegada: o objetivo é achar a carga, não cansar. 2 séries por exercício, parando sobrando 3 a 4 repetições. Anote a carga de cada exercício. Semana 1 = repetir este treino; a carga sobe a partir da semana 2. ' + REGRA_BASE;
+  pri.exercicios = [mk('Supino máquina','2','10 a 12'), mk('Puxada alta','2','10 a 12'), mk('Leg press','2','10 a 12'), mk('Stiff','2','10 a 12'), mk('Elevação lateral','2','12')];
+  const con = nb('con'); con.nome = 'Condicionamento leve'; con.tipo = 'Aeróbico'; con.duracao = '8 min'; con.titulo = 'Cardio leve'; con.desc = '8 minutos em ritmo de conversa (dá para falar frases curtas), na bike, esteira ou elíptico.';
+  const id = sm.id + 'd' + dc++;
+  sm.dias.push({ id: id, nome: 'Chegada', diaSemana: '', sub: 'Treino de chegada · semana 1 = repetir', blocos: [atv, pri, con] });
+  renderAll(); renderKanbanSemana(sm.id);
+  notify('Treino de chegada criado. Confira os exercícios e o dia da semana.');
 }
 function removeDia(sid,did){const s=semanas.find(x=>x.id===sid);if(!s||s.dias.length<=1)return;s.dias=s.dias.filter(d=>d.id!==did);renderAll();nav(semanas[0].dias[0].id);notify('Dia removido.');}
 function moveDia(sid,did,dir){
@@ -9971,11 +9986,12 @@ function mbCobrarAtualizar(trocouPlano){
   const valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
   const a = _cob.a, nome = String(a.nome || '').trim().split(/\s+/)[0] || 'tudo bem';
   let code = '';
-  if (_cob.pix) { const it = _cob.pix.itens[Number(document.getElementById('cob-chave').value) || 0] || _cob.pix.itens[0]; code = mbPixPayload(it.chave, _cob.pix.nome, _cob.pix.cidade, valor, _cob.txid); }
+  if (_cob.pix && valor > 0) { const it = _cob.pix.itens[Number(document.getElementById('cob-chave').value) || 0] || _cob.pix.itens[0]; code = mbPixPayload(it.chave, _cob.pix.nome, _cob.pix.cidade, valor, _cob.txid); }
   _cob.code = code;
   const val = mbCobrarFmt(valor);
   let t;
-  if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
+  if (pl.id === 'av_mapa') t = `Oi, ${nome}! Tudo bem? 💪 Para começar, o primeiro passo é a Avaliação + Mapa: avaliação, fotos, medidas e um mapa de 1 página com o seu caminho. O valor é ${val}, e se você fechar o programa em até 7 dias esse valor vira crédito.`;
+  else if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
   else if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
   else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}. Você volta a ter acesso ao seu treino atual (sem treino novo).`;
@@ -10350,7 +10366,7 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     const pdfHtml = v.status === 'confirmada' ? `
       <div style="margin-top:8px">
         <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbAvalGerarPDF('${v.id}')">📄 Gerar PDF</button>
-        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ Mapa do aluno</button>
+        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ ${mbMapaAnterior(v) ? 'Mapa 2' : 'Mapa do aluno'}</button>
       </div>` : '';
     const diagnosticoHtml = v.diagnostico ? `<div style="font-size:10.5px;color:var(--tx);margin-top:6px;white-space:pre-wrap">${escAttr(v.diagnostico)}</div>` : '';
     return `<div style="padding:8px 0;border-bottom:1px solid var(--bd)">
@@ -10437,15 +10453,32 @@ renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this,
 let _mbMapa = null;
 const MAPA_VISTAS = [['frontal', 'Frontal'], ['posterior', 'Posterior'], ['lateral_d', 'Lateral D'], ['lateral_e', 'Lateral E']];
 const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;\nNOTIFY pgrst, \'reload schema\';';
+// Mapa 2: avaliação confirmada mais nova que a primeira do mesmo aluno (reavaliação); a primeira é o 'antes'.
+function mbMapaAnterior(row) {
+  const lst = (_mbAvaliacoesCache || []).filter(v => v.status === 'confirmada' && v.id !== row.id);
+  const dt = v => v.data_avaliacao || (v.created_at || '').slice(0, 10);
+  const ant = lst.filter(v => dt(v) && dt(v) < dt(row)).sort((a, b) => dt(a) < dt(b) ? -1 : 1)[0];
+  return ant || null;
+}
 function mbMapaPadrao(row) {
   const ach = Array.isArray(row.achados) ? row.achados : [];
   const bom = ach.filter(a => a.sev === 'ok').map(a => a.texto);
   const mel = ach.filter(a => a.sev !== 'ok').sort((a, b) => (a.sev === 'critico' ? 0 : 1) - (b.sev === 'critico' ? 0 : 1)).slice(0, 3).map(a => a.texto);
   const ini = row.data_avaliacao || (row.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+  const ant = mbMapaAnterior(row);
+  if (ant) {
+    const dif = (nome, k, un) => (ant[k] && row[k]) ? nome + ': ' + ant[k] + ' → ' + row[k] + ' ' + un : null;
+    [dif('Peso', 'peso', 'kg'), dif('Cintura', 'cintura', 'cm')].filter(Boolean).reverse().forEach(t => bom.unshift(t));
+  }
   return {
-    v: 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
+    v: 1, ciclo: ant ? 2 : 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
     depende: ['3 treinos por semana, registrados no app', 'Dormir 7 a 8 horas e beber água ao longo do dia', 'Avisar dor ou desconforto no mesmo dia'],
-    marcos: [
+    marcos: ant ? [
+      { sem: 0, titulo: 'Ponto de partida (reavaliação)', texto: 'Mesmas fotos, medidas e teste de 3 km do ciclo anterior.' },
+      { sem: 4, titulo: 'Meio do ciclo 2', texto: 'Medidas, cargas, frequência e teste de 3 km.' },
+      { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
+      { sem: 12, titulo: 'Nova reavaliação', texto: 'Mesmas fotos, medidas e teste de 3 km; antes e depois do ciclo 2.' }
+    ] : [
       { sem: 0, titulo: 'Chegada', texto: 'Fotos posturais, medidas e testes.' },
       { sem: 4, titulo: 'Fim da Base', texto: 'Medidas, cargas, frequência e teste de 3 km.' },
       { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
@@ -18878,6 +18911,7 @@ const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'R
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
 const PL_PRESENCIAL = [
   { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
+  { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:0 },
   { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220 },
   { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
   { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
