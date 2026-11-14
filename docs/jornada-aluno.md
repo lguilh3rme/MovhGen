@@ -3,8 +3,8 @@
 Objetivo: o aluno enxergar UM caminho só (começo, meio e fim), com nomes simples, um primeiro treino pensado e corrida/condicionamento que progride sem jargão. Reaproveita o que existe; não mexe nos motores (`cpPlano`, `PF_COND`, fase `base`) até a implementação.
 
 ## Decisões do dono (14/11)
-1. Etapas: **Base · Construção · [3º nome cortado na mensagem]**. Provisório neste doc: **Fechamento** (confirmar).
-2. **Programa de 16 semanas** (não 12).
+1. Etapas: **Base · Construção · Consolidação** (nome confirmado em 14/11 10h36).
+2. **Programa de 16 semanas** (decidido às 10h30). Às 10h34 o dono disse "vamos manter 3 meses": lido como voltar a 12 semanas (4+4+4: Base 1–4, Construção 5–8, Consolidação 9–12; testes sem 0 ou 4, 8 e 12; caminhada-corrida até a sem 12). AGUARDANDO confirmação; as seções abaixo ainda estão em 16 sem.
 3. **Acelerar a caminhada-corrida** e preencher a lacuna com ciência e prática (seção 4).
 
 ## 1. O que já existe (conferido no código)
@@ -19,7 +19,7 @@ Objetivo: o aluno enxergar UM caminho só (começo, meio e fim), com nomes simpl
 | Chegada | 0 | Avaliação + Mapa + 1º treino | Fotos, medidas, teste |
 | Base | 1–4 | Adaptação (iniciante/retorno) ou calibração com folga RIR 3 (quem já treina) | Check sem 4 |
 | Construção | 5–12 | Base (progressão dupla, 8 sem) | Check sem 8 e 12 |
-| Fechamento | 13–16 | Consolidação: mantém cargas, afina técnica | Testes + reavaliação sem 16 |
+| Consolidação | 13–16 | Consolidação: mantém cargas, afina técnica | Testes + reavaliação sem 16 |
 | Próximo ciclo | 17+ | Próxima fase | Novo Mapa |
 Todo aluno vê as mesmas 3 etapas (4 + 8 + 4). Para quem já treina, a etapa Base é 4 sem de calibração (mesma técnica da Base, folga maior).
 Impacto comercial a decidir: o Programa de 12 sem presencial (3 meses, R$1.728/2.448) e o trimestral online passam a 16 sem (4 meses). Opções: cobrar 4 meses (mensal × 4, o Cobrar já aceita 1–3; precisa ir a 4) ou manter 12 sem só para quem já treina.
@@ -55,7 +55,7 @@ Limites: nenhum desses estudos valida uma curva específica de caminhada-corrida
 ## 5. Linguagem (aluno nunca vê a sigla; ícone "?" explica)
 | Técnico | Para o aluno |
 |---|---|
-| Adaptação / Base / Consolidação | Base / Construção / Fechamento |
+| Adaptação / Base técnica / Consolidação | Base / Construção / Consolidação |
 | Deload | Semana leve |
 | RIR 2 / RPE 7–8 | "Termine sobrando 2 repetições" |
 | Progressão dupla | "Primeiro mais repetições, depois mais peso" |
@@ -65,11 +65,11 @@ Limites: nenhum desses estudos valida uma curva específica de caminhada-corrida
 | Volume | "Séries" |
 
 ## 6. Como aplicar (app = 1 deploy só, junto da próxima mudança)
-1. Só Gerador: Mapa padrão com 16 sem, marcos 0/4/8/12/16 e testes de 3 km (0 ou 4, 8, 16); `mbPrograma12` vira programa de 16 (Base 4 + Construção 8 + Fechamento 4) e agenda os testes; fase própria "Consolidação" com texto humano; Próxima fase gera 8+4; Cobrar com 4 meses.
+1. Só Gerador: Mapa padrão com 16 sem, marcos 0/4/8/12/16 e testes de 3 km (0 ou 4, 8, 16); `mbPrograma12` vira programa de 16 (Base 4 + Construção 8 + Consolidação 4) e agenda os testes; fase própria "Consolidação" com texto humano; Próxima fase gera 8+4; Cobrar com 4 meses.
 2. Motor: caminhada-corrida acelerada em `cpPlano` nas DUAS cópias (Gerador e template do app) + teste.
 3. App (1 deploy): card do Caminho com a etapa e "Treino X de N"; textos de fase e corrida sem siglas; abertura do 1º treino.
 4. Gerador: modelo "treino de chegada" ao criar protocolo novo.
 
 ## Pendente do dono
-- Nome da 3ª etapa (Fechamento provisório).
+- Nome da 3ª etapa (confirmado pelo dono em 14/11).
 - Preço/duração do programa de 16 sem (4 meses) no presencial e online.
