@@ -59,4 +59,5 @@ Leitura honesta: o método funcional/CrossFit tem a evidência DIRETA mais fraca
 4. Livros: guardar só resumo próprio com capítulo/página; não copiar trechos.
 
 ## Diário de leitura (acrescentar no topo)
+- 14/11/2026: progressão de iniciantes na corrida (lacuna "gestão de carga"): NHS Couch to 5K, Buist 2008 (RCT, regra dos 10% não reduziu lesão), Nielsen 2014 (coorte, >30% em 2 sem sem diferença significativa). Lidos por resumo; detalhe em `docs/jornada-aluno.md` seção 4.
 - 09/11/2026: primeira curadoria (14 áreas de fonte acima). Nenhum texto completo lido.
