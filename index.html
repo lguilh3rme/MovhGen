@@ -5634,9 +5634,13 @@ function mbPrograma12(){
     (cl.dias || []).forEach(d => { d.id = sid + 'd' + dc++; });
     semanas.push(cl); total = 12; msg.push('Consolidação de ' + cl.duracaoSemanas + ' sem. criada (cópia do último treino: ajuste os exercícios)');
   } else if (total > 12) { msg.push('protocolo já passa de 12 semanas (' + total + '): só agendei os testes'); }
-  const alvo = Math.min(total, 12) - 1;
-  const tem = tipo => (testesAgendados || []).some(t => t.semana === alvo && (t.tipo || 'condicionamento') === tipo);
-  if (!tem('condicionamento')) { testesAgendados.push({ semana: alvo, dia: 'Quarta', tipo: 'condicionamento' }); msg.push('teste de condicionamento na semana 12'); }
+  const nTot = Math.min(total, 12);
+  const alvos = [3, 7, nTot - 1].filter((x, i, a) => x >= 0 && x < nTot && a.indexOf(x) === i);
+  const novos = [];
+  alvos.forEach(al => {
+    if (!(testesAgendados || []).some(t => t.semana === al && (t.tipo || 'condicionamento') === 'condicionamento')) { testesAgendados.push({ semana: al, dia: 'Quarta', tipo: 'condicionamento' }); novos.push(al + 1); }
+  });
+  if (novos.length) msg.push('teste de condicionamento (3 km) nas semanas ' + novos.join(', '));
   renderAll(); notify(msg.length ? msg.join(' · ') : 'Já está no formato de 12 semanas.');
 }
 // ── Testes agendados (config) ──
@@ -10441,10 +10445,10 @@ function mbMapaPadrao(row) {
     v: 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
     depende: ['3 treinos por semana, registrados no app', 'Dormir 7 a 8 horas e beber água ao longo do dia', 'Avisar dor ou desconforto no mesmo dia'],
     marcos: [
-      { sem: 0, titulo: 'Avaliação inicial', texto: 'Fotos posturais, medidas e testes.' },
-      { sem: 4, titulo: 'Check da semana 4', texto: 'Medidas, cargas e frequência.' },
-      { sem: 8, titulo: 'Check da semana 8', texto: 'Medidas, cargas e ajuste do treino.' },
-      { sem: 12, titulo: 'Reavaliação final', texto: 'Mesmas fotos e medidas, relatório antes e depois.' }
+      { sem: 0, titulo: 'Chegada', texto: 'Fotos posturais, medidas e testes.' },
+      { sem: 4, titulo: 'Fim da Base', texto: 'Medidas, cargas, frequência e teste de 3 km.' },
+      { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
+      { sem: 12, titulo: 'Reavaliação (fim da Consolidação)', texto: 'Mesmas fotos, medidas e teste de 3 km; relatório antes e depois.' }
     ],
     fotos: Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, { show: true, rot: 0, zoom: 1, src: null }])),
     publicado: false

@@ -1,4 +1,4 @@
-"""Gerador: botão Programa de 12 semanas (completa Consolidação + teste na semana 12). Uso: python3 tools/tests/prog12.py <index.html>"""
+"""Gerador: botão Programa de 12 semanas (completa Consolidação + testes nas semanas 4, 8 e 12). Uso: python3 tools/tests/prog12.py <index.html>"""
 import sys
 from playwright.sync_api import sync_playwright
 STUB = open(__file__.replace('prog12.py','gpage.py'),encoding='utf-8').read().split('STUB="""')[1].split('"""')[0]
@@ -17,7 +17,7 @@ with sync_playwright() as p:
       mbPrograma12(); const a={n:semanas.length,nome:semanas[1]&&semanas[1].nome,dur:semanas[1]&&semanas[1].duracaoSemanas,t:JSON.stringify(testesAgendados)};
       mbPrograma12(); a.n2=semanas.length; a.t2=testesAgendados.length; return a;}""")
     ok(r['n']==2 and r['nome']=='Consolidação' and r['dur']==4,'8 sem -> cria Consolidação de 4: '+str(r))
-    ok('"semana":11' in r['t'],'teste na semana 12 (índice 11)')
-    ok(r['n2']==2 and r['t2']==1,'idempotente')
+    ok(all(('"semana":%d'%i) in r['t'] for i in (3,7,11)),'testes nas semanas 4, 8 e 12 (índices 3, 7, 11)')
+    ok(r['n2']==2 and r['t2']==3,'idempotente (3 testes, sem duplicar)')
     ok(not errs,'sem pageerror '+str(errs[:2])); b.close()
 print('FALHAS:',len(F)); sys.exit(1 if F else 0)
