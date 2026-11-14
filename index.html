@@ -2290,8 +2290,9 @@ function cpPlano(b,w,N,zonaSeg){
     o.tiros=Math.max(n0,Math.round(n0*f));o.esf=esf;o.rec=rec;o.tempo=Math.round(10+o.tiros*(esf+rec));
     if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
   }else if(mod==='caminhada'){
-    var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
-    o.corre=c0+r.ciclo;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    var c0=esf||1,a0=rec||2,T=tb||20,cs=c0-1+(w-Math.floor(w/4));cs=Math.max(c0,Math.min(cs,Math.max(c0,T-a0)));
+    var reps=Math.max(1,Math.round(T/(cs+a0)));
+    o.corre=cs;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
     if(rit)o.dist=cpR2(reps*o.corre*60/rit);
   }else if(tb){
     o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);
@@ -3997,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.7 · 13/11';
+var MOVH_VER = 'v64.0 · 14/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -5634,9 +5635,13 @@ function mbPrograma12(){
     (cl.dias || []).forEach(d => { d.id = sid + 'd' + dc++; });
     semanas.push(cl); total = 12; msg.push('Consolidação de ' + cl.duracaoSemanas + ' sem. criada (cópia do último treino: ajuste os exercícios)');
   } else if (total > 12) { msg.push('protocolo já passa de 12 semanas (' + total + '): só agendei os testes'); }
-  const alvo = Math.min(total, 12) - 1;
-  const tem = tipo => (testesAgendados || []).some(t => t.semana === alvo && (t.tipo || 'condicionamento') === tipo);
-  if (!tem('condicionamento')) { testesAgendados.push({ semana: alvo, dia: 'Quarta', tipo: 'condicionamento' }); msg.push('teste de condicionamento na semana 12'); }
+  const nTot = Math.min(total, 12);
+  const alvos = [3, 7, nTot - 1].filter((x, i, a) => x >= 0 && x < nTot && a.indexOf(x) === i);
+  const novos = [];
+  alvos.forEach(al => {
+    if (!(testesAgendados || []).some(t => t.semana === al && (t.tipo || 'condicionamento') === 'condicionamento')) { testesAgendados.push({ semana: al, dia: 'Quarta', tipo: 'condicionamento' }); novos.push(al + 1); }
+  });
+  if (novos.length) msg.push('teste de condicionamento (3 km) nas semanas ' + novos.join(', '));
   renderAll(); notify(msg.length ? msg.join(' · ') : 'Já está no formato de 12 semanas.');
 }
 // ── Testes agendados (config) ──
@@ -10441,10 +10446,10 @@ function mbMapaPadrao(row) {
     v: 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
     depende: ['3 treinos por semana, registrados no app', 'Dormir 7 a 8 horas e beber água ao longo do dia', 'Avisar dor ou desconforto no mesmo dia'],
     marcos: [
-      { sem: 0, titulo: 'Avaliação inicial', texto: 'Fotos posturais, medidas e testes.' },
-      { sem: 4, titulo: 'Check da semana 4', texto: 'Medidas, cargas e frequência.' },
-      { sem: 8, titulo: 'Check da semana 8', texto: 'Medidas, cargas e ajuste do treino.' },
-      { sem: 12, titulo: 'Reavaliação final', texto: 'Mesmas fotos e medidas, relatório antes e depois.' }
+      { sem: 0, titulo: 'Chegada', texto: 'Fotos posturais, medidas e testes.' },
+      { sem: 4, titulo: 'Fim da Base', texto: 'Medidas, cargas, frequência e teste de 3 km.' },
+      { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
+      { sem: 12, titulo: 'Reavaliação (fim da Consolidação)', texto: 'Mesmas fotos, medidas e teste de 3 km; relatório antes e depois.' }
     ],
     fotos: Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, { show: true, rot: 0, zoom: 1, src: null }])),
     publicado: false
@@ -11920,17 +11925,18 @@ function pfCondDecisao(m){
 function pfCondR1(x){ return String(Math.round(x*10)/10).replace('.', ','); }
 function pfCondMin(orig, v){ return /min/i.test(String(orig||'')) ? v+' min' : String(v); }
 // bloco de condicionamento da fase vigente -> bloco-base da próxima (null se não se aplica)
-function pfCondProximo(b, nivel){
+function pfCondProximo(b, nivel, semP){
   if (!b || !CP_MODELOS[b.modelo] || b.progressaoAuto === false || b.modelo === 'regenerativo') return null;
   const C = PF_COND, n = JSON.parse(JSON.stringify(b)), tb = cpNum(b.duracao), d0 = cpNum(b.dist);
   const escala = (r) => { if (tb) n.duracao = pfCondMin(b.duracao, Math.max(1, Math.round(tb*r))); if (d0) n.dist = pfCondR1(d0*r); };
   if (nivel === 'mantem') return n;                       // repete o volume inicial, sem qualidade nova
   if (nivel === 'progride') {                              // patamar de partida do 2º ciclo (ex.: 20 -> 22 min)
-    const p = cpPlano(b, C.semPartida, 8);
+    const sp = semP || C.semPartida;
+    const p = cpPlano(b, sp, 8);
     if (!p) return null;
     if (b.modelo === 'intervalado') n.tiros = String(p.tiros);
     else if (b.modelo === 'caminhada') { n.esf = String(p.corre); n.duracao = pfCondMin(b.duracao, p.tempo); if (d0 && tb) n.dist = pfCondR1(d0*p.tempo/tb); }
-    else { const r = tb ? p.tempo/tb : cpFator(C.semPartida).f; escala(r); }
+    else { const r = tb ? p.tempo/tb : cpFator(sp).f; escala(r); }
     return n;
   }
   // recua: volume −20% e sem intensidade (tempo/fartlek/intervalado viram contínuo fácil)
@@ -11946,11 +11952,11 @@ function pfCondProximo(b, nivel){
 }
 function pfCondResumo(b){ const p = b && cpPlano(b, 1, 8); return p ? cpResumo(p) : '—'; }
 // aplica a decisão aos blocos 'con' (com modelo) dos dias do rascunho; devolve [{dia, de, para, modelo}]
-function pfCondAplicar(dias, nivel){
+function pfCondAplicar(dias, nivel, semP){
   const out = [];
   (dias||[]).forEach((d,di) => (d.blocos||[]).forEach((b,bi) => {
     if (b.id !== 'con') return;
-    const n = pfCondProximo(b, nivel); if (!n) return;
+    const n = pfCondProximo(b, nivel, semP); if (!n) return;
     out.push({ dia: d.nome || ('Dia '+(di+1)), modelo: CP_MODELOS[b.modelo].nome, de: pfCondResumo(b), para: pfCondResumo(n), facil: PF_COND.facil.indexOf(b.modelo) >= 0 });
     d.blocos[bi] = n;
   }));
@@ -12042,7 +12048,8 @@ async function mbSugerirProximaFase(protoId, alunoId){
     const _t3 = Array.isArray(ts.data) && ts.data[0] && ts.data[0].data ? ts.data[0].data : null;
     const teste3Sem = _t3 ? Math.max(0, Math.floor((_hoje - new Date(_t3+'T00:00:00')) / (7*_dia))) : null;
     const condDec = pfCondDecisao({ ader: aderPct, rpeMed: rpeCond, testeSem: teste3Sem, dor: dorAtiva });
-    const condMud = pfCondAplicar(sem.dias, condDec.nivel);
+    const ciclo2 = total >= 12;   // vigente com 12+ semanas = programa completo: o próximo é o Ciclo 2 (sem voltar ao início)
+    const condMud = pfCondAplicar(sem.dias, condDec.nivel, ciclo2 ? 9 : undefined);
     if (condMud.length) {
       const rot = { progride:'Corrida: progride', mantem:'Corrida: mantém', recua:'Corrida: recua −20%, sem intensidade' }[condDec.nivel];
       alertas.push({ t: condDec.nivel === 'progride' ? 'ok' : 'av', x: rot + ' (' + condDec.motivos.join(' · ') + ')' });
@@ -12050,6 +12057,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
       if (condDec.nivel === 'recua') alertas.push({ t:'av', x:'Demanda: refazer o teste de 3 km antes de voltar a subir o volume' });
       if (condDec.nivel === 'progride' && condMud.every(m => m.facil)) alertas.push({ t:'ok', x:'Já fechou uma fase inteira em ritmo Fácil: pode incluir 1 sessão de qualidade por semana (Limiar ou Intervalo, pace do VDOT atual), à mão' });
     }
+    if (ciclo2) alertas.push({ t:'ok', x:'Ciclo 2 (12 sem): semana 1 = reacerto de cargas (sem Adaptação); Construção + Consolidação de 4 sem; testes de 3 km nas semanas 4, 8 e 12; corrida parte do patamar da semana 9' });
     // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
     const vol0 = pfVolume(sem);
     PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0, min: m.volMin || 10})).filter(x => x.n < x.min).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
@@ -12077,7 +12085,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     if (rpeMed != null && rpeMed <= 4) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões leves — pode apertar a carga'});
     const diasReg = new Set((rg.data||[]).map(r => String(r.criado_em).slice(0,10))).size;
     if (diasReg < 15) alertas.push({t:'av', x:'Poucos registros: '+diasReg+' dia(s) com carga em 10 semanas — peça ao menos 3 por semana (a progressão dupla depende deles)'});
-    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: iniIso, alertas,
+    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: iniIso, alertas, ciclo2,
       ctx: [['Fase vigente', (vig.nome||'—')+' · semana '+semAtual+' de '+total], ['Histórico', sems.length+' mesociclo'+(sems.length!==1?'s':'')+' · '+total+' sem'],
             ['Nível', resp && resp.tempo_treino ? String(resp.tempo_treino) : '—'], ['RPE médio', rpeMed != null ? rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', diasReg+' dia(s)']]
         .concat(condMud.length ? [['Aderência (4 sem)', aderPct != null ? aderPct+'%' : 'sem dados'], ['Teste de 3 km', teste3Sem != null ? 'há '+teste3Sem+' sem' : 'nenhum']] : []) };
@@ -12133,8 +12141,18 @@ async function pfSalvar(ativar){
   sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => { delete e._novo; delete e._restAlt; })));
   const b0 = P.base || {};
   const nomeBase = String(b0.nome || 'Protocolo').split('·')[0].trim();
-  const nome = nomeBase + ' · Base 8 sem';
-  const conteudo = { nome, icone: b0.icone || '💪', desc: b0.desc || '', divisao: b0.divisao || '', lang: b0.lang, semanas: [sem], testesAgendados: [], overrides: {}, fimPrevisto: null };
+  const nome = nomeBase + (P.ciclo2 ? ' · Ciclo 2 · 12 sem' : ' · Base 8 sem');
+  const semsNovas = [sem], testesNovos = [];
+  if (P.ciclo2) {
+    // Ciclo 2: Construção (8 sem, o rascunho) + Consolidação de 4 sem (cópia, para ajustar) e testes de 3 km nas semanas 4, 8 e 12
+    sem.duracaoSemanas = 8;
+    const cl = JSON.parse(JSON.stringify(sem)); const sid = 's' + sc++;
+    cl.id = sid; cl.nome = 'Consolidação'; cl.duracaoSemanas = 4;
+    (cl.dias || []).forEach(d => { d.id = sid + 'd' + dc++; });
+    semsNovas.push(cl);
+    [3, 7, 11].forEach(i => testesNovos.push({ semana: i, dia: 'Quarta', tipo: 'condicionamento' }));
+  }
+  const conteudo = { nome, icone: b0.icone || '💪', desc: b0.desc || '', divisao: b0.divisao || '', lang: b0.lang, semanas: semsNovas, testesAgendados: testesNovos, overrides: {}, fimPrevisto: null };
   try {
     const { data, error } = await mbClient.from('protocolos').insert({ aluno_id: P.alunoId, professor_id: mbProfessor.id, nome, conteudo, ativo: false, data_inicio: P.data }).select('id').maybeSingle();
     if (error) throw error;
@@ -16628,8 +16646,9 @@ function cpPlano(b,w,N,zonaSeg){
     o.tiros=Math.max(n0,Math.round(n0*f));o.esf=esf;o.rec=rec;o.tempo=Math.round(10+o.tiros*(esf+rec));
     if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
   }else if(mod==='caminhada'){
-    var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
-    o.corre=c0+r.ciclo;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    var c0=esf||1,a0=rec||2,T=tb||20,cs=c0-1+(w-Math.floor(w/4));cs=Math.max(c0,Math.min(cs,Math.max(c0,T-a0)));
+    var reps=Math.max(1,Math.round(T/(cs+a0)));
+    o.corre=cs;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
     if(rit)o.dist=cpR2(reps*o.corre*60/rit);
   }else if(tb){
     o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);

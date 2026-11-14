@@ -25,8 +25,9 @@ t('dist+ritmo → tempo',P({modelo:'continuo',dist:'5',ritmo:'6:00'},1).tempo===
 t('ritmo manual vence a zona',P({modelo:'continuo',duracao:'30',ritmo:'6:00'},1,z).ritmoAuto===false);
 // fartlek e caminhada
 const f=P({modelo:'fartlek',duracao:'30 min'},3);t('fartlek % esforço',f.pctEsf===25&&f.esf>0);
-const k=[1,2,3,4,5,6,7,8,9].map(w=>P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},w).corre).join();t('caminhada: +1 min correndo por ciclo (1,1,1,1,2,2,2,2,3)',k==='1,1,1,1,2,2,2,2,3');
-t('caminhada reps fixos',P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},1).reps===7);
+const k=[1,2,3,4,5,6,7,8,9,10,11,12].map(w=>P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},w).corre).join();t('caminhada: +1 min correndo por semana, 4/8/12 assentam (1,2,3,3,4,5,6,6,7,8,9,9)',k==='1,2,3,3,4,5,6,6,7,8,9,9');
+t('caminhada: sessão não estica (reps recalculadas, tempo 18-24 em 21 min)',[1,5,9,12].every(w=>{const p=P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},w);return p.tempo>=18&&p.tempo<=24;}));
+t('caminhada reps caem com o tempo correndo',P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},1).reps===7&&P({modelo:'caminhada',duracao:'21 min',esf:1,rec:2},9).reps===2);
 // robustez
 t('sem modelo → null',P({duracao:'20 min'},1)===null);
 t('"15-30 min" → 15',ctx.cpNum('15-30 min')===15);
