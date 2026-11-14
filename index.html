@@ -16974,7 +16974,17 @@ function aCaminhoSemana(m){
 }
 function aCaminhoFase(m, sem){
   const t = m.semanas || 12;
-  return sem <= Math.round(t / 3) ? 'Começo' : (sem <= Math.round(t * 2 / 3) ? 'Meio' : 'Fim');
+  return sem <= Math.round(t / 3) ? 'Base' : (sem <= Math.round(t * 2 / 3) ? 'Construção' : 'Consolidação');
+}
+// Treinos por semana do protocolo (dias da semana 1) e treinos já feitos desde o início do Mapa.
+let aCaminhoFeitos = null;
+function aCaminhoDiasSem(){
+  try { const sm = aProtocolo && aProtocolo.conteudo && aProtocolo.conteudo.semanas; const d = sm && sm[0] && sm[0].dias; return d && d.length ? d.length : 0; } catch (e) { return 0; }
+}
+function aCaminhoTreinoTxt(m){
+  const ds = aCaminhoDiasSem(), tot = m.semanas || 12;
+  if (!ds || aCaminhoFeitos == null) return '';
+  return 'Treino ' + Math.min(aCaminhoFeitos + 1, ds * tot) + ' de ' + (ds * tot);
 }
 async function aCaminhoCarregar(){
   aCaminhoMapa = null; aCaminhoRow = null;
@@ -16990,6 +17000,11 @@ async function aCaminhoCarregar(){
     if (!row) return;
     aCaminhoRow = row; aCaminhoMapa = row.mapa;
   } catch (e) { return; }
+  aCaminhoFeitos = null;
+  try {
+    const q = await aClient.from('rpe_sessoes').select('criado_em').eq('aluno_id', aAlunoRow.id).gte('criado_em', (aCaminhoMapa.inicio || '2000-01-01') + 'T00:00:00');
+    if (!q.error) aCaminhoFeitos = new Set((q.data || []).map(function(x){ return String(x.criado_em).slice(0,10); })).size;
+  } catch (e) {}
   aCaminhoRenderCard();
 }
 function aCaminhoRenderCard(){
@@ -16998,8 +17013,10 @@ function aCaminhoRenderCard(){
   const sem = aCaminhoSemana(m), tot = m.semanas || 12;
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDiaMarco(m, x.sem); return d && d >= hoje; });
-  card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
+  const trn = aCaminhoTreinoTxt(m);
+  card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>' + aCaminhoFase(m, sem) + ' · Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
     '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
+    (trn ? '<div class="cam-prox">' + trn + '</div>' : '') +
     (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDiaMarco(m, prox.sem)) + '</div>' : '');
   card.style.display = 'block';
 }
@@ -17039,7 +17056,8 @@ async function aVerCaminho(){
   const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
     .map(function(x){ return '<div class="cam-med"><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('');
   document.getElementById('tCaminhoConteudo').innerHTML =
-    '<div class="cam-hd"><b>🧭 Seu caminho</b><span class="cam-chip">Semana ' + sem + ' de ' + tot + ' · ' + fase + '</span></div>' +
+    '<div class="cam-hd"><b>🧭 Seu caminho</b><span class="cam-chip">' + fase + ' · Semana ' + sem + ' de ' + tot + '</span></div>' +
+    (aCaminhoTreinoTxt(m) ? '<div class="cam-sub" style="margin:-4px 2px 8px">' + aCaminhoTreinoTxt(m) + '</div>' : '') +
     aCaminhoBox('Sua meta', '<div class="cam-big">' + aEsc(m.objetivo || 'Seu objetivo') + '</div><div class="cam-sub">' + tot + ' semanas · reavaliação na semana ' + tot + '</div><div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>') +
     aCaminhoBox('Marcos', '<div class="cam-tl">' + tl + '</div>') +
     '<button class="vksbtn cam-link" onclick="aVerProgresso()">📈 Cargas e histórico ›</button>' +
