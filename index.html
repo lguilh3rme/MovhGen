@@ -2290,8 +2290,9 @@ function cpPlano(b,w,N,zonaSeg){
     o.tiros=Math.max(n0,Math.round(n0*f));o.esf=esf;o.rec=rec;o.tempo=Math.round(10+o.tiros*(esf+rec));
     if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
   }else if(mod==='caminhada'){
-    var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
-    o.corre=c0+r.ciclo;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    var c0=esf||1,a0=rec||2,T=tb||20,cs=c0-1+(w-Math.floor(w/4));cs=Math.max(c0,Math.min(cs,Math.max(c0,T-a0)));
+    var reps=Math.max(1,Math.round(T/(cs+a0)));
+    o.corre=cs;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
     if(rit)o.dist=cpR2(reps*o.corre*60/rit);
   }else if(tb){
     o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);
@@ -11924,17 +11925,18 @@ function pfCondDecisao(m){
 function pfCondR1(x){ return String(Math.round(x*10)/10).replace('.', ','); }
 function pfCondMin(orig, v){ return /min/i.test(String(orig||'')) ? v+' min' : String(v); }
 // bloco de condicionamento da fase vigente -> bloco-base da próxima (null se não se aplica)
-function pfCondProximo(b, nivel){
+function pfCondProximo(b, nivel, semP){
   if (!b || !CP_MODELOS[b.modelo] || b.progressaoAuto === false || b.modelo === 'regenerativo') return null;
   const C = PF_COND, n = JSON.parse(JSON.stringify(b)), tb = cpNum(b.duracao), d0 = cpNum(b.dist);
   const escala = (r) => { if (tb) n.duracao = pfCondMin(b.duracao, Math.max(1, Math.round(tb*r))); if (d0) n.dist = pfCondR1(d0*r); };
   if (nivel === 'mantem') return n;                       // repete o volume inicial, sem qualidade nova
   if (nivel === 'progride') {                              // patamar de partida do 2º ciclo (ex.: 20 -> 22 min)
-    const p = cpPlano(b, C.semPartida, 8);
+    const sp = semP || C.semPartida;
+    const p = cpPlano(b, sp, 8);
     if (!p) return null;
     if (b.modelo === 'intervalado') n.tiros = String(p.tiros);
     else if (b.modelo === 'caminhada') { n.esf = String(p.corre); n.duracao = pfCondMin(b.duracao, p.tempo); if (d0 && tb) n.dist = pfCondR1(d0*p.tempo/tb); }
-    else { const r = tb ? p.tempo/tb : cpFator(C.semPartida).f; escala(r); }
+    else { const r = tb ? p.tempo/tb : cpFator(sp).f; escala(r); }
     return n;
   }
   // recua: volume −20% e sem intensidade (tempo/fartlek/intervalado viram contínuo fácil)
@@ -11950,11 +11952,11 @@ function pfCondProximo(b, nivel){
 }
 function pfCondResumo(b){ const p = b && cpPlano(b, 1, 8); return p ? cpResumo(p) : '—'; }
 // aplica a decisão aos blocos 'con' (com modelo) dos dias do rascunho; devolve [{dia, de, para, modelo}]
-function pfCondAplicar(dias, nivel){
+function pfCondAplicar(dias, nivel, semP){
   const out = [];
   (dias||[]).forEach((d,di) => (d.blocos||[]).forEach((b,bi) => {
     if (b.id !== 'con') return;
-    const n = pfCondProximo(b, nivel); if (!n) return;
+    const n = pfCondProximo(b, nivel, semP); if (!n) return;
     out.push({ dia: d.nome || ('Dia '+(di+1)), modelo: CP_MODELOS[b.modelo].nome, de: pfCondResumo(b), para: pfCondResumo(n), facil: PF_COND.facil.indexOf(b.modelo) >= 0 });
     d.blocos[bi] = n;
   }));
@@ -16632,8 +16634,9 @@ function cpPlano(b,w,N,zonaSeg){
     o.tiros=Math.max(n0,Math.round(n0*f));o.esf=esf;o.rec=rec;o.tempo=Math.round(10+o.tiros*(esf+rec));
     if(rit)o.dist=cpR2(o.tiros*esf*60/rit);
   }else if(mod==='caminhada'){
-    var c0=esf||1,a0=rec||2,reps=Math.max(1,Math.round((tb||20)/(c0+a0)));
-    o.corre=c0+r.ciclo;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
+    var c0=esf||1,a0=rec||2,T=tb||20,cs=c0-1+(w-Math.floor(w/4));cs=Math.max(c0,Math.min(cs,Math.max(c0,T-a0)));
+    var reps=Math.max(1,Math.round(T/(cs+a0)));
+    o.corre=cs;o.anda=a0;o.reps=reps;o.tempo=reps*(o.corre+o.anda);
     if(rit)o.dist=cpR2(reps*o.corre*60/rit);
   }else if(tb){
     o.tempo=(mod==='regenerativo')?Math.round(tb):Math.round(tb*f);

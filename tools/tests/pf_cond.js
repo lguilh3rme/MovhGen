@@ -34,7 +34,8 @@ t('intervalado recua: vira contínuo fácil, sem tiros',(()=>{const n=N(nat,'rec
 t('tempo run recua: vira contínuo',N({modelo:'tempo',duracao:'30 min'},'recua').modelo==='continuo');
 t('fartlek recua: vira contínuo',N({modelo:'fartlek',duracao:'30 min'},'recua').modelo==='continuo');
 const cam={modelo:'caminhada',duracao:'21 min',esf:1,rec:2};
-t('caminhada progride: corre 1 -> 2 min, 28 min',(()=>{const n=N(cam,'progride');return n.esf==='2'&&n.duracao==='28 min';})());
+t('caminhada progride: patamar da sem 5 (corre 4 min, 24 min)',(()=>{const n=N(cam,'progride');return n.esf==='4'&&n.duracao==='24 min';})());
+t('caminhada progride com vigente de 12 sem: patamar da sem 9 (corre 7 min)',(()=>{const n=ctx.pfCondProximo(cam,'progride',9);return n.esf==='7';})());
 t('caminhada recua: mantém 1 min correndo, volume menor',(()=>{const n=N(cam,'recua');return String(n.esf)==='1'&&n.duracao==='17 min';})());
 t('regenerativo não entra',N({modelo:'regenerativo',duracao:'20 min'},'progride')===null);
 t('progressaoAuto false não entra',N({modelo:'continuo',duracao:'20 min',progressaoAuto:false},'progride')===null);
