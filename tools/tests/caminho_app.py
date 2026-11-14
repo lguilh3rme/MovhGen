@@ -8,7 +8,7 @@ STUB = """
 window.__CAM = {on:true, pub:true};
 const SVG='data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#7aa"/><circle cx="150" cy="90" r="40" fill="#fff"/><rect x="100" y="140" width="100" height="200" fill="#fff"/></svg>');
 window.supabase={createClient:function(){
- function mk(t){const q={select(){return q},eq(){return q},not(){return q},is(){return q},limit(){return q},order(){return q},in(){return q},insert(){return q},update(){return q},
+ function mk(t){const q={select(){return q},eq(){return q},not(){return q},gte(){return q},is(){return q},limit(){return q},order(){return q},in(){return q},insert(){return q},update(){return q},
   maybeSingle(){return Promise.resolve({data:null,error:null})},single(){return Promise.resolve({data:null,error:null})},
   then(r){ if(t==='avaliacoes_fisicas') return r({data:[{id:'v1',mapa:{publicado:window.__CAM.pub,objetivo:'Emagrecer 5 kg e melhorar a postura dos ombros',semanas:12,inicio:'__INI__',
      bom:['Joelhos alinhados','Boa mobilidade de quadril'],melhorar:['Ombros mais à frente','Quadril inclinado para frente'],depende:['Treinar 3x por semana','Dormir 7h por noite'],
@@ -35,8 +35,14 @@ with sync_playwright() as p:
     ok(not vis(),'chave desligada: card oculto')
     pg.evaluate("aAlunoRow={id:'a1',caminho_ativo:true}; window.__CAM.pub=false; aCaminhoCarregar()"); pg.wait_for_timeout(500)
     ok(not vis(),'ligado mas Mapa não publicado: oculto')
-    pg.evaluate("window.__CAM.pub=true; aCaminhoCarregar()"); pg.wait_for_timeout(500)
+    pg.evaluate("aProtocolo={conteudo:{semanas:[{dias:[{},{},{}]}]}}; window.__CAM.pub=true; aCaminhoCarregar()"); pg.wait_for_timeout(700)
     ok(vis(),'ligado + publicado: card visível')
+    _t=pg.evaluate("document.getElementById('tCaminhoCard').innerText")
+    ok('Construção' in _t and 'Treino 1 de 36' in _t,'card mostra etapa e Treino X de N')
+    pg.evaluate("window._movhPreview=false; aPrimeiroTreino()"); pg.wait_for_timeout(500)
+    ok(pg.evaluate("getComputedStyle(document.getElementById('tPrimeiroTreino')).display!=='none' && document.getElementById('tPrimeiroTreino').innerText.includes('primeiro treino')"),'sem sessões: card do primeiro treino visível')
+    ok('fixar o que você conquistou' in pg.evaluate("aMontarCardFase({fase:'base',nome:'Consolidação'},1,'t')"),'fase Consolidação com texto próprio')
+    ok('sobrando 2 repetições' in pg.evaluate("aMontarCardFase({fase:'base',nome:'Base'},1,'t')") or 'mais 2 repetições' in pg.evaluate("aMontarCardFase({fase:'base',nome:'Base'},1,'t')"),'fase Base segue com o texto da Base')
     pg.evaluate("document.getElementById('tCaminhoCard').scrollIntoView({block:'center'})")
     if OUT: pg.screenshot(path=OUT+'/caminho_card.png')
     pg.evaluate("document.getElementById('tCaminhoCard').click()"); pg.wait_for_timeout(1200)

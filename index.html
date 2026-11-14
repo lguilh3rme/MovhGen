@@ -2262,10 +2262,10 @@ function setSemFoco(sid,campo,v){
 // Pace automático: zonas de Daniels (VDOT do teste de 3 km do aluno) quando não há ritmo digitado.
 var CP_ZONAS=['Recuperação','Fácil','Maratona','Limiar','Intervalo','Repetição'];
 var CP_MODELOS={
- continuo:{nome:'Contínuo',zona:1,obs:'rodagem em ritmo de conversa (zona Fácil); cerca de 80% do volume semanal deve ser fácil'},
+ continuo:{nome:'Contínuo',zona:1,obs:'ritmo de conversa (dá para falar frases curtas); cerca de 80% do que você corre na semana deve ser assim'},
  regenerativo:{nome:'Regenerativo',zona:0,obs:'bem leve e sem progressão: serve para recuperar'},
  longao:{nome:'Longão',zona:1,obs:'a sessão mais longa da semana, sempre em ritmo fácil'},
- tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e sustentável (RPE 6-7); só com base aeróbica e sem dor'},
+ tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e firme, dá para falar só poucas palavras; só com base de corrida e sem dor'},
  fartlek:{nome:'Fartlek',zona:3,obs:'alterna trechos fortes por percepção com trotes leves, sem relógio rígido'},
  intervalado:{nome:'Intervalado',zona:4,obs:'tiros com recuperação ativa; aumenta o número de tiros antes de acelerar'},
  caminhada:{nome:'Caminhada-corrida',zona:0,obs:'alterna corrida leve e caminhada; aumenta o tempo correndo aos poucos'}
@@ -2311,8 +2311,8 @@ function cpResumo(p){
 }
 function cpObs(p){
   var M=CP_MODELOS[p.modelo];
-  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assimilação: mantém o patamar de partida do ciclo, sem aumentar':(p.w>1?'semana de carga: +8% sobre a anterior':'semana de partida'));
-  return fase+'; '+M.obs+'; dor ou RPE 9+: repita a semana anterior';
+  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assentar: repete o nível da anterior, sem aumentar':(p.w>1?'semana de aumento: um pouco mais que a anterior':'semana de partida'));
+  return fase+'; '+M.obs+'; se sentir dor ou ficar muito cansado, repita a semana passada';
 }
 function cpSemanaGlobal(inicio,sems){
   var N=0,i;for(i=0;i<(sems||[]).length;i++)N+=parseInt(sems[i].duracaoSemanas,10)||4;if(!N)N=1;
@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.0 · 14/11';
+var MOVH_VER = 'v64.1 · 14/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4654,7 +4654,7 @@ function renderKanbanSemanaUm(sid){
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
-      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button></div>
+      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
     </div>
     <div id="kb-analise-wrap">${kbAnaliseHTML(sem)}</div>
     <div class="kb-board" style="--kbn:${sem.dias.length}">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
@@ -6172,6 +6172,21 @@ function mbAplicarColarTreino(){
   const st = _colStats || { ok:0, novos:[] };
   notify(parsed.length + ' dia(s) criado(s) · ' + st.ok + ' exercício(s) do banco com vídeo' + (st.novos.length ? ' · ' + st.novos.length + ' fora do banco (sem vídeo)' : '') + '. Confira séries e dia da semana.');
   renderKanbanSemana(s.id);
+}
+// Treino de chegada: sessão 1 pensada para achar a carga (2 séries, sobrando 3-4 reps). Semana 1 = repetir.
+function mbModeloChegada(sid){
+  const sm = semanas.find(x => x.id === sid); if (!sm) return;
+  const mk = (nome, series, reps) => { const a = mvAcharEx(nome); return mbExProto({ nome: a ? a.n : nome, series: series, reps: reps }, 0); };
+  const atv = nb('atv'); atv.nome = 'Mobilidade e ativação';
+  atv.exercicios = [mk('Prancha','2','20 a 30 s'), mk('Elevação pélvica','2','12')];
+  const pri = nb('pri'); pri.nome = 'Bloco Principal';
+  pri.obs = 'Treino de chegada: o objetivo é achar a carga, não cansar. 2 séries por exercício, parando sobrando 3 a 4 repetições. Anote a carga de cada exercício. Semana 1 = repetir este treino; a carga sobe a partir da semana 2. ' + REGRA_BASE;
+  pri.exercicios = [mk('Supino máquina','2','10 a 12'), mk('Puxada alta','2','10 a 12'), mk('Leg press','2','10 a 12'), mk('Stiff','2','10 a 12'), mk('Elevação lateral','2','12')];
+  const con = nb('con'); con.nome = 'Condicionamento leve'; con.tipo = 'Aeróbico'; con.duracao = '8 min'; con.titulo = 'Cardio leve'; con.desc = '8 minutos em ritmo de conversa (dá para falar frases curtas), na bike, esteira ou elíptico.';
+  const id = sm.id + 'd' + dc++;
+  sm.dias.push({ id: id, nome: 'Chegada', diaSemana: '', sub: 'Treino de chegada · semana 1 = repetir', blocos: [atv, pri, con] });
+  renderAll(); renderKanbanSemana(sm.id);
+  notify('Treino de chegada criado. Confira os exercícios e o dia da semana.');
 }
 function removeDia(sid,did){const s=semanas.find(x=>x.id===sid);if(!s||s.dias.length<=1)return;s.dias=s.dias.filter(d=>d.id!==did);renderAll();nav(semanas[0].dias[0].id);notify('Dia removido.');}
 function moveDia(sid,did,dir){
@@ -9971,11 +9986,12 @@ function mbCobrarAtualizar(trocouPlano){
   const valor = Number(document.getElementById('cob-valor').value) || pl.precoBR;
   const a = _cob.a, nome = String(a.nome || '').trim().split(/\s+/)[0] || 'tudo bem';
   let code = '';
-  if (_cob.pix) { const it = _cob.pix.itens[Number(document.getElementById('cob-chave').value) || 0] || _cob.pix.itens[0]; code = mbPixPayload(it.chave, _cob.pix.nome, _cob.pix.cidade, valor, _cob.txid); }
+  if (_cob.pix && valor > 0) { const it = _cob.pix.itens[Number(document.getElementById('cob-chave').value) || 0] || _cob.pix.itens[0]; code = mbPixPayload(it.chave, _cob.pix.nome, _cob.pix.cidade, valor, _cob.txid); }
   _cob.code = code;
   const val = mbCobrarFmt(valor);
   let t;
-  if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
+  if (pl.id === 'av_mapa') t = `Oi, ${nome}! Tudo bem? 💪 Para começar, o primeiro passo é a Avaliação + Mapa: avaliação, fotos, medidas e um mapa de 1 página com o seu caminho. O valor é ${val}, e se você fechar o programa em até 7 dias esse valor vira crédito.`;
+  else if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
   else if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
   else t = `Oi, ${nome}! Sentimos sua falta por aqui 💪 Que tal voltar a treinar? Para reativar seu acesso ao MOVH (${pl.nome} · ${pl.dias} dias) o valor é ${val}. Você volta a ter acesso ao seu treino atual (sem treino novo).`;
@@ -10350,7 +10366,7 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     const pdfHtml = v.status === 'confirmada' ? `
       <div style="margin-top:8px">
         <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbAvalGerarPDF('${v.id}')">📄 Gerar PDF</button>
-        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ Mapa do aluno</button>
+        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ ${mbMapaAnterior(v) ? 'Mapa 2' : 'Mapa do aluno'}</button>
       </div>` : '';
     const diagnosticoHtml = v.diagnostico ? `<div style="font-size:10.5px;color:var(--tx);margin-top:6px;white-space:pre-wrap">${escAttr(v.diagnostico)}</div>` : '';
     return `<div style="padding:8px 0;border-bottom:1px solid var(--bd)">
@@ -10437,15 +10453,32 @@ renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this,
 let _mbMapa = null;
 const MAPA_VISTAS = [['frontal', 'Frontal'], ['posterior', 'Posterior'], ['lateral_d', 'Lateral D'], ['lateral_e', 'Lateral E']];
 const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;\nNOTIFY pgrst, \'reload schema\';';
+// Mapa 2: avaliação confirmada mais nova que a primeira do mesmo aluno (reavaliação); a primeira é o 'antes'.
+function mbMapaAnterior(row) {
+  const lst = (_mbAvaliacoesCache || []).filter(v => v.status === 'confirmada' && v.id !== row.id);
+  const dt = v => v.data_avaliacao || (v.created_at || '').slice(0, 10);
+  const ant = lst.filter(v => dt(v) && dt(v) < dt(row)).sort((a, b) => dt(a) < dt(b) ? -1 : 1)[0];
+  return ant || null;
+}
 function mbMapaPadrao(row) {
   const ach = Array.isArray(row.achados) ? row.achados : [];
   const bom = ach.filter(a => a.sev === 'ok').map(a => a.texto);
   const mel = ach.filter(a => a.sev !== 'ok').sort((a, b) => (a.sev === 'critico' ? 0 : 1) - (b.sev === 'critico' ? 0 : 1)).slice(0, 3).map(a => a.texto);
   const ini = row.data_avaliacao || (row.created_at || '').slice(0, 10) || new Date().toISOString().slice(0, 10);
+  const ant = mbMapaAnterior(row);
+  if (ant) {
+    const dif = (nome, k, un) => (ant[k] && row[k]) ? nome + ': ' + ant[k] + ' → ' + row[k] + ' ' + un : null;
+    [dif('Peso', 'peso', 'kg'), dif('Cintura', 'cintura', 'cm')].filter(Boolean).reverse().forEach(t => bom.unshift(t));
+  }
   return {
-    v: 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
+    v: 1, ciclo: ant ? 2 : 1, objetivo: '', semanas: 12, inicio: ini, bom, melhorar: mel,
     depende: ['3 treinos por semana, registrados no app', 'Dormir 7 a 8 horas e beber água ao longo do dia', 'Avisar dor ou desconforto no mesmo dia'],
-    marcos: [
+    marcos: ant ? [
+      { sem: 0, titulo: 'Ponto de partida (reavaliação)', texto: 'Mesmas fotos, medidas e teste de 3 km do ciclo anterior.' },
+      { sem: 4, titulo: 'Meio do ciclo 2', texto: 'Medidas, cargas, frequência e teste de 3 km.' },
+      { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
+      { sem: 12, titulo: 'Nova reavaliação', texto: 'Mesmas fotos, medidas e teste de 3 km; antes e depois do ciclo 2.' }
+    ] : [
       { sem: 0, titulo: 'Chegada', texto: 'Fotos posturais, medidas e testes.' },
       { sem: 4, titulo: 'Fim da Base', texto: 'Medidas, cargas, frequência e teste de 3 km.' },
       { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
@@ -14001,6 +14034,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
       </div>
       <div id="tDashConteudo"></div>
       <div class="xo-next" id="aXoNext"></div>
+      <div class="cam-card" id="tPrimeiroTreino" style="display:none;border-color:var(--P)"></div>
       <div class="cam-card" id="tCaminhoCard" style="display:none" onclick="aVerCaminho()" role="button"></div>
       <div class="dash-actions">
         <button class="vksbtn" id="tBtnProgresso" onclick="aVerProgresso()">📈 Meu progresso</button>
@@ -15149,6 +15183,7 @@ async function aBoot(sessionParam){
 
   aRenderProtocolo(proto);
   try { aCaminhoCarregar(); } catch (e) {}
+  try { aPrimeiroTreino(); } catch (e) {}
 }
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -16397,6 +16432,9 @@ const FASES_TEMPLATE_PT = {
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (última série 1)', carga:'Progressão dupla', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
     progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'],
     humano:['Esforço: termine cada série sentindo que ainda dava para fazer mais 2 repetições (na última série, 1).','Como evoluir: quando fizer o máximo de repetições em todas as séries e ainda sobrar fôlego, suba o menor peso possível.','Descanso: 2 min nos exercícios grandes e 1 min nos menores.'] },
+  consolidacao: { label:'Consolidação', emoji:'🟢', rpe:'7–8', rir:'2', carga:'Manter e afinar', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
+    progressao:['Semanas 9 a 12 do programa','Mantém as cargas da Construção e afina a técnica','Semana 12: testes e reavaliação'],
+    humano:['Objetivo: fixar o que você conquistou e afinar a técnica.','Esforço: mantenha as cargas da Construção e termine sobrando 2 repetições.','Como evoluir: só suba o peso se fizer todas as repetições com boa técnica.','Corrida: se o teste da semana 8 foi bom, entra 1 treino de tiros por semana.','Semana 12: testes e reavaliação para o seu próximo Mapa.'] },
   intensificacao: { label:'Intensificação', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderado', descanso:'Maior',
     progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'],
     humano:['Esforço: mais pesado; termine as séries sentindo que dava para fazer de 1 a 3 repetições a mais.','Como evoluir: na semana 1 suba o peso, na 2 mantenha e capriche na execução, na 3 chegue mais perto do limite.','Descanso: um pouco maior entre as séries.'] },
@@ -16408,6 +16446,9 @@ const FASES_TEMPLATE_PT = {
     humano:['Esforço: leve; termine as séries sobrando bastante, com 4 a 6 repetições a mais.','Como evoluir: semana de recuperação, sem aumentar o peso.','Descanso: livre.'] }
 };
 const FASES_TEMPLATE_EN = {
+  consolidacao: { label:'Consolidation', emoji:'🟢', rpe:'7–8', rir:'2', carga:'Hold and refine', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
+    progressao:['Weeks 9 to 12 of the program','Keeps the Build loads and refines technique','Week 12: tests and reassessment'],
+    humano:['Goal: lock in what you gained and polish your technique.','Effort: keep the Build loads and finish each set with 2 reps left.','How to progress: only add weight if every rep is clean.','Running: if your week 8 test went well, one speed session per week starts.','Week 12: tests and reassessment for your next Map.'] },
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (last set 1)', carga:'Double progression', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
     progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'],
     humano:['Effort: finish each set feeling you could still do 2 more reps (1 on the last set).','How to progress: when you hit the top reps on every set and still have energy left, go up by the smallest weight step.','Rest: 2 min on big lifts and 1 min on smaller ones.'] },
@@ -16618,10 +16659,10 @@ function aCalcularAgendaHoje(proto, semanas, dataAlvoISO){
 // Pace automático: zonas de Daniels (VDOT do teste de 3 km do aluno) quando não há ritmo digitado.
 var CP_ZONAS=['Recuperação','Fácil','Maratona','Limiar','Intervalo','Repetição'];
 var CP_MODELOS={
- continuo:{nome:'Contínuo',zona:1,obs:'rodagem em ritmo de conversa (zona Fácil); cerca de 80% do volume semanal deve ser fácil'},
+ continuo:{nome:'Contínuo',zona:1,obs:'ritmo de conversa (dá para falar frases curtas); cerca de 80% do que você corre na semana deve ser assim'},
  regenerativo:{nome:'Regenerativo',zona:0,obs:'bem leve e sem progressão: serve para recuperar'},
  longao:{nome:'Longão',zona:1,obs:'a sessão mais longa da semana, sempre em ritmo fácil'},
- tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e sustentável (RPE 6-7); só com base aeróbica e sem dor'},
+ tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e firme, dá para falar só poucas palavras; só com base de corrida e sem dor'},
  fartlek:{nome:'Fartlek',zona:3,obs:'alterna trechos fortes por percepção com trotes leves, sem relógio rígido'},
  intervalado:{nome:'Intervalado',zona:4,obs:'tiros com recuperação ativa; aumenta o número de tiros antes de acelerar'},
  caminhada:{nome:'Caminhada-corrida',zona:0,obs:'alterna corrida leve e caminhada; aumenta o tempo correndo aos poucos'}
@@ -16667,8 +16708,8 @@ function cpResumo(p){
 }
 function cpObs(p){
   var M=CP_MODELOS[p.modelo];
-  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assimilação: mantém o patamar de partida do ciclo, sem aumentar':(p.w>1?'semana de carga: +8% sobre a anterior':'semana de partida'));
-  return fase+'; '+M.obs+'; dor ou RPE 9+: repita a semana anterior';
+  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assentar: repete o nível da anterior, sem aumentar':(p.w>1?'semana de aumento: um pouco mais que a anterior':'semana de partida'));
+  return fase+'; '+M.obs+'; se sentir dor ou ficar muito cansado, repita a semana passada';
 }
 function cpSemanaGlobal(inicio,sems){
   var N=0,i;for(i=0;i<(sems||[]).length;i++)N+=parseInt(sems[i].duracaoSemanas,10)||4;if(!N)N=1;
@@ -16821,8 +16862,9 @@ function aFaseDetId(ctxPrefix){ return 'fasedet-' + ctxPrefix; }
 // Ao clicar, alterna a exibição do card de detalhe (aMontarCardFase) correspondente.
 function aMontarBadgeFase(semana, ctxPrefix){
   const FT = aFasesTemplate();
-  if (!semana.fase || !FT[semana.fase]) return '';
-  const ft = FT[semana.fase];
+  const _fk = (semana.nome === 'Consolidação' && FT.consolidacao) ? 'consolidacao' : semana.fase;
+  if (!semana.fase || !FT[_fk]) return '';
+  const ft = FT[_fk];
   const detId = aFaseDetId(ctxPrefix);
   return '<button type="button" class="fase-badge" data-tgt="' + detId + '" onclick="aToggleFaseDetalhe(this)">' + ft.emoji + ' ' + aEsc(ft.label) + ' <span class="fase-badge-arrow">▾</span></button>';
 }
@@ -16838,8 +16880,9 @@ function aToggleFaseDetalhe(btn){
 
 function aMontarCardFase(semana, semanaDentroFase, ctxPrefix){
   const FT = aFasesTemplate();
-  if (!semana.fase || !FT[semana.fase]) return '';
-  const ft = FT[semana.fase];
+  const _fk = (semana.nome === 'Consolidação' && FT.consolidacao) ? 'consolidacao' : semana.fase;
+  if (!semana.fase || !FT[_fk]) return '';
+  const ft = FT[_fk];
   const detId = aFaseDetId(ctxPrefix);
   const helpId = 'th-' + detId;
   if (ft.humano) {
@@ -16974,7 +17017,31 @@ function aCaminhoSemana(m){
 }
 function aCaminhoFase(m, sem){
   const t = m.semanas || 12;
-  return sem <= Math.round(t / 3) ? 'Começo' : (sem <= Math.round(t * 2 / 3) ? 'Meio' : 'Fim');
+  return sem <= Math.round(t / 3) ? 'Base' : (sem <= Math.round(t * 2 / 3) ? 'Construção' : 'Consolidação');
+}
+// Treinos por semana do protocolo (dias da semana 1) e treinos já feitos desde o início do Mapa.
+let aCaminhoFeitos = null;
+function aCaminhoDiasSem(){
+  try { const sm = aProtocolo && aProtocolo.conteudo && aProtocolo.conteudo.semanas; const d = sm && sm[0] && sm[0].dias; return d && d.length ? d.length : 0; } catch (e) { return 0; }
+}
+function aCaminhoTreinoTxt(m){
+  const ds = aCaminhoDiasSem(), tot = m.semanas || 12;
+  if (!ds || aCaminhoFeitos == null) return '';
+  return 'Treino ' + Math.min(aCaminhoFeitos + 1, ds * tot) + ' de ' + (ds * tot);
+}
+// Treino de chegada: só para quem ainda não registrou nenhuma sessão. Semana 1 = acerto de carga.
+async function aPrimeiroTreino(){
+  const el = document.getElementById('tPrimeiroTreino'); if (!el) return;
+  el.style.display = 'none';
+  if (window._movhPreview || !aAlunoRow || !aAlunoRow.id) return;
+  try {
+    const q = await aClient.from('rpe_sessoes').select('id').eq('aluno_id', aAlunoRow.id).limit(1);
+    if (q.error || (q.data && q.data.length)) return;
+  } catch (e) { return; }
+  el.innerHTML = '<div class="cam-top"><b>👋 Seu primeiro treino</b></div>' +
+    '<div class="cam-prox" style="font-size:12.5px;line-height:1.5;color:var(--tx)">Hoje o objetivo é achar a sua carga, não cansar: pare cada série sobrando 3 ou 4 repetições.</div>' +
+    '<div class="cam-prox">A semana 1 é de acerto: você repete este treino e a carga sobe a partir da semana 2. Anotar a carga faz parte do treino.</div>';
+  el.style.display = 'block';
 }
 async function aCaminhoCarregar(){
   aCaminhoMapa = null; aCaminhoRow = null;
@@ -16990,6 +17057,11 @@ async function aCaminhoCarregar(){
     if (!row) return;
     aCaminhoRow = row; aCaminhoMapa = row.mapa;
   } catch (e) { return; }
+  aCaminhoFeitos = null;
+  try {
+    const q = await aClient.from('rpe_sessoes').select('criado_em').eq('aluno_id', aAlunoRow.id).gte('criado_em', (aCaminhoMapa.inicio || '2000-01-01') + 'T00:00:00');
+    if (!q.error) aCaminhoFeitos = new Set((q.data || []).map(function(x){ return String(x.criado_em).slice(0,10); })).size;
+  } catch (e) {}
   aCaminhoRenderCard();
 }
 function aCaminhoRenderCard(){
@@ -16998,8 +17070,10 @@ function aCaminhoRenderCard(){
   const sem = aCaminhoSemana(m), tot = m.semanas || 12;
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDiaMarco(m, x.sem); return d && d >= hoje; });
-  card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
+  const trn = aCaminhoTreinoTxt(m);
+  card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>' + aCaminhoFase(m, sem) + ' · Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
     '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
+    (trn ? '<div class="cam-prox">' + trn + '</div>' : '') +
     (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDiaMarco(m, prox.sem)) + '</div>' : '');
   card.style.display = 'block';
 }
@@ -17039,7 +17113,8 @@ async function aVerCaminho(){
   const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
     .map(function(x){ return '<div class="cam-med"><small>' + x[0] + '</small><b>' + x[1] + '</b></div>'; }).join('');
   document.getElementById('tCaminhoConteudo').innerHTML =
-    '<div class="cam-hd"><b>🧭 Seu caminho</b><span class="cam-chip">Semana ' + sem + ' de ' + tot + ' · ' + fase + '</span></div>' +
+    '<div class="cam-hd"><b>🧭 Seu caminho</b><span class="cam-chip">' + fase + ' · Semana ' + sem + ' de ' + tot + '</span></div>' +
+    (aCaminhoTreinoTxt(m) ? '<div class="cam-sub" style="margin:-4px 2px 8px">' + aCaminhoTreinoTxt(m) + '</div>' : '') +
     aCaminhoBox('Sua meta', '<div class="cam-big">' + aEsc(m.objetivo || 'Seu objetivo') + '</div><div class="cam-sub">' + tot + ' semanas · reavaliação na semana ' + tot + '</div><div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>') +
     aCaminhoBox('Marcos', '<div class="cam-tl">' + tl + '</div>') +
     '<button class="vksbtn cam-link" onclick="aVerProgresso()">📈 Cargas e histórico ›</button>' +
@@ -18836,6 +18911,7 @@ const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'R
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
 const PL_PRESENCIAL = [
   { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
+  { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:0 },
   { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220 },
   { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
   { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
