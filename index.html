@@ -2262,10 +2262,10 @@ function setSemFoco(sid,campo,v){
 // Pace automático: zonas de Daniels (VDOT do teste de 3 km do aluno) quando não há ritmo digitado.
 var CP_ZONAS=['Recuperação','Fácil','Maratona','Limiar','Intervalo','Repetição'];
 var CP_MODELOS={
- continuo:{nome:'Contínuo',zona:1,obs:'rodagem em ritmo de conversa (zona Fácil); cerca de 80% do volume semanal deve ser fácil'},
+ continuo:{nome:'Contínuo',zona:1,obs:'ritmo de conversa (dá para falar frases curtas); cerca de 80% do que você corre na semana deve ser assim'},
  regenerativo:{nome:'Regenerativo',zona:0,obs:'bem leve e sem progressão: serve para recuperar'},
  longao:{nome:'Longão',zona:1,obs:'a sessão mais longa da semana, sempre em ritmo fácil'},
- tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e sustentável (RPE 6-7); só com base aeróbica e sem dor'},
+ tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e firme, dá para falar só poucas palavras; só com base de corrida e sem dor'},
  fartlek:{nome:'Fartlek',zona:3,obs:'alterna trechos fortes por percepção com trotes leves, sem relógio rígido'},
  intervalado:{nome:'Intervalado',zona:4,obs:'tiros com recuperação ativa; aumenta o número de tiros antes de acelerar'},
  caminhada:{nome:'Caminhada-corrida',zona:0,obs:'alterna corrida leve e caminhada; aumenta o tempo correndo aos poucos'}
@@ -2311,8 +2311,8 @@ function cpResumo(p){
 }
 function cpObs(p){
   var M=CP_MODELOS[p.modelo];
-  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assimilação: mantém o patamar de partida do ciclo, sem aumentar':(p.w>1?'semana de carga: +8% sobre a anterior':'semana de partida'));
-  return fase+'; '+M.obs+'; dor ou RPE 9+: repita a semana anterior';
+  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assentar: repete o nível da anterior, sem aumentar':(p.w>1?'semana de aumento: um pouco mais que a anterior':'semana de partida'));
+  return fase+'; '+M.obs+'; se sentir dor ou ficar muito cansado, repita a semana passada';
 }
 function cpSemanaGlobal(inicio,sems){
   var N=0,i;for(i=0;i<(sems||[]).length;i++)N+=parseInt(sems[i].duracaoSemanas,10)||4;if(!N)N=1;
@@ -14001,6 +14001,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
       </div>
       <div id="tDashConteudo"></div>
       <div class="xo-next" id="aXoNext"></div>
+      <div class="cam-card" id="tPrimeiroTreino" style="display:none;border-color:var(--P)"></div>
       <div class="cam-card" id="tCaminhoCard" style="display:none" onclick="aVerCaminho()" role="button"></div>
       <div class="dash-actions">
         <button class="vksbtn" id="tBtnProgresso" onclick="aVerProgresso()">📈 Meu progresso</button>
@@ -15149,6 +15150,7 @@ async function aBoot(sessionParam){
 
   aRenderProtocolo(proto);
   try { aCaminhoCarregar(); } catch (e) {}
+  try { aPrimeiroTreino(); } catch (e) {}
 }
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
@@ -16397,6 +16399,9 @@ const FASES_TEMPLATE_PT = {
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (última série 1)', carga:'Progressão dupla', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
     progressao:['Fase única de 8 semanas','Topo da faixa em todas as séries com RIR ≥2 → sobe a menor carga','Revisão a cada 4 semanas pelos registros e dor'],
     humano:['Esforço: termine cada série sentindo que ainda dava para fazer mais 2 repetições (na última série, 1).','Como evoluir: quando fizer o máximo de repetições em todas as séries e ainda sobrar fôlego, suba o menor peso possível.','Descanso: 2 min nos exercícios grandes e 1 min nos menores.'] },
+  consolidacao: { label:'Consolidação', emoji:'🟢', rpe:'7–8', rir:'2', carga:'Manter e afinar', volume:'Alto', descanso:'Compostos 2 min · isoladores 1 min',
+    progressao:['Semanas 9 a 12 do programa','Mantém as cargas da Construção e afina a técnica','Semana 12: testes e reavaliação'],
+    humano:['Objetivo: fixar o que você conquistou e afinar a técnica.','Esforço: mantenha as cargas da Construção e termine sobrando 2 repetições.','Como evoluir: só suba o peso se fizer todas as repetições com boa técnica.','Corrida: se o teste da semana 8 foi bom, entra 1 treino de tiros por semana.','Semana 12: testes e reavaliação para o seu próximo Mapa.'] },
   intensificacao: { label:'Intensificação', emoji:'🔴', rpe:'7–9', rir:'1–3', carga:'~75–90%', volume:'Moderado', descanso:'Maior',
     progressao:['Semana 1: sobe carga','Semana 2: mantém carga + melhora execução','Semana 3: aproxima da falha (RIR 1–2)'],
     humano:['Esforço: mais pesado; termine as séries sentindo que dava para fazer de 1 a 3 repetições a mais.','Como evoluir: na semana 1 suba o peso, na 2 mantenha e capriche na execução, na 3 chegue mais perto do limite.','Descanso: um pouco maior entre as séries.'] },
@@ -16408,6 +16413,9 @@ const FASES_TEMPLATE_PT = {
     humano:['Esforço: leve; termine as séries sobrando bastante, com 4 a 6 repetições a mais.','Como evoluir: semana de recuperação, sem aumentar o peso.','Descanso: livre.'] }
 };
 const FASES_TEMPLATE_EN = {
+  consolidacao: { label:'Consolidation', emoji:'🟢', rpe:'7–8', rir:'2', carga:'Hold and refine', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
+    progressao:['Weeks 9 to 12 of the program','Keeps the Build loads and refines technique','Week 12: tests and reassessment'],
+    humano:['Goal: lock in what you gained and polish your technique.','Effort: keep the Build loads and finish each set with 2 reps left.','How to progress: only add weight if every rep is clean.','Running: if your week 8 test went well, one speed session per week starts.','Week 12: tests and reassessment for your next Map.'] },
   base: { label:'Base', emoji:'🔵', rpe:'7–8', rir:'2 (last set 1)', carga:'Double progression', volume:'High', descanso:'Compounds 2 min · isolations 1 min',
     progressao:['Single 8-week phase','Top of the range on all sets with RIR ≥2 → raise the lightest load','Review every 4 weeks using logs and pain'],
     humano:['Effort: finish each set feeling you could still do 2 more reps (1 on the last set).','How to progress: when you hit the top reps on every set and still have energy left, go up by the smallest weight step.','Rest: 2 min on big lifts and 1 min on smaller ones.'] },
@@ -16618,10 +16626,10 @@ function aCalcularAgendaHoje(proto, semanas, dataAlvoISO){
 // Pace automático: zonas de Daniels (VDOT do teste de 3 km do aluno) quando não há ritmo digitado.
 var CP_ZONAS=['Recuperação','Fácil','Maratona','Limiar','Intervalo','Repetição'];
 var CP_MODELOS={
- continuo:{nome:'Contínuo',zona:1,obs:'rodagem em ritmo de conversa (zona Fácil); cerca de 80% do volume semanal deve ser fácil'},
+ continuo:{nome:'Contínuo',zona:1,obs:'ritmo de conversa (dá para falar frases curtas); cerca de 80% do que você corre na semana deve ser assim'},
  regenerativo:{nome:'Regenerativo',zona:0,obs:'bem leve e sem progressão: serve para recuperar'},
  longao:{nome:'Longão',zona:1,obs:'a sessão mais longa da semana, sempre em ritmo fácil'},
- tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e sustentável (RPE 6-7); só com base aeróbica e sem dor'},
+ tempo:{nome:'Tempo run (limiar)',zona:3,obs:'ritmo forte e firme, dá para falar só poucas palavras; só com base de corrida e sem dor'},
  fartlek:{nome:'Fartlek',zona:3,obs:'alterna trechos fortes por percepção com trotes leves, sem relógio rígido'},
  intervalado:{nome:'Intervalado',zona:4,obs:'tiros com recuperação ativa; aumenta o número de tiros antes de acelerar'},
  caminhada:{nome:'Caminhada-corrida',zona:0,obs:'alterna corrida leve e caminhada; aumenta o tempo correndo aos poucos'}
@@ -16667,8 +16675,8 @@ function cpResumo(p){
 }
 function cpObs(p){
   var M=CP_MODELOS[p.modelo];
-  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assimilação: mantém o patamar de partida do ciclo, sem aumentar':(p.w>1?'semana de carga: +8% sobre a anterior':'semana de partida'));
-  return fase+'; '+M.obs+'; dor ou RPE 9+: repita a semana anterior';
+  var fase=(p.modelo==='regenerativo')?'sem progressão (recuperação)':(p.assim?'semana de assentar: repete o nível da anterior, sem aumentar':(p.w>1?'semana de aumento: um pouco mais que a anterior':'semana de partida'));
+  return fase+'; '+M.obs+'; se sentir dor ou ficar muito cansado, repita a semana passada';
 }
 function cpSemanaGlobal(inicio,sems){
   var N=0,i;for(i=0;i<(sems||[]).length;i++)N+=parseInt(sems[i].duracaoSemanas,10)||4;if(!N)N=1;
@@ -16821,8 +16829,9 @@ function aFaseDetId(ctxPrefix){ return 'fasedet-' + ctxPrefix; }
 // Ao clicar, alterna a exibição do card de detalhe (aMontarCardFase) correspondente.
 function aMontarBadgeFase(semana, ctxPrefix){
   const FT = aFasesTemplate();
-  if (!semana.fase || !FT[semana.fase]) return '';
-  const ft = FT[semana.fase];
+  const _fk = (semana.nome === 'Consolidação' && FT.consolidacao) ? 'consolidacao' : semana.fase;
+  if (!semana.fase || !FT[_fk]) return '';
+  const ft = FT[_fk];
   const detId = aFaseDetId(ctxPrefix);
   return '<button type="button" class="fase-badge" data-tgt="' + detId + '" onclick="aToggleFaseDetalhe(this)">' + ft.emoji + ' ' + aEsc(ft.label) + ' <span class="fase-badge-arrow">▾</span></button>';
 }
@@ -16838,8 +16847,9 @@ function aToggleFaseDetalhe(btn){
 
 function aMontarCardFase(semana, semanaDentroFase, ctxPrefix){
   const FT = aFasesTemplate();
-  if (!semana.fase || !FT[semana.fase]) return '';
-  const ft = FT[semana.fase];
+  const _fk = (semana.nome === 'Consolidação' && FT.consolidacao) ? 'consolidacao' : semana.fase;
+  if (!semana.fase || !FT[_fk]) return '';
+  const ft = FT[_fk];
   const detId = aFaseDetId(ctxPrefix);
   const helpId = 'th-' + detId;
   if (ft.humano) {
@@ -16985,6 +16995,20 @@ function aCaminhoTreinoTxt(m){
   const ds = aCaminhoDiasSem(), tot = m.semanas || 12;
   if (!ds || aCaminhoFeitos == null) return '';
   return 'Treino ' + Math.min(aCaminhoFeitos + 1, ds * tot) + ' de ' + (ds * tot);
+}
+// Treino de chegada: só para quem ainda não registrou nenhuma sessão. Semana 1 = acerto de carga.
+async function aPrimeiroTreino(){
+  const el = document.getElementById('tPrimeiroTreino'); if (!el) return;
+  el.style.display = 'none';
+  if (window._movhPreview || !aAlunoRow || !aAlunoRow.id) return;
+  try {
+    const q = await aClient.from('rpe_sessoes').select('id').eq('aluno_id', aAlunoRow.id).limit(1);
+    if (q.error || (q.data && q.data.length)) return;
+  } catch (e) { return; }
+  el.innerHTML = '<div class="cam-top"><b>👋 Seu primeiro treino</b></div>' +
+    '<div class="cam-prox" style="font-size:12.5px;line-height:1.5;color:var(--tx)">Hoje o objetivo é achar a sua carga, não cansar: pare cada série sobrando 3 ou 4 repetições.</div>' +
+    '<div class="cam-prox">A semana 1 é de acerto: você repete este treino e a carga sobe a partir da semana 2. Anotar a carga faz parte do treino.</div>';
+  el.style.display = 'block';
 }
 async function aCaminhoCarregar(){
   aCaminhoMapa = null; aCaminhoRow = null;
