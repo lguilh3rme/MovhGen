@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v63.7 · 13/11';
+var MOVH_VER = 'v64.0 · 14/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12048,7 +12048,8 @@ async function mbSugerirProximaFase(protoId, alunoId){
     const _t3 = Array.isArray(ts.data) && ts.data[0] && ts.data[0].data ? ts.data[0].data : null;
     const teste3Sem = _t3 ? Math.max(0, Math.floor((_hoje - new Date(_t3+'T00:00:00')) / (7*_dia))) : null;
     const condDec = pfCondDecisao({ ader: aderPct, rpeMed: rpeCond, testeSem: teste3Sem, dor: dorAtiva });
-    const condMud = pfCondAplicar(sem.dias, condDec.nivel);
+    const ciclo2 = total >= 12;   // vigente com 12+ semanas = programa completo: o próximo é o Ciclo 2 (sem voltar ao início)
+    const condMud = pfCondAplicar(sem.dias, condDec.nivel, ciclo2 ? 9 : undefined);
     if (condMud.length) {
       const rot = { progride:'Corrida: progride', mantem:'Corrida: mantém', recua:'Corrida: recua −20%, sem intensidade' }[condDec.nivel];
       alertas.push({ t: condDec.nivel === 'progride' ? 'ok' : 'av', x: rot + ' (' + condDec.motivos.join(' · ') + ')' });
@@ -12056,6 +12057,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
       if (condDec.nivel === 'recua') alertas.push({ t:'av', x:'Demanda: refazer o teste de 3 km antes de voltar a subir o volume' });
       if (condDec.nivel === 'progride' && condMud.every(m => m.facil)) alertas.push({ t:'ok', x:'Já fechou uma fase inteira em ritmo Fácil: pode incluir 1 sessão de qualidade por semana (Limiar ou Intervalo, pace do VDOT atual), à mão' });
     }
+    if (ciclo2) alertas.push({ t:'ok', x:'Ciclo 2 (12 sem): semana 1 = reacerto de cargas (sem Adaptação); Construção + Consolidação de 4 sem; testes de 3 km nas semanas 4, 8 e 12; corrida parte do patamar da semana 9' });
     // volume mínimo ~10 séries/sem por músculo: sugere até 3 exercícios novos (3×10-12, 1')
     const vol0 = pfVolume(sem);
     PF_MUSCULOS.filter(m => m.sug).map(m => ({m, n: vol0[m.k]||0, min: m.volMin || 10})).filter(x => x.n < x.min).sort((x,y) => x.n - y.n).slice(0,3).forEach(x => {
@@ -12083,7 +12085,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     if (rpeMed != null && rpeMed <= 4) alertas.push({t:'av', x:'RPE médio '+rpeMed.toFixed(1)+': sessões leves — pode apertar a carga'});
     const diasReg = new Set((rg.data||[]).map(r => String(r.criado_em).slice(0,10))).size;
     if (diasReg < 15) alertas.push({t:'av', x:'Poucos registros: '+diasReg+' dia(s) com carga em 10 semanas — peça ao menos 3 por semana (a progressão dupla depende deles)'});
-    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: iniIso, alertas,
+    _pf = { alunoId, alunoNome: a ? a.nome : '', base: c, sem, novoDe: protoId, data: iniIso, alertas, ciclo2,
       ctx: [['Fase vigente', (vig.nome||'—')+' · semana '+semAtual+' de '+total], ['Histórico', sems.length+' mesociclo'+(sems.length!==1?'s':'')+' · '+total+' sem'],
             ['Nível', resp && resp.tempo_treino ? String(resp.tempo_treino) : '—'], ['RPE médio', rpeMed != null ? rpeMed.toFixed(1) : 'sem dados'], ['Registros (10 sem)', diasReg+' dia(s)']]
         .concat(condMud.length ? [['Aderência (4 sem)', aderPct != null ? aderPct+'%' : 'sem dados'], ['Teste de 3 km', teste3Sem != null ? 'há '+teste3Sem+' sem' : 'nenhum']] : []) };
@@ -12139,8 +12141,18 @@ async function pfSalvar(ativar){
   sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => { delete e._novo; delete e._restAlt; })));
   const b0 = P.base || {};
   const nomeBase = String(b0.nome || 'Protocolo').split('·')[0].trim();
-  const nome = nomeBase + ' · Base 8 sem';
-  const conteudo = { nome, icone: b0.icone || '💪', desc: b0.desc || '', divisao: b0.divisao || '', lang: b0.lang, semanas: [sem], testesAgendados: [], overrides: {}, fimPrevisto: null };
+  const nome = nomeBase + (P.ciclo2 ? ' · Ciclo 2 · 12 sem' : ' · Base 8 sem');
+  const semsNovas = [sem], testesNovos = [];
+  if (P.ciclo2) {
+    // Ciclo 2: Construção (8 sem, o rascunho) + Consolidação de 4 sem (cópia, para ajustar) e testes de 3 km nas semanas 4, 8 e 12
+    sem.duracaoSemanas = 8;
+    const cl = JSON.parse(JSON.stringify(sem)); const sid = 's' + sc++;
+    cl.id = sid; cl.nome = 'Consolidação'; cl.duracaoSemanas = 4;
+    (cl.dias || []).forEach(d => { d.id = sid + 'd' + dc++; });
+    semsNovas.push(cl);
+    [3, 7, 11].forEach(i => testesNovos.push({ semana: i, dia: 'Quarta', tipo: 'condicionamento' }));
+  }
+  const conteudo = { nome, icone: b0.icone || '💪', desc: b0.desc || '', divisao: b0.divisao || '', lang: b0.lang, semanas: semsNovas, testesAgendados: testesNovos, overrides: {}, fimPrevisto: null };
   try {
     const { data, error } = await mbClient.from('protocolos').insert({ aluno_id: P.alunoId, professor_id: mbProfessor.id, nome, conteudo, ativo: false, data_inicio: P.data }).select('id').maybeSingle();
     if (error) throw error;

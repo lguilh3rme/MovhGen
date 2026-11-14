@@ -27,8 +27,10 @@ chk bulk 26 0 python3 $T/bulk.py $R/index.html $T/gpage.py $X
 chk kbm 20 0 python3 $T/kbm.py
 chk prox_fase 8 0 python3 $T/prox_fase.py $R/index.html
 chk prox_cond 14 0 python3 $T/prox_cond.py $R/index.html
-chk cp_engine 19 0 node $T/cp_engine.js $R/index.html
-chk pf_cond 33 0 node $T/pf_cond.js $R/index.html
+chk cp_engine 20 0 node $T/cp_engine.js $R/index.html
+chk pf_cond 34 0 node $T/pf_cond.js $R/index.html
+chk prog12 4 0 python3 $T/prog12.py $R/index.html
+chk ciclo2 9 0 python3 $T/ciclo2.py $R/index.html
 chk app_header 2 0 python3 $T/app_header.py $X/app/app.html
 chk app_personal 3 0 python3 $T/app_personal.py $X/app/app.html
 chk t.py_link 1 1 python3 $T/t.py $X/app/app.html   # 1 FAIL esperado (caminho de erro de propósito)
