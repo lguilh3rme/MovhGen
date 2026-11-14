@@ -40,7 +40,7 @@ Trilhas pela anamnese ("corre com frequência?"):
 - Medida para o aluno: "tempo correndo sem parar", "distância em 30 min", tempo do 3 km.
 
 ### Caminhada-corrida acelerada (proposta)
-Hoje: +1 min correndo por ciclo de 4 sem (1 → 3 min em 12 sem). Proposta: **+1 min correndo por semana de carga**, semanas 4, 8, 12 e 16 repetem a anterior (assentam); duração total da sessão segue +8%/sem do motor, completada com caminhada.
+Hoje (conferido no `cpPlano`, 14/11): corre = 1 + ciclo, anda = 2, repetições = duração base ÷ 3 (7 para 20 min). O minuto a mais por ciclo também estica a sessão: 21 min (sem 1–4) → 28 (5–8) → 35 (9–12), com tempo correndo total 7 → 14 → 21 min. Proposta: **+1 min correndo por semana de carga**, semanas 4, 8, 12 e 16 repetem a anterior (assentam); duração total da sessão FIXA na duração base (ex.: 25–30 min) e as repetições recalculadas (reps = duração ÷ (corre + anda)), então a caminhada diminui sozinha. Muda `cpPlano` (ramo caminhada) nas duas cópias.
 Tempo correndo por série: sem 1: 1 · 2: 2 · 3: 3 · 4: 3 (assenta) · 5: 4 · 6: 5 · 7: 6 · 8: 6 (assenta) · 9: 7 · 10: 8 · 11: 9 · 12: 9 (assenta) · 13: 10 · 14: 11 · 15: 12 · 16: 12 (assenta). Passa a modelo **contínuo** quando fizer 10 min seguidos em 2 sessões. Dor ou RPE ≥ 9: repete a semana anterior (regra já usada na Base).
 Essa curva é prática moderada, não protocolo validado: é mais lenta que o NHS C25K no início e mais rápida que o motor atual.
 
