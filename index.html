@@ -10617,7 +10617,7 @@ async function mbMapaAtualizarFotos() {
     const f = _mbMapa.m.fotos[k], ua = (u && f.antes) ? await mbMapaFotoUrl(k, true) : null, op = f.show ? '' : ';opacity:.3';
     const L = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
     const im = (x, cap) => '<div style="flex:1;min-width:0"><img src="' + x + '" style="width:100%;display:block;border-radius:8px' + op + '">' + (cap ? '<div style="font-size:9px;color:var(--t3);text-align:center;margin-top:2px">' + cap + '</div>' : '') + '</div>';
-    el.innerHTML = u ? (ua ? '<div style="display:flex;gap:4px">' + im(ua, 'Antes ' + L(f.antes_data)) + im(u, 'Agora ' + L(f.src_data || _mbMapa.row.data_avaliacao)) + '</div>' : im(u, '')) : '<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto</div>';
+    el.innerHTML = u ? (ua ? '<div style="display:flex;gap:4px">' + im(ua, 'Antes ' + L(f.antes_data)) + im(u, 'Agora ' + L(f.src_data || _mbMapa.row.data_avaliacao)) + '</div>' : im(u, '')) : '<div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto desta vista</div>';
   }
   if (_mbMapa.prev) mbMapaPrevia();
 }
@@ -10678,7 +10678,7 @@ function mbMapaRender() {
     const f = m.fotos[k], opts = mbMapaFotosDaVista(k), atual = mbMapaSrc(k);
     const sel = (rot, list, cur, campo, vazio) => `<label style="font-size:9.5px;color:var(--t3);display:block;margin-top:4px">${rot}<select onchange="mbMapaFoto('${k}','${campo}',this.value)" style="${inp}">${vazio ? '<option value="">— sem comparação —</option>' : ''}${list.map(o => `<option value="${E(o.path)}" ${o.path === cur ? 'selected' : ''}>${L(o.data)}</option>`).join('')}</select></label>`;
     return `<div style="min-width:0"><div style="font-size:11px;font-weight:700;margin-bottom:3px">${n}</div><div id="mapa-ft-${k}"></div>
-      <label style="font-size:10px;display:block;margin-top:4px"><input type="checkbox" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar ao aluno</label>
+      <label style="font-size:10px;display:flex;align-items:center;gap:5px;margin-top:4px"><input type="checkbox" style="width:auto;margin:0" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar ao aluno</label>
       <div style="display:flex;gap:6px;align-items:center;margin-top:3px"><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="mbMapaFoto('${k}','rot')">↻ girar</button><input type="range" min="1" max="1.6" step="0.05" value="${f.zoom}" oninput="mbMapaFoto('${k}','zoom',this.value)" style="flex:1" title="Zoom"></div>
       ${opts.length > 1 ? sel('Foto de agora', opts, atual, 'src', false) + sel('Comparar com (antes)', opts.filter(o => o.path !== atual), f.antes, 'antes', true) : ''}</div>`;
   }).join('');
