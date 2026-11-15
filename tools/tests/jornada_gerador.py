@@ -23,7 +23,23 @@ with sync_playwright() as p:
     ok(r['c1']==1 and r['c2']==2 and r['t1']=='Chegada' and 'reavaliação' in r['t2'],'Mapa 1 x Mapa 2: '+str(r))
     ok('Peso: 82 → 79.5 kg' in r['bom'] and 'Cintura: 90 → 86 cm' in r['bom'],'Mapa 2 traz antes e depois de peso e cintura')
     ok(r['ant'] and not r['ant1'],'só a reavaliação conta como Mapa 2')
-    r=pg.evaluate("PL_PRESENCIAL.some(function(x){return x.id==='av_mapa'&&x.precoBR===0&&/Degrau 1/.test(x.grupo)})")
-    ok(r,'degrau 1 Avaliação + Mapa no catálogo do Cobrar (valor a digitar)')
+    r=pg.evaluate("""()=>{
+      const m={inicio:'2026-11-02'}, t=[{semana:3,dia:'Quarta'}];
+      return {s0:mbMapaDataAgenda(m,0,t),s4:mbMapaDataAgenda(m,4,t),s8:mbMapaDataAgenda(m,8,t),s12:mbMapaDataAgenda(m,12,[{semana:11,dia:'Sexta'}])};}""")
+    ok(r['s0']=='2026-11-02' and r['s4']=='2026-11-25' and r['s8']=='2026-12-27' and r['s12']=='2027-01-22','agenda dos marcos segue os testes do treino: '+str(r))
+    r=pg.evaluate("""()=>{
+      const a1={id:'a1',status:'confirmada',data_avaliacao:'2026-08-01',foto_frontal_path:'p1',achados:[]}, a2={id:'a2',status:'confirmada',data_avaliacao:'2026-11-01',foto_frontal_path:'p2',achados:[]};
+      _mbAvaliacoesCache=[a1,a2]; const m2=mbMapaPadrao(a2), m1=mbMapaPadrao(a1);
+      _mbMapa={m:m2,row:a2,testes:[],urls:{},cache:{},avalId:'a2',alunoId:'x'};
+      const h=mbMapaHtmlAluno(m2,a2,{frontal:'data:a',frontal_antes:'data:b'});
+      return {antes:m2.fotos.frontal.antes,d:m2.fotos.frontal.antes_data,sem1:m1.fotos.frontal.antes,html:h.indexOf('Antes e depois')>=0&&h.indexOf('Agora')>=0};}""")
+    ok(r['antes']=='p1' and r['d']=='2026-08-01' and r['sem1'] is None and r['html'],'Mapa 2 liga antes e depois e a prévia mostra os dois: '+str(r))
+    r=pg.evaluate("""()=>{ window.mbAbrirAvaliacoes=async()=>{}; 
+      const a2=_mbAvaliacoesCache[1]; _mbMapa={m:mbMapaPadrao(a2),row:a2,testes:[{semana:3,dia:'Quarta'}],protoIni:'2026-11-09',urls:{},cache:{},avalId:'a2',alunoId:'x',ab:{}};
+      document.body.insertAdjacentHTML('beforeend','<div id="mb-mapa-body"></div>'); mbMapaRender(); const h=document.getElementById('mb-mapa-body').innerText;
+      return {sec:['Meta e prazo','Fotos que o aluno vê','Diagnóstico em linguagem simples','Caminho e agenda'].every(x=>h.indexOf(x)>=0),aval:h.indexOf('Da avaliação de')>=0,ini:h.indexOf('diferente do início do treino')>=0,comp:h.indexOf('Comparar com')>=0};}""")
+    ok(r['sec'] and r['aval'] and r['ini'] and r['comp'],'editor novo: seções, avaliação, aviso de início e comparação: '+str(r))
+    r=pg.evaluate("PL_PRESENCIAL.some(function(x){return x.id==='av_mapa'&&x.precoBR===150&&/Degrau 1/.test(x.grupo)})")
+    ok(r,'degrau 1 Avaliação + Mapa no catálogo do Cobrar R$ 150')
     ok(not errs,'sem pageerror '+str(errs[:2])); b.close()
 print('FALHAS:',len(F)); sys.exit(1 if F else 0)

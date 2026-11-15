@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.1 · 14/11';
+var MOVH_VER = 'v64.2 · 15/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9811,7 +9811,7 @@ function renderPainelAlunos() {
            style="font-size:11px;padding:4px 10px;color:var(--G);border-color:var(--G)">↩ Restaurar</button>
          <button class="btn" title="Excluir permanentemente" data-id="${a.id}" onclick="mbExcluirDefinitivo(this.dataset.id)"
            style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#c03030;border-color:#f0b0b0">✕ Excluir</button>`
-      : `${btnsProto}<button type="button" class="btn bs" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="font-size:10px;padding:3px 8px;white-space:nowrap;width:auto;flex:none">🧭 Caminho</button><button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
+      : `${btnsProto}<button type="button" class="btn bs" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="font-size:10px;padding:3px 8px;white-space:nowrap;width:auto;flex:none">🧭 Caminho</button><button type="button" class="btn bs" onclick="mbMapaDoAluno('${a.id}')" title="Abre o Mapa da última avaliação confirmada deste aluno" style="font-size:10px;padding:3px 8px;white-space:nowrap;width:auto;flex:none">🗺️ Mapa</button><button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
          <label class="toggle-sw" title="${bloqueado?'Liberar acesso':'Bloquear acesso'}" style="margin-right:2px">
            <input type="checkbox" ${bloqueado?'':'checked'} data-id="${a.id}" onchange="mbToggleAlunoAtivo(this.dataset.id,this.checked)"/>
            <span class="toggle-sw-slider"></span>
@@ -10334,6 +10334,8 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     (signed || []).forEach(s => { if (s.signedUrl) urlMap[s.path] = s.signedUrl; });
   }
   _mbAvaliacoesUrlMap = urlMap;
+  _mbMapaStatus = {};
+  try { const rm = await mbClient.from('avaliacoes_fisicas').select('id, mapa').eq('aluno_id', alunoId); if (!rm.error) (rm.data || []).forEach(x => { if (x.mapa) _mbMapaStatus[x.id] = { pub: !!x.mapa.publicado }; }); } catch (e) {}
 
   const statusLabel = { solicitada: '⏳ Solicitada, aguardando fotos', pendente_revisao: '📋 Aguardando sua revisão', confirmada: '✅ Confirmada' };
   const confirmadas = data.filter(v => v.status === 'confirmada');
@@ -10366,8 +10368,9 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
     const pdfHtml = v.status === 'confirmada' ? `
       <div style="margin-top:8px">
         <button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbAvalGerarPDF('${v.id}')">📄 Gerar PDF</button>
-        <button class="btn bp" style="font-size:10px;padding:4px 10px;margin-left:4px" onclick="mbMapaAbrir('${v.id}')">🗺️ ${mbMapaAnterior(v) ? 'Mapa 2' : 'Mapa do aluno'}</button>
       </div>` : '';
+    const ms = _mbMapaStatus[v.id];
+    const mapaHtml = v.status === 'confirmada' ? `<div style="margin-top:8px;padding:8px 10px;border:1px solid var(--P,#7C74DC);border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap"><div style="font-size:11px"><b>🗺️ ${mbMapaAnterior(v) ? 'Mapa 2' : 'Mapa do aluno'}</b> · ${ms ? (ms.pub ? '✅ publicado' : '📝 rascunho') : 'ainda não criado'}<div style="font-size:9.5px;color:var(--t3)">O que o aluno vê no app: meta, fotos, marcos e agenda.</div></div><button class="btn bp" style="font-size:11px;padding:6px 12px" onclick="mbMapaAbrir('${v.id}')">${ms ? '✏️ Editar' : '➕ Criar'} Mapa</button></div>` : '';
     const diagnosticoHtml = v.diagnostico ? `<div style="font-size:10.5px;color:var(--tx);margin-top:6px;white-space:pre-wrap">${escAttr(v.diagnostico)}</div>` : '';
     return `<div style="padding:8px 0;border-bottom:1px solid var(--bd)">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -10375,7 +10378,7 @@ async function mbAbrirAvaliacoes(alunoId, nome) {
       <span style="font-size:10px;color:var(--t2)">${escAttr(statusLabel[v.status] || v.status)}</span>
     </div>
     ${v.observacoes ? `<div style="font-size:10px;color:var(--t2);margin-top:2px">${escAttr(v.observacoes)}</div>` : ''}
-    ${fotosHtml}${antroHtml}${diagnosticoHtml}${editorHtml}${manualHtml}${pdfHtml}
+    ${fotosHtml}${antroHtml}${diagnosticoHtml}${mapaHtml}${editorHtml}${manualHtml}${pdfHtml}
   </div>`;
   }).join('');
 }
@@ -10451,6 +10454,24 @@ renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this,
 // ══ MAPA DO ALUNO (editor do professor) ══
 // Guarda tudo em avaliacoes_fisicas.mapa (jsonb). Sem a coluna, o editor avisa e mostra o SQL; nada mais quebra.
 let _mbMapa = null;
+let _mbMapaStatus = {};
+function mbMapaIso(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function mbMapaFmtIso(iso) { iso = String(iso || ''); return iso.length >= 10 ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : ''; }
+// Data do marco = dia do teste agendado no treino (mesma conta do app: semana = floor(dias/7) desde o início);
+// sem teste naquela semana, vale o último dia da semana. Semana 0 = início.
+function mbMapaDataAgenda(m, sem, testes) {
+  const d0 = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d0)) return '';
+  sem = Number(sem) || 0; if (sem <= 0) return mbMapaIso(d0);
+  const base = new Date(d0); base.setDate(base.getDate() + (sem - 1) * 7);
+  const t = (testes || []).find(x => x.semana === sem - 1 && x.dia);
+  if (t) for (let k = 0; k < 7; k++) { const d = new Date(base); d.setDate(base.getDate() + k); if (CAL_DOW[d.getDay()] === t.dia) return mbMapaIso(d); }
+  base.setDate(base.getDate() + 6); return mbMapaIso(base);
+}
+function mbMapaMarcoIso(m, x) { return x.data || mbMapaDataAgenda(m, x.sem, (_mbMapa && _mbMapa.testes) || []); }
+function mbMapaAlinhar(todos) {
+  const M = _mbMapa; if (!M) return;
+  (M.m.marcos || []).forEach(x => { if (todos) delete x.manual; if (!x.manual) x.data = mbMapaDataAgenda(M.m, x.sem, M.testes); });
+}
 const MAPA_VISTAS = [['frontal', 'Frontal'], ['posterior', 'Posterior'], ['lateral_d', 'Lateral D'], ['lateral_e', 'Lateral E']];
 const MAPA_SQL = 'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;\nALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;\nNOTIFY pgrst, \'reload schema\';';
 // Mapa 2: avaliação confirmada mais nova que a primeira do mesmo aluno (reavaliação); a primeira é o 'antes'.
@@ -10484,7 +10505,7 @@ function mbMapaPadrao(row) {
       { sem: 8, titulo: 'Fim da Construção', texto: 'Medidas, cargas, teste de 3 km e ajuste do treino.' },
       { sem: 12, titulo: 'Reavaliação (fim da Consolidação)', texto: 'Mesmas fotos, medidas e teste de 3 km; relatório antes e depois.' }
     ],
-    fotos: Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, { show: true, rot: 0, zoom: 1, src: null }])),
+    fotos: Object.fromEntries(MAPA_VISTAS.map(([k]) => { const a = ant && ant['foto_' + k + '_path'], n = row['foto_' + k + '_path']; return [k, { show: true, rot: 0, zoom: 1, src: null, antes: (a && n) ? a : null, antes_data: (a && n) ? (ant.data_avaliacao || (ant.created_at || '').slice(0, 10)) : null }]; })),
     publicado: false
   };
 }
@@ -10492,6 +10513,14 @@ function mbMapaDataMarco(m, sem) {
   const d = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d)) return '';
   d.setDate(d.getDate() + (Number(sem) || 0) * 7);
   return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0');
+}
+async function mbMapaDoAluno(alunoId) {
+  const a = (mbPainelAlunos || []).find(x => x.id === alunoId);
+  _mbAvaliacoesCache = [];
+  await mbAbrirAvaliacoes(alunoId, a ? a.nome : '');
+  const conf = (_mbAvaliacoesCache || []).filter(v => v.status === 'confirmada')[0];
+  if (!conf) { notify('Este aluno ainda não tem avaliação confirmada. Finalize a avaliação para criar o Mapa.'); return; }
+  mbMapaAbrir(conf.id);
 }
 async function mbMapaAbrir(avalId) {
   const row = (_mbAvaliacoesCache || []).find(v => v.id === avalId);
@@ -10502,17 +10531,19 @@ async function mbMapaAbrir(avalId) {
     const r = await mbClient.from('avaliacoes_fisicas').select('mapa').eq('id', avalId).maybeSingle();
     if (r.error) colOk = false; else salvo = r.data && r.data.mapa;
   } catch (e) { colOk = false; }
-  // Integra com o treino: sem Mapa salvo, a semana 0 do caminho = início do protocolo do aluno (se houver)
-  if (!salvo) {
-    try {
-      const pr = await mbClient.from('protocolos').select('data_inicio').eq('aluno_id', _mbAvaliacoesAlunoId).not('data_inicio', 'is', null).order('created_at', { ascending: false }).limit(1);
-      const di = pr && pr.data && pr.data[0] && pr.data[0].data_inicio;
-      if (di && /^\d{4}-\d{2}-\d{2}/.test(di)) def.inicio = di.slice(0, 10);
-    } catch (e) {}
-  }
+  // Integra com o treino ativo: início (semana 0) e testes agendados definem as datas dos marcos
+  let testes = [], protoIni = null;
+  try {
+    let pr = await mbClient.from('protocolos').select('data_inicio, conteudo').eq('aluno_id', _mbAvaliacoesAlunoId).eq('ativo', true).order('data_inicio', { ascending: false }).limit(1);
+    let p0 = pr && pr.data && pr.data[0];
+    if (!p0) { pr = await mbClient.from('protocolos').select('data_inicio, conteudo').eq('aluno_id', _mbAvaliacoesAlunoId).not('data_inicio', 'is', null).order('created_at', { ascending: false }).limit(1); p0 = pr && pr.data && pr.data[0]; }
+    if (p0) { protoIni = (p0.data_inicio && /^\d{4}-\d{2}-\d{2}/.test(p0.data_inicio)) ? p0.data_inicio.slice(0, 10) : null; testes = (p0.conteudo && p0.conteudo.testesAgendados) || []; }
+  } catch (e) {}
+  if (!salvo && protoIni) def.inicio = protoIni;
   const m = Object.assign({}, def, salvo || {});
   m.fotos = Object.fromEntries(MAPA_VISTAS.map(([k]) => [k, Object.assign({}, def.fotos[k], (salvo && salvo.fotos && salvo.fotos[k]) || {})]));
-  _mbMapa = { avalId, alunoId: _mbAvaliacoesAlunoId, row, m, colOk, urls: {}, cache: {}, prev: false };
+  _mbMapa = { avalId, alunoId: _mbAvaliacoesAlunoId, row, m, colOk, urls: {}, cache: {}, prev: false, testes, protoIni, ab: {} };
+  mbMapaAlinhar(false);
   const t = document.getElementById('mb-aval-titulo');
   document.getElementById('mb-mapa-titulo').textContent = '🗺️ Mapa do aluno' + (t ? ' — ' + t.textContent.replace(/^.*?—\s*/, '') : '');
   openM('modal-mapa-editor');
@@ -10533,8 +10564,8 @@ async function mbMapaCarregarUrls() {
 }
 function mbMapaSrc(k) { const f = _mbMapa.m.fotos[k]; return f.src || _mbMapa.row['foto_' + k + '_path'] || null; }
 // Gera a foto já girada/ampliada em 3:4 (usada no editor, na prévia e no PDF)
-async function mbMapaFotoUrl(k) {
-  const f = _mbMapa.m.fotos[k], src = mbMapaSrc(k), url = src && _mbMapa.urls[src];
+async function mbMapaFotoUrl(k, antes) {
+  const f = _mbMapa.m.fotos[k], src = antes ? f.antes : mbMapaSrc(k), url = src && _mbMapa.urls[src];
   if (!url) return null;
   const ck = [src, f.rot, f.zoom].join('|');
   if (_mbMapa.cache[ck]) return _mbMapa.cache[ck];
@@ -10550,41 +10581,66 @@ async function mbMapaFotoUrl(k) {
 }
 function mbMapaSet(k, v) { _mbMapa.m[k] = v; }
 function mbMapaLista(k, txt) { _mbMapa.m[k] = String(txt).split('\n').map(s => s.trim()).filter(Boolean); }
-function mbMapaMarco(i, campo, v) { _mbMapa.m.marcos[i][campo] = campo === 'sem' ? (Number(v) || 0) : v; }
-function mbMapaMarcoAdd() { _mbMapa.m.marcos.push({ sem: 6, titulo: 'Novo marco', texto: '' }); mbMapaRender(); }
+function mbMapaMarco(i, campo, v) {
+  const x = _mbMapa.m.marcos[i]; x[campo] = campo === 'sem' ? (Number(v) || 0) : v;
+  if (campo === 'sem' && !x.manual) { x.data = mbMapaDataAgenda(_mbMapa.m, x.sem, _mbMapa.testes); mbMapaRender(); }
+}
+function mbMapaMarcoData(i, v) { const x = _mbMapa.m.marcos[i]; x.manual = !!v; x.data = v || mbMapaDataAgenda(_mbMapa.m, x.sem, _mbMapa.testes); mbMapaRender(); }
+function mbMapaUsarInicio() { _mbMapa.m.inicio = _mbMapa.protoIni; mbMapaAlinhar(false); mbMapaRender(); }
+function mbMapaReimportar() {
+  if (!confirm('Substituir os textos de "O que está bom" e "O que vamos melhorar primeiro" pelos achados da avaliação?')) return;
+  const d = mbMapaPadrao(_mbMapa.row); _mbMapa.m.bom = d.bom; _mbMapa.m.melhorar = d.melhorar; mbMapaRender();
+}
+function mbMapaIrAvaliacao() { const id = _mbMapa.avalId; closeM('modal-mapa-editor'); mbAvalAbrirEditor(id); }
+function mbMapaCompararTodas() {
+  MAPA_VISTAS.forEach(([k]) => {
+    const o = mbMapaFotosDaVista(k).slice().sort((a, b) => a.data < b.data ? -1 : 1); if (o.length < 2) return;
+    const f = _mbMapa.m.fotos[k]; f.antes = o[0].path; f.antes_data = o[0].data; f.src = o[o.length - 1].path; f.src_data = o[o.length - 1].data; f.show = true;
+  });
+  mbMapaRender();
+}
+function mbMapaMarcoAdd() { _mbMapa.m.marcos.push({ sem: 6, titulo: 'Novo marco', texto: '', data: mbMapaDataAgenda(_mbMapa.m, 6, _mbMapa.testes) }); mbMapaRender(); }
 function mbMapaMarcoDel(i) { _mbMapa.m.marcos.splice(i, 1); mbMapaRender(); }
 function mbMapaFoto(k, campo, v) {
   const f = _mbMapa.m.fotos[k];
-  if (campo === 'show') f.show = !!v; else if (campo === 'zoom') f.zoom = Number(v) || 1; else if (campo === 'src') f.src = v || null;
+  const dataDe = p => { const o = mbMapaFotosDaVista(k).find(x => x.path === p); return o ? o.data : null; };
+  if (campo === 'show') f.show = !!v; else if (campo === 'zoom') f.zoom = Number(v) || 1;
   else if (campo === 'rot') f.rot = ((f.rot || 0) + 90) % 360;
+  else if (campo === 'src') { f.src = v || null; f.src_data = v ? dataDe(v) : null; if (f.antes && f.antes === f.src) { f.antes = null; f.antes_data = null; } mbMapaRender(); return; }
+  else if (campo === 'antes') { f.antes = v || null; f.antes_data = v ? dataDe(v) : null; mbMapaRender(); return; }
   mbMapaAtualizarFotos();
 }
 async function mbMapaAtualizarFotos() {
   for (const [k] of MAPA_VISTAS) {
     const el = document.getElementById('mapa-ft-' + k); if (!el) continue;
     const u = await mbMapaFotoUrl(k);
-    el.innerHTML = u ? '<img src="' + u + '" style="width:100%;display:block;border-radius:8px' + (_mbMapa.m.fotos[k].show ? '' : ';opacity:.3') + '">' : '<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto</div>';
+    const f = _mbMapa.m.fotos[k], ua = (u && f.antes) ? await mbMapaFotoUrl(k, true) : null, op = f.show ? '' : ';opacity:.3';
+    const L = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
+    const im = (x, cap) => '<div style="flex:1;min-width:0"><img src="' + x + '" style="width:100%;display:block;border-radius:8px' + op + '">' + (cap ? '<div style="font-size:9px;color:var(--t3);text-align:center;margin-top:2px">' + cap + '</div>' : '') + '</div>';
+    el.innerHTML = u ? (ua ? '<div style="display:flex;gap:4px">' + im(ua, 'Antes ' + L(f.antes_data)) + im(u, 'Agora ' + L(f.src_data || _mbMapa.row.data_avaliacao)) + '</div>' : im(u, '')) : '<div style="aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto</div>';
   }
   if (_mbMapa.prev) mbMapaPrevia();
 }
 function mbMapaTogglePrevia() { _mbMapa.prev = !_mbMapa.prev; document.getElementById('mb-mapa-prev').style.display = _mbMapa.prev ? 'block' : 'none'; if (_mbMapa.prev) mbMapaPrevia(); }
 async function mbMapaPrevia() {
-  const imgs = {}; for (const [k] of MAPA_VISTAS) if (_mbMapa.m.fotos[k].show) imgs[k] = await mbMapaFotoUrl(k);
+  const imgs = {}; for (const [k] of MAPA_VISTAS) if (_mbMapa.m.fotos[k].show) { imgs[k] = await mbMapaFotoUrl(k); if (_mbMapa.m.fotos[k].antes) imgs[k + '_antes'] = await mbMapaFotoUrl(k, true); }
   document.getElementById('mb-mapa-prev').innerHTML = mbMapaHtmlAluno(_mbMapa.m, _mbMapa.row, imgs);
 }
 // Exatamente o que o aluno vê (cores fixas do app)
 function mbMapaHtmlAluno(m, row, imgs) {
   const li = a => (a || []).map(t => `<div style="font-size:12px;color:#9AA3BD;padding:4px 0 4px 14px;position:relative;line-height:1.4"><span style="position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:#D62839"></span>${escAttr(t)}</div>`).join('');
   const box = (tit, inner) => `<div style="background:#111A2E;border:1px solid #1F2B45;border-radius:14px;padding:14px;margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:#9AA3BD;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">${tit}</div>${inner}</div>`;
-  const fotos = MAPA_VISTAS.filter(([k]) => imgs[k]).map(([k, n]) => `<div style="flex:1;text-align:center;font-size:9.5px;color:#6B7699"><img src="${imgs[k]}" style="width:100%;border-radius:7px;border:1px solid #1F2B45;display:block;margin-bottom:3px">${n}</div>`).join('');
+  const fotos = MAPA_VISTAS.filter(([k]) => imgs[k] && !imgs[k + '_antes']).map(([k, n]) => `<div style="flex:1;text-align:center;font-size:9.5px;color:#6B7699"><img src="${imgs[k]}" style="width:100%;border-radius:7px;border:1px solid #1F2B45;display:block;margin-bottom:3px">${n}</div>`).join('');
+  const cmp = MAPA_VISTAS.filter(([k]) => imgs[k] && imgs[k + '_antes']).map(([k, n]) => `<div style="font-size:10.5px;font-weight:700;color:#9AA3BD;margin:8px 0 4px">${n}</div><div style="display:flex;gap:6px">` + [[imgs[k + '_antes'], 'Antes'], [imgs[k], 'Agora']].map(t => `<div style="flex:1;text-align:center;font-size:9.5px;color:#6B7699"><img src="${t[0]}" style="width:100%;border-radius:7px;border:1px solid #1F2B45;display:block;margin-bottom:3px">${t[1]}</div>`).join('') + `</div>`).join('');
   const med = [row.peso ? ['Peso', row.peso + ' kg'] : null, row.cintura ? ['Cintura', row.cintura + ' cm'] : null, (row.cintura && row.quadril) ? ['RCQ', (row.cintura / row.quadril).toFixed(2)] : null].filter(Boolean)
     .map(x => `<div style="flex:1;background:#0B1220;border-radius:10px;padding:8px"><div style="font-size:10px;color:#6B7699">${x[0]}</div><b style="font-size:15px">${x[1]}</b></div>`).join('');
-  const marcos = (m.marcos || []).slice().sort((a, b) => a.sem - b.sem).map(x => `<div style="display:flex;gap:10px;padding:6px 0;border-top:1px solid #1F2B45"><div style="min-width:46px;font-size:11px;font-weight:700;color:#FF4D5A">Sem ${x.sem}<div style="font-weight:500;color:#6B7699">${mbMapaDataMarco(m, x.sem)}</div></div><div><div style="font-size:13px;font-weight:700">${escAttr(x.titulo)}</div><div style="font-size:11.5px;color:#9AA3BD">${escAttr(x.texto)}</div></div></div>`).join('');
+  const marcos = (m.marcos || []).slice().sort((a, b) => a.sem - b.sem).map(x => `<div style="display:flex;gap:10px;padding:6px 0;border-top:1px solid #1F2B45"><div style="min-width:46px;font-size:11px;font-weight:700;color:#FF4D5A">Sem ${x.sem}<div style="font-weight:500;color:#6B7699">${mbMapaFmtIso(mbMapaMarcoIso(m, x))}</div></div><div><div style="font-size:13px;font-weight:700">${escAttr(x.titulo)}</div><div style="font-size:11.5px;color:#9AA3BD">${escAttr(x.texto)}</div></div></div>`).join('');
   return `<div style="background:#0B1220;color:#F3EAD8;border-radius:14px;padding:14px;max-width:390px;margin:0 auto;font-family:inherit">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #D62839;padding-bottom:8px;margin-bottom:12px"><div style="font-size:22px;font-weight:900">MOV<span style="color:#D62839">H</span></div><div style="font-size:10.5px;color:#6B7699;text-align:right">Seu Mapa<br>${escAttr(row.data_avaliacao || '')}</div></div>
     ${box('Objetivo e prazo', `<div style="font-size:17px;font-weight:800">${escAttr(m.objetivo || 'Defina o objetivo')}</div><div style="font-size:12px;color:#9AA3BD;margin-top:3px">${m.semanas} semanas · reavaliação na semana ${m.semanas}</div>`)}
     ${med ? `<div style="display:flex;gap:8px;margin-bottom:10px">${med}</div>` : ''}
     ${fotos ? box('Postura', `<div style="display:flex;gap:6px">${fotos}</div>`) : ''}
+    ${cmp ? box('Antes e depois', cmp) : ''}
     ${(m.bom || []).length ? box('O que está bom', li(m.bom)) : ''}
     ${(m.melhorar || []).length ? box('O que vamos melhorar primeiro', li(m.melhorar)) : ''}
     ${box('Seu caminho', marcos)}
@@ -10592,34 +10648,59 @@ function mbMapaHtmlAluno(m, row, imgs) {
   </div>`;
 }
 function mbMapaRender() {
-  const M = _mbMapa, m = M.m, E = escAttr;
+  const M = _mbMapa, m = M.m, E = escAttr; M.ab = M.ab || {};
   const inp = 'width:100%;font-size:11px;padding:6px;border:1px solid var(--bd);border-radius:6px;background:var(--ip);color:var(--tx);box-sizing:border-box';
-  const lab = 'font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:12px 0 4px';
+  const lab = 'font-size:10.5px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px';
+  const L = d => { d = String(d || ''); return d.length >= 10 ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : ''; };
+  const dt = v => (v.data_avaliacao || (v.created_at || '').slice(0, 10));
+  const sec = (k, titulo, inner) => `<details ${(k === 'dep' ? M.ab[k] === true : M.ab[k] !== false) ? 'open' : ''} ontoggle="_mbMapa.ab['${k}']=this.open" style="border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:8px"><summary style="font-size:12px;font-weight:800;cursor:pointer">${titulo}</summary><div>${inner}</div></details>`;
   const ta = (k, rows) => `<textarea oninput="mbMapaLista('${k}',this.value)" rows="${rows}" style="${inp};font-family:inherit">${E((m[k] || []).join('\n'))}</textarea>`;
-  const marcos = m.marcos.map((x, i) => `<div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-start">
-      <input type="number" min="0" value="${x.sem}" oninput="mbMapaMarco(${i},'sem',this.value)" style="${inp};width:54px" title="Semana">
-      <div style="flex:1"><input value="${E(x.titulo)}" oninput="mbMapaMarco(${i},'titulo',this.value)" style="${inp};margin-bottom:4px"><input value="${E(x.texto)}" oninput="mbMapaMarco(${i},'texto',this.value)" style="${inp}"></div>
-      <button class="btn bs" style="font-size:10px;padding:4px 8px" onclick="mbMapaMarcoDel(${i})" title="Remover">✕</button></div>`).join('');
-  const fotos = MAPA_VISTAS.map(([k, n]) => {
-    const f = m.fotos[k], opts = mbMapaFotosDaVista(k), atual = mbMapaSrc(k);
-    return `<div style="flex:1;min-width:0"><div style="font-size:10px;font-weight:700;margin-bottom:3px">${n}</div><div id="mapa-ft-${k}"></div>
-      <label style="font-size:10px;display:block;margin-top:4px"><input type="checkbox" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar</label>
-      <button class="btn bs" style="font-size:10px;padding:3px 8px;margin:3px 0" onclick="mbMapaFoto('${k}','rot')">↻ girar</button>
-      <input type="range" min="1" max="1.6" step="0.05" value="${f.zoom}" oninput="mbMapaFoto('${k}','zoom',this.value)" style="width:100%" title="Zoom">
-      ${opts.length > 1 ? `<select onchange="mbMapaFoto('${k}','src',this.value)" style="${inp};margin-top:3px">${opts.map(o => `<option value="${E(o.path)}" ${o.path === atual ? 'selected' : ''}>${E(o.data)}</option>`).join('')}</select>` : ''}</div>`;
-  }).join('');
-  document.getElementById('mb-mapa-body').innerHTML = `
-    <div style="font-size:10.5px;margin-bottom:6px">🧭 Caminho no app deste aluno: <b>${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'ligado' : 'desligado'}</b> <button class="btn bs" style="font-size:10px;padding:2px 8px;margin-left:4px" onclick="mbCaminhoToggle(_mbMapa.alunoId).then(mbMapaRender)">${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'desligar' : 'ligar'}</button></div>
-    ${M.colOk ? '' : `<div style="font-size:10.5px;background:#3a1f1f;border:1px solid #c0392b;border-radius:8px;padding:8px;margin-bottom:8px">Falta a coluna <b>mapa</b> no banco: você ainda pode editar e gerar o PDF, mas só salva depois de rodar este SQL no Supabase.<pre style="font-size:10px;white-space:pre-wrap;margin:6px 0 4px">${E(MAPA_SQL)}</pre><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="navigator.clipboard.writeText(MAPA_SQL).then(()=>notify('SQL copiado!')).catch(()=>{})">Copiar SQL</button></div>`}
-    <div style="${lab}">Objetivo</div><input value="${E(m.objetivo)}" oninput="mbMapaSet('objetivo',this.value)" placeholder="Ex.: Recomposição corporal" style="${inp}">
+  const ant = mbMapaAnterior(M.row), ach = Array.isArray(M.row.achados) ? M.row.achados.length : 0;
+  const med = [M.row.peso ? 'Peso ' + M.row.peso + ' kg' : null, M.row.cintura ? 'Cintura ' + M.row.cintura + ' cm' : null].filter(Boolean).join(' · ');
+  const btn = 'font-size:10px;padding:4px 10px';
+  const topo = `<div style="background:var(--ip);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:11px;line-height:1.5">
+    <b>Da avaliação de ${L(dt(M.row))}</b>${med ? ' · ' + med : ''} · ${ach} achado(s)${ant ? '<br>Comparando com a avaliação de ' + L(dt(ant)) : ''}
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="btn bs" style="${btn}" onclick="mbMapaReimportar()">↻ Trazer achados da avaliação</button><button class="btn bs" style="${btn}" onclick="mbMapaIrAvaliacao()">🎯 Abrir avaliação</button>
+    <button class="btn bs" style="${btn}" onclick="mbCaminhoToggle('${M.alunoId}').then(mbMapaRender)">🧭 Caminho no app: ${(_mbCaminho && _mbCaminho[M.alunoId]) ? 'ligado ✓' : 'desligado'}</button></div></div>`;
+  const temFoto = MAPA_VISTAS.some(([k]) => m.fotos[k].show && mbMapaSrc(k));
+  const difIni = !!(M.protoIni && m.inicio !== M.protoIni);
+  const chk = [[!!(m.objetivo && m.objetivo.trim()), 'Objetivo'], [temFoto, 'Fotos'], [M.testes.length > 0, 'Testes agendados no treino'], [!difIni, 'Início = início do treino']]
+    .map(c => `<span style="font-size:10px;padding:2px 8px;border-radius:99px;border:1px solid var(--bd);color:${c[0] ? 'var(--G,#1A9E72)' : '#e0a030'}">${c[0] ? '✓' : '!'} ${c[1]}</span>`).join(' ');
+  const avisos = (difIni ? `<div style="font-size:10.5px;margin-top:6px">O início do Mapa (${L(m.inicio)}) é diferente do início do treino ativo (${L(M.protoIni)}). <button class="btn bs" style="${btn}" onclick="mbMapaUsarInicio()">Usar ${L(M.protoIni)}</button></div>` : '')
+    + (!M.testes.length ? `<div style="font-size:10.5px;color:var(--t3);margin-top:6px">O treino ativo não tem testes agendados: os marcos caem no último dia de cada semana. Use "Programa de 12 semanas" no treino do aluno para agendar os testes.</div>` : '');
+  const pronto = `<div style="margin-bottom:8px"><div style="display:flex;gap:6px;flex-wrap:wrap">${chk}</div>${avisos}</div>`;
+  const colAviso = M.colOk ? '' : `<div style="font-size:10.5px;background:#3a1f1f;border:1px solid #c0392b;border-radius:8px;padding:8px;margin-bottom:8px">Falta a coluna <b>mapa</b> no banco: você pode editar e gerar o PDF, mas só salva depois de rodar o SQL. <button class="btn bs" style="${btn}" onclick="try{navigator.clipboard.writeText(MAPA_SQL)}catch(e){};notify('SQL copiado: rode no Supabase.')">Copiar SQL</button></div>`;
+  const meta = `<div style="${lab}">Objetivo</div><input value="${E(m.objetivo)}" oninput="mbMapaSet('objetivo',this.value)" placeholder="Ex.: Recomposição corporal" style="${inp}">
     <div style="display:flex;gap:8px"><div style="flex:1"><div style="${lab}">Prazo (semanas)</div><input type="number" min="4" max="52" value="${m.semanas}" oninput="mbMapaSet('semanas',Number(this.value)||12)" style="${inp}"></div>
-    <div style="flex:1"><div style="${lab}">Início</div><input type="date" value="${E(m.inicio)}" oninput="mbMapaSet('inicio',this.value)" style="${inp}"></div></div>
-    <div style="${lab}">Fotos que o aluno vê</div><div style="display:flex;gap:6px">${fotos}</div>
-    <div style="${lab}">O que está bom <span style="font-weight:400;text-transform:none">(uma frase por linha)</span></div>${ta('bom', 3)}
-    <div style="${lab}">O que vamos melhorar primeiro</div>${ta('melhorar', 4)}
-    <div style="${lab}">Marcos do caminho</div>${marcos}<button class="btn bs" style="font-size:10px;padding:4px 10px" onclick="mbMapaMarcoAdd()">+ marco</button>
-    <div style="${lab}">O que depende do aluno</div>${ta('depende', 3)}
-    <div style="margin-top:12px"><button class="btn bs" style="font-size:10.5px;padding:5px 12px" onclick="mbMapaTogglePrevia()">👁 Ver como o aluno vê</button></div>
+    <div style="flex:1"><div style="${lab}">Início (semana 0)</div><input type="date" value="${E(m.inicio)}" onchange="mbMapaSet('inicio',this.value);mbMapaAlinhar(false);mbMapaRender()" style="${inp}"></div></div>`;
+  const algumaComp = MAPA_VISTAS.some(([k]) => mbMapaFotosDaVista(k).length > 1);
+  const fotosCards = MAPA_VISTAS.map(([k, n]) => {
+    const f = m.fotos[k], opts = mbMapaFotosDaVista(k), atual = mbMapaSrc(k);
+    const sel = (rot, list, cur, campo, vazio) => `<label style="font-size:9.5px;color:var(--t3);display:block;margin-top:4px">${rot}<select onchange="mbMapaFoto('${k}','${campo}',this.value)" style="${inp}">${vazio ? '<option value="">— sem comparação —</option>' : ''}${list.map(o => `<option value="${E(o.path)}" ${o.path === cur ? 'selected' : ''}>${L(o.data)}</option>`).join('')}</select></label>`;
+    return `<div style="min-width:0"><div style="font-size:11px;font-weight:700;margin-bottom:3px">${n}</div><div id="mapa-ft-${k}"></div>
+      <label style="font-size:10px;display:block;margin-top:4px"><input type="checkbox" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar ao aluno</label>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:3px"><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="mbMapaFoto('${k}','rot')">↻ girar</button><input type="range" min="1" max="1.6" step="0.05" value="${f.zoom}" oninput="mbMapaFoto('${k}','zoom',this.value)" style="flex:1" title="Zoom"></div>
+      ${opts.length > 1 ? sel('Foto de agora', opts, atual, 'src', false) + sel('Comparar com (antes)', opts.filter(o => o.path !== atual), f.antes, 'antes', true) : ''}</div>`;
+  }).join('');
+  const fotosAviso = algumaComp ? `<button class="btn bs" style="${btn};margin-bottom:8px" onclick="mbMapaCompararTodas()">↔ Antes e depois: primeira e última foto de cada vista</button>`
+    : `<div style="font-size:10.5px;color:var(--t3);margin-bottom:8px">Só há fotos de uma data. Quando o aluno enviar as fotos da reavaliação, a escolha de "antes e depois" aparece aqui. <button class="btn bs" style="${btn}" onclick="mbSolicitarAvaliacaoFisica('${M.alunoId}')">🔁📸 Solicitar reavaliação</button></div>`;
+  const testesTxt = M.testes.length ? '🎯 Testes do treino: ' + M.testes.map(t => 'sem ' + (t.semana + 1) + (t.dia ? ' (' + t.dia.slice(0, 3) + ')' : '')).join(', ') + ' · início ' + L(m.inicio) : '';
+  const marcos = m.marcos.map((x, i) => {
+    const teste = M.testes.find(t => t.semana === (Number(x.sem) || 0) - 1);
+    return `<div style="display:flex;gap:6px;margin-bottom:8px;align-items:flex-start">
+      <input type="number" min="0" value="${x.sem}" onchange="mbMapaMarco(${i},'sem',this.value)" style="${inp};width:54px" title="Semana">
+      <div style="flex:1;min-width:0"><input value="${E(x.titulo)}" oninput="mbMapaMarco(${i},'titulo',this.value)" style="${inp};margin-bottom:4px"><input value="${E(x.texto)}" oninput="mbMapaMarco(${i},'texto',this.value)" style="${inp}">
+      <div style="font-size:9.5px;color:var(--t3);margin-top:3px">${teste ? '🎯 teste agendado (' + E(teste.dia || '') + ')' : (x.sem > 0 ? 'sem teste nessa semana: último dia da semana' : 'início do treino')} · ${x.manual ? 'data manual' : 'data automática'}</div></div>
+      <input type="date" value="${E(x.data || '')}" onchange="mbMapaMarcoData(${i},this.value)" style="${inp};width:128px" title="Data do marco">
+      <button class="btn bs" style="font-size:10px;padding:4px 8px" onclick="mbMapaMarcoDel(${i})" title="Remover">✕</button></div>`;
+  }).join('');
+  document.getElementById('mb-mapa-body').innerHTML = topo + colAviso + pronto +
+    sec('meta', '🎯 Meta e prazo', meta) +
+    sec('fotos', '📸 Fotos que o aluno vê', fotosAviso + `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">${fotosCards}</div>`) +
+    sec('diag', '🩺 Diagnóstico em linguagem simples', `<div style="${lab}">O que está bom <span style="font-weight:400;text-transform:none">(uma frase por linha)</span></div>${ta('bom', 3)}<div style="${lab}">O que vamos melhorar primeiro</div>${ta('melhorar', 4)}`) +
+    sec('cam', '🧭 Caminho e agenda', (testesTxt ? `<div style="font-size:10.5px;margin:4px 0 8px">${testesTxt}</div>` : '') + marcos + `<button class="btn bs" style="${btn}" onclick="mbMapaMarcoAdd()">+ marco</button> <button class="btn bs" style="${btn}" onclick="mbMapaAlinhar(true);mbMapaRender()" title="Recalcula todas as datas pela agenda de testes do treino">↻ Alinhar datas com a agenda do treino</button>`) +
+    sec('dep', '🤝 O que depende do aluno', ta('depende', 3)) +
+    `<div style="margin-top:4px"><button class="btn bs" style="font-size:10.5px;padding:5px 12px" onclick="mbMapaTogglePrevia()">👁 Ver como o aluno vê</button></div>
     <div id="mb-mapa-prev" style="display:${M.prev ? 'block' : 'none'};margin-top:8px"></div>
     <div style="font-size:10px;color:var(--t3);margin-top:8px">${m.publicado ? '✅ Publicado: o aluno já vê este Mapa no app.' : 'Rascunho: o aluno só vê depois de publicar.'}</div>`;
   mbMapaAtualizarFotos();
@@ -10631,6 +10712,8 @@ async function mbMapaSalvar(publicar) {
   const { error } = await mbClient.from('avaliacoes_fisicas').update({ mapa: M.m }).eq('id', M.avalId);
   if (error) { M.colOk = false; mbMapaRender(); notify(/mapa/i.test(error.message) ? 'Falta criar a coluna "mapa" no banco (SQL no topo).' : 'Erro ao salvar: ' + error.message); return; }
   M.colOk = true; mbMapaRender();
+  _mbMapaStatus[M.avalId] = { pub: !!M.m.publicado };
+  if (_mbAvaliacoesAlunoId) { const a = (mbPainelAlunos || []).find(x => x.id === _mbAvaliacoesAlunoId); mbAbrirAvaliacoes(_mbAvaliacoesAlunoId, a ? a.nome : ''); }
   notify(M.m.publicado ? 'Mapa publicado! O aluno vê no app.' : 'Rascunho do Mapa salvo.');
 }
 async function mbMapaPDF() {
@@ -10647,12 +10730,12 @@ async function mbMapaPDF() {
     const tit = t => { nova(30); doc.setTextColor(214, 40, 57); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(t, mg, y); y += 16; };
     const par = (t, sz) => { doc.setTextColor(40, 40, 40); doc.setFont('helvetica', 'normal'); doc.setFontSize(sz || 10); doc.splitTextToSize(t, lw).forEach(l => { nova(14); doc.text(l, mg, y); y += 14; }); };
     tit('Objetivo e prazo'); doc.setFont('helvetica', 'bold'); par(m.objetivo || '—', 13); par(m.semanas + ' semanas · reavaliação na semana ' + m.semanas, 10); y += 6;
-    const ft = []; for (const [k, n] of MAPA_VISTAS) if (m.fotos[k].show) { const u = await mbMapaFotoUrl(k); if (u) ft.push([u, n]); }
-    if (ft.length) { tit('Postura'); const cw = (lw - (ft.length - 1) * 8) / ft.length, ch = cw * 4 / 3; nova(ch + 20);
-      ft.forEach((f, i) => { const x = mg + i * (cw + 8); doc.addImage(f[0], 'JPEG', x, y, cw, ch); doc.setFontSize(8); doc.setTextColor(110, 110, 110); doc.text(f[1], x, y + ch + 11); }); y += ch + 24; }
+    const ft = []; for (const [k, n] of MAPA_VISTAS) if (m.fotos[k].show) { const u = await mbMapaFotoUrl(k); if (u) { if (m.fotos[k].antes) { const ua = await mbMapaFotoUrl(k, true); if (ua) ft.push([ua, n + ' (antes)']); } ft.push([u, m.fotos[k].antes ? n + ' (agora)' : n]); } }
+    if (ft.length) { tit('Postura'); for (let r = 0; r < ft.length; r += 4) { const lin = ft.slice(r, r + 4), cw = (lw - 3 * 8) / 4, ch = cw * 4 / 3; nova(ch + 20);
+      lin.forEach((f, i) => { const x = mg + i * (cw + 8); doc.addImage(f[0], 'JPEG', x, y, cw, ch); doc.setFontSize(8); doc.setTextColor(110, 110, 110); doc.text(f[1], x, y + ch + 11); }); y += ch + 24; } }
     if ((m.bom || []).length) { tit('O que está bom'); m.bom.forEach(t => par('• ' + t)); y += 6; }
     if ((m.melhorar || []).length) { tit('O que vamos melhorar primeiro'); m.melhorar.forEach(t => par('• ' + t)); y += 6; }
-    tit('Seu caminho'); m.marcos.slice().sort((a, b) => a.sem - b.sem).forEach(x => par('Semana ' + x.sem + ' (' + mbMapaDataMarco(m, x.sem) + ') — ' + x.titulo + '. ' + x.texto)); y += 6;
+    tit('Seu caminho'); m.marcos.slice().sort((a, b) => a.sem - b.sem).forEach(x => par('Semana ' + x.sem + ' (' + mbMapaFmtIso(mbMapaMarcoIso(m, x)) + ') — ' + x.titulo + '. ' + x.texto)); y += 6;
     if ((m.depende || []).length) { tit('O que depende de você'); m.depende.forEach(t => par('• ' + t)); }
     doc.save('mapa-' + (row.data_avaliacao || 'aluno') + '.pdf');
   } catch (e) { notify('Não consegui gerar o PDF: ' + e.message); }
@@ -10677,7 +10760,7 @@ async function mbFinalizarAvaliacao(avaliacaoId) {
   if (_mbAvaliacoesAlunoId) {
     const a = mbPainelAlunos.find(x => x.id === _mbAvaliacoesAlunoId);
     const nome = a ? a.nome : '';
-    mbAbrirAvaliacoes(_mbAvaliacoesAlunoId, nome);
+    mbAbrirAvaliacoes(_mbAvaliacoesAlunoId, nome).then(function () { if (!jaConfirmada) mbMapaAbrir(avaliacaoId); });
   }
 }
 
@@ -11420,7 +11503,7 @@ async function mbAvalSalvarFinalizar() {
   closeM('modal-aval-editor');
   if (_mbAvaliacoesAlunoId) {
     const a = mbPainelAlunos.find(x => x.id === _mbAvaliacoesAlunoId);
-    mbAbrirAvaliacoes(_mbAvaliacoesAlunoId, a ? a.nome : '');
+    mbAbrirAvaliacoes(_mbAvaliacoesAlunoId, a ? a.nome : '').then(function () { if (!jaConfirmada) mbMapaAbrir(ed.avaliacaoId); });
   }
 }
 
@@ -13407,7 +13490,7 @@ body #treinoScreen #tLinhaAlertas{position:sticky;top:0;z-index:30;display:flex;
 .cam-st b{font-size:13.5px}.cam-d{font-size:11px;color:var(--t3);margin-top:1px}.cam-st p{font-size:12px;color:var(--t2);margin:3px 0 0;line-height:1.4}
 .cam-link{width:100%;margin:0 0 10px;text-align:left}
 .cam-meds{display:flex;gap:8px;margin-bottom:10px}.cam-med{flex:1;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px}.cam-med small{display:block;font-size:10px;color:var(--t3)}.cam-med b{font-size:15px}
-.cam-fts{display:flex;gap:6px}.cam-ft{flex:1;text-align:center;font-size:9.5px;color:var(--t3)}.cam-ft img{width:100%;border-radius:7px;border:1px solid var(--bd);display:block;margin-bottom:3px}
+.cam-cmp-t{font-size:11px;font-weight:700;color:var(--t3);margin:8px 0 4px}.cam-fts{display:flex;gap:6px}.cam-ft{flex:1;text-align:center;font-size:9.5px;color:var(--t3)}.cam-ft img{width:100%;border-radius:7px;border:1px solid var(--bd);display:block;margin-bottom:3px}
 .cam-li{font-size:12.5px;color:var(--t2);padding:4px 0 4px 14px;position:relative;line-height:1.4}.cam-li:before{content:"";position:absolute;left:0;top:10px;width:6px;height:6px;border-radius:50%;background:var(--P)}
 .pr-top{display:flex;gap:6px;align-items:center;margin-bottom:8px}
 .pr-top .pr-sel,.pr-top .pr-nome{flex:1;min-width:0;margin:0}
@@ -17008,6 +17091,11 @@ function aCaminhoDiaMarco(m, sem){
   const d = new Date((m.inicio || '') + 'T12:00:00'); if (isNaN(d)) return null;
   d.setDate(d.getDate() + (Number(sem) || 0) * 7); return d;
 }
+function aCaminhoDataMarco(m, x){
+  if (x && x.data) { const d = new Date(x.data + 'T12:00:00'); if (!isNaN(d)) return d; }
+  return aCaminhoDiaMarco(m, x && x.sem);
+}
+function aCaminhoFmtIso(t){ t = String(t || ''); return t.length >= 10 ? t.slice(8,10) + '/' + t.slice(5,7) : ''; }
 function aCaminhoFmt(d){ return d ? String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') : ''; }
 function aCaminhoSemana(m){
   const d0 = new Date((m.inicio || '') + 'T12:00:00'); const tot = m.semanas || 12;
@@ -17069,18 +17157,18 @@ function aCaminhoRenderCard(){
   if (!card || !m) return;
   const sem = aCaminhoSemana(m), tot = m.semanas || 12;
   const hoje = new Date(); hoje.setHours(0,0,0,0);
-  const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDiaMarco(m, x.sem); return d && d >= hoje; });
+  const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDataMarco(m, x); return d && d >= hoje; });
   const trn = aCaminhoTreinoTxt(m);
   card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>' + aCaminhoFase(m, sem) + ' · Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
     '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
     (trn ? '<div class="cam-prox">' + trn + '</div>' : '') +
-    (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDiaMarco(m, prox.sem)) + '</div>' : '');
+    (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDataMarco(m, prox)) + '</div>' : '');
   card.style.display = 'block';
 }
-async function aCaminhoFotoUrl(k){
+async function aCaminhoFotoUrl(k, antes){
   const m = aCaminhoMapa, row = aCaminhoRow; const f = (m.fotos && m.fotos[k]) || {};
   if (f.show === false) return null;
-  const src = f.src || row['foto_' + k + '_path']; const url = src && aCaminhoUrls[src]; if (!url) return null;
+  const src = antes ? f.antes : (f.src || row['foto_' + k + '_path']); const url = src && aCaminhoUrls[src]; if (!url) return null;
   const ck = [src, f.rot, f.zoom].join('|'); if (aCaminhoImgs[ck]) return aCaminhoImgs[ck];
   try {
     const img = await new Promise(function(ok, er){ const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function(){ ok(i); }; i.onerror = er; i.src = url; });
@@ -17106,7 +17194,7 @@ async function aVerCaminho(){
   const marcos = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; });
   let achouAtual = false;
   const tl = marcos.map(function(x){
-    const d = aCaminhoDiaMarco(m, x.sem); const feito = d && d < hoje;
+    const d = aCaminhoDataMarco(m, x); const feito = d && d < hoje;
     let cls = feito ? 'ok' : ''; if (!feito && !achouAtual) { cls = 'now'; achouAtual = true; }
     return '<div class="cam-st ' + cls + '"><span class="cam-dot"></span><b>' + aEsc(x.titulo) + '</b><div class="cam-d">Semana ' + x.sem + ' · ' + aCaminhoFmt(d) + (feito ? ' · feito' : '') + '</div>' + (x.texto ? '<p>' + aEsc(x.texto) + '</p>' : '') + '</div>';
   }).join('');
@@ -17125,12 +17213,18 @@ async function aVerCaminho(){
     ((m.depende || []).length ? aCaminhoBox('O que depende de você', aCaminhoLista(m.depende)) : '');
   window.scrollTo(0, 0);
   try {
-    const paths = []; A_CAM_VISTAS.forEach(function(v){ const f = (m.fotos && m.fotos[v[0]]) || {}; const p = f.src || row['foto_' + v[0] + '_path']; if (p && paths.indexOf(p) < 0) paths.push(p); });
+    const paths = []; A_CAM_VISTAS.forEach(function(v){ const f = (m.fotos && m.fotos[v[0]]) || {}; [f.src || row['foto_' + v[0] + '_path'], f.antes].forEach(function(p){ if (p && paths.indexOf(p) < 0) paths.push(p); }); });
     if (paths.length) { const r = await aClient.storage.from('avaliacoes').createSignedUrls(paths, 3600); (r.data || []).forEach(function(s){ if (s && s.path && s.signedUrl) aCaminhoUrls[s.path] = s.signedUrl; }); }
-    const fts = [];
-    for (const v of A_CAM_VISTAS) { const u = await aCaminhoFotoUrl(v[0]); if (u) fts.push('<div class="cam-ft"><img src="' + u + '" alt="">' + v[1] + '</div>'); }
+    const fts = [], cmp = [];
+    for (const v of A_CAM_VISTAS) {
+      const f = (m.fotos && m.fotos[v[0]]) || {}; const u = await aCaminhoFotoUrl(v[0]); if (!u) continue;
+      const ua = f.antes ? await aCaminhoFotoUrl(v[0], true) : null;
+      const dAgora = f.src_data || row.data_avaliacao;
+      if (ua) cmp.push('<div class="cam-cmp-t">' + v[1] + '</div><div class="cam-fts"><div class="cam-ft"><img src="' + ua + '" alt="">Antes' + (f.antes_data ? ' · ' + aCaminhoFmtIso(f.antes_data) : '') + '</div><div class="cam-ft"><img src="' + u + '" alt="">Agora' + (dAgora ? ' · ' + aCaminhoFmtIso(dAgora) : '') + '</div></div>');
+      else fts.push('<div class="cam-ft"><img src="' + u + '" alt="">' + v[1] + '</div>');
+    }
     const box = document.getElementById('tCamFotos');
-    if (box && fts.length) box.innerHTML = aCaminhoBox('Postura', '<div class="cam-fts">' + fts.join('') + '</div>');
+    if (box && (fts.length || cmp.length)) box.innerHTML = (fts.length ? aCaminhoBox('Postura', '<div class="cam-fts">' + fts.join('') + '</div>') : '') + (cmp.length ? aCaminhoBox('Antes e depois', cmp.join('')) : '');
   } catch (e) {}
 }
 function aVoltarHoje(){
@@ -18911,7 +19005,7 @@ const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'R
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
 const PL_PRESENCIAL = [
   { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
-  { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:0 },
+  { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:150 },
   { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220 },
   { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
   { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
