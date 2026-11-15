@@ -39,6 +39,8 @@ with sync_playwright() as p:
     ok(vis(),'ligado + publicado: card visível')
     _t=pg.evaluate("document.getElementById('tCaminhoCard').innerText")
     ok('Construção' in _t and 'Treino 1 de 36' in _t,'card mostra etapa e Treino X de N')
+    ok(pg.evaluate("typeof aCaminhoPixelar==='function'"),'app tem o borrão (aCaminhoPixelar)')
+    ok(pg.evaluate("aCaminhoDataMarco({inicio:'2026-11-02'},{sem:4,data:'2026-11-25'}).getDate()")==25 and pg.evaluate("aCaminhoDataMarco({inicio:'2026-11-02'},{sem:4}).getDate()")==30,'marco usa a data da agenda e, sem ela, início + semanas')
     pg.evaluate("window._movhPreview=false; aPrimeiroTreino()"); pg.wait_for_timeout(500)
     ok(pg.evaluate("getComputedStyle(document.getElementById('tPrimeiroTreino')).display!=='none' && document.getElementById('tPrimeiroTreino').innerText.includes('primeiro treino')"),'sem sessões: card do primeiro treino visível')
     ok('fixar o que você conquistou' in pg.evaluate("aMontarCardFase({fase:'base',nome:'Consolidação'},1,'t')"),'fase Consolidação com texto próprio')
