@@ -40,6 +40,15 @@ with sync_playwright() as p:
     cfg = pg.evaluate("renderCfgTreino(), document.getElementById('cfg-treino').textContent")
     ok('Próximo' in cfg and 'Publicar para o aluno' in cfg, 'cabeçalho da Configuração: badge + Publicar')
     if OUT: pg.locator('#cfg-treino').screenshot(path=OUT + '/estados_cfg.png')
+    pg.evaluate("""() => {
+      const old = new Date(Date.now() - 100 * 86400000).toISOString().slice(0, 10);
+      const rows = [{ aluno_id: 'al1', status: 'confirmada', created_at: '2026-07-01T10:00:00Z', inicio: old, semanas: '12', pub: 'true' }];
+      const q = { select() { return Promise.resolve({ data: rows, error: null }); } };
+      mbClient.from = () => q; _mbCaminho = {};
+      document.body.insertAdjacentHTML('beforeend', '<div id="tx"><button data-caminho-mini="al1">x</button></div>');
+    }""")
+    pg.evaluate("mbCaminhoCarregar(true).then(() => mbCaminhoAtualizarBotoes())"); pg.wait_for_timeout(500)
+    ok(pg.evaluate("!!document.querySelector('#tx [data-reav=al1]')"), 'ciclo concluído: botão reavaliar aparece')
     ok(not errs, 'sem pageerror ' + str(errs[:2]))
     b.close()
 print('FALHAS:', len(FALHAS)); sys.exit(1 if FALHAS else 0)

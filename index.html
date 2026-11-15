@@ -10303,6 +10303,7 @@ async function mbSolicitarAvaliacaoFisica(alunoId) {
     solicitado_em: new Date().toISOString()
   });
   if (error) { notify('Erro: ' + error.message); return; }
+  _mbReavaliar[alunoId] = false;
   const a = mbPainelAlunos.find(x => x.id === alunoId);
   if (a) { a.avaliacoes = a.avaliacoes || []; a.avaliacoes.unshift({ status: 'solicitada', solicitado_em: new Date().toISOString() }); }
   renderPainelAlunos();
@@ -10409,9 +10410,37 @@ async function mbCaminhoCarregar(forcar) {
     const { data, error } = await mbClient.from('alunos').select('id, caminho_ativo');
     if (error) _mbCaminhoOk = false; else (data || []).forEach(r => { _mbCaminho[r.id] = !!r.caminho_ativo; });
   } catch (e) { _mbCaminhoOk = false; }
+  // Ciclo concluído: Mapa publicado cujas semanas já passaram e sem reavaliação solicitada depois dele
+  _mbReavaliar = {};
+  try {
+    const r = await mbClient.from('avaliacoes_fisicas').select('aluno_id, status, created_at, inicio:mapa->>inicio, semanas:mapa->>semanas, pub:mapa->>publicado');
+    if (!r.error) {
+      const por = {};
+      (r.data || []).forEach(x => { (por[x.aluno_id] = por[x.aluno_id] || []).push(x); });
+      Object.keys(por).forEach(id => {
+        const l = por[id], mp = l.filter(x => x.pub === 'true' && x.inicio).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+        if (!mp) return;
+        const fim = new Date(mp.inicio + 'T12:00:00').getTime() + (parseInt(mp.semanas) || 12) * 7 * 86400000;
+        if (Date.now() < fim) return;
+        if (l.some(x => x.status === 'solicitada' && String(x.created_at) > String(mp.created_at))) return;
+        _mbReavaliar[id] = true;
+      });
+    }
+  } catch (e) {}
 }
+let _mbReavaliar = {};
 async function mbCaminhoAtualizarBotoes() {
   await mbCaminhoCarregar();
+  document.querySelectorAll('[data-caminho-mini]').forEach(b => {
+    const id = b.dataset.caminhoMini, ja = b.parentNode && b.parentNode.querySelector('[data-reav="' + id + '"]');
+    if (_mbReavaliar[id] && !ja) {
+      const r = document.createElement('button'); r.className = 'btn bs'; r.dataset.reav = id;
+      r.style.cssText = 'font-size:9px;padding:3px 8px;color:#f0b429;border-color:#D4A017';
+      r.textContent = '🧭 Ciclo concluído · reavaliar'; r.title = 'O Mapa deste aluno já passou das semanas: solicitar nova avaliação para o Mapa 2';
+      r.onclick = function(ev){ ev.stopPropagation(); mbSolicitarAvaliacaoFisica(id).then(function(){ if (!_mbReavaliar[id]) r.remove(); }); };
+      b.insertAdjacentElement('afterend', r);
+    }
+  });
   document.querySelectorAll('[data-caminho]').forEach(b => {
     const on = !!_mbCaminho[b.dataset.caminho];
     b.textContent = '🧭 Caminho: ' + (on ? 'ligado' : 'desligado');
