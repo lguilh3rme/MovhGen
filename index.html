@@ -10567,7 +10567,7 @@ function mbMapaSrc(k) { const f = _mbMapa.m.fotos[k]; return f.src || _mbMapa.ro
 async function mbMapaFotoUrl(k, antes) {
   const f = _mbMapa.m.fotos[k], src = antes ? f.antes : mbMapaSrc(k), url = src && _mbMapa.urls[src];
   if (!url) return null;
-  const ck = [src, f.rot, f.zoom].join('|');
+  const ck = [src, f.rot, f.zoom, JSON.stringify(f.blur || [])].join('|');
   if (_mbMapa.cache[ck]) return _mbMapa.cache[ck];
   try {
     const img = await new Promise((ok, er) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = er; i.src = url; });
@@ -10576,8 +10576,39 @@ async function mbMapaFotoUrl(k, antes) {
     x.translate(W / 2, H / 2); x.rotate((f.rot || 0) * Math.PI / 180);
     const giro = (f.rot || 0) % 180 !== 0, iw = giro ? img.height : img.width, ih = giro ? img.width : img.height;
     const s = Math.max(W / iw, H / ih) * (f.zoom || 1); x.scale(s, s); x.drawImage(img, -img.width / 2, -img.height / 2);
+    x.setTransform(1, 0, 0, 1, 0, 0); (f.blur || []).forEach(r => mbMapaPixelar(x, W, H, r));
     return (_mbMapa.cache[ck] = c.toDataURL('image/jpeg', 0.82));
   } catch (e) { return null; }
+}
+// Borrão por pixelização (funciona no iOS, onde ctx.filter não existe). r = {x,y,w,h} normalizado 0-1 sobre a foto já enquadrada 3:4.
+function mbMapaPixelar(x, W, H, r) {
+  const px = Math.round(r.x * W), py = Math.round(r.y * H), pw = Math.max(1, Math.round(r.w * W)), ph = Math.max(1, Math.round(r.h * H)), bs = 18;
+  const t = document.createElement('canvas'); t.width = Math.max(1, Math.ceil(pw / bs)); t.height = Math.max(1, Math.ceil(ph / bs));
+  t.getContext('2d').drawImage(x.canvas, px, py, pw, ph, 0, 0, t.width, t.height);
+  x.imageSmoothingEnabled = false; x.drawImage(t, 0, 0, t.width, t.height, px, py, pw, ph);
+}
+function mbMapaBlurModo(k) { _mbMapa.blurK = (_mbMapa.blurK === k) ? null : k; mbMapaRender(); }
+function mbMapaBlurRosto(k) { const f = _mbMapa.m.fotos[k]; f.blur = (f.blur || []).concat([{ x: 0.28, y: 0.01, w: 0.44, h: 0.2 }]); mbMapaAtualizarFotos(); mbMapaRender(); }
+function mbMapaBlurLimpar(k) { _mbMapa.m.fotos[k].blur = []; mbMapaRender(); }
+function mbMapaBlurBind(el, k) {
+  el.style.outline = '2px dashed var(--P,#7C74DC)'; el.style.cursor = 'crosshair'; el.style.touchAction = 'none';
+  let st = null, ov = null;
+  el.onpointerdown = ev => {
+    const im = ev.target.closest && ev.target.closest('img'); if (!im) return;
+    const b = im.getBoundingClientRect(); st = { b, x: (ev.clientX - b.left) / b.width, y: (ev.clientY - b.top) / b.height };
+    ov = document.createElement('div'); ov.style.cssText = 'position:fixed;border:2px solid #fff;background:rgba(255,255,255,.25);pointer-events:none;z-index:99999';
+    document.body.appendChild(ov); try { el.setPointerCapture(ev.pointerId); } catch (e) {} ev.preventDefault();
+  };
+  el.onpointermove = ev => {
+    if (!st) return; const b = st.b, cx = Math.min(Math.max(ev.clientX, b.left), b.right), cy = Math.min(Math.max(ev.clientY, b.top), b.bottom), sx = b.left + st.x * b.width, sy = b.top + st.y * b.height;
+    ov.style.left = Math.min(sx, cx) + 'px'; ov.style.top = Math.min(sy, cy) + 'px'; ov.style.width = Math.abs(cx - sx) + 'px'; ov.style.height = Math.abs(cy - sy) + 'px';
+  };
+  el.onpointerup = ev => {
+    if (!st) return; const b = st.b, nx = Math.min(Math.max((ev.clientX - b.left) / b.width, 0), 1), ny = Math.min(Math.max((ev.clientY - b.top) / b.height, 0), 1);
+    const r = { x: Math.min(st.x, nx), y: Math.min(st.y, ny), w: Math.abs(nx - st.x), h: Math.abs(ny - st.y) };
+    if (ov) ov.remove(); ov = null; st = null;
+    if (r.w > 0.04 && r.h > 0.04) { const f = _mbMapa.m.fotos[k]; f.blur = (f.blur || []).concat([r]); mbMapaRender(); }
+  };
 }
 function mbMapaSet(k, v) { _mbMapa.m[k] = v; }
 function mbMapaLista(k, txt) { _mbMapa.m[k] = String(txt).split('\n').map(s => s.trim()).filter(Boolean); }
@@ -10618,6 +10649,7 @@ async function mbMapaAtualizarFotos() {
     const L = d => d ? d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(0, 4) : '';
     const im = (x, cap) => '<div style="flex:1;min-width:0"><img src="' + x + '" style="width:100%;display:block;border-radius:8px' + op + '">' + (cap ? '<div style="font-size:9px;color:var(--t3);text-align:center;margin-top:2px">' + cap + '</div>' : '') + '</div>';
     el.innerHTML = u ? (ua ? '<div style="display:flex;gap:4px">' + im(ua, 'Antes ' + L(f.antes_data)) + im(u, 'Agora ' + L(f.src_data || _mbMapa.row.data_avaliacao)) + '</div>' : im(u, '')) : '<div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--t3);border:1px dashed var(--bd);border-radius:8px">sem foto desta vista</div>';
+    el.style.outline = ''; el.style.cursor = ''; if (_mbMapa.blurK === k) mbMapaBlurBind(el, k);
   }
   if (_mbMapa.prev) mbMapaPrevia();
 }
@@ -10680,6 +10712,8 @@ function mbMapaRender() {
     return `<div style="min-width:0"><div style="font-size:11px;font-weight:700;margin-bottom:3px">${n}</div><div id="mapa-ft-${k}"></div>
       <label style="font-size:10px;display:flex;align-items:center;gap:5px;margin-top:4px"><input type="checkbox" style="width:auto;margin:0" ${f.show ? 'checked' : ''} onchange="mbMapaFoto('${k}','show',this.checked)"> mostrar ao aluno</label>
       <div style="display:flex;gap:6px;align-items:center;margin-top:3px"><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="mbMapaFoto('${k}','rot')">↻ girar</button><input type="range" min="1" max="1.6" step="0.05" value="${f.zoom}" oninput="mbMapaFoto('${k}','zoom',this.value)" style="flex:1" title="Zoom"></div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px"><button class="btn ${M.blurK === k ? 'bp' : 'bs'}" style="font-size:10px;padding:3px 8px" onclick="mbMapaBlurModo('${k}')" title="Arraste sobre a foto para borrar uma área (vale para as duas fotos do antes e depois)">${M.blurK === k ? '✔ Pronto' : '🫥 Borrar área'}</button><button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="mbMapaBlurRosto('${k}')" title="Borra a região do rosto (aproximada: confira)">Rosto</button>${(f.blur || []).length ? `<button class="btn bs" style="font-size:10px;padding:3px 8px" onclick="mbMapaBlurLimpar('${k}')">limpar (${f.blur.length})</button>` : ''}</div>
+      ${M.blurK === k ? '<div style="font-size:9.5px;color:var(--t3);margin-top:3px">Arraste sobre a foto para marcar a área. O borrão vale no app, na prévia e no PDF; o arquivo original continua guardado.</div>' : ''}
       ${opts.length > 1 ? sel('Foto de agora', opts, atual, 'src', false) + sel('Comparar com (antes)', opts.filter(o => o.path !== atual), f.antes, 'antes', true) : ''}</div>`;
   }).join('');
   const fotosAviso = algumaComp ? `<button class="btn bs" style="${btn};margin-bottom:8px" onclick="mbMapaCompararTodas()">↔ Antes e depois: primeira e última foto de cada vista</button>`
@@ -17165,11 +17199,17 @@ function aCaminhoRenderCard(){
     (prox ? '<div class="cam-prox">Próximo: ' + aEsc(prox.titulo) + ' · ' + aCaminhoFmt(aCaminhoDataMarco(m, prox)) + '</div>' : '');
   card.style.display = 'block';
 }
+function aCaminhoPixelar(x, W, H, r){
+  const px = Math.round(r.x * W), py = Math.round(r.y * H), pw = Math.max(1, Math.round(r.w * W)), ph = Math.max(1, Math.round(r.h * H)), bs = 18;
+  const t = document.createElement('canvas'); t.width = Math.max(1, Math.ceil(pw / bs)); t.height = Math.max(1, Math.ceil(ph / bs));
+  t.getContext('2d').drawImage(x.canvas, px, py, pw, ph, 0, 0, t.width, t.height);
+  x.imageSmoothingEnabled = false; x.drawImage(t, 0, 0, t.width, t.height, px, py, pw, ph);
+}
 async function aCaminhoFotoUrl(k, antes){
   const m = aCaminhoMapa, row = aCaminhoRow; const f = (m.fotos && m.fotos[k]) || {};
   if (f.show === false) return null;
   const src = antes ? f.antes : (f.src || row['foto_' + k + '_path']); const url = src && aCaminhoUrls[src]; if (!url) return null;
-  const ck = [src, f.rot, f.zoom].join('|'); if (aCaminhoImgs[ck]) return aCaminhoImgs[ck];
+  const ck = [src, f.rot, f.zoom, JSON.stringify(f.blur || [])].join('|'); if (aCaminhoImgs[ck]) return aCaminhoImgs[ck];
   try {
     const img = await new Promise(function(ok, er){ const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = function(){ ok(i); }; i.onerror = er; i.src = url; });
     const W = 300, H = 400, c = document.createElement('canvas'); c.width = W; c.height = H;
@@ -17177,6 +17217,7 @@ async function aCaminhoFotoUrl(k, antes){
     x.translate(W / 2, H / 2); x.rotate((f.rot || 0) * Math.PI / 180);
     const giro = (f.rot || 0) % 180 !== 0, iw = giro ? img.height : img.width, ih = giro ? img.width : img.height;
     const s = Math.max(W / iw, H / ih) * (f.zoom || 1); x.scale(s, s); x.drawImage(img, -img.width / 2, -img.height / 2);
+    x.setTransform(1, 0, 0, 1, 0, 0); (f.blur || []).forEach(function(r){ aCaminhoPixelar(x, W, H, r); });
     return (aCaminhoImgs[ck] = c.toDataURL('image/jpeg', 0.82));
   } catch (e) { return null; }
 }

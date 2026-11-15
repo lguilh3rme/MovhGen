@@ -39,6 +39,13 @@ with sync_playwright() as p:
       document.body.insertAdjacentHTML('beforeend','<div id="mb-mapa-body"></div>'); mbMapaRender(); const h=document.getElementById('mb-mapa-body').innerText;
       return {sec:['Meta e prazo','Fotos que o aluno vê','Diagnóstico em linguagem simples','Caminho e agenda'].every(x=>h.indexOf(x)>=0),aval:h.indexOf('Da avaliação de')>=0,ini:h.indexOf('diferente do início do treino')>=0,comp:h.indexOf('Comparar com')>=0};}""")
     ok(r['sec'] and r['aval'] and r['ini'] and r['comp'],'editor novo: seções, avaliação, aviso de início e comparação: '+str(r))
+    r=pg.evaluate("""()=>{
+      const c=document.createElement('canvas'); c.width=300; c.height=400; const x=c.getContext('2d');
+      for(let i=0;i<300;i+=2){x.fillStyle='rgb('+((i*5)%256)+','+((i*7)%256)+',50)';x.fillRect(i,0,2,400)}
+      const g=(a,b)=>x.getImageData(a,b,1,1).data.join(','); const o1=g(125,165), o2=g(127,167), fora=g(10,10);
+      mbMapaPixelar(x,300,400,{x:.4,y:.4,w:.3,h:.3});
+      return {difAntes:o1!==o2, igualDepois:g(125,165)===g(127,167), foraIgual:g(10,10)===fora};}""")
+    ok(r['difAntes'] and r['igualDepois'] and r['foraIgual'],'borrão pixeliza só a área marcada: '+str(r))
     r=pg.evaluate("PL_PRESENCIAL.some(function(x){return x.id==='av_mapa'&&x.precoBR===150&&/Degrau 1/.test(x.grupo)})")
     ok(r,'degrau 1 Avaliação + Mapa no catálogo do Cobrar R$ 150')
     ok(not errs,'sem pageerror '+str(errs[:2])); b.close()
