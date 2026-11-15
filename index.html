@@ -558,7 +558,7 @@ body.dock-open #aluno-dock{display:flex}
 /* ── editor enxuto (v97) ── */
 .sb-ver{margin:10px 14px 4px;font-size:9.5px;color:var(--t3);opacity:.7}
 .pb-btn.sv{background:var(--P);color:#fff;border-color:var(--P)}
-.pb-badge{font-size:10px;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap;border:1px solid}.pb-badge.pb-ativo{color:#1fb583;border-color:#1A9E72;background:rgba(26,158,114,.12)}.pb-badge.pb-rasc{color:#f0b429;border-color:#D4A017;background:rgba(212,160,23,.14)}.pb-btn.pf-prox{color:#1fb583!important;border-color:#1A9E72!important}
+.pb-badge{font-size:10px;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap;border:1px solid}.pb-badge.pb-ativo{color:#1fb583;border-color:#1A9E72;background:rgba(26,158,114,.12)}.pb-badge.pb-prox{color:#f0b429;border-color:#D4A017;background:rgba(212,160,23,.14)}.pb-badge.pb-rasc{color:#c9cfdd;border-color:#4a5570;background:rgba(120,130,160,.14)}.pb-badge.pb-hist{color:#7f8aa6;border-color:#2c3552}.pb-btn.pf-prox{color:#1fb583!important;border-color:#1A9E72!important}
 .pb-btn.dest{max-width:150px;overflow:hidden;text-overflow:ellipsis;background:var(--Pl);color:var(--Pd);border-color:var(--P)}
 .pb-btn.sv.dirty{box-shadow:0 0 0 2px rgba(224,80,40,.35)}
 .sel-cb{display:none;width:16px;height:16px;flex:0 0 auto;accent-color:var(--P);cursor:pointer;margin:0 4px 0 0}
@@ -2557,7 +2557,7 @@ function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">✅ Treino ativo'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':'<span class="pb-badge pb-rasc">📝 Rascunho inativo · não está em vigor</span>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 function pbProximaFase(){
   if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
@@ -2648,7 +2648,7 @@ function pbGoSem(sid){const s=semanas.find(x=>x.id===sid);if(!s)return;nav(s.dia
 function refreshPBars(){document.querySelectorAll('.pbar').forEach(el=>{const h=pbarHTML(el.dataset.sid,el.dataset.did,el.dataset.mode);if(h)el.outerHTML=h;});}
 function renderCfgTreino(){
   const el=document.getElementById('cfg-treino');if(!el)return;
-  const di=pbDestInfo();el.innerHTML='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span style="font-size:12px;font-weight:700">✏️ Treino em edição</span><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde será salvo — toque para trocar">'+escAttr(di.txt)+' ▾</button><span style="flex:1"></span><button class="pb-btn sv'+(_pbDirty?' dirty':'')+'" onclick="pbSalvar()">'+di.acao+(_pbDirty?' ●':'')+'</button><button class="pb-btn" onclick="pbSalvarComo()">Salvar como…</button><button class="pb-btn" onclick="nav(\'splits\')">📂 Carregar split</button><button class="pb-btn" onclick="toggleDock()">📱 Prévia</button></div>'+
+  const di=pbDestInfo();el.innerHTML='<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px"><span style="font-size:12px;font-weight:700">✏️ Treino em edição</span><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde será salvo — toque para trocar">'+escAttr(di.txt)+' ▾</button>'+((typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?mbBadgeProto(_mbProtoEstado,mbProtoDataInicio)+(_mbProtoAtivo?'':'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):'')+'<span style="flex:1"></span><button class="pb-btn sv'+(_pbDirty?' dirty':'')+'" onclick="pbSalvar()">'+di.acao+(_pbDirty?' ●':'')+'</button><button class="pb-btn" onclick="pbSalvarComo()">Salvar como…</button><button class="pb-btn" onclick="nav(\'splits\')">📂 Carregar split</button><button class="pb-btn" onclick="toggleDock()">📱 Prévia</button></div>'+
     semanas.map(s=>`<div class="cfg-sem"><b>${escAttr(s.nome||'Semana')}</b>${s.dias.map(d=>`<button class="pb-chip" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('')}<button class="pb-btn" data-sid="${s.id}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button></div>`).join('');
 }
 const _renderSB0=renderSB;
@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.2 · 15/11';
+var MOVH_VER = 'v64.3 · 15/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9031,6 +9031,22 @@ let mbProfessor = null; // {id, nome, email}
 let mbAlunos = [];       // lista de alunos do professor logado
 let mbAlunoSelecionadoId = null;
 let _mbProtoAtivo = true; // false = protocolo carregado no editor é rascunho inativo
+let _mbProtoEstado = 'on';
+// Estado de um treino do aluno: on = no app · prox = inativo com início hoje/futuro · rasc = inativo em edição · hist = inativo mais antigo que o ativo
+function mbEstadoProto(ativo, dataIni, dataAtivo){
+  if (ativo) return 'on';
+  const h = new Date(); const hoje = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
+  if (dataIni && dataIni >= hoje) return 'prox';
+  if (dataIni && dataAtivo && dataIni < dataAtivo) return 'hist';
+  return 'rasc';
+}
+function mbBadgeProto(k, dataIni){
+  const d = dataIni ? dataIni.split('-').reverse().slice(0,2).join('/') : '';
+  if (k === 'on') return '<span class="pb-badge pb-ativo" title="É o treino que o aluno vê no app agora">🟢 No app</span>';
+  if (k === 'prox') return '<span class="pb-badge pb-prox" title="Pronto, mas o aluno ainda vê o treino atual até você publicar">🟡 Próximo' + (d ? ' · ' + d : '') + '</span>';
+  if (k === 'hist') return '<span class="pb-badge pb-hist" title="Treino antigo">🗂️ Histórico</span>';
+  return '<span class="pb-badge pb-rasc" title="Em edição: o aluno não vê">⚪ Rascunho</span>';
+}
 let mbProtoCarregadoId = null; // ID do protocolo carregado no editor (para UPDATE)
 
 function mbShowMsg(elId, text, type) {
@@ -10287,6 +10303,7 @@ async function mbSolicitarAvaliacaoFisica(alunoId) {
     solicitado_em: new Date().toISOString()
   });
   if (error) { notify('Erro: ' + error.message); return; }
+  _mbReavaliar[alunoId] = false;
   const a = mbPainelAlunos.find(x => x.id === alunoId);
   if (a) { a.avaliacoes = a.avaliacoes || []; a.avaliacoes.unshift({ status: 'solicitada', solicitado_em: new Date().toISOString() }); }
   renderPainelAlunos();
@@ -10393,9 +10410,37 @@ async function mbCaminhoCarregar(forcar) {
     const { data, error } = await mbClient.from('alunos').select('id, caminho_ativo');
     if (error) _mbCaminhoOk = false; else (data || []).forEach(r => { _mbCaminho[r.id] = !!r.caminho_ativo; });
   } catch (e) { _mbCaminhoOk = false; }
+  // Ciclo concluído: Mapa publicado cujas semanas já passaram e sem reavaliação solicitada depois dele
+  _mbReavaliar = {};
+  try {
+    const r = await mbClient.from('avaliacoes_fisicas').select('aluno_id, status, created_at, inicio:mapa->>inicio, semanas:mapa->>semanas, pub:mapa->>publicado');
+    if (!r.error) {
+      const por = {};
+      (r.data || []).forEach(x => { (por[x.aluno_id] = por[x.aluno_id] || []).push(x); });
+      Object.keys(por).forEach(id => {
+        const l = por[id], mp = l.filter(x => x.pub === 'true' && x.inicio).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))[0];
+        if (!mp) return;
+        const fim = new Date(mp.inicio + 'T12:00:00').getTime() + (parseInt(mp.semanas) || 12) * 7 * 86400000;
+        if (Date.now() < fim) return;
+        if (l.some(x => x.status === 'solicitada' && String(x.created_at) > String(mp.created_at))) return;
+        _mbReavaliar[id] = true;
+      });
+    }
+  } catch (e) {}
 }
+let _mbReavaliar = {};
 async function mbCaminhoAtualizarBotoes() {
   await mbCaminhoCarregar();
+  document.querySelectorAll('[data-caminho-mini]').forEach(b => {
+    const id = b.dataset.caminhoMini, ja = b.parentNode && b.parentNode.querySelector('[data-reav="' + id + '"]');
+    if (_mbReavaliar[id] && !ja) {
+      const r = document.createElement('button'); r.className = 'btn bs'; r.dataset.reav = id;
+      r.style.cssText = 'font-size:9px;padding:3px 8px;color:#f0b429;border-color:#D4A017';
+      r.textContent = '🧭 Ciclo concluído · reavaliar'; r.title = 'O Mapa deste aluno já passou das semanas: solicitar nova avaliação para o Mapa 2';
+      r.onclick = function(ev){ ev.stopPropagation(); mbSolicitarAvaliacaoFisica(id).then(function(){ if (!_mbReavaliar[id]) r.remove(); }); };
+      b.insertAdjacentElement('afterend', r);
+    }
+  });
   document.querySelectorAll('[data-caminho]').forEach(b => {
     const on = !!_mbCaminho[b.dataset.caminho];
     b.textContent = '🧭 Caminho: ' + (on ? 'ligado' : 'desligado');
@@ -11882,7 +11927,7 @@ async function mbGerenciarProtocolos(alunoId) {
     }
     html += `<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:linear-gradient(135deg,rgba(8,80,64,.12),rgba(8,80,64,.04));border:1px solid #9ad8c2;margin-bottom:10px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:var(--tx)">${escAttr(nome)} <span style="font-size:9px;background:#E0F5EE;color:#085040;padding:2px 6px;border-radius:99px;font-weight:700;margin-left:6px">✅ ATIVO</span></div>
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${escAttr(nome)} <span style="margin-left:6px">${mbBadgeProto('on')}</span></div>
         <div style="font-size:10px;color:var(--t3);margin-top:2px">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · ${ativo.data_inicio?('📅 '+mbPeriodoTxt(ativo.data_inicio,c)):('criado '+criado)}${fimTxt.replace(/^ · fim previsto [0-9\/]+/,'')}</div>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -11897,7 +11942,7 @@ async function mbGerenciarProtocolos(alunoId) {
   // --- RASCUNHOS INATIVOS (agrupados por data) ---
   if (inativos.length > 0) {
     html += '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--bd2)">';
-    html += '<div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase">Rascunhos inativos</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:var(--t3);margin-bottom:6px;text-transform:uppercase">Próximo, rascunhos e histórico</div>';
     datasOrdenadas.forEach(dataKey => {
       const lista = grupos.get(dataKey);
       const dataFmt = dataKey === 'sem-data' ? 'sem data' : new Date(dataKey + 'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
@@ -11910,7 +11955,8 @@ async function mbGerenciarProtocolos(alunoId) {
         const ehDuplicado = duplicados.has(p.id);
         const originalId = ehDuplicado ? conteudosVistos.get(JSON.stringify(c)) : null;
         const labelDup = ehDuplicado && originalId ? `<span style="font-size:8px;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:99px;margin-left:4px;font-weight:600">= rascunho ${originalId.slice(0,8)}</span>` : '';
-        const ativoBadge = '<span style="font-size:9px;background:#F3F3F3;color:#888;padding:2px 6px;border-radius:99px">inativo</span>';
+        const _k = mbEstadoProto(false, p.data_inicio || null, ativo ? ativo.data_inicio : null);
+        const ativoBadge = '<span style="margin-left:6px">' + mbBadgeProto(_k, p.data_inicio || null) + '</span>';
         html += `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:var(--cl);margin-bottom:6px${ehDuplicado ? ';opacity:.7' : ''}">
           <div style="flex:1;min-width:0">
             <div style="font-size:12px;font-weight:600;color:var(--tx)">${escAttr(nome)} ${ativoBadge}${labelDup}</div>
@@ -11919,7 +11965,7 @@ async function mbGerenciarProtocolos(alunoId) {
           <div style="display:flex;gap:4px;flex-wrap:wrap">
             <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
             <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
-            <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="Volta a ser o treino ativo do aluno (o ativo atual vai para o histórico)">↩ Reativar</button>
+            <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">${_k === 'hist' ? '↩ Reativar' : '🚀 Publicar'}</button>
             <button class="btn bs" style="font-size:9px;padding:3px 8px;color:#c03030;border-color:#f0b0b0" onclick="mbDeletarProtocolo('${p.id}','${alunoId}')" title="Excluir protocolo">🗑 Excluir</button>
           </div>
         </div>`;
@@ -12322,6 +12368,12 @@ async function pfSalvar(ativar){
   } catch (e) { notify('Erro ao salvar rascunho: ' + (e.message || e)); }
 }
 
+async function mbPublicarCarregado(){
+  if (!mbProtoCarregadoId || !mbAlunoSelecionadoId) { notify('Abra o treino de um aluno primeiro.'); return; }
+  await mbReativarProtocolo(String(mbProtoCarregadoId), mbAlunoSelecionadoId);
+  _mbProtoAtivo = true; _mbProtoEstado = 'on';
+  try { pbRefreshDest(); } catch (_) {}
+}
 async function mbReativarProtocolo(protoId, alunoId) {
   if (!confirm('Reativar este protocolo? O treino ativo atual do aluno vai para o histórico (inativo) e o aluno passa a ver este no app.\n\nSe as datas dele já venceram, ajuste início/fim no Quadro (📅 Calendário do treino).')) return;
   try {
@@ -12662,6 +12714,7 @@ function mbAplicarProtoNoEditor(proto) {
   // guarda o ID para permitir UPDATE direto
   mbProtoCarregadoId = proto.id;
   _mbProtoAtivo = proto.ativo !== false;
+  _mbProtoEstado = mbEstadoProto(_mbProtoAtivo, proto.data_inicio || null, null);
   const nomeProto = c.nome || proto.nome || 'protocolo';
   document.getElementById('mb-update-wrap').style.display = 'block';
   document.getElementById('mb-proto-editando').textContent = '✏️ Editando: ' + nomeProto;
@@ -13221,6 +13274,13 @@ async function mbAtualizarProtocolo() {
     document.getElementById('mb-proto-editando').textContent = '✅ Atualizado: ' + nome;
     mbShowMsg('mb-save-msg', '✅ Protocolo atualizado com sucesso no banco!', 'ok');
     pbMarcarLimpo();
+    if (!_mbProtoAtivo && mbAlunoSelecionadoId) {
+      // rascunho inativo: o aluno continua vendo o treino antigo até ele ser ativado
+      mbShowMsg('mb-save-msg', '⚠️ Salvo, mas este protocolo é um RASCUNHO INATIVO: o aluno ainda vê o treino antigo no app.', 'err');
+      if (confirm('Este protocolo está INATIVO, então o aluno ainda vê o treino antigo.\n\nAtivar agora para ele aparecer no app?')) {
+        await mbPublicarCarregado();
+      }
+    }
   } catch (err) {
     mbShowMsg('mb-save-msg', 'Erro ao atualizar: ' + (err.message || err), 'err');
   } finally {
@@ -17193,6 +17253,14 @@ function aCaminhoRenderCard(){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDataMarco(m, x); return d && d >= hoje; });
   const trn = aCaminhoTreinoTxt(m);
+  const d0 = new Date((m.inicio || '') + 'T12:00:00');
+  if (!isNaN(d0) && Date.now() - d0.getTime() >= tot * 7 * 86400000) {
+    card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>✅ Ciclo concluído ›</span></div>' +
+      '<div class="cam-bar"><i style="width:100%"></i></div>' +
+      '<div class="cam-prox">Você completou as ' + tot + ' semanas. Toque para rever o caminho; o próximo Mapa vem na sua reavaliação.</div>';
+    card.style.display = 'block';
+    return;
+  }
   card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>' + aCaminhoFase(m, sem) + ' · Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
     '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
     (trn ? '<div class="cam-prox">' + trn + '</div>' : '') +
