@@ -191,3 +191,5 @@ Trigger `trg_alunos_protege_colunas` (12/11) impede o aluno de alterar acesso, c
 - AÇÃO DO USUÁRIO: revogar o token GitHub colado no chat de 09/11/2026.
 
 - 15/11 (wip/rascunho-ciclo): aluno não via treino novo porque 'Atualizar protocolo' em rascunho inativo não ativa; agora avisa e oferece ativar. App: card do Caminho mostra 'Ciclo concluído' após as semanas do Mapa. Pendente: aprovar release; Mapa 2 depende da reavaliação (2 avaliações 'solicitada' sem dados).
+
+- 15/11 (wip/rascunho-ciclo): estados do treino por aluno com badges (🟢 No app · 🟡 Próximo · ⚪ Rascunho · 🗂️ Histórico; helper mbEstadoProto/mbBadgeProto, regra pela data_inicio), botão 'Publicar para o aluno' (mbPublicarCarregado) no cabeçalho da Configuração e na barra do editor; Gerenciar protocolos com badges e 'Publicar'. Teste estados_proto (9). Falta: badge 'Próximo' no card do aluno (exige query extra). Só Gerador, app só muda no 'Ciclo concluído'.
