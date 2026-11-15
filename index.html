@@ -13221,6 +13221,15 @@ async function mbAtualizarProtocolo() {
     document.getElementById('mb-proto-editando').textContent = '✅ Atualizado: ' + nome;
     mbShowMsg('mb-save-msg', '✅ Protocolo atualizado com sucesso no banco!', 'ok');
     pbMarcarLimpo();
+    if (!_mbProtoAtivo && mbAlunoSelecionadoId) {
+      // rascunho inativo: o aluno continua vendo o treino antigo até ele ser ativado
+      mbShowMsg('mb-save-msg', '⚠️ Salvo, mas este protocolo é um RASCUNHO INATIVO: o aluno ainda vê o treino antigo no app.', 'err');
+      if (confirm('Este protocolo está INATIVO, então o aluno ainda vê o treino antigo.\n\nAtivar agora para ele aparecer no app?')) {
+        await mbReativarProtocolo(String(mbProtoCarregadoId), mbAlunoSelecionadoId);
+        _mbProtoAtivo = true;
+        if (typeof pbRender === 'function') try { pbRender(); } catch (_) {}
+      }
+    }
   } catch (err) {
     mbShowMsg('mb-save-msg', 'Erro ao atualizar: ' + (err.message || err), 'err');
   } finally {
@@ -17193,6 +17202,14 @@ function aCaminhoRenderCard(){
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const prox = (m.marcos || []).slice().sort(function(a,b){ return a.sem - b.sem; }).find(function(x){ const d = aCaminhoDataMarco(m, x); return d && d >= hoje; });
   const trn = aCaminhoTreinoTxt(m);
+  const d0 = new Date((m.inicio || '') + 'T12:00:00');
+  if (!isNaN(d0) && Date.now() - d0.getTime() >= tot * 7 * 86400000) {
+    card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>✅ Ciclo concluído ›</span></div>' +
+      '<div class="cam-bar"><i style="width:100%"></i></div>' +
+      '<div class="cam-prox">Você completou as ' + tot + ' semanas. Toque para rever o caminho; o próximo Mapa vem na sua reavaliação.</div>';
+    card.style.display = 'block';
+    return;
+  }
   card.innerHTML = '<div class="cam-top"><b>🧭 Seu caminho</b><span>' + aCaminhoFase(m, sem) + ' · Semana ' + sem + ' de ' + tot + ' ›</span></div>' +
     '<div class="cam-bar"><i style="width:' + Math.round(sem / tot * 100) + '%"></i></div>' +
     (trn ? '<div class="cam-prox">' + trn + '</div>' : '') +
