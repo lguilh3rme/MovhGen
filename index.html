@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.5 · 16/11';
+var MOVH_VER = 'v64.6 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -5606,10 +5606,10 @@ function montarTimelinePeriodizacao(lista, semanaAtualGlobal, detalhado){
     <option value=""${!nivelAluno?' selected':''}>Nível do aluno — não definido</option>
     ${Object.keys(NIVEL_TREINO).map(k=>`<option value="${k}"${nivelAluno===k?' selected':''}>${NIVEL_TREINO[k].label} (${NIVEL_TREINO[k].sub})</option>`).join('')}
   </select>${nivelAluno&&nivelAlunoOrigem==='anamnese'?'<div style="font-size:8.5px;color:var(--t3);margin-top:2px">📋 Veio do questionário inicial do aluno — troque aqui só se quiser sobrepor.</div>':''}`;
-  const avisos = analisarPeriodizacao(lista, nivelAluno);
+  const avisos = []; // v64.6: avisos antigos (Base 1–3 sem, mesociclos de 4) desligados — o modelo hoje é Base 8 sem · Construção · Consolidação
   const avisosHTML = avisos.length
     ? `<div class="pzt-avisos">${avisos.map(a=>`<div class="pzt-aviso">${a.texto}${a.aplicar?`<button class="btn bp" style="font-size:9px;padding:2px 7px;margin-top:4px;display:block" onclick="${a.aplicar}">✓ Aplicar sugestão</button>`:''}</div>`).join('')}</div>`
-    : (nivelAluno ? `<div class="pzt-avisos ok">✅ Distribuição de fases dentro do recomendado pra ${NIVEL_TREINO[nivelAluno].label.toLowerCase()}.</div>` : '');
+    : (false ? `<div class="pzt-avisos ok">✅ Distribuição de fases dentro do recomendado pra ${NIVEL_TREINO[nivelAluno].label.toLowerCase()}.</div>` : '');
   return `<div class="pzt-wrap">
     <div class="pzt-title">📈 Periodização prevista (${total} semanas)</div>
     <div class="pzt-track">${segs}${marker}${testeMarkers}</div>
@@ -9593,6 +9593,23 @@ function mbPresenca(a){
   if (ace) p.push('👀 app ' + mbTempoRel(a.ultimo_acesso));
   return { dot: dot, nv: nv, txt: txt, det: p.join(' · ') };
 }
+// Barra de etapas do protocolo ativo (gestão de alunos): um segmento por fase, largura = semanas, preenchido até hoje. Adapta-se sozinha ao incluir/remover fases.
+function mbBarraFases(a){
+  const p = a.protocoloAtivo; if (!p || !p.data_inicio) return '';
+  const ss = ((p._conteudo || p.conteudo || {}).semanas) || []; if (!ss.length) return '';
+  const durs = ss.map(s => parseInt(s.duracaoSemanas) || 4);
+  const pos = Math.max(0, (Date.now() - new Date(p.data_inicio + 'T00:00:00').getTime()) / (7 * 86400000));
+  let acc = 0;
+  const segs = ss.map((s, i) => {
+    const n = String(s.nome || '').toLowerCase();
+    const cor = /consolid/.test(n) ? '#1A9E72' : /constru/.test(n) ? '#8A5CD0' : ({ base:'#3580D8', intensificacao:'#D43A3A', densidade:'#D4A017', deload:'#777777' }[s.fase] || '#3580D8');
+    const d = durs[i], ini = acc; acc += d;
+    const fill = Math.max(0, Math.min(1, (pos - ini) / d)) * 100;
+    const nome = String(s.nome || s.fase || 'Fase');
+    return '<div title="' + escAttr(nome + ' · ' + d + ' sem') + '" style="flex:' + d + ' 1 0;min-width:0;position:relative;height:14px;border-radius:4px;background:' + cor + '33;overflow:hidden"><div style="position:absolute;top:0;bottom:0;left:0;width:' + fill + '%;background:' + cor + '"></div><span style="position:relative;display:block;font-size:8.5px;font-weight:700;color:#fff;padding:0 4px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escAttr(nome) + ' · ' + d + 's</span></div>';
+  }).join('');
+  return '<div style="display:flex;gap:2px;margin-top:5px;max-width:420px">' + segs + '</div>';
+}
 // Fim do treino (previsão pela duração das semanas) e do acesso: laranja ≤ 14 dias, vermelho ≤ 7 dias (ou já vencido).
 function mbPrevisaoFim(a){
   const p = a.protocoloAtivo; if (!p) return null;
@@ -9763,7 +9780,7 @@ function renderPainelAlunos() {
       ? `<button onclick="mbVerProtocolo('${a.id}')" title="Ver / editar protocolo" style="background:var(--cl);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--tx);cursor:pointer">✏️ ${escAttr(proto.nome)}</button>` +
         (proto.data_inicio ? `<span style="color:var(--t3);font-size:10px"> desde ${new Date(proto.data_inicio+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
         (previsaoFim ? `<span style="color:var(--t3);font-size:10px"> · fim ${previsaoFim.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
-        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno (histórico, duplicar, link)">🗂 Todos os treinos</button>`
+        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno (histórico, duplicar, link)">🗂 Todos os treinos</button>` + mbBarraFases(a)
       : `<span style="color:var(--t3);font-style:italic;font-size:10px">sem protocolo</span> <button class="btn bp" style="font-size:10px;padding:2px 9px;margin-left:4px" onclick="mbMontarTreinoPara('${a.id}')" title="Abre o editor com este aluno selecionado">＋ Montar treino</button>`;
 
     // Badges de status
@@ -13010,7 +13027,7 @@ function mbOnAlunoChange(autoCarregar) {
       }
     }
   }
-  mbRenderSugestaoPeriodizacao();
+  // v64.6: sugestão inicial de periodização (modelo antigo) desligada
   _dest = null; if (typeof pbRefreshDest === 'function') pbRefreshDest();
 }
 
