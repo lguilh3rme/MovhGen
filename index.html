@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.3 · 15/11';
+var MOVH_VER = 'v64.4 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9317,6 +9317,7 @@ async function mbCarregarPainelAlunos() {
       .select('id, nome, aluno_id, data_inicio, criado_em, conteudo')
       .in('aluno_id', alunoIds)
       .eq('ativo', true));
+    P.k11 = Q(() => mbClient.from('protocolos').select('id, aluno_id, nome, data_inicio, criado_em').in('aluno_id', alunoIds).eq('ativo', false));
     P.k2 = Q(() => mbClient.from('anamneses')
       .select('id, aluno_id, tipo, respostas, solicitado_em, criado_em')
       .in('aluno_id', alunoIds)
@@ -9361,6 +9362,8 @@ async function mbCarregarPainelAlunos() {
   }
   const protoMap = {};
   protocolosAtivos.forEach(p => { protoMap[p.aluno_id] = {...p, _conteudo: p.conteudo}; });
+  const inatMap = {};
+  if (alunoIds.length > 0) { try { const { data: _pi } = await P.k11; (_pi || []).forEach(p => { (inatMap[p.aluno_id] = inatMap[p.aluno_id] || []).push(p); }); } catch (e) {} }
 
   // Busca anamneses e PAR-Q de todos os alunos de uma vez
   let anamnesesData = [];
@@ -9467,6 +9470,7 @@ async function mbCarregarPainelAlunos() {
     ...a,
     _lixeira: !!a.na_lixeira,
     protocoloAtivo: protoMap[a.id] || null,
+    protosInativos: inatMap[a.id] || [],
     anamnese: anamMap[a.id]?.anamnese || null,
     parq: anamMap[a.id]?.parq || null,
     avaliacoes: avalMap[a.id] || [],
@@ -10477,16 +10481,36 @@ function mbFilaItens() {
   });
   return out.sort((x, y) => x.d - y.d);
 }
+// rascunho/próximo = inativo com início posterior ao do treino ativo (mais recente primeiro)
+function mbRascunhoDe(a) {
+  const ini = (a.protocoloAtivo && a.protocoloAtivo.data_inicio) || '';
+  return (a.protosInativos || []).filter(p => !ini || (p.data_inicio || '') > ini)
+    .sort((x, y) => String(y.data_inicio || '').localeCompare(String(x.data_inicio || '')))[0] || null;
+}
+async function mbAbrirProtoNoQuadro(protoId, alunoId) {
+  if (typeof _pbDirty !== 'undefined' && _pbDirty && mbProtoCarregadoId !== protoId && !confirm('Há alterações não salvas no editor. Abrir outro treino vai substituí-las. Continuar?')) return;
+  const { data, error } = await mbClient.from('protocolos').select('id, nome, ativo, data_inicio, conteudo').eq('id', protoId).maybeSingle();
+  if (error || !data) { notify('Erro ao abrir o treino: ' + (error ? error.message : 'não encontrado')); return; }
+  try { closeM('modal-protos-aluno'); } catch (e) {}
+  const sel = document.getElementById('mb-aluno-select');
+  if (sel) { sel.value = alunoId; mbOnAlunoChange(); }
+  mbAplicarProtoNoEditor({ ...data, conteudo: data.conteudo || {} });
+  const s0 = semanas[0];
+  if (s0) nav('kb-' + s0.id); else nav('main');
+  notify((data.ativo ? 'Fase atual' : 'Rascunho') + ' aberto no Quadro.');
+}
 function mbFilaRender() {
   const tab = document.getElementById('alunos-tabela'); if (!tab) return;
   let box = document.getElementById('al-fila');
   if (!box) { box = document.createElement('details'); box.id = 'al-fila'; box.open = true; box.className = 'card'; box.style.cssText = 'margin-bottom:8px;padding:8px 12px'; tab.parentNode.insertBefore(box, tab); }
   const it = mbFilaItens(); const venc = it.filter(x => x.d <= 0), prox = it.filter(x => x.d > 0 && x.d <= 21), resto = it.length - venc.length - prox.length;
-  const linha = x => { const a = x.a, n = escAttr(a.nome || 'Aluno');
+  const linha = x => { const a = x.a, n = escAttr(a.nome || 'Aluno'), rasc = mbRascunhoDe(a);
     const txt = x.d <= 0 ? 'venceu há ' + Math.abs(x.d) + ' dia(s)' : 'acaba em ' + x.d + ' dia(s)';
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--bd2)"><b style="min-width:130px;font-size:12px">' + n + '</b>' +
       '<span style="font-size:11px;color:var(--t3);flex:1;min-width:150px">semana ' + x.sem + ' de ' + x.tot + ' · ' + txt + '</span>' +
-      '<button class="btn bp" style="font-size:10px;padding:3px 9px" onclick="mbSugerirProximaFase(\'' + a.protocoloAtivo.id + '\',\'' + a.id + '\')" title="Gera o rascunho da próxima fase para você revisar">✨ Próxima fase</button>' +
+      '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="mbAbrirProtoNoQuadro(\'' + a.protocoloAtivo.id + '\',\'' + a.id + '\')" title="Abre o treino que o aluno está fazendo agora no Quadro">✏️ Fase atual</button>' +
+      (rasc ? '<button class="btn bp" style="font-size:10px;padding:3px 9px" onclick="mbAbrirProtoNoQuadro(\'' + rasc.id + '\',\'' + a.id + '\')" title="Abre o rascunho da próxima fase no Quadro (início ' + escAttr(rasc.data_inicio || '—') + ')">📝 Rascunho' + (rasc.data_inicio ? ' · ' + rasc.data_inicio.slice(8, 10) + '/' + rasc.data_inicio.slice(5, 7) : '') + '</button>'
+        : '<button class="btn bp" style="font-size:10px;padding:3px 9px" onclick="mbSugerirProximaFase(\'' + a.protocoloAtivo.id + '\',\'' + a.id + '\')" title="Gera o rascunho da próxima fase para você revisar">✨ Próxima fase</button>') +
       (x.d <= 0 ? '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="mbCobrar(\'' + a.id + '\')" title="Abre a oferta de renovação/reativação por Pix e WhatsApp, com os valores da aba Planos">💰 Oferecer</button>' : '') +
       '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="var e=document.getElementById(\'al-' + a.id + '\');if(e){e.classList.add(\'al-open\');e.scrollIntoView({block:\'center\'});}">Abrir aluno</button></div>'; };
   const bloco = (t, l) => l.length ? '<div style="margin-top:6px"><div style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">' + t + ' (' + l.length + ')</div>' + l.map(linha).join('') + '</div>' : '';
@@ -11932,6 +11956,7 @@ async function mbGerenciarProtocolos(alunoId) {
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${ativo.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>
+        <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbAbrirProtoNoQuadro('${ativo.id}','${alunoId}')" title="Abre este treino no Quadro">✏️ Editar</button>
         <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbSugerirProximaFase('${ativo.id}','${alunoId}')" title="Gera um rascunho inativo da próxima fase (fase única base 8 sem), editável antes de salvar">✨ Próxima fase</button>
         <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${ativo.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
         <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${ativo.id}')" title="Revogar link">🚫</button>
@@ -11963,6 +11988,7 @@ async function mbGerenciarProtocolos(alunoId) {
             <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · id ${p.id.slice(0,8)}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbAbrirProtoNoQuadro('${p.id}','${alunoId}')" title="Abre este rascunho no Quadro">✏️ Editar</button>
             <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
             <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
             <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">${_k === 'hist' ? '↩ Reativar' : '🚀 Publicar'}</button>
