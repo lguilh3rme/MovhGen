@@ -14051,6 +14051,19 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .a-cj-items{padding:2px!important;gap:2px!important}
 .a-cj-items .ec{padding:5px 8px!important;border-radius:8px!important}
 .a-cj-items .ec-chips{margin-top:3px!important;gap:4px!important}
+.a-cj-group{border-width:2px!important;border-left-width:5px!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--P) 13%,transparent)}
+.a-cj-head{background:color-mix(in srgb,var(--P) 26%,transparent)!important}
+.a-cj-head .a-cj-label{color:var(--tx)!important}
+.bloco-ativ .exl{display:flex;flex-wrap:wrap;gap:6px;padding:4px 10px 10px;align-items:flex-start}
+.bloco-ativ .ec{flex:0 0 auto;width:auto!important;margin:0!important;padding:5px 8px!important;border:none!important;border-radius:9px!important;background:color-mix(in srgb,#1A9E72 16%,transparent)!important}
+.bloco-ativ .ec>*:not(.ec-hd),.bloco-ativ .ec-chips,.bloco-ativ .ec-o{display:none!important}
+.bloco-ativ .ec-hd,.bloco-ativ .ec-info{display:block;padding:0!important;margin:0!important}
+.bloco-ativ .ec-name-row{display:flex;align-items:center;gap:6px}
+.bloco-ativ .ec-name-row .vbtn span{display:none!important}
+.bloco-ativ .ec-name-row .vbtn{padding:0 7px!important;height:20px!important}
+.bloco-ativ .ec-n{font-size:13px!important;font-weight:600}
+.bloco-ativ .a-cj-group{flex:1 1 100%}
+.bloco-ativ .a-cj-items{display:flex;flex-direction:column;align-items:flex-start;gap:5px!important}
 .a-cj-items .ec-hd{gap:6px!important}
 .a-cj-foot{display:none!important}
 /* ── v48 · opção A: séries×reps vermelho MOVH, verde único, carga com rótulo, avelã / preto azulado ── */
@@ -14167,6 +14180,9 @@ img.lg-escuro{display:none!important}
 .ec-name-row .vbtn{position:static!important;top:auto!important;width:30px!important;height:30px!important;padding:0!important;border-radius:50%!important;flex:0 0 auto;display:inline-flex!important;align-items:center;justify-content:center;margin:0!important}
 .ec-name-row .vbtn span{display:none!important}
 .ec-name-row .vbtn::before{margin-left:2px}
+.ec-name-row .vbtn{width:auto!important;height:22px!important;padding:0 8px 0 6px!important;border-radius:6px!important;gap:3px!important}
+.ec-name-row .vbtn::before{margin-left:0!important;border-left-width:7px!important;border-top-width:4.5px!important;border-bottom-width:4.5px!important}
+.ec-name-row .vbtn span{display:inline!important;font-size:10px;font-weight:700}
 .nt-wrap{position:relative;margin:0 0 6px}
 .nt-wrap .nt-it{margin:0!important;padding:6px 38px 6px 10px!important;border-radius:10px!important}
 .nt-wrap .nt-tx{flex-direction:row;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;min-width:0}
@@ -15507,6 +15523,7 @@ async function aBoot(sessionParam){
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function aAttr(s){ return aEsc(s); }
+function aEhAtiv(b){ if(b && b.ativacao===true) return true; var n=String((b&&b.nome)||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim(); return /^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/.test(n); }
 function aEmbedUrl(url){ if(!url) return ''; const m=url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/shorts\\/)([^&?\\/]+)/); return m ? 'https://www.youtube-nocookie.com/embed/'+m[1] : ''; }
 
 // Converte formatos compactos de série/reps (ex: "3x12", "4×[6-10→10-12→4-6]")
@@ -17099,7 +17116,7 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
   }
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs">💡 '+aEsc(b.obs)+'</div>' : '';
-  return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
+  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
 }
 
 // Monta a lista de exercícios de um bloco, agrupando os que estão marcados
@@ -17133,7 +17150,7 @@ function aRenderExercicios(b, faseAtual, ctxPrefix, semanaDentroFase, duracaoSem
       // o cronômetro automático dispara ao concluir a série do ÚLTIMO exercício.
       let gRest = g.restAfter || '';
       if (!gRest) { gExsIdx.forEach(function(i){ if (!gRest && exercicios[i].rest) gRest = exercicios[i].rest; }); }
-      const gLabel = g.label || aT('conjugado');
+      const gLabel = (g.label || aT('conjugado')) + ((!g.metodo || g.metodo === 'conjugado') ? (aLang === 'en' ? ' · quick transition' : ' · transição rápida') : '');
       const gDica = aLang === 'en' ? mt.en : mt.pt;
       const gLastEid = ctxPrefix + '-e' + gExsIdx[gExsIdx.length - 1];
       const gChip = '<span class="ec-chip ec-chip-r ec-chip-clicavel a-cj-rest' + (gRest ? '' : ' ec-chip-rlivre') + '" data-tempo="' + aEsc(gRest || '60s') + '" data-nome="' + aEsc(gLabel) + '" data-eid="' + gLastEid + '" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="' + aEsc(aT('descanso_apos_grupo')) + '">💤 ' + aEsc(gRest || '60s') + '</span>';
