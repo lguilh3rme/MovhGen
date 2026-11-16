@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.3 · 15/11';
+var MOVH_VER = 'v64.4 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9317,6 +9317,8 @@ async function mbCarregarPainelAlunos() {
       .select('id, nome, aluno_id, data_inicio, criado_em, conteudo')
       .in('aluno_id', alunoIds)
       .eq('ativo', true));
+    P.k11 = Q(() => mbClient.from('protocolos').select('id, aluno_id, nome, data_inicio, criado_em').in('aluno_id', alunoIds).eq('ativo', false));
+    P.k12 = Q(() => mbClient.from('rpe_sessoes').select('aluno_id, rpe, criado_em').in('aluno_id', alunoIds).gte('criado_em', new Date(Date.now() - 28*86400000).toISOString()));
     P.k2 = Q(() => mbClient.from('anamneses')
       .select('id, aluno_id, tipo, respostas, solicitado_em, criado_em')
       .in('aluno_id', alunoIds)
@@ -9361,6 +9363,10 @@ async function mbCarregarPainelAlunos() {
   }
   const protoMap = {};
   protocolosAtivos.forEach(p => { protoMap[p.aluno_id] = {...p, _conteudo: p.conteudo}; });
+  const rpeMap = {};
+  if (alunoIds.length > 0) { try { const { data: _rp } = await P.k12; (_rp || []).forEach(r => { (rpeMap[r.aluno_id] = rpeMap[r.aluno_id] || []).push(r); }); } catch (e) {} }
+  const inatMap = {};
+  if (alunoIds.length > 0) { try { const { data: _pi } = await P.k11; (_pi || []).forEach(p => { (inatMap[p.aluno_id] = inatMap[p.aluno_id] || []).push(p); }); } catch (e) {} }
 
   // Busca anamneses e PAR-Q de todos os alunos de uma vez
   let anamnesesData = [];
@@ -9467,6 +9473,8 @@ async function mbCarregarPainelAlunos() {
     ...a,
     _lixeira: !!a.na_lixeira,
     protocoloAtivo: protoMap[a.id] || null,
+    protosInativos: inatMap[a.id] || [],
+    rpeMes: rpeMap[a.id] || [],
     anamnese: anamMap[a.id]?.anamnese || null,
     parq: anamMap[a.id]?.parq || null,
     avaliacoes: avalMap[a.id] || [],
@@ -10473,25 +10481,141 @@ function mbFilaItens() {
     const cc = a.protocoloAtivo._conteudo || a.protocoloAtivo.conteudo || {}, ss = cc.semanas || [];
     const tot = ss.reduce((x, y) => x + (parseInt(y.duracaoSemanas) || 4), 0) || (ss.length * 4);
     const sem = Math.max(1, Math.floor((h - new Date(a.protocoloAtivo.data_inicio + 'T00:00:00')) / (7 * 86400000)) + 1);
-    out.push({ a, d, sem: Math.min(sem, tot), tot });
+    out.push({ a, d, sem: Math.min(sem, tot), tot, loop: !!cc.loop });
   });
   return out.sort((x, y) => x.d - y.d);
+}
+// rascunho/próximo = inativo com início posterior ao do treino ativo (mais recente primeiro)
+function mbRascunhoDe(a) {
+  const ini = (a.protocoloAtivo && a.protocoloAtivo.data_inicio) || '';
+  return (a.protosInativos || []).filter(p => !ini || (p.data_inicio || '') > ini)
+    .sort((x, y) => String(y.data_inicio || '').localeCompare(String(x.data_inicio || '')))[0] || null;
+}
+async function mbAbrirProtoNoQuadro(protoId, alunoId) {
+  if (typeof _pbDirty !== 'undefined' && _pbDirty && mbProtoCarregadoId !== protoId && !confirm('Há alterações não salvas no editor. Abrir outro treino vai substituí-las. Continuar?')) return;
+  const { data, error } = await mbClient.from('protocolos').select('id, nome, ativo, data_inicio, conteudo').eq('id', protoId).maybeSingle();
+  if (error || !data) { notify('Erro ao abrir o treino: ' + (error ? error.message : 'não encontrado')); return; }
+  try { closeM('modal-protos-aluno'); } catch (e) {}
+  const sel = document.getElementById('mb-aluno-select');
+  if (sel) { sel.value = alunoId; mbOnAlunoChange(); }
+  mbAplicarProtoNoEditor({ ...data, conteudo: data.conteudo || {} });
+  const s0 = semanas[0];
+  if (s0) nav('kb-' + s0.id); else nav('main');
+  notify((data.ativo ? 'Fase atual' : 'Rascunho') + ' aberto no Quadro.');
+}
+// Limiares do status (editáveis no ⚙ da Fila; ficam só neste navegador). Padrões = pontos de partida, não validados.
+const MB_FILA_LIM_PAD = { ader: 80, aderMin: 60, rpeAlto: 9, rpeBaixo: 6, semRegDias: 14 };
+function mbFilaLim() { try { return Object.assign({}, MB_FILA_LIM_PAD, JSON.parse(localStorage.getItem('movh-fila-lim') || 'null') || {}); } catch (e) { return Object.assign({}, MB_FILA_LIM_PAD); } }
+function mbFilaLimEditar() {
+  const L = mbFilaLim();
+  const r = prompt('Limiares da Fila: adesão que progride (%), adesão mínima (%), RPE alto, RPE leve, dias sem registro para alertar', [L.ader, L.aderMin, L.rpeAlto, L.rpeBaixo, L.semRegDias].join(', '));
+  if (r == null) return;
+  const v = r.split(',').map(x => parseFloat(x.trim()));
+  if (v.length !== 5 || v.some(isNaN)) { notify('Formato: 80, 60, 9, 6, 14'); return; }
+  try { localStorage.setItem('movh-fila-lim', JSON.stringify({ ader: v[0], aderMin: v[1], rpeAlto: v[2], rpeBaixo: v[3], semRegDias: v[4] })); } catch (e) {}
+  mbFilaRender();
+}
+// Status sugerido: adesão = dias com registro (carga ou RPE) ÷ dias previstos na janela de até 28 dias; RPE = média das últimas 5 sessões (mín. 3)
+function mbFilaStatus(x) {
+  const a = x.a, L = mbFilaLim(), p = a.protocoloAtivo, cc = p._conteudo || p.conteudo || {};
+  const h = new Date(); h.setHours(0, 0, 0, 0);
+  const desde = Math.floor((h - new Date(p.data_inicio + 'T00:00:00')) / 86400000), jan = Math.max(0, Math.min(28, desde));
+  const dias = new Set();
+  (a.registrosCarga || []).concat(a.rpeMes || []).forEach(r => { if (r.criado_em && (Date.now() - new Date(r.criado_em).getTime()) <= jan * 86400000) dias.add(String(r.criado_em).slice(0, 10)); });
+  let acum = 0, vig = (cc.semanas || [])[0] || {};
+  for (const sm of (cc.semanas || [])) { acum += parseInt(sm.duracaoSemanas) || 4; if (x.sem <= acum) { vig = sm; break; } }
+  const dps = Math.max(1, (vig.dias || []).length);
+  const ader = jan >= L.semRegDias ? Math.min(100, Math.round(100 * dias.size / (dps * jan / 7))) : null;
+  const rp = (a.rpeMes || []).filter(r => r.rpe != null).sort((u, v) => String(v.criado_em).localeCompare(String(u.criado_em))).slice(0, 5);
+  const rpe = rp.length >= 3 ? rp.reduce((t, r) => t + r.rpe, 0) / rp.length : null;
+  const semReg = jan >= L.semRegDias && dias.size === 0, baixa = ader != null && ader < L.aderMin && !semReg;
+  let tag, cor;
+  if (a.alertaDor) { tag = 'Dor: revisar'; cor = '#c03030'; }
+  else if (semReg) { tag = 'Sem registros'; cor = '#B45309'; }
+  else if (baixa) { tag = 'Adesão baixa'; cor = '#B45309'; }
+  else if (rpe != null && rpe >= L.rpeAlto) { tag = 'RPE alto: aliviar'; cor = '#c03030'; }
+  else if (ader != null && ader < L.ader) { tag = 'Manter e ajustar'; cor = '#6B7280'; }
+  else if (rpe != null && rpe <= L.rpeBaixo) { tag = 'Pode apertar'; cor = '#1A9E72'; }
+  else if (ader != null) { tag = 'Progredir'; cor = '#1A9E72'; }
+  else { tag = 'Sem dados'; cor = '#6B7280'; }
+  const det = [ader != null ? 'adesão ' + ader + '%' : '', rpe != null ? 'RPE ' + rpe.toFixed(1).replace('.', ',') : ''].filter(Boolean).join(' · ');
+  return { tag, cor, det, semReg, baixa };
+}
+async function mbFilaLoop(protoId, alunoId) {
+  try {
+    const { data: row, error: e0 } = await mbClient.from('protocolos').select('conteudo').eq('id', protoId).maybeSingle();
+    if (e0 || !row) throw (e0 || new Error('protocolo não encontrado'));
+    const c = Object.assign({}, row.conteudo || {}); c.loop = true;
+    const { error } = await mbClient.from('protocolos').update({ conteudo: c }).eq('id', protoId);
+    if (error) throw error;
+    const a = (mbPainelAlunos || []).find(v => v.id === alunoId);
+    if (a && a.protocoloAtivo) { const cc = a.protocoloAtivo._conteudo || a.protocoloAtivo.conteudo; if (cc) cc.loop = true; }
+    notify('🔁 Loop ligado: quando o treino acabar, recomeça da semana 1.');
+    mbFilaRender();
+  } catch (e) { notify('Erro no loop: ' + (e.message || e)); }
+}
+function mbCobrarRegistro(alunoId) {
+  const a = (mbPainelAlunos || []).find(v => v.id === alunoId); if (!a) return;
+  const r = a.anamnese && a.anamnese.respostas;
+  let d = String(a.whatsapp || (r && r.whatsapp) || '').replace(/\D/g, '');
+  if (!d) { notify('Aluno sem WhatsApp cadastrado.'); return; }
+  if (d.length <= 11) d = '55' + d;
+  const nome = String(a.nome || '').trim().split(/\s+/)[0];
+  const msg = 'Oi, ' + nome + '! Tudo bem? Vi que faltam registros das cargas dos seus treinos no app. Leva poucos segundos por exercício e é com isso que eu ajusto a sua progressão na hora certa. Consegue registrar nos próximos treinos? 💪';
+  window.open('https://wa.me/' + d + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
 }
 function mbFilaRender() {
   const tab = document.getElementById('alunos-tabela'); if (!tab) return;
   let box = document.getElementById('al-fila');
   if (!box) { box = document.createElement('details'); box.id = 'al-fila'; box.open = true; box.className = 'card'; box.style.cssText = 'margin-bottom:8px;padding:8px 12px'; tab.parentNode.insertBefore(box, tab); }
-  const it = mbFilaItens(); const venc = it.filter(x => x.d <= 0), prox = it.filter(x => x.d > 0 && x.d <= 21), resto = it.length - venc.length - prox.length;
-  const linha = x => { const a = x.a, n = escAttr(a.nome || 'Aluno');
+  const hj = mbIsoLocal(new Date()), todos = mbFilaItens(), it = todos.filter(x => !x.loop);
+  const venc = it.filter(x => x.d <= 0), prox = it.filter(x => x.d > 0 && x.d <= 21), resto = todos.length - venc.length - prox.length;
+  const B = (cls, oc, tt, lb) => '<button class="btn ' + cls + '" style="font-size:10px;padding:3px 8px" onclick="' + oc + '" title="' + escAttr(tt) + '">' + lb + '</button>';
+  const linha = x => { const a = x.a, n = escAttr(a.nome || 'Aluno'), rasc = mbRascunhoDe(a), st = mbFilaStatus(x), pid = a.protocoloAtivo.id;
     const txt = x.d <= 0 ? 'venceu há ' + Math.abs(x.d) + ' dia(s)' : 'acaba em ' + x.d + ' dia(s)';
-    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--bd2)"><b style="min-width:130px;font-size:12px">' + n + '</b>' +
-      '<span style="font-size:11px;color:var(--t3);flex:1;min-width:150px">semana ' + x.sem + ' de ' + x.tot + ' · ' + txt + '</span>' +
-      '<button class="btn bp" style="font-size:10px;padding:3px 9px" onclick="mbSugerirProximaFase(\'' + a.protocoloAtivo.id + '\',\'' + a.id + '\')" title="Gera o rascunho da próxima fase para você revisar">✨ Próxima fase</button>' +
-      (x.d <= 0 ? '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="mbCobrar(\'' + a.id + '\')" title="Abre a oferta de renovação/reativação por Pix e WhatsApp, com os valores da aba Planos">💰 Oferecer</button>' : '') +
-      '<button class="btn bs" style="font-size:10px;padding:3px 9px" onclick="var e=document.getElementById(\'al-' + a.id + '\');if(e){e.classList.add(\'al-open\');e.scrollIntoView({block:\'center\'});}">Abrir aluno</button></div>'; };
+    const rv = rasc && rasc.data_inicio && rasc.data_inicio <= hj;
+    return '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--bd2)"><b style="min-width:120px;font-size:12px">' + n + '</b>' +
+      '<span style="font-size:10px;font-weight:700;color:#fff;background:' + st.cor + ';border-radius:99px;padding:1px 7px;white-space:nowrap">' + st.tag + '</span>' +
+      '<span style="font-size:11px;color:var(--t3);flex:1;min-width:140px">semana ' + x.sem + ' de ' + x.tot + ' · ' + txt + (st.det ? ' · ' + st.det : '') + '</span>' +
+      B('bs', "mbAbrirProtoNoQuadro('" + pid + "','" + a.id + "')", 'Abre o treino que o aluno está fazendo agora no Quadro', '✏️ Fase atual') +
+      (rasc ? B('bp', "mbAbrirProtoNoQuadro('" + rasc.id + "','" + a.id + "')", 'Abre o rascunho da próxima fase no Quadro (início ' + (rasc.data_inicio || '—') + ')' + (rv ? '. A data de início já passou: ajuste ou publique.' : ''), '📝 Rascunho' + (rasc.data_inicio ? ' · ' + rasc.data_inicio.slice(8, 10) + '/' + rasc.data_inicio.slice(5, 7) : '') + (rv ? ' ⚠' : ''))
+        : B('bp', "mbSugerirProximaFase('" + pid + "','" + a.id + "')", 'Gera o rascunho da próxima fase para você revisar', '✨ Próxima fase')) +
+      (x.d <= 7 ? B('bs', "mbFilaLoop('" + pid + "','" + a.id + "')", 'Deixar em loop: quando acabar, recomeça da semana 1', '🔁') : '') +
+      ((st.semReg || st.baixa) ? B('bs', "mbCobrarRegistro('" + a.id + "')", 'Abre o WhatsApp pedindo para registrar as cargas', '💬') : '') +
+      (x.d <= 0 ? B('bs', "mbCobrar('" + a.id + "')", 'Abre a oferta de renovação/reativação por Pix e WhatsApp, com os valores da aba Planos', '💰 Oferecer') : '') +
+      B('bs', "var e=document.getElementById('al-" + a.id + "');if(e){e.classList.add('al-open');e.scrollIntoView({block:'center'});}", 'Abrir o card do aluno', 'Abrir aluno') + '</div>'; };
   const bloco = (t, l) => l.length ? '<div style="margin-top:6px"><div style="font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--t3)">' + t + ' (' + l.length + ')</div>' + l.map(linha).join('') + '</div>' : '';
-  box.innerHTML = '<summary style="cursor:pointer;font-weight:700;font-size:12px">📋 Fila de treinos <span style="font-weight:400;color:var(--t3)">— ' + (venc.length + prox.length) + ' precisam de atenção' + (resto ? ' · ' + resto + ' em andamento' : '') + '</span></summary>' +
+  box.innerHTML = '<summary style="cursor:pointer;font-weight:700;font-size:12px">📋 Fila de treinos <span style="font-weight:400;color:var(--t3)">— ' + (venc.length + prox.length) + ' precisam de atenção' + (resto ? ' · ' + resto + ' em andamento' : '') + '</span> <button class="btn bs" style="font-size:10px;padding:1px 6px;float:right" onclick="event.preventDefault();mbFilaLimEditar()" title="Limiares do status: adesão, RPE, dias sem registro">⚙</button></summary>' +
     (bloco('Vencidos: precisam de treino novo', venc) + bloco('Fecham em até 3 semanas: progredir', prox) || '<div style="font-size:11px;color:var(--t3);margin-top:6px">Nenhum treino vencendo nas próximas 3 semanas.</div>');
+  try { mbAgendaRender(); } catch (e) { console.error('[MOVH] agenda:', e); }
+}
+// ── Agenda: quanto falta para cada evento (fim do treino, testes, próximo treino, fim do acesso) ──
+function mbAgendaEventos() {
+  const h = new Date(); h.setHours(0, 0, 0, 0); const hi = mbIsoLocal(h), ev = [], vistos = new Set();
+  const add = (iso, a, k) => { if (!iso) return; const key = a.id + k + iso; if (vistos.has(key)) return; vistos.add(key); const d = Math.ceil((new Date(iso + 'T00:00:00') - h) / 86400000); if (d <= 30) ev.push({ d, iso, a, k }); };
+  (mbPainelAlunos || []).forEach(a => {
+    if (a._lixeira || a.ativo === false) return;
+    const p = a.protocoloAtivo;
+    if (p && p.data_inicio) {
+      const cc = p._conteudo || p.conteudo || {}, f = mbPrevisaoFim(a);
+      if (f && !cc.loop) add(mbIsoLocal(f), a, 'fim');
+      (cc.testesAgendados || []).forEach(t => { const iso = mbMapaDataAgenda({ inicio: p.data_inicio }, (Number(t.semana) || 0) + 1, cc.testesAgendados); if (iso && iso >= hi) add(iso, a, 'teste:' + (t.tipo || 'condicionamento')); });
+      const r = mbRascunhoDe(a); if (r && r.data_inicio && r.data_inicio >= hi) add(r.data_inicio, a, 'proximo');
+    }
+    if (a.acesso_fim) add(a.acesso_fim, a, 'acesso');
+  });
+  return ev.sort((x, y) => x.d - y.d);
+}
+function mbAgendaRender() {
+  const fila = document.getElementById('al-fila'); if (!fila) return;
+  let box = document.getElementById('al-agenda');
+  if (!box) { box = document.createElement('details'); box.id = 'al-agenda'; box.className = 'card'; box.style.cssText = 'margin-bottom:8px;padding:8px 12px'; fila.parentNode.insertBefore(box, fila.nextSibling); }
+  const ev = mbAgendaEventos(), n7 = ev.filter(e => e.d >= 0 && e.d <= 7).length, atras = ev.filter(e => e.d < 0).length;
+  const cor = d => d <= 0 ? '#c03030' : d <= 7 ? '#B45309' : 'var(--t3)';
+  const quando = d => d < 0 ? 'há ' + (-d) + ' d' : d === 0 ? 'hoje' : 'em ' + d + ' d';
+  const rot = e => e.k === 'fim' ? (e.d < 0 ? 'treino venceu' : 'treino acaba') : e.k === 'proximo' ? 'próximo treino começa' : e.k === 'acesso' ? (e.d < 0 ? 'acesso venceu' : 'acesso acaba') : (e.k.indexOf('condic') > 0 ? 'teste de condicionamento' : 'teste ' + e.k.slice(6));
+  box.innerHTML = '<summary style="cursor:pointer;font-weight:700;font-size:12px">📅 Agenda <span style="font-weight:400;color:var(--t3)">— ' + n7 + ' nos próximos 7 dias' + (atras ? ' · ' + atras + ' atrasado(s)' : '') + '</span></summary>' +
+    (ev.slice(0, 25).map(e => '<div style="display:flex;gap:8px;font-size:11px;padding:2px 0;border-top:1px solid var(--bd2)"><b style="min-width:58px;color:' + cor(e.d) + '">' + quando(e.d) + '</b><span style="min-width:36px;color:var(--t3)">' + e.iso.slice(8, 10) + '/' + e.iso.slice(5, 7) + '</span><span style="flex:1"><b>' + escAttr(e.a.nome || 'Aluno') + '</b> · ' + rot(e) + '</span></div>').join('') || '<div style="font-size:11px;color:var(--t3);margin-top:6px">Nada agendado nos próximos 30 dias.</div>');
 }
 const _renderPainelAlunosOrig = renderPainelAlunos;
 renderPainelAlunos = function () { const r = _renderPainelAlunosOrig.apply(this, arguments); try { mbCaminhoAtualizarBotoes(); } catch (e) {} try { mbFilaRender(); } catch (e) {} return r; };
@@ -11932,6 +12056,7 @@ async function mbGerenciarProtocolos(alunoId) {
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="btn bs" style="font-size:9px;padding:3px 8px;${c.loop ? 'background:#E0F5EE;color:#085040;border-color:#9ad8c2' : ''}" onclick="mbToggleLoop('${ativo.id}','${alunoId}',${c.loop ? 'false' : 'true'})" title="Loop: quando o treino acabar, recomeça da semana 1 em vez de travar na última semana">🔁 ${c.loop ? 'Loop ligado' : 'Loop'}</button>
+        <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbAbrirProtoNoQuadro('${ativo.id}','${alunoId}')" title="Abre este treino no Quadro">✏️ Editar</button>
         <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbSugerirProximaFase('${ativo.id}','${alunoId}')" title="Gera um rascunho inativo da próxima fase (fase única base 8 sem), editável antes de salvar">✨ Próxima fase</button>
         <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${ativo.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
         <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${ativo.id}')" title="Revogar link">🚫</button>
@@ -11963,6 +12088,7 @@ async function mbGerenciarProtocolos(alunoId) {
             <div style="font-size:10px;color:var(--t3)">${semanas} semana${semanas!==1?'s':''} · ${exCount} exercício${exCount!==1?'s':''} · id ${p.id.slice(0,8)}</div>
           </div>
           <div style="display:flex;gap:4px;flex-wrap:wrap">
+            <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbAbrirProtoNoQuadro('${p.id}','${alunoId}')" title="Abre este rascunho no Quadro">✏️ Editar</button>
             <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbCopiarLinkTreino('protocolo','${p.id}')" title="Copiar link para enviar a um futuro aluno (abre sem login)">🔗 Link</button>
             <button class="btn bs" style="font-size:9px;padding:3px 6px" onclick="mbRevogarLinkTreino('protocolo','${p.id}')" title="Revogar link">🚫</button>
             <button class="btn bs" style="font-size:9px;padding:3px 8px" onclick="mbReativarProtocolo('${p.id}','${alunoId}')" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">${_k === 'hist' ? '↩ Reativar' : '🚀 Publicar'}</button>
