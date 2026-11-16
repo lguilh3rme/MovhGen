@@ -11,7 +11,7 @@ with sync_playwright() as p:
     pg.goto('file://'+sys.argv[1]); pg.wait_for_timeout(1500)
     js="""(ini)=>{ try{nav('alunos')}catch(e){}
      const P=(i,s)=>({id:'p'+i,data_inicio:ini[i],conteudo:{semanas:[{duracaoSemanas:s}]}});
-     mbPainelAlunos=[{id:'a1',nome:'Iasmim',ativo:true,protocoloAtivo:P(0,6),protosInativos:[{id:'r1',data_inicio:ini[1]},{id:'h0',data_inicio:'2020-01-01'}]},{id:'a2',nome:'Felipe M',ativo:true,protocoloAtivo:P(1,6)},{id:'a3',nome:'Enes',ativo:true,protocoloAtivo:P(2,12)},{id:'a4',nome:'Sem treino',ativo:true,protocoloAtivo:null}];
+     mbPainelAlunos=[{id:'a1',nome:'Iasmim',ativo:true,protocoloAtivo:P(0,6),protosInativos:[{id:'r1',data_inicio:ini[1]},{id:'h0',data_inicio:'2020-01-01'}],registrosCarga:[],rpeMes:[]},{id:'a2',nome:'Felipe M',ativo:true,protocoloAtivo:P(1,6),registrosCarga:[2,5,9,12].map(k=>({criado_em:new Date(Date.now()-86400000*k).toISOString()})),rpeMes:[]},{id:'a3',nome:'Enes',ativo:true,protocoloAtivo:P(2,12)},{id:'a4',nome:'Sem treino',ativo:true,protocoloAtivo:null}];
      renderPainelAlunos(); const f=document.getElementById('al-fila'); if(!f) return 'sem fila';
      const o=document.createElement('div'); o.style.cssText='position:fixed;left:210px;top:60px;width:950px;z-index:9999;background:#0b0b0d'; o.id='ov'; o.appendChild(f.cloneNode(true)); document.body.appendChild(o);
      return f.innerText.replace(/\\n+/g,' | '); }"""
@@ -22,6 +22,12 @@ with sync_playwright() as p:
     assert 'Fase atual' in h and "mbAbrirProtoNoQuadro('r1','a1')" in ia and 'Rascunho' in ia and 'Próxima fase' not in ia, 'FAIL rascunho de Iasmim'
     assert 'Próxima fase' in h.split('Felipe M')[1].split('Enes')[0], 'FAIL gerar para Felipe'
     assert "'h0'" not in h, 'FAIL historico nao e rascunho'
+    fe=h.split('Felipe M')[1].split('Enes')[0]
+    assert 'Sem registros' in ia and '💬' in ia and '🔁' in ia, 'FAIL status Iasmim'
+    assert 'Progredir' in fe and '💬' not in fe and '🔁' not in fe, 'FAIL status Felipe'
+    ag=pg.evaluate("document.getElementById('al-agenda').innerText")
+    print(ag.replace('\n',' | '))
+    assert 'Iasmim' in ag and 'Felipe M' in ag and 'treino' in ag, 'FAIL agenda'
     assert 'Iasmim' in r and 'Felipe M' in r and 'venceu' in r and 'Sem treino' not in r and '1 em andamento' in r, 'FAIL'
     if len(sys.argv)>2: pg.screenshot(path=sys.argv[2],clip=pg.query_selector('#ov').bounding_box())
     print('erros',errs[:2]); b.close(); sys.exit(1 if errs else 0)
