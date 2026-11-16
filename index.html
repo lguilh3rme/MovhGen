@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.4 · 16/11';
+var MOVH_VER = 'v64.5 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12496,27 +12496,43 @@ async function pfSalvar(ativar){
 
 async function mbPublicarCarregado(){
   if (!mbProtoCarregadoId || !mbAlunoSelecionadoId) { notify('Abra o treino de um aluno primeiro.'); return; }
-  await mbReativarProtocolo(String(mbProtoCarregadoId), mbAlunoSelecionadoId);
+  const r = await mbReativarProtocolo(String(mbProtoCarregadoId), mbAlunoSelecionadoId);
+  if (!r || !r.ok) return;
+  if (r.ini) { mbProtoDataInicio = r.ini; if (r.semFim) mbProtoFim = null; }
   _mbProtoAtivo = true; _mbProtoEstado = 'on';
   try { pbRefreshDest(); } catch (_) {}
 }
 async function mbReativarProtocolo(protoId, alunoId) {
-  if (!confirm('Reativar este protocolo? O treino ativo atual do aluno vai para o histórico (inativo) e o aluno passa a ver este no app.\n\nSe as datas dele já venceram, ajuste início/fim no Quadro (📅 Calendário do treino).')) return;
+  if (!confirm('Reativar este protocolo? O treino ativo atual do aluno vai para o histórico (inativo) e o aluno passa a ver este no app.\n\nSe o início dele já passou, vou pedir a nova data de início.')) return false;
   try {
+    // início no passado (ex.: rascunho criado há semanas): sem nova data o treino já nasce vencido
+    let novoIni = null, semFim = false, conteudoNovo = null;
+    const { data: pr } = await mbClient.from('protocolos').select('data_inicio, conteudo').eq('id', protoId).maybeSingle();
+    const hj = mbIsoLocal(new Date());
+    if (pr && (!pr.data_inicio || pr.data_inicio < hj)) {
+      const r = prompt('Este treino está com início em ' + (pr.data_inicio ? pr.data_inicio.split('-').reverse().join('/') : 'data em branco') + '. Qual a data de início agora? (AAAA-MM-DD)', hj);
+      if (r === null) return { ok: false };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(r.trim())) { notify('Data inválida: use AAAA-MM-DD.'); return { ok: false }; }
+      novoIni = r.trim();
+      const c0 = pr.conteudo || {};
+      if (/^\d{4}-\d{2}-\d{2}$/.test(c0.fimPrevisto || '') && c0.fimPrevisto < novoIni) { conteudoNovo = Object.assign({}, c0); delete conteudoNovo.fimPrevisto; semFim = true; }
+    }
     let antigos = [];
     try { const { data } = await mbClient.from('protocolos').select('id').eq('aluno_id', alunoId).eq('ativo', true); antigos = (data || []).map(x => String(x.id)); } catch (_) {}
     const r1 = await mbClient.from('protocolos').update({ ativo: false }).eq('aluno_id', alunoId).eq('ativo', true);
     if (r1.error) throw r1.error;
-    const r2 = await mbClient.from('protocolos').update({ ativo: true }).eq('id', protoId);
+    const upd = { ativo: true }; if (novoIni) upd.data_inicio = novoIni; if (conteudoNovo) upd.conteudo = conteudoNovo;
+    const r2 = await mbClient.from('protocolos').update(upd).eq('id', protoId);
     if (r2.error) {
       if (antigos.length) { try { await mbClient.from('protocolos').update({ ativo: true }).in('id', antigos); } catch (_) {} }
       throw r2.error;
     }
     if (antigos.length) { try { await mbClient.from('links_treino').update({ protocolo_id: String(protoId) }).in('protocolo_id', antigos); } catch (_) {} }
-    notify('✅ Protocolo reativado.');
+    notify('✅ Protocolo reativado' + (novoIni ? ' com início em ' + novoIni.split('-').reverse().join('/') : '') + '.');
     mbGerenciarProtocolos(alunoId);
     mbCarregarPainelAlunos();
-  } catch (e) { notify('Erro ao reativar: ' + (e.message || e)); }
+    return { ok: true, ini: novoIni, semFim };
+  } catch (e) { notify('Erro ao reativar: ' + (e.message || e)); return { ok: false }; }
 }
 
 async function mbDeletarProtocolo(protoId, alunoId) {
