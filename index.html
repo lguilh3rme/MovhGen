@@ -634,6 +634,8 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-more-m .btn{display:flex;justify-content:flex-start;text-align:left;font-size:11px;padding:5px 9px;white-space:nowrap;width:100%}
 .cl-more-m>span{display:flex;gap:4px}.cl-more-m .cl-dup{flex:0 0 118px;min-width:118px}.cl-more-m>span .btn{width:auto;flex:1}
 .cl-more-r{left:auto;right:0}
+.cl-foco{display:flex;gap:8px;align-items:center;margin:2px 0 8px;font-size:11px;color:var(--t2)}
+.cl-foco input{flex:1;max-width:340px;font-size:12px;padding:5px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)}
 .cl-tabrow{display:flex;gap:6px;align-items:center;position:sticky;top:-1px;z-index:5;background:var(--bg);padding:2px 0 6px}
 #page-coletivas .cl-tabrow .cl-tabs{flex:1;position:static;margin:0;padding:0;background:none}
 #page-coletivas .cl-tab{flex:1 1 0;min-width:0;flex-direction:row;justify-content:center;gap:5px;padding:4px 6px}
@@ -3383,7 +3385,7 @@ function coletivasRenderEditor(el, datas){
     '<div class="cl-day">' + (per ? '' : '<div class="cl-day-hd"><span class="cl-day-t">' + label + (coletivasDiaSel === hojeKey ? ' · hoje' : '') + '</span><span style="flex:1"></span>' +
     notasBtn('dia', (coletivasModo === 'personal' ? personalAlunoId : 'col') + '|' + coletivasDiaSel, 'Dia ' + label) + '<input type="date" id="cl-dup-data" class="cl-dup" title="Copiar este dia para a data escolhida"/><button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasDuplicarDia()">⧉ Copiar dia p/ data</button>' +
     (coletivasModo === 'personal' ? '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="personalSepararSR()" title="Lê nomes como \'Remada: 3×8-10\' e separa séries e reps">↔ Separar séries×reps</button>' : '') + '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasLimparDia()">🗑 Limpar dia</button></div>') +
-    '<div class="cl-blocos pers">' + (blocos.length ? colPersColunas(blocos, blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
+    (blocos.length ? '<div class="cl-foco"><span>🎯 Foco do dia</span><input type="text" value="' + escAttr((blocos[0] && blocos[0].foco) || '') + '" placeholder="ex.: Empurrar · Inf. Post 🦵" oninput="coletivasSetFoco(\'' + coletivasDiaSel + '\', this.value)"/></div>' : '') + '<div class="cl-blocos pers">' + (blocos.length ? colPersColunas(blocos, blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
     (per ? '' : '<div class="cl-add"><button type="button" class="btn bp" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\')">＋ Bloco</button><button type="button" class="btn bs" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\',\'condicionamento\')">🔥 ＋ Condicionamento</button></div>') + '</div>';
   el.querySelectorAll('textarea.cl-ta').forEach(coletivasAuto);
 }
@@ -3525,6 +3527,7 @@ function personalSepararSR(){
 function coletivasLimparDia(){ if (!(coletivasData[coletivasDiaSel] || []).length) return; if (!confirm('Remover todos os blocos deste dia?')) return; coletivasData[coletivasDiaSel] = []; renderColetivas(); coletivasMarcarSujo(); }
 window.addEventListener('beforeunload', function(e){ if (typeof coletivasSujo !== 'undefined' && coletivasSujo) { e.preventDefault(); e.returnValue = ''; } });
 
+function coletivasSetFoco(dia, v){ (coletivasData[dia] || []).forEach(function(b){ if (v) b.foco = v; else delete b.foco; }); coletivasMarcarSujo(); }
 function coletivasMarcarSujo(){
   coletivasSujo = true;
   const btn = document.getElementById('coletivas-save-btn');
@@ -3591,7 +3594,54 @@ function mvAcharEx(nome){
   if(!_mvIdx||_mvIdx._sig!==sig){_mvIdx=mvIndice();_mvIdx._sig=sig;}
   const k=mvKey(nome);if(!k)return null;
   const sp=mvKey(String(nome).replace(/\([^)]*\)/g,' '));
-  return _mvIdx.get(k)||_mvIdx.get(sp)||_mvIdx.get(k.replace(/s$/,''))||_mvIdx.get(k+'s')||null;
+  const hit=_mvIdx.get(k)||_mvIdx.get(sp)||_mvIdx.get(k.replace(/s$/,''))||_mvIdx.get(k+'s');
+  if(hit)return hit;
+  const al=mvAliasLer()[k];   // apelido aprendido (v2): "triceps coice" → nome do banco
+  return al?(_mvIdx.get(mvKey(al))||null):null;
+}
+function mvAliasLer(){try{return JSON.parse(localStorage.getItem('movh_alias_ex')||'{}')||{};}catch(e){return {};}}
+function mvAliasSalvar(nome,alvo){try{const a=mvAliasLer();a[mvKey(nome)]=alvo;localStorage.setItem('movh_alias_ex',JSON.stringify(a));}catch(e){}}
+function mvLev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=[];for(let j=0;j<=n;j++)p[j]=j;for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
+function mvTokMatch(a,b){if(a===b)return true;if(Math.min(a.length,b.length)>=4&&(a.indexOf(b)===0||b.indexOf(a)===0))return true;const m=Math.max(a.length,b.length);return m>=5&&mvLev(a,b)<=(m>=8?2:1);}
+// Sugere o exercício do banco mais parecido (typo, abreviação, "A ou B" usa a 1ª parte). Só sugere: quem aceita é o professor.
+function mvSugerir(nome){
+  mvAcharEx('x');
+  const um=function(txt){
+    const q=mvKey(txt).split(' ').filter(Boolean);if(!q.length)return null;
+    let best=null,bs=0,second=0,cont={};
+    _mvIdx.forEach(function(v,k){
+      const c=k.split(' ').filter(Boolean),used={};let hit=0;
+      q.forEach(function(t){for(let i=0;i<c.length;i++){if(!used[i]&&mvTokMatch(t,c[i])){used[i]=1;hit++;break;}}});
+      // nome abreviado ("Terra" → "Levantamento Terra") conta; empate entre nomes diferentes = ambíguo, não sugere
+      const sc=hit===q.length?(q.length===c.length?1:0.7+0.3*q.length/c.length):2*hit/(q.length+c.length);
+      if(hit===q.length&&q.length<c.length)cont[v.n]=1;
+      if(sc>bs){if(best&&best.n!==v.n)second=bs;bs=sc;best=v;}else if(sc>second&&best&&v.n!==best.n)second=sc;
+    });
+    if(bs<0.7||bs-second<0.03)return null;
+    if(bs<1&&Object.keys(cont).length>1)return null;   // nome curto que cabe em vários nomes do banco = palpite fraco, não sugere
+    return best;
+  };
+  let r=um(nome);if(r)return r;
+  const ps=String(nome).split(/\s+ou\s+/i);
+  if(ps.length>1)for(let i=0;i<ps.length;i++){r=um(ps[i]);if(r)return r;}
+  return null;
+}
+let _colSugList=[];
+function colNovosHtml(st){
+  _colSugList=[];if(!st||!st.novos.length)return '';
+  const itens=st.novos.slice(0,12).map(function(n){
+    const g=st.sug&&st.sug[n];
+    if(g){_colSugList.push([n,g]);const i=_colSugList.length-1;return '<div style="margin:2px 0">≈ '+escAttr(n)+' → <b>'+escAttr(g)+'</b> <button type="button" class="btn bs" style="font-size:10px;padding:1px 7px" onclick="colAceitarAlias('+i+')">✓ usar (e lembrar)</button></div>';}
+    return '<div style="margin:2px 0">＋ '+escAttr(n)+' <span style="color:var(--t3)">(sem vídeo)</span></div>';
+  }).join('');
+  const todos=_colSugList.length>1?' <button type="button" class="btn bp" style="font-size:10px;padding:1px 7px" onclick="colAceitarAlias(-1)">✓ usar todas as sugestões</button>':'';
+  return '<br>➕ <b>'+st.novos.length+' fora do banco</b>'+todos+itens+(st.novos.length>12?'<div>…</div>':'');
+}
+function colAceitarAlias(i){
+  (i<0?_colSugList:[_colSugList[i]]).forEach(function(x){if(x)mvAliasSalvar(x[0],x[1]);});
+  const a=document.getElementById('coletivas-colar-overlay'),m=document.getElementById('mb-colar-treino-overlay');
+  if(a&&a.style.display==='flex')coletivasPreviewColar();
+  if(m&&m.style.display==='flex')mbPreviewColarTreino();
 }
 function mvEhPausa(nome){return /^(rest|descanso|pausa)$/.test(mvKey(nome));}
 
@@ -3611,34 +3661,51 @@ function colNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(
 const COL_SEC=[
   {re:/^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/, tipo:'normal', nome:'Ativação', cor:'#1A9E72'},
   {re:/^(forca|hipertrofia|acessorios?)(?![a-z])/, tipo:'normal', nome:'Força', forca:true, cor:'#3580D8'},
+  {re:/^fortalecimento(?![a-z])/, tipo:'normal', nome:'Fortalecimento', forca:true, cor:'#B81414'},
+  {re:/^tensional(?![a-z])/, tipo:'normal', nome:'Tensional', forca:true, cor:'#7A4A1E'},
+  {re:/^lpo(?![a-z])/, tipo:'normal', nome:'LPO', forca:true, cor:'#6A3A9A'},
+  {re:/^core(?![a-z])/, tipo:'normal', nome:'Core', cor:'#6FB51E', marcador:true},
   {re:/^(localizada)(?![a-z])/, tipo:'normal', nome:'Localizada', cor:'#8A5CD0'},
-  {re:/^(c\.?\s*funcional|funcional|metabolico|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional', cor:'#D9A21B'},
+  {re:/^(metabolico)(?![a-z])/, tipo:'condicionamento', nome:'Metabólico', cor:'#F26A0A', livre:true},
+  {re:/^(c\.?\s*funcional|funcional|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional', cor:'#D9A21B'},
   {re:/^(endurance|condicionamento|cardio)(?![a-z])/, tipo:'condicionamento', nome:'', cor:'#D45828'}
 ];
 let _colStats=null;
-function colDia(linha){
+function colDiaT(linha){
   const m=colNorm(linha).match(COL_RE_DIA);if(!m)return null;
   const resto=(m[2]||'').trim();
-  if(resto&&!/^([(\d]|[-–:])/.test(resto))return null;
   const k=m[1].slice(0,3);
-  return COLETIVAS_DOW_ABREV[k]!=null?COLETIVAS_DOW_ABREV[k]:null;
+  if(COLETIVAS_DOW_ABREV[k]==null)return null;
+  const classico=(!resto||/^([(\d]|[-–:])/.test(resto))&&!/^\d+\s*[x×]\s*\d/.test(resto);
+  if(!classico&&/^\d+\s*[x×]\s*\d/.test(resto))return null;
+  // v2: "QUI Superiores💪" (sem hífen) vale como dia se não parece exercício/instrução e é curto
+  if(!classico&&(linha.length>48||/\d\s*[x×]\s*\d/i.test(linha)||colSecao(linha)||colEhInstrucao(linha)))return null;
+  let t=linha.trim().replace(/^[^\s\-–:(]+/,'').replace(/^[\s\-–:]+/,'').trim();
+  if(/^\d{1,2}\s*[\/.]\s*\d{1,2}(\s*[\/.]\s*\d{2,4})?$/.test(t))t='';
+  return {d:k,titulo:t.replace(/^\((.*)\)$/,'$1').trim()};
 }
+function colDia(linha){const r=colDiaT(linha);return r?COLETIVAS_DOW_ABREV[r.d]:null;}
 function colSecao(linha){
+  const seq=/^\s*sequ[eê]ncia\b/i.test(linha);
+  linha=String(linha).replace(/^\s*sequ[eê]ncia\s*(de|:)?\s*/i,'');
   const n=colNorm(linha);
   for(const s of COL_SEC){
     const m=n.match(s.re);if(!m)continue;
     let resto=linha.slice(m[0].length).trim(),ser='';
     resto=resto.replace(/(\d+)\s*s[eé]ries?/i,function(_,x){ser=x;return ' ';}).trim();
-    const partes=resto.split(/\s+e\s+|,|\//).map(function(p){return p.trim();}).filter(Boolean);
+    resto=resto.replace(/[^\p{L}\p{N}\s.,;:'′’"”()\/+\-–×*&]/gu,'').trim();   // emoji (🔥💪) não conta como texto
+    const partes=resto.replace(/^(ou|e)\s+/i,'').split(/\s+(?:e|ou)\s+|,|\//).map(function(p){return p.trim();}).filter(Boolean);
+    const alt=/^ou\s/i.test(resto)&&partes.length&&partes.every(function(p){const pn=colNorm(p);return COL_SEC.some(function(x){return x.re.test(pn);});});
     if(partes.length&&partes.every(function(p){const pn=colNorm(p);return COL_SEC.some(function(x){return x.re.test(pn);});}))resto='';
     if(resto&&!COL_RE_FMT.test(colNorm(resto))&&!/^\(.*\)$/.test(resto))return null;
-    return {sec:s,ser:ser,resto:resto.replace(/^\((.*)\)$/,'$1')};
+    if(alt)return {sec:{tipo:'condicionamento',nome:linha.replace(/[^\p{L}\p{N}\s.]/gu,'').trim(),cor:s.cor,livre:true},ser:'',resto:''};
+    return {sec:s,ser:ser,resto:resto.replace(/^\((.*)\)$/,'$1'),seq:seq};
   }
   return null;
 }
 function colEhInstrucao(linha){
   const n=colNorm(linha);
-  return COL_RE_FMT.test(n)||/^(obs|nota|dica|observ)/.test(n)||/^\(.*\)$/.test(linha.trim());
+  return COL_RE_FMT.test(n)||/^(obs|nota|dica|observ)/.test(n)||/^\(.*\)$/.test(linha.trim())||/^ou$/.test(n)||/^\d+(\s*(-|–|a)\s*\d+)?\s*(min|minutos?)(?![a-z])/.test(n);
 }
 function colSplitSR(txt){
   const m = String(txt || '').trim().match(/^(.+?)\s*[:\-–—]?\s*(\d{1,2})\s*[x×X]\s*(\d+(?:\s*(?:[-–—]|a)\s*\d+)?)(\s*(?:\/\s*lado|por lado|cada lado|\/\s*perna))?\s*(?:[.,;:]\s*)?(.*)$/i);
@@ -3665,7 +3732,7 @@ function coletivasParseLinhaExercicio(linha){
 function colExFinal(ex){
   const a=mvAcharEx(ex.nome);
   if(a){ex.nome=a.n;_colStats.ok++;}
-  else if(!mvEhPausa(ex.nome)){if(_colStats.novos.indexOf(ex.nome)<0)_colStats.novos.push(ex.nome);}
+  else if(!mvEhPausa(ex.nome)){if(_colStats.novos.indexOf(ex.nome)<0){_colStats.novos.push(ex.nome);const g=mvSugerir(ex.nome);if(g)_colStats.sug[ex.nome]=g.n;}}
   return ex;
 }
 function coletivasParsearDia(linhas){
@@ -3677,9 +3744,12 @@ function coletivasParsearDia(linhas){
   linhas.forEach(function(raw){
     let linha=raw.replace(/^[\s•·▪●○*\-–—]+/,'').replace(/^\d{1,2}[.)]\s+(?=\S)/,'').trim();
     if(!linha)return;
+    if(cur&&cur._sec&&cur._sec.livre&&/^\s*[-–—]/.test(raw)){cur.detalhes=cur.detalhes?cur.detalhes+'\n'+linha:linha;return;}
     const s=colSecao(linha);
     if(s){
       cur=novo(s.sec);conj={};
+      if(s.sec.livre)cur.formato=cur.nome;   // bloco de condicionamento não mostra o nome: o título vai no campo Formato
+      if(s.seq)cur.detalhes='Sequência de '+s.sec.nome;
       if(s.ser)cur._ser=s.ser;
       if(s.resto){
         if(cur.tipo==='condicionamento')cur.formato=s.resto;
@@ -3696,7 +3766,7 @@ function coletivasParsearDia(linhas){
       _colStats.instr++;
       const t=linha.replace(/^\((.*)\)$/,'$1');
       if(!cur){pend.push(t);return;}
-      if(cur.tipo==='condicionamento'&&!cur.formato)cur.formato=t;
+      if(cur.tipo==='condicionamento'&&!cur.formato&&!(cur._sec&&cur._sec.livre))cur.formato=t;
       else cur.detalhes=cur.detalhes?cur.detalhes+'\n'+t:t;
       return;
     }
@@ -3716,7 +3786,7 @@ function coletivasParsearDia(linhas){
     });
   });
   if(pend.length&&!blocos.length){cur=novo({tipo:'normal',nome:'Treino'});cur.detalhes=pend.join('\n');}
-  return blocos.filter(function(b){return b.tipo==='condicionamento'||b.exercicios.length||b.detalhes;}).map(function(b){
+  return blocos.filter(function(b){return b.tipo==='condicionamento'||b.exercicios.length||b.detalhes||(b._sec&&b._sec.marcador);}).map(function(b){
     if(b._ser)b.exercicios.forEach(function(e){if(!e.series&&!b.conjugado)e.series=b._ser;});
     if(b.conjugado&&!b.series&&b._ser)b.series=b._ser;
     if(b._sec&&b._sec.cor)b.cor=b._sec.cor;
@@ -3726,8 +3796,8 @@ function coletivasParsearDia(linhas){
   });
 }
 function coletivasParsearTexto(texto){
-  _mvIdx=null;_colStats={ok:0,novos:[],instr:0};
-  const dias={};let diaAtual=null,off=0,colunas=null;
+  _mvIdx=null;_colStats={ok:0,novos:[],instr:0,sug:{}};
+  const dias={},focos={};let diaAtual=null,off=0,colunas=null;
   const abre=function(d){diaAtual=off+d;dias[diaAtual]=[];};
   texto.split('\n').forEach(function(raw){
     const linha=raw.replace(/\r/g,'').trim();
@@ -3736,17 +3806,17 @@ function coletivasParsearTexto(texto){
     if(mSem){off=(Number(mSem[1])-1)*7;diaAtual=null;colunas=null;return;}
     if(linha.indexOf('\t')>=0){
       const segs=raw.replace(/\r/g,'').split('\t').map(function(x){return x.trim();});
-      const ds=segs.filter(Boolean).map(colDia);
-      if(ds.length>1&&ds.every(function(d){return d!=null;})){colunas=ds;ds.forEach(function(d){dias[off+d]=[];});diaAtual=null;return;}
+      const dt=segs.filter(Boolean).map(colDiaT),ds=dt.map(function(x){return x?COLETIVAS_DOW_ABREV[x.d]:null;});
+      if(ds.length>1&&ds.every(function(d){return d!=null;})){colunas=ds;ds.forEach(function(d,i){dias[off+d]=[];if(dt[i].titulo)focos[off+d]=dt[i].titulo;});diaAtual=null;return;}
       if(colunas){segs.forEach(function(s,i){if(s&&colunas[i]!=null&&dias[off+colunas[i]])dias[off+colunas[i]].push(s);});return;}
     }
-    const d=colDia(linha);
-    if(d!=null){abre(d);colunas=null;return;}
+    const dT=colDiaT(linha),d=dT?COLETIVAS_DOW_ABREV[dT.d]:null;
+    if(d!=null){abre(d);if(dT.titulo)focos[diaAtual]=dT.titulo;colunas=null;return;}
     if(diaAtual==null||colunas)return;
     dias[diaAtual].push(linha);
   });
   const resultado={};
-  Object.keys(dias).forEach(function(k){const b=coletivasParsearDia(dias[k]);if(b.length)resultado[k]=b;});
+  Object.keys(dias).forEach(function(k){const b=coletivasParsearDia(dias[k]);if(b.length){if(focos[k])b.forEach(function(x){x.foco=focos[k];});resultado[k]=b;}});
   return resultado;
 }
 function coletivasPreviewColar(){
@@ -3756,7 +3826,9 @@ function coletivasPreviewColar(){
   const p=coletivasParsearTexto(t),st=_colStats,nd=Object.keys(p).length;
   if(!nd){pv.textContent='⚠️ Nenhum dia reconhecido ainda (use Segunda/Terça…/SEG/TER… no começo da linha).';return;}
   const nb=Object.keys(p).reduce(function(a,k){return a+p[k].length;},0);
-  pv.innerHTML='<b>'+nd+' dia(s) · '+nb+' bloco(s)</b> · ✓ '+st.ok+' no banco (vídeo automático) · 📝 '+st.instr+' instrução(ões) separadas dos exercícios'+(st.novos.length?'<br>➕ <b>'+st.novos.length+' fora do banco</b> (sem vídeo): '+st.novos.slice(0,12).map(escAttr).join(', ')+(st.novos.length>12?'…':''):'');
+  const DN=['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
+  const diasTxt=Object.keys(p).map(function(k){const f=p[k][0]&&p[k][0].foco;return '<span style="white-space:nowrap">'+DN[k%7]+(f?' · '+escAttr(f):'')+' ('+p[k].length+')</span>';}).join(' &nbsp;|&nbsp; ');
+  pv.innerHTML='<div style="margin-bottom:4px">'+diasTxt+'</div><b>'+nd+' dia(s) · '+nb+' bloco(s)</b> · ✓ '+st.ok+' no banco (vídeo automático) · 📝 '+st.instr+' instrução(ões) separadas dos exercícios'+colNovosHtml(st);
 }
 // Cadastrar no banco um exercício que veio do texto (abre o modal da Biblioteca já com o nome; é lá que se cola o vídeo).
 function mvCadastrar(nome){
@@ -3998,7 +4070,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.6 · 16/11';
+var MOVH_VER = 'v64.7 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -6106,7 +6178,7 @@ function mbBlocosDoDia(ls){
   if (mbEhFormatoPares(ls)) {
     const bloco = nb('pri'), exs = [];
     let pend = null;
-    const push = (nome, spec) => { const a = mvAcharEx(nome); if (a) { nome = a.n; _colStats.ok++; } else if (_colStats.novos.indexOf(nome) < 0) _colStats.novos.push(nome); exs.push(mbExProto({ nome: nome, series: spec ? spec.series : '', reps: spec ? spec.reps : '' })); };
+    const push = (nome, spec) => { const a = mvAcharEx(nome); if (a) { nome = a.n; _colStats.ok++; } else if (_colStats.novos.indexOf(nome) < 0) { _colStats.novos.push(nome); const g = mvSugerir(nome); if (g) _colStats.sug[nome] = g.n; } exs.push(mbExProto({ nome: nome, series: spec ? spec.series : '', reps: spec ? spec.reps : '' })); };
     ls.forEach(l => {
       const spec = mbParsearLinhaExercicioTreino(l);
       if (spec && pend) { push(pend, spec); pend = null; }
@@ -6119,7 +6191,7 @@ function mbBlocosDoDia(ls){
   return coletivasParsearDia(ls).map(mbBlocoDeColetiva);
 }
 function mbParsearTreinoTexto(texto){
-  _mvIdx = null; _colStats = { ok:0, novos:[], instr:0 };
+  _mvIdx = null; _colStats = { ok:0, novos:[], instr:0, sug:{} };
   const ignorar = /^(tempo estimado|adicionar exerc|total grupos musculares?|excluir protocolo|editar nome|sem descri|baixar pdf|duplicar protocolo)/i;
   const dias = []; let atual = null;
   texto.split('\n').map(l => l.trim()).filter(Boolean).forEach(linha => {
@@ -6152,7 +6224,7 @@ function mbPreviewColarTreino(){
   if (!prev) return;
   if (!parsed.length) { prev.textContent = texto.trim() ? '⚠️ Nenhum "Treino X" reconhecido ainda.' : ''; return; }
   const nex = t => t.blocos.reduce((a,b) => a + (b.exercicios||[]).length, 0), st = _colStats;
-  prev.innerHTML = parsed.map(t => `${escAttr(t.nome)}${t.diaSemana && t.diaSemana !== t.nome ? ' ('+t.diaSemana+')' : ''} — ${t.blocos.length} bloco${t.blocos.length!==1?'s':''}, ${nex(t)} exercício${nex(t)!==1?'s':''}`).join('<br>') + `<br>✓ ${st.ok} no banco (vídeo automático) · 📝 ${st.instr} instrução(ões) separada(s)` + (st.novos.length ? `<br>➕ <b>${st.novos.length} fora do banco</b>: ${st.novos.slice(0,10).map(escAttr).join(', ')}${st.novos.length>10?'…':''}` : '');
+  prev.innerHTML = parsed.map(t => `${escAttr(t.nome)}${t.diaSemana && t.diaSemana !== t.nome ? ' ('+t.diaSemana+')' : ''} — ${t.blocos.length} bloco${t.blocos.length!==1?'s':''}, ${nex(t)} exercício${nex(t)!==1?'s':''}`).join('<br>') + `<br>✓ ${st.ok} no banco (vídeo automático) · 📝 ${st.instr} instrução(ões) separada(s)` + colNovosHtml(st);
 }
 function mbAplicarColarTreino(){
   const texto = document.getElementById('mb-colar-treino-texto').value;

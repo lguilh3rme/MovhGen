@@ -28,6 +28,7 @@ chk kbm 20 0 python3 $T/kbm.py
 chk prox_fase 8 0 python3 $T/prox_fase.py $R/index.html
 chk prox_cond 14 0 python3 $T/prox_cond.py $R/index.html
 chk cp_engine 20 0 node $T/cp_engine.js $R/index.html
+chk colar_v2 39 0 node $T/colar_v2.js $R/index.html
 chk pf_cond 34 0 node $T/pf_cond.js $R/index.html
 chk prog12 4 0 python3 $T/prog12.py $R/index.html
 chk ciclo2 9 0 python3 $T/ciclo2.py $R/index.html
