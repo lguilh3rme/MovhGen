@@ -482,6 +482,7 @@ body.dock-open #aluno-dock{display:flex}
 .kbg-hd{display:flex;align-items:center;gap:10px;position:sticky;left:0;margin-bottom:8px;max-width:calc(100vw - 40px)}
 .kbg-n{background:var(--P);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
 .kbg-tt{display:flex;flex-direction:column;flex:1;min-width:0}.kbg-tt b{font-size:14px}.kbg-tt span{font-size:11px;color:var(--mt,#888)}
+#sp-preview-body .kb-board{grid-template-columns:repeat(var(--kbn,5),230px)!important;overflow-x:auto}
 .kbg-board.kb-board{grid-auto-columns:230px!important;overflow:visible!important}
 .kbg-board .kb-col{max-height:none!important}
 .an-chip{font-size:10px;font-weight:700;border-radius:99px;padding:2px 8px;border:1px solid;white-space:nowrap;line-height:1.4}
@@ -8862,7 +8863,7 @@ function renderSplitPreviewKanban(split){
         <div class="kb-col-body">${body}</div>
       </div>`;
     }).join('');
-    h+=`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">${escAttr(sem.nome)}</div><div class="kb-board">${cols}</div></div>`;
+    h+=`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">${escAttr(sem.nome)}</div><div class="kb-board" style="--kbn:${sem.dias.length}">${cols}</div></div>`;
   });
   return h;
 }
