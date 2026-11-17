@@ -10,7 +10,8 @@ Objetivo: o mesmo roteiro na landing, no WhatsApp, na avaliação, na devolutiva
 2. **Programa de 12 semanas** (Base · Construção · Consolidação)
 3. **Próximo ciclo** (quem continua, sem voltar ao início)
 
-## Degrau 1 — Avaliação + Mapa (R$ 150, DECISÃO PENDENTE do dono)
+## Degrau 1 — Avaliação + Mapa (DECIDIDO 17/11 17h32: R$ 150 presencial e R$ 130 online; crédito de 100% se fechar em 7 dias)
+Pendente: texto do Cobrar com checklist e dois valores; avaliar incluir bioimpedância (ver CONTEXTO seção 0) sem mudar o preço.
 O valor foi definido pelo Claude em 15/11 e nunca confirmado. Hoje só aparece numa frase no WhatsApp do botão Cobrar ("avaliação, fotos, medidas e um mapa de 1 página"), sem dizer o que é entregue, quanto tempo leva nem o que acontece se não fechar. Isso não está claro nem justo para quem paga.
 
 **O que está incluído (texto para landing, Cobrar e app):**
