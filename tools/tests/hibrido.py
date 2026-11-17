@@ -47,5 +47,11 @@ with sync_playwright() as p:
     ok(e['orig']==e['base'],'objetivos não alteram o modelo original')
     ok(e['pad']==9 and e['i1']['padrao']=='gluteo' and e['i1']['nivel']==2,'escada: Hip Thrust é glúteo N2: '+str(e['i1']))
     ok(e['s1'] and e['s1']['para']=='Hip Thrust Unilateral' and e['s1']['nivelPara']==3 and e['s2'] is None and e['sx']['para']=='Gluteo 4 apoios (caneleira)','escada: sobe 1 degrau, pula a variante que o aluno já tem e para no topo: '+str((e['s1']['para'],e['s2'],e['sx']['para'])))
+    h=pg.evaluate("""async()=>{window.notify=()=>{};
+      SPLITS=SPLITS.filter(x=>x.id!=='hibrido'); renderDBSplits();
+      const b=document.getElementById('hx-add-btn'); const antes=b&&b.style.display!=='none';
+      await hxAdicionar(); await hxAdicionar();
+      return {antes:antes,depois:b.style.display==='none',n:SPLITS.filter(x=>x.id==='hibrido').length};}""")
+    ok(h['antes'] and h['depois'] and h['n']==1,'botão Modelo Híbrido aparece sem o híbrido, adiciona uma vez só e some: '+str(h))
     ok(not errs,'sem pageerror '+str(errs[:2])); b.close()
 print('FALHAS:',len(F)); sys.exit(1 if F else 0)
