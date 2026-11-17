@@ -1195,7 +1195,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <span style="font-size:13px;font-weight:600;color:var(--tx)" id="sp-preview-title"></span>
-        <select id="sp-enfase" onchange="hxEnfaseMudou()" style="display:none;width:auto;flex:0 0 auto;font-size:12px;padding:4px 8px" title="Ênfase: camada extra sobre o modelo"><option value="">Sem ênfase</option><option value="gluteo">Ênfase glúteo</option><option value="superior">Ênfase superior</option></select>
+        <select id="sp-enfase" onchange="hxEnfaseMudou()" style="display:none;width:auto;flex:0 0 auto;font-size:12px;padding:4px 8px" title="Objetivo do aluno: camada sobre o modelo (muda a semana e qual degrau da escada sobe primeiro)"><option value="">Sem objetivo</option><option value="gluteo">Objetivo: glúteo</option><option value="superior">Objetivo: superiores</option><option value="definicao">Objetivo: definição</option><option value="emagrecimento">Objetivo: emagrecimento</option><option value="manutencao">Objetivo: manutenção funcional</option></select>
         <button class="btn bp" onclick="loadSplit()">Carregar e editar →</button>
       </div>
       <div id="sp-preview-body"></div>
@@ -4128,7 +4128,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.0 · 17/11';
+var MOVH_VER = 'v65.1 · 17/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8641,9 +8641,29 @@ function hxModelo(){
     ]}]};
 }
 // Ênfase = camada sobre o modelo (não vira outro modelo): acrescenta acessórios em dias fixos da semana-base.
+// ESCADA por padrão (docs/escada-padroes.md): níveis N1..N4, só nomes que existem no banco. Parâmetro do MOVH, revisável.
+const ESCADA={"joelho":[["Goblet Squat Heels Elevated","Leg Press","Agachamento Hack","Sumo Squat KB"],["Back Squat","Front Squat","Step Up","Split Squat Smith","Recuo Alternado no Smith","Bulgaro Guiado (Smith)"],["Reverse Lunge","Afundo","Split Lunges","Bulgarian Split Squat","Cossack Squat"],["Box Pistol","Back Squat 1½"]],"quadril":[["Pull-through no Cabo","Hiperextensão Lombar","Mesa Flexora"],["RDL","Stiff","Good Morning"],["RDL Barra","Romanian Deadlift Hip 2/3","Deadlift","Deadlift Sumo"],["RDL DB Single Leg","Nordic Curl"]],"gluteo":[["Glute Bridge","Elevação Pélvica Máquina","Coice Polia Alta","Extensão Glu Polia"],["Hip Thrust"],["Hip Thrust Unilateral","Gluteo 4 apoios (caneleira)"],[]],"emp_h":[["Supino Maquina","Supino Inclinado Máquina"],["DB Press","Supino Inclinado","Chest Press DB Single Arm"],["Bench Press","Supino Pegada Fechada","Deficit Push Up"],["Ring Dip Strict"]],"emp_v":[["Desenvolvimento Máquina"],["Shoulder Press DB","Arnold Press"],["Landmine Press","Z Press","Push Press"],["KB Bottom Up Press"]],"puxar_v":[["Puxada Neutra","Puxada Alta"],[],["Chin-Up","Pull-Up Strict"],["L-Sit Pull-Up","Pull Up CTB"]],"puxar_h":[["Remada Máquina","Remada Baixa no Cabo"],["Remada Unilateral","DB Row","Remada Curvada DB"],["Remada Cavalinho T-Bar","Barbell Row","Pendlay Row"],["Renegade Row","See Saw Row"]],"core":[["Dead Bug","Bird Dog","Prancha","Hollow Hold"],["Prancha com Rotação","Pallof Press","Hollow Rock","Leg Raise"],["Ab Rolinho","V-Ups","L-Sit Hold","Hollow Pullover"],["Strict TTB","Toes to Bar"]],"carregar":[["Farmer Carry"],["Suitcase Carry"],["OH Walk"],[]]};
+function escadaInfo(nome){
+  const k=String(nome||'').trim().toLowerCase();if(!k)return null;
+  for(const p in ESCADA){for(let n=0;n<4;n++){if(ESCADA[p][n].some(function(x){return x.toLowerCase()===k;}))return{padrao:p,nivel:n+1};}}
+  return null;
+}
+// próximo degrau: primeira variante do nível seguinte que ainda não está na lista `jaTem`
+function escadaSugestao(nome,jaTem){
+  const i=escadaInfo(nome);if(!i||i.nivel>=4)return null;
+  const tem=(jaTem||[]).map(function(x){return String(x||'').toLowerCase();});
+  for(let n=i.nivel;n<4;n++){const c=ESCADA[i.padrao][n].find(function(x){return tem.indexOf(x.toLowerCase())<0;});if(c)return{padrao:i.padrao,de:nome,nivelDe:i.nivel,para:c,nivelPara:n+1};}
+  return null;
+}
+// Objetivo = camada sobre o modelo: muda a semana (add/fn) e diz quais padrões sobem primeiro na escada (sobe).
+function hxRestMenos(r){const t=String(r||'');if(t==="2'")return "1'30\"";if(t==="1'30\"")return "1'";return t;}
+function hxSeriesMenos(sr){const m=String(sr||'').match(/^(\d+)(\s*[x×]\s*.*)$/);if(!m||+m[1]<3)return sr;return (+m[1]-1)+m[2];}
 const HX_ENFASE={
-  gluteo:{nome:'Glúteo',add:{1:[['pri',['Hip Thrust Unilateral','2×12 cada',"1'"]]],3:[['pri',['Hip Thrust Unilateral','3×10 a 12 cada',"1'"]]]}},
-  superior:{nome:'Superior',add:{0:[['pri',['Elevação Lateral','3×12 a 15','45s']]],2:[['pri',['Face Pull','3×15','45s']]],4:[['pri2',['Rosca Direta','2×12','45s']],['pri2',['Tríceps Pulley','2×12','45s']]]}}
+  gluteo:{nome:'Glúteo',sobe:['gluteo','quadril'],add:{1:[['pri',['Hip Thrust Unilateral','2×12 cada',"1'"]]],3:[['pri',['Hip Thrust Unilateral','3×10 a 12 cada',"1'"]]]}},
+  superior:{nome:'Superior',sobe:['emp_h','emp_v','puxar_v','puxar_h'],add:{0:[['pri',['Elevação Lateral','3×12 a 15','45s']]],2:[['pri',['Face Pull','3×15','45s']]],4:[['pri2',['Rosca Direta','2×12','45s']],['pri2',['Tríceps Pulley','2×12','45s']]]}},
+  definicao:{nome:'Definição',sobe:[],add:{},fn:function(c){c.semanas[0].dias.forEach(function(d){(d.blocos||[]).forEach(function(b){if(b.id==='pri')b.exercicios.forEach(function(e){e.rest=hxRestMenos(e.rest);});});});}},
+  emagrecimento:{nome:'Emagrecimento',sobe:['joelho','quadril','puxar_v','puxar_h'],add:{},fn:function(c){[0,2,4].forEach(function(di){const d=c.semanas[0].dias[di];if(!d)return;d.blocos.push({id:'pri3',nome:'Metabólico curto',cor:'#D45828',obs:'3 rodadas, sem pausa entre os exercícios, 1 min entre as rodadas.',meta:'3 rodadas | 10 min',exercicios:[hxEx('KB Swing','3×15','30s','Ênfase emagrecimento'),hxEx('Remo Ergômetro','3×250 m','30s','Ênfase emagrecimento'),hxEx('Mountain Climber','3×30s','30s','Ênfase emagrecimento')],conjGroups:{}});});}},
+  manutencao:{nome:'Manutenção funcional',sobe:[],add:{4:[['pri',['Suitcase Carry','3×20 m cada','45s']]]},fn:function(c){c.semanas[0].dias.forEach(function(d){(d.blocos||[]).forEach(function(b){if(b.id==='pri')b.exercicios.forEach(function(e){e.series=hxSeriesMenos(e.series);});});});}}
 };
 function hxEnfaseAtual(){const el=document.getElementById('sp-enfase');return el?el.value:'';}
 function hxAplicarEnfase(split,tipo){
@@ -8652,7 +8672,8 @@ function hxAplicarEnfase(split,tipo){
   Object.keys(E.add).forEach(function(di){const d=c.semanas[0].dias[+di];if(!d)return;
     E.add[di].forEach(function(it){const b=(d.blocos||[]).find(function(x){return x.id===it[0];});
       if(b)b.exercicios.push(hxEx(it[1][0],it[1][1],it[1][2],'Ênfase '+E.nome.toLowerCase()));});});
-  c.nome=c.nome+' · ênfase '+E.nome.toLowerCase();return c;
+  if(E.fn)E.fn(c);
+  c.nome=c.nome+' · '+E.nome.toLowerCase();return c;
 }
 function hxEnfaseMudou(){
   if(!_selSplit)return;
@@ -8829,7 +8850,7 @@ function selectSplit(id){
   document.querySelectorAll('.sp-card').forEach(c=>c.classList.remove('sel'));
   const card=document.getElementById('spc-'+id);if(card)card.classList.add('sel');
   document.getElementById('sp-preview').style.display='block';
-  document.getElementById('sp-preview-title').textContent=_selSplit.icone+' '+_selSplit.nome;
+  document.getElementById('sp-preview-title').textContent=(String(_selSplit.nome||'').indexOf(_selSplit.icone)===0?'':_selSplit.icone+' ')+_selSplit.nome;
   const _en=document.getElementById('sp-enfase');if(_en){_en.style.display=id==='hibrido'?'':'none';_en.value='';}
   document.getElementById('sp-preview-body').innerHTML=renderSplitPreviewKanban(_selSplit);
 }
@@ -12610,6 +12631,22 @@ async function mbSugerirProximaFase(protoId, alunoId){
     PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
     // anamnese / dor
     const resp = an.data && an.data[0] ? an.data[0].respostas : null;
+    // ESCADA: objetivo do aluno (campo objetivo da anamnese) -> padrões que sobem primeiro; só sugere, o professor decide
+    try {
+      const _ob = String(resp && (resp.objetivo || resp.objetivos || resp.meta) || '').toLowerCase();
+      const _k = /gl[uú]te/.test(_ob) ? 'gluteo' : /emagre|perder peso|gordura/.test(_ob) ? 'emagrecimento' : /defin/.test(_ob) ? 'definicao' : /bra[cç]o|peito|costas|ombro|superior/.test(_ob) ? 'superior' : /manuten|funcional|sa[uú]de/.test(_ob) ? 'manutencao' : '';
+      if (_k) {
+        const _E = HX_ENFASE[_k], _todos = [];
+        sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => _todos.push(e.nome))));
+        alertas.push({ t:'ok', x:'Objetivo lido da anamnese: ' + _E.nome.toLowerCase() + (_E.sobe.length ? ' — sobem primeiro na escada: ' + _E.sobe.join(', ') : ' — mantém o degrau; progride por carga e densidade') });
+        let _n = 0;
+        sem.dias.forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
+          const i = escadaInfo(e.nome); if (!i || _E.sobe.indexOf(i.padrao) < 0 || _n >= 2) return;
+          const g = escadaSugestao(e.nome, _todos); if (!g) return; _n++;
+          alertas.push({ t:'ok', x:'Escada (' + g.padrao + '): ' + g.de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ') se bateu o topo da faixa em 2 sessões, RIR 2+, sem dor. Sugestão: troque à mão.' });
+        }); }));
+      }
+    } catch (_e) {}
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
     if (hits.length) alertas.push({t:'av', x:'Anamnese cita: '+hits.join(', ')+' — confira exercícios e volume dessas regiões'});
     // RPE e registros

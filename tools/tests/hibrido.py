@@ -31,5 +31,21 @@ with sync_playwright() as p:
     ok(r['orig']==r['base'] and 'glúteo' in r['gnome'],'ênfase não altera o modelo original')
     ok(r['carregado']==5 and r['ex']==r['base']+2,'loadSplit aplica a ênfase escolhida: '+str((r['carregado'],r['ex'])))
     ok(r['joe']==3 and r['qua']==3 and r['hib']==2 and r['inf']==6,'painel separa joelho x quadril e conta híbrido: '+str((r['joe'],r['qua'],r['hib'],r['inf'])))
+    e=pg.evaluate("""()=>{const d=DEFAULT_SPLITS.find(x=>x.id==='hibrido');const R=o=>hxAplicarEnfase(d,o);
+      const cnt=x=>x.semanas[0].dias.reduce((a,dd)=>a+dd.blocos.reduce((q,bl)=>q+(bl.exercicios||[]).length,0),0);
+      const pri=x=>x.semanas[0].dias[0].blocos.find(b=>b.id==='pri').exercicios;
+      const def=R('definicao'),em=R('emagrecimento'),ma=R('manutencao');
+      return {n:Object.keys(HX_ENFASE).join(','),base:cnt(d),defRest:pri(def)[0].rest,baseRest:pri(d)[0].rest,
+        emBlocos:[0,2,4].map(i=>em.semanas[0].dias[i].blocos.filter(b=>b.id==='pri3').length).join(''),emN:cnt(em),
+        maSr:pri(ma)[0].series,baseSr:pri(d)[0].series,maN:cnt(ma),orig:cnt(d),
+        i1:escadaInfo('Hip Thrust'),s1:escadaSugestao('Hip Thrust',[]),s2:escadaSugestao('Hip Thrust Unilateral',[]),sx:escadaSugestao('Hip Thrust',['Hip Thrust Unilateral']),
+        pad:Object.keys(ESCADA).length}}""")
+    ok(e['n']=='gluteo,superior,definicao,emagrecimento,manutencao','5 objetivos: '+e['n'])
+    ok(e['baseRest']=="2'" and e['defRest']=="1'30"+chr(34),'definição encurta descanso dos compostos: '+str((e['baseRest'],e['defRest'])))
+    ok(e['emBlocos']=='111' and e['emN']==e['base']+9,'emagrecimento: Metabólico curto em Seg/Qua/Sex: '+str((e['emBlocos'],e['emN'],e['base'])))
+    ok(e['baseSr']=='4×6 a 8' and e['maSr']=='3×6 a 8' and e['maN']==e['base']+1,'manutenção: -1 série nos principais e +Suitcase Carry: '+str((e['baseSr'],e['maSr'],e['maN'])))
+    ok(e['orig']==e['base'],'objetivos não alteram o modelo original')
+    ok(e['pad']==9 and e['i1']['padrao']=='gluteo' and e['i1']['nivel']==2,'escada: Hip Thrust é glúteo N2: '+str(e['i1']))
+    ok(e['s1'] and e['s1']['para']=='Hip Thrust Unilateral' and e['s1']['nivelPara']==3 and e['s2'] is None and e['sx']['para']=='Gluteo 4 apoios (caneleira)','escada: sobe 1 degrau, pula a variante que o aluno já tem e para no topo: '+str((e['s1']['para'],e['s2'],e['sx']['para'])))
     ok(not errs,'sem pageerror '+str(errs[:2])); b.close()
 print('FALHAS:',len(F)); sys.exit(1 if F else 0)
