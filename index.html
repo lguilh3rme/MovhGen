@@ -635,6 +635,8 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-more-m>span{display:flex;gap:4px}.cl-more-m .cl-dup{flex:0 0 118px;min-width:118px}.cl-more-m>span .btn{width:auto;flex:1}
 .cl-more-r{left:auto;right:0}
 .cl-foco{display:flex;gap:8px;align-items:center;margin:2px 0 8px;font-size:11px;color:var(--t2)}
+.cl-padrao{font-size:11px;color:var(--t2);margin:-4px 0 8px}
+.cl-padrao-av{margin-top:3px;color:#F5A524;font-weight:700}
 .cl-foco input{flex:1;max-width:340px;font-size:12px;padding:5px 8px;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)}
 .cl-tabrow{display:flex;gap:6px;align-items:center;position:sticky;top:-1px;z-index:5;background:var(--bg);padding:2px 0 6px}
 #page-coletivas .cl-tabrow .cl-tabs{flex:1;position:static;margin:0;padding:0;background:none}
@@ -3385,7 +3387,7 @@ function coletivasRenderEditor(el, datas){
     '<div class="cl-day">' + (per ? '' : '<div class="cl-day-hd"><span class="cl-day-t">' + label + (coletivasDiaSel === hojeKey ? ' · hoje' : '') + '</span><span style="flex:1"></span>' +
     notasBtn('dia', (coletivasModo === 'personal' ? personalAlunoId : 'col') + '|' + coletivasDiaSel, 'Dia ' + label) + '<input type="date" id="cl-dup-data" class="cl-dup" title="Copiar este dia para a data escolhida"/><button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasDuplicarDia()">⧉ Copiar dia p/ data</button>' +
     (coletivasModo === 'personal' ? '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="personalSepararSR()" title="Lê nomes como \'Remada: 3×8-10\' e separa séries e reps">↔ Separar séries×reps</button>' : '') + '<button type="button" class="btn bs" style="font-size:10px;padding:3px 9px" onclick="coletivasLimparDia()">🗑 Limpar dia</button></div>') +
-    (blocos.length ? '<div class="cl-foco"><span>🎯 Foco do dia</span><input type="text" value="' + escAttr((blocos[0] && blocos[0].foco) || '') + '" placeholder="ex.: Empurrar · Inf. Post 🦵" oninput="coletivasSetFoco(\'' + coletivasDiaSel + '\', this.value)"/></div>' : '') + '<div class="cl-blocos pers">' + (blocos.length ? colPersColunas(blocos, blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
+    (blocos.length ? '<div class="cl-foco"><span>🎯 Foco do dia</span><input type="text" value="' + escAttr((blocos[0] && blocos[0].foco) || '') + '" placeholder="ex.: Empurrar · Inf. Post 🦵" oninput="coletivasSetFoco(\'' + coletivasDiaSel + '\', this.value)"/></div>' + colPadraoHtml(blocos) : '') + '<div class="cl-blocos pers">' + (blocos.length ? colPersColunas(blocos, blocos.map((b, i) => renderColetivasBloco(coletivasDiaSel, i, b, blocos.length))) : '<div class="cl-vazio">Sem aula coletiva neste dia.</div>') + '</div>' +
     (per ? '' : '<div class="cl-add"><button type="button" class="btn bp" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\')">＋ Bloco</button><button type="button" class="btn bs" onclick="coletivasAddBloco(\'' + coletivasDiaSel + '\',\'condicionamento\')">🔥 ＋ Condicionamento</button></div>') + '</div>';
   el.querySelectorAll('textarea.cl-ta').forEach(coletivasAuto);
 }
@@ -3830,6 +3832,35 @@ function coletivasPreviewColar(){
   const diasTxt=Object.keys(p).map(function(k){const f=p[k][0]&&p[k][0].foco;return '<span style="white-space:nowrap">'+DN[k%7]+(f?' · '+escAttr(f):'')+' ('+p[k].length+')</span>';}).join(' &nbsp;|&nbsp; ');
   pv.innerHTML='<div style="margin-bottom:4px">'+diasTxt+'</div><b>'+nd+' dia(s) · '+nb+' bloco(s)</b> · ✓ '+st.ok+' no banco (vídeo automático) · 📝 '+st.instr+' instrução(ões) separadas dos exercícios'+colNovosHtml(st);
 }
+// Padrão de movimento do dia (pela categoria do banco) e aviso quando o título do dia não bate com o conteúdo.
+function colPadraoDia(blocos){
+  const c={inf:0,push:0,pull:0,core:0,n:0};
+  (blocos||[]).forEach(function(b){if(b.tipo==='condicionamento')return;(b.exercicios||[]).forEach(function(e){
+    const a=e&&e.nome?mvAcharEx(e.nome):null;if(!a)return;const k=a.cat||'';
+    if(/Squat|Hinge|Glúteo|Unilateral|Lower/.test(k))c.inf++;
+    else if(/Push|Peitoral|Tríceps/.test(k))c.push++;
+    else if(/Pull|Bíceps|Ombro/.test(k))c.pull++;
+    else if(/Core/.test(k))c.core++;
+    else return;
+    c.n++;});});
+  return c;
+}
+function colAvisoFoco(foco,c){
+  const sup=c.push+c.pull,tot=c.inf+sup;if(!foco||tot<3)return '';
+  const f=colNorm(foco),pInf=c.inf/tot;
+  const dInf=/(^|[^a-z])(inf|lower|perna|quadr|poster|gluteo)/.test(f),dSup=/(^|[^a-z])(sup|upper|empurr|push|puxa|pull|peito|costas|ombro)/.test(f);
+  if(dInf&&!dSup&&pInf<0.35)return 'O título fala de inferior, mas só '+c.inf+' de '+tot+' exercícios reconhecidos são de pernas.';
+  if(dSup&&!dInf&&pInf>0.65)return 'O título fala de superior, mas '+c.inf+' de '+tot+' exercícios reconhecidos são de pernas.';
+  const dPush=/empurr|push|peito/.test(f),dPull=/puxa|pull|costas/.test(f);
+  if(dPush&&!dPull&&sup>=3&&c.pull>c.push*1.5)return 'O título fala de empurrar, mas há mais exercícios de puxar ('+c.pull+') que de empurrar ('+c.push+').';
+  if(dPull&&!dPush&&sup>=3&&c.push>c.pull*1.5)return 'O título fala de puxar, mas há mais exercícios de empurrar ('+c.push+') que de puxar ('+c.pull+').';
+  return '';
+}
+function colPadraoHtml(blocos){
+  const c=colPadraoDia(blocos);if(!c.n)return '';
+  const av=colAvisoFoco((blocos[0]&&blocos[0].foco)||'',c);
+  return '<div class="cl-padrao">📊 Padrão (pelo banco): ⬆️ empurrar '+c.push+' · ⬇️ puxar '+c.pull+' · 🦵 inferior '+c.inf+' · 🔩 core '+c.core+(av?'<div class="cl-padrao-av">⚠️ '+escAttr(av)+'</div>':'')+'</div>';
+}
 // Cadastrar no banco um exercício que veio do texto (abre o modal da Biblioteca já com o nome; é lá que se cola o vídeo).
 function mvCadastrar(nome){
   const cats=Object.keys(REP);openAddEx(cats[0]||'');
@@ -4070,7 +4101,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.7 · 16/11';
+var MOVH_VER = 'v64.8 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
