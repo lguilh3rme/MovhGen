@@ -3998,7 +3998,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.5 · 16/11';
+var MOVH_VER = 'v64.6 · 16/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -5606,10 +5606,10 @@ function montarTimelinePeriodizacao(lista, semanaAtualGlobal, detalhado){
     <option value=""${!nivelAluno?' selected':''}>Nível do aluno — não definido</option>
     ${Object.keys(NIVEL_TREINO).map(k=>`<option value="${k}"${nivelAluno===k?' selected':''}>${NIVEL_TREINO[k].label} (${NIVEL_TREINO[k].sub})</option>`).join('')}
   </select>${nivelAluno&&nivelAlunoOrigem==='anamnese'?'<div style="font-size:8.5px;color:var(--t3);margin-top:2px">📋 Veio do questionário inicial do aluno — troque aqui só se quiser sobrepor.</div>':''}`;
-  const avisos = analisarPeriodizacao(lista, nivelAluno);
+  const avisos = []; // v64.6: avisos antigos (Base 1–3 sem, mesociclos de 4) desligados — o modelo hoje é Base 8 sem · Construção · Consolidação
   const avisosHTML = avisos.length
     ? `<div class="pzt-avisos">${avisos.map(a=>`<div class="pzt-aviso">${a.texto}${a.aplicar?`<button class="btn bp" style="font-size:9px;padding:2px 7px;margin-top:4px;display:block" onclick="${a.aplicar}">✓ Aplicar sugestão</button>`:''}</div>`).join('')}</div>`
-    : (nivelAluno ? `<div class="pzt-avisos ok">✅ Distribuição de fases dentro do recomendado pra ${NIVEL_TREINO[nivelAluno].label.toLowerCase()}.</div>` : '');
+    : (false ? `<div class="pzt-avisos ok">✅ Distribuição de fases dentro do recomendado pra ${NIVEL_TREINO[nivelAluno].label.toLowerCase()}.</div>` : '');
   return `<div class="pzt-wrap">
     <div class="pzt-title">📈 Periodização prevista (${total} semanas)</div>
     <div class="pzt-track">${segs}${marker}${testeMarkers}</div>
@@ -9593,6 +9593,23 @@ function mbPresenca(a){
   if (ace) p.push('👀 app ' + mbTempoRel(a.ultimo_acesso));
   return { dot: dot, nv: nv, txt: txt, det: p.join(' · ') };
 }
+// Barra de etapas do protocolo ativo (gestão de alunos): um segmento por fase, largura = semanas, preenchido até hoje. Adapta-se sozinha ao incluir/remover fases.
+function mbBarraFases(a){
+  const p = a.protocoloAtivo; if (!p || !p.data_inicio) return '';
+  const ss = ((p._conteudo || p.conteudo || {}).semanas) || []; if (!ss.length) return '';
+  const durs = ss.map(s => parseInt(s.duracaoSemanas) || 4);
+  const pos = Math.max(0, (Date.now() - new Date(p.data_inicio + 'T00:00:00').getTime()) / (7 * 86400000));
+  let acc = 0;
+  const segs = ss.map((s, i) => {
+    const n = String(s.nome || '').toLowerCase();
+    const cor = /consolid/.test(n) ? '#1A9E72' : /constru/.test(n) ? '#8A5CD0' : ({ base:'#3580D8', intensificacao:'#D43A3A', densidade:'#D4A017', deload:'#777777' }[s.fase] || '#3580D8');
+    const d = durs[i], ini = acc; acc += d;
+    const fill = Math.max(0, Math.min(1, (pos - ini) / d)) * 100;
+    const nome = String(s.nome || s.fase || 'Fase');
+    return '<div title="' + escAttr(nome + ' · ' + d + ' sem') + '" style="flex:' + d + ' 1 0;min-width:0;position:relative;height:14px;border-radius:4px;background:' + cor + '33;overflow:hidden"><div style="position:absolute;top:0;bottom:0;left:0;width:' + fill + '%;background:' + cor + '"></div><span style="position:relative;display:block;font-size:8.5px;font-weight:700;color:#fff;padding:0 4px;line-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escAttr(nome) + ' · ' + d + 's</span></div>';
+  }).join('');
+  return '<div style="display:flex;gap:2px;margin-top:5px;max-width:420px">' + segs + '</div>';
+}
 // Fim do treino (previsão pela duração das semanas) e do acesso: laranja ≤ 14 dias, vermelho ≤ 7 dias (ou já vencido).
 function mbPrevisaoFim(a){
   const p = a.protocoloAtivo; if (!p) return null;
@@ -9763,7 +9780,7 @@ function renderPainelAlunos() {
       ? `<button onclick="mbVerProtocolo('${a.id}')" title="Ver / editar protocolo" style="background:var(--cl);border:1px solid var(--bd);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;color:var(--tx);cursor:pointer">✏️ ${escAttr(proto.nome)}</button>` +
         (proto.data_inicio ? `<span style="color:var(--t3);font-size:10px"> desde ${new Date(proto.data_inicio+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
         (previsaoFim ? `<span style="color:var(--t3);font-size:10px"> · fim ${previsaoFim.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})}</span>` : '') +
-        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno (histórico, duplicar, link)">🗂 Todos os treinos</button>`
+        `<button class="btn bs" style="font-size:9px;padding:2px 6px;margin-left:4px" onclick="mbGerenciarProtocolos('${a.id}')" title="Todos os protocolos deste aluno (histórico, duplicar, link)">🗂 Todos os treinos</button>` + mbBarraFases(a)
       : `<span style="color:var(--t3);font-style:italic;font-size:10px">sem protocolo</span> <button class="btn bp" style="font-size:10px;padding:2px 9px;margin-left:4px" onclick="mbMontarTreinoPara('${a.id}')" title="Abre o editor com este aluno selecionado">＋ Montar treino</button>`;
 
     // Badges de status
@@ -13010,7 +13027,7 @@ function mbOnAlunoChange(autoCarregar) {
       }
     }
   }
-  mbRenderSugestaoPeriodizacao();
+  // v64.6: sugestão inicial de periodização (modelo antigo) desligada
   _dest = null; if (typeof pbRefreshDest === 'function') pbRefreshDest();
 }
 
@@ -14051,6 +14068,19 @@ body.preview-mode .toprow{position:static!important;padding:0;margin:0 0 6px}
 .a-cj-items{padding:2px!important;gap:2px!important}
 .a-cj-items .ec{padding:5px 8px!important;border-radius:8px!important}
 .a-cj-items .ec-chips{margin-top:3px!important;gap:4px!important}
+.a-cj-group{border-width:2px!important;border-left-width:5px!important;box-shadow:0 0 0 3px color-mix(in srgb,var(--P) 13%,transparent)}
+.a-cj-head{background:color-mix(in srgb,var(--P) 26%,transparent)!important}
+.a-cj-head .a-cj-label{color:var(--tx)!important}
+.bloco-ativ .exl{display:flex;flex-wrap:wrap;gap:6px;padding:4px 10px 10px;align-items:flex-start}
+.bloco-ativ .ec{flex:0 0 auto;width:auto!important;margin:0!important;padding:5px 8px!important;border:none!important;border-radius:9px!important;background:color-mix(in srgb,#1A9E72 16%,transparent)!important}
+.bloco-ativ .ec>*:not(.ec-hd),.bloco-ativ .ec-chips,.bloco-ativ .ec-o{display:none!important}
+.bloco-ativ .ec-hd,.bloco-ativ .ec-info{display:block;padding:0!important;margin:0!important}
+.bloco-ativ .ec-name-row{display:flex;align-items:center;gap:6px}
+.bloco-ativ .ec-name-row .vbtn span{display:none!important}
+.bloco-ativ .ec-name-row .vbtn{padding:0 7px!important;height:20px!important}
+.bloco-ativ .ec-n{font-size:13px!important;font-weight:600}
+.bloco-ativ .a-cj-group{flex:1 1 100%}
+.bloco-ativ .a-cj-items{display:flex;flex-direction:column;align-items:flex-start;gap:5px!important}
 .a-cj-items .ec-hd{gap:6px!important}
 .a-cj-foot{display:none!important}
 /* ── v48 · opção A: séries×reps vermelho MOVH, verde único, carga com rótulo, avelã / preto azulado ── */
@@ -14167,6 +14197,9 @@ img.lg-escuro{display:none!important}
 .ec-name-row .vbtn{position:static!important;top:auto!important;width:30px!important;height:30px!important;padding:0!important;border-radius:50%!important;flex:0 0 auto;display:inline-flex!important;align-items:center;justify-content:center;margin:0!important}
 .ec-name-row .vbtn span{display:none!important}
 .ec-name-row .vbtn::before{margin-left:2px}
+.ec-name-row .vbtn{width:auto!important;height:22px!important;padding:0 8px 0 6px!important;border-radius:6px!important;gap:3px!important}
+.ec-name-row .vbtn::before{margin-left:0!important;border-left-width:7px!important;border-top-width:4.5px!important;border-bottom-width:4.5px!important}
+.ec-name-row .vbtn span{display:inline!important;font-size:10px;font-weight:700}
 .nt-wrap{position:relative;margin:0 0 6px}
 .nt-wrap .nt-it{margin:0!important;padding:6px 38px 6px 10px!important;border-radius:10px!important}
 .nt-wrap .nt-tx{flex-direction:row;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;min-width:0}
@@ -15507,6 +15540,7 @@ async function aBoot(sessionParam){
 
 function aEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function aAttr(s){ return aEsc(s); }
+function aEhAtiv(b){ if(b && b.ativacao===true) return true; var n=String((b&&b.nome)||'').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').trim(); return /^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/.test(n); }
 function aEmbedUrl(url){ if(!url) return ''; const m=url.match(/(?:youtube\\.com\\/watch\\?v=|youtu\\.be\\/|youtube\\.com\\/shorts\\/)([^&?\\/]+)/); return m ? 'https://www.youtube-nocookie.com/embed/'+m[1] : ''; }
 
 // Converte formatos compactos de série/reps (ex: "3x12", "4×[6-10→10-12→4-6]")
@@ -17099,7 +17133,7 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
   }
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs">💡 '+aEsc(b.obs)+'</div>' : '';
-  return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
+  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
 }
 
 // Monta a lista de exercícios de um bloco, agrupando os que estão marcados
@@ -17133,7 +17167,7 @@ function aRenderExercicios(b, faseAtual, ctxPrefix, semanaDentroFase, duracaoSem
       // o cronômetro automático dispara ao concluir a série do ÚLTIMO exercício.
       let gRest = g.restAfter || '';
       if (!gRest) { gExsIdx.forEach(function(i){ if (!gRest && exercicios[i].rest) gRest = exercicios[i].rest; }); }
-      const gLabel = g.label || aT('conjugado');
+      const gLabel = (g.label || aT('conjugado')) + ((!g.metodo || g.metodo === 'conjugado') ? (aLang === 'en' ? ' · quick transition' : ' · transição rápida') : '');
       const gDica = aLang === 'en' ? mt.en : mt.pt;
       const gLastEid = ctxPrefix + '-e' + gExsIdx[gExsIdx.length - 1];
       const gChip = '<span class="ec-chip ec-chip-r ec-chip-clicavel a-cj-rest' + (gRest ? '' : ' ec-chip-rlivre') + '" data-tempo="' + aEsc(gRest || '60s') + '" data-nome="' + aEsc(gLabel) + '" data-eid="' + gLastEid + '" onclick="aIniciarDescanso(this.dataset.tempo,this.dataset.nome,this.dataset.eid)" title="' + aEsc(aT('descanso_apos_grupo')) + '">💤 ' + aEsc(gRest || '60s') + '</span>';
