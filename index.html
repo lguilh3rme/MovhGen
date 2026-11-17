@@ -4128,7 +4128,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.2 · 17/11';
+var MOVH_VER = 'v65.3 · 17/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -6215,8 +6215,11 @@ function mbEhFormatoPares(ls){
   return ls.every((l,i) => !spec(l) || (i > 0 && !spec(ls[i-1])));
 }
 function mbExProto(e, cj){
-  const sr = (e.series && e.reps) ? (e.series + '×' + e.reps) : (e.reps || e.series || '');
-  return { nome: e.nome, url: getUrl(e.nome) || '', series: sr, rest: '', obs: '', cj: cj != null ? cj : null };
+  let reps = e.reps, obs = '';
+  const mc = (reps || '').match(/^(.*?)\s*\(([^)]*)\)\s*$/);   // "5 (40–60 kg)" → reps 5, obs "40–60 kg"
+  if (mc && mc[1]) { reps = mc[1]; obs = mc[2]; }
+  const sr = (e.series && reps) ? (e.series + '×' + reps) : (reps || e.series || '');
+  return { nome: e.nome, url: getUrl(e.nome) || '', series: sr, rest: '', obs: obs, cj: cj != null ? cj : null };
 }
 function mbBlocoDeColetiva(cb){
   const ativ = /ativa|mobilidade|aquec/i.test(cb.nome || '');
@@ -6246,14 +6249,23 @@ function mbBlocosDoDia(ls){
     bloco.exercicios = exs;
     return [bloco];
   }
-  return coletivasParsearDia(ls).map(mbBlocoDeColetiva);
+  // Dia misto (Docs): "Nome" numa linha e "5×5 (40–60 kg)" na seguinte junto com "Nome 3×10" inline → junta o par antes de interpretar.
+  const soSpec = l => /^\d+(?:\s*[–-]\s*\d+)?\s*[x×]\s*\S/.test(l);
+  const jun = [];
+  ls.forEach(l => {
+    const prev = jun.length ? jun[jun.length - 1] : null;
+    if (soSpec(l) && prev && !soSpec(prev) && !/\d\s*[x×]\s*\d/.test(prev) && !/^(?:[-•]|\d+\s*op|[ivx]+\))/i.test(prev)) jun[jun.length - 1] = prev + ' ' + l;
+    else jun.push(l);
+  });
+  return coletivasParsearDia(jun).map(mbBlocoDeColetiva);
 }
 function mbParsearTreinoTexto(texto){
   _mvIdx = null; _colStats = { ok:0, novos:[], instr:0, sug:{} };
-  const ignorar = /^(tempo estimado|adicionar exerc|total grupos musculares?|excluir protocolo|editar nome|sem descri|baixar pdf|duplicar protocolo)/i;
+  const ignorar = /^(sequ[eê]ncia de\s*$|tempo estimado|adicionar exerc|total grupos musculares?|excluir protocolo|editar nome|sem descri|baixar pdf|duplicar protocolo)/i;
   const dias = []; let atual = null;
-  texto.split('\n').map(l => l.trim()).filter(Boolean).forEach(linha => {
-    if (ignorar.test(linha)) return;
+  texto.replace(/\u000b/g, '\n').split('\n').map(l => l.trim()).filter(Boolean).forEach(linha => {
+    if (!ignorar.test(linha) || /^sequ[eê]ncia de\s*$/i.test(linha)) { /* segue */ } else return;
+    if (/^sequ[eê]ncia de\s*$/i.test(linha)) { if (atual) atual.linhas.push('§SEQ'); return; }
     const mT = linha.match(/^treino\s+(.+)$/i), mD = mT ? null : linha.match(/^dia\s+(\d+)\b/i), wd = (mT || mD) ? null : colDia(linha);
     if (mT || mD || wd != null) {
       atual = { nome: mT ? 'Treino ' + mT[1].trim().toUpperCase() : (mD ? 'Dia ' + mD[1] : MB_DIAS_PT[wd]), diaSemana: wd != null ? MB_DIAS_PT[wd] : '', linhas: [] };
@@ -6261,7 +6273,27 @@ function mbParsearTreinoTexto(texto){
     }
     if (atual) atual.linhas.push(linha);
   });
+  mbRedistribuirTabelaDocs(dias);
+  dias.forEach(d => { d.linhas = d.linhas.filter(l => l !== '§SEQ'); });
   return dias.map(d => ({ nome: d.nome, diaSemana: d.diaSemana, blocos: mbBlocosDoDia(d.linhas) }));
+}
+// Tabela do Google Docs: a linha de cabeçalho (SEG TER QUA QUI SEX) vem separada das células, que começam em "Sequência de".
+// Se há N cabeçalhos seguidos sem conteúdo e o último traz N marcadores, cada bloco vai para o seu dia, em ordem.
+function mbRedistribuirTabelaDocs(dias){
+  let i = 0;
+  while (i < dias.length) {
+    if (dias[i].linhas.length) { i++; continue; }
+    let j = i; while (j < dias.length && !dias[j].linhas.length) j++;
+    if (j < dias.length) {
+      const run = j - i, chunks = []; let cur = null;
+      dias[j].linhas.forEach(l => {
+        if (l === '§SEQ') { cur = []; chunks.push(cur); }
+        else { if (!cur) { cur = []; chunks.push(cur); } cur.push(l); }
+      });
+      if (chunks.length === run + 1) for (let k = 0; k <= run; k++) dias[i + k].linhas = chunks[k];
+    }
+    i = j + 1;
+  }
 }
 let mbColarTreinoSemanaId = null;
 function mbAbrirColarTreino(sid){
