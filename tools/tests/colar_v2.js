@@ -11,8 +11,8 @@ const code=s.slice(a,b)+'let REP=JSON.parse(JSON.stringify(DEFAULT_REP));\n'
  +s.slice(s.indexOf('function colRepsA'),s.indexOf('function colRepsA')+400).split('\n')[0]+'\n'
  +'function coletivasNovoBloco(){return {id:"b",tipo:"normal",nome:"",conjugado:false,series:"",exercicios:[{nome:"",series:"",reps:""}],formato:"",materiais:"",detalhes:""};}\n'
  +s.slice(mv0,mv1)+'function mvEhPausa(n){return /^(rest|descanso|pausa)$/.test(mvKey(n));}\n'
- +col.replace(/function coletivasPreviewColar[\s\S]*$/,'');
-const ctx={};new Function('ctx',code+';Object.assign(ctx,{coletivasParsearTexto,colDia,colDiaT,mvAcharEx,mvSugerir,mvAliasSalvar,colSecao,addREP:function(a){REP.__t=a;_mvIdx=null;},getStats:()=>_colStats});')(ctx);
+ +col.replace(/function coletivasPreviewColar[\s\S]*?\n}\n/,'');
+const ctx={};new Function('ctx',code+';Object.assign(ctx,{coletivasParsearTexto,colDia,colDiaT,mvAcharEx,mvSugerir,mvAliasSalvar,colSecao,colPadraoDia,colAvisoFoco,addREP:function(a){REP.__t=a;_mvIdx=null;},getStats:()=>_colStats});')(ctx);
 let ok=0,bad=0;const t=(n,c)=>{if(c){ok++;console.log('OK  ',n);}else{bad++;console.log('FAIL',n);}};
 // dias (com e sem hífen, emoji, data)
 t('SEG - Inf. Post🦵',ctx.colDia('SEG - Inf. Post🦵')===0);
@@ -111,4 +111,16 @@ const tab='SEG - Inf. Post\tTER - Superiores\tQUI Superiores💪\nSequência de 
 const rt=ctx.coletivasParsearTexto(tab);
 t('TAB: 3 colunas, incluindo QUI sem hífen',Object.keys(rt).join()==='0,1,3');
 t('TAB: exercício na coluna certa',rt[3].find(b=>b.nome==='Força').exercicios[0].nome.toLowerCase().indexOf('terra')>=0||rt[3].find(b=>b.nome==='Força').exercicios[0].nome==='Levantamento Terra');
+// padrão do dia + aviso título×conteúdo (categorias do banco)
+const dia=ex=>[{tipo:'normal',exercicios:ex.map(n=>({nome:n}))}];
+const push=ctx.colPadraoDia(dia(['Supino Inclinado','DB Press','Arnold Press','Tríceps Pulley']));
+t('padrão: dia de empurrar conta push',push.push===4&&push.inf===0);
+t('título "Inf. Post" em dia de empurrar = aviso',/inferior/.test(ctx.colAvisoFoco('Inf. Post🦵',push)));
+t('título "Empurrar" em dia de empurrar = sem aviso',ctx.colAvisoFoco('Empurrar',push)==='');
+const low=ctx.colPadraoDia(dia(['Back Squat','Deadlift','Hip Thrust','Leg Press']));
+t('título "Superiores" em dia de pernas = aviso',/superior/.test(ctx.colAvisoFoco('Superiores💪',low)));
+t('título "Inf. Ant" em dia de pernas = sem aviso',ctx.colAvisoFoco('Inf. Ant',low)==='');
+const pull=ctx.colPadraoDia(dia(['Puxada Alta','Remada Curvada DB','Rosca Direta','Face Pull']));
+t('título "Empurrar" em dia de puxar = aviso',/puxar/.test(ctx.colAvisoFoco('Empurrar',pull)));
+t('poucos exercícios reconhecidos = sem aviso',ctx.colAvisoFoco('Inf. Post',ctx.colPadraoDia(dia(['Supino Inclinado','Zzz'])))==='');
 console.log('OK='+ok+' FAIL='+bad);process.exit(bad?1:0);
