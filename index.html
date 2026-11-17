@@ -482,6 +482,7 @@ body.dock-open #aluno-dock{display:flex}
 .kbg-hd{display:flex;align-items:center;gap:10px;position:sticky;left:0;margin-bottom:8px;max-width:calc(100vw - 40px)}
 .kbg-n{background:var(--P);color:#fff;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
 .kbg-tt{display:flex;flex-direction:column;flex:1;min-width:0}.kbg-tt b{font-size:14px}.kbg-tt span{font-size:11px;color:var(--mt,#888)}
+#sp-preview-body .kb-board{grid-template-columns:repeat(var(--kbn,5),230px)!important;overflow-x:auto}
 .kbg-board.kb-board{grid-auto-columns:230px!important;overflow:visible!important}
 .kbg-board .kb-col{max-height:none!important}
 .an-chip{font-size:10px;font-weight:700;border-radius:99px;padding:2px 8px;border:1px solid;white-space:nowrap;line-height:1.4}
@@ -1194,6 +1195,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div class="card">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
         <span style="font-size:13px;font-weight:600;color:var(--tx)" id="sp-preview-title"></span>
+        <select id="sp-enfase" onchange="hxEnfaseMudou()" style="display:none;width:auto;flex:0 0 auto;font-size:12px;padding:4px 8px" title="Objetivo do aluno: camada sobre o modelo (muda a semana e qual degrau da escada sobe primeiro)"><option value="">Sem objetivo</option><option value="gluteo">Objetivo: glúteo</option><option value="superior">Objetivo: superiores</option><option value="definicao">Objetivo: definição</option><option value="emagrecimento">Objetivo: emagrecimento</option><option value="manutencao">Objetivo: manutenção funcional</option></select>
         <button class="btn bp" onclick="loadSplit()">Carregar e editar →</button>
       </div>
       <div id="sp-preview-body"></div>
@@ -3837,13 +3839,16 @@ function coletivasPreviewColar(){
 }
 // Padrão de movimento do dia (pela categoria do banco) e aviso quando o título do dia não bate com o conteúdo.
 function colPadraoDia(blocos){
-  const c={inf:0,push:0,pull:0,core:0,n:0};
+  const c={inf:0,push:0,pull:0,core:0,joe:0,qua:0,hib:0,n:0};
   (blocos||[]).forEach(function(b){if(b.tipo==='condicionamento')return;(b.exercicios||[]).forEach(function(e){
     const a=e&&e.nome?mvAcharEx(e.nome):null;if(!a)return;const k=a.cat||'';
-    if(/Squat|Hinge|Glúteo|Unilateral|Lower/.test(k))c.inf++;
+    if(/Squat|Hinge|Glúteo|Unilateral|Lower/.test(k)){c.inf++;
+      if(/Squat|Unilateral/.test(k))c.joe++;else if(/Hinge|Glúteo/.test(k))c.qua++;
+      else if(/extens/i.test(e.nome))c.joe++;else if(/flexora|stiff|elevação pélvica/i.test(e.nome))c.qua++;}
     else if(/Push|Peitoral|Tríceps/.test(k))c.push++;
     else if(/Pull|Bíceps|Ombro/.test(k))c.pull++;
     else if(/Core/.test(k))c.core++;
+    else if(/Carries|CrossFit|Mono/.test(k))c.hib++;
     else return;
     c.n++;});});
   return c;
@@ -3861,26 +3866,27 @@ function colAvisoFoco(foco,c){
 }
 // Resumo da SEMANA: soma do padrão de cada dia + avisos de equilíbrio (empurrar×puxar, pouco inferior).
 function colSemanaResumo(keys,dados){
-  const t={inf:0,push:0,pull:0,core:0,n:0},av=[];
-  keys.forEach(function(k){const b=(dados||{})[k]||[];if(!b.length)return;const c=colPadraoDia(b);t.inf+=c.inf;t.push+=c.push;t.pull+=c.pull;t.core+=c.core;t.n+=c.n;});
+  const t={inf:0,push:0,pull:0,core:0,joe:0,qua:0,hib:0,n:0},av=[];
+  keys.forEach(function(k){const b=(dados||{})[k]||[];if(!b.length)return;const c=colPadraoDia(b);t.inf+=c.inf;t.push+=c.push;t.pull+=c.pull;t.core+=c.core;t.joe+=c.joe;t.qua+=c.qua;t.hib+=c.hib;t.n+=c.n;});
   const sup=t.push+t.pull,tot=t.inf+sup;
   if(sup>=6&&t.push>t.pull*1.6)av.push('Mais empurrar ('+t.push+') que puxar ('+t.pull+'): vale equilibrar com remadas/puxadas.');
   if(sup>=6&&t.pull>t.push*1.6)av.push('Mais puxar ('+t.pull+') que empurrar ('+t.push+').');
   if(tot>=8&&t.inf/tot<0.25)av.push('Pouco inferior na semana ('+t.inf+' de '+tot+' exercícios de força reconhecidos).');
+  if(t.joe+t.qua>=6&&(t.joe>t.qua*2.2||t.qua>t.joe*2.2))av.push('Pernas desequilibradas: joelho '+t.joe+' × quadril '+t.qua+'.');
   return {t:t,av:av};
 }
 function colSemanaHtml(keys){
   const r=colSemanaResumo(keys,coletivasData),t=r.t;if(t.n<4)return '';
-  const seg=[['⬆️','empurrar',t.push,'#E5484D'],['⬇️','puxar',t.pull,'#3580D8'],['🦵','inferior',t.inf,'#1A9E72'],['🔩','core',t.core,'#6FB51E']];
+  const seg=[['⬆️','empurrar',t.push,'#E5484D'],['⬇️','puxar',t.pull,'#3580D8'],['🦵','inferior',t.inf,'#1A9E72',(t.joe||t.qua)?' (joelho '+t.joe+' · quadril '+t.qua+')':''],['🔩','core',t.core,'#6FB51E'],['🔥','híbrido',t.hib,'#F5A524']];
   const bar='<div style="display:flex;height:6px;border-radius:4px;overflow:hidden;margin:5px 0">'+seg.map(function(x){return x[2]?'<div style="flex:'+x[2]+';background:'+x[3]+'"></div>':'';}).join('')+'</div>';
   return '<details class="cl-sem"><summary>📊 Semana (pelo banco): '+seg.map(function(x){return x[0]+' '+x[2];}).join(' · ')+(r.av.length?' · <span style="color:#F5A524">⚠️ '+r.av.length+'</span>':'')+'</summary>'+bar+
-    '<div class="cl-sem-l">'+seg.map(function(x){return x[0]+' '+x[1]+' '+x[2];}).join(' &nbsp;·&nbsp; ')+' <span style="color:var(--t3)">(exercícios reconhecidos no banco)</span></div>'+
+    '<div class="cl-sem-l">'+seg.map(function(x){return x[0]+' '+x[1]+' '+x[2]+(x[4]||'');}).join(' &nbsp;·&nbsp; ')+' <span style="color:var(--t3)">(exercícios reconhecidos no banco)</span></div>'+
     r.av.map(function(a){return '<div class="cl-padrao-av">⚠️ '+escAttr(a)+'</div>';}).join('')+'</details>';
 }
 function colPadraoHtml(blocos){
   const c=colPadraoDia(blocos);if(!c.n)return '';
   const av=colAvisoFoco((blocos[0]&&blocos[0].foco)||'',c);
-  return '<div class="cl-padrao">📊 Padrão (pelo banco): ⬆️ empurrar '+c.push+' · ⬇️ puxar '+c.pull+' · 🦵 inferior '+c.inf+' · 🔩 core '+c.core+(av?'<div class="cl-padrao-av">⚠️ '+escAttr(av)+'</div>':'')+'</div>';
+  return '<div class="cl-padrao">📊 Padrão (pelo banco): ⬆️ empurrar '+c.push+' · ⬇️ puxar '+c.pull+' · 🦵 inferior '+c.inf+' · 🔩 core '+c.core+(c.hib?' · 🔥 híbrido '+c.hib:'')+((c.joe||c.qua)?' · joelho '+c.joe+' × quadril '+c.qua:'')+(av?'<div class="cl-padrao-av">⚠️ '+escAttr(av)+'</div>':'')+'</div>';
 }
 // Cadastrar no banco um exercício que veio do texto (abre o modal da Biblioteca já com o nome; é lá que se cola o vídeo).
 function mvCadastrar(nome){
@@ -4122,7 +4128,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v64.9 · 16/11';
+var MOVH_VER = 'v65.1 · 17/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8597,8 +8603,92 @@ semanas:[
       {id:'con',nome:'Condicionamento',cor:'#D45828',tipo:'Aeróbico',duracao:'15 min',titulo:'Corrida Z2 (Fácil)',desc:'15 min corrida Z2 (Fácil). Fechamento da semana.',metconExs:[]}
     ]}
   ]}
-]}
+]},
+hxModelo()
 ];
+
+// ── Modelo "Híbrido por padrões" (17/11): semana-base de 5 dias por padrão de movimento e dominância ──
+function hxEx(n,sr,r,o){return{nome:n,url:'',series:sr,rest:r||'',obs:o||''};}
+function hxModelo(){
+  const A=function(x){return{id:'atv',nome:'Ativação',cor:'#1A9E72',obs:'',meta:'',exercicios:x,conjGroups:{}};};
+  const F=function(nome,meta,x){return{id:'pri',nome:nome,cor:'#3580D8',obs:'',meta:meta,exercicios:x,conjGroups:{}};};
+  const C=function(x){return{id:'pri2',nome:'Core',cor:'#6FB51E',obs:'',meta:'3 séries | descanso 45s',exercicios:x,conjGroups:{}};};
+  const M=function(){return{id:'pri2',nome:'Metabólico',cor:'#D45828',obs:'Aquecimento 6 min (bike, elíptico ou esteira): 2 lento, 3 forte, 1 desacelerando. Depois 1 série de 6 de cada, com remo 15/20 cal. Por fim 3 rodadas de 20 a 15 reps, for time, com a mesma série.',meta:'1×6 + 3×20 a 15 for time',exercicios:[hxEx('Thruster','1×6'),hxEx('Remo Ergômetro','15/20 cal'),hxEx('Reverse Lunge','1×6 alt.'),hxEx('KB Swing','1×6')],conjGroups:{}};};
+  return {id:'hibrido',nome:'🧬 Híbrido por padrões',icone:'🧬',
+    desc:'5 dias por padrão de movimento: empurrar, pernas (joelho), puxar, pernas (quadril) e superior misto, com metabólico nas pernas.',
+    divisao:'Empurrar / Pernas joelho / Puxar / Pernas quadril / Superior misto — Base, Construção, Consolidação',pw:'',
+    semanas:[{nome:'Semana A',dias:[
+      {nome:'Segunda',sub:'Empurrar',blocos:[
+        A([hxEx('Face Pull','2×15','30s'),hxEx('Dead Bug','2×10 alt.','30s')]),
+        F('Empurrar','4×6 a 8 | descanso 2min',[hxEx('Supino Inclinado','4×6 a 8',"2'"),hxEx('Desenvolvimento Máquina','3×8 a 10',"1'30\""),hxEx('Mergulho Banco','3×10 a 12',"1'"),hxEx('Tríceps Pulley','3×12 a 15',"1'")]),
+        C([hxEx('Prancha','3×40s','45s'),hxEx('Pallof Press','3×10 cada','45s')])]},
+      {nome:'Terça',sub:'Pernas · joelho',blocos:[
+        A([hxEx('Goblet Squat Heels Elevated','2×10','30s'),hxEx('Hip CARs','2×6 cada','30s')]),
+        F('Pernas · joelho','4×8 a 10 | descanso 2min',[hxEx('Agachamento Hack','4×8 a 10',"2'"),hxEx('Bulgarian Split Squat','3×8 a 10 cada',"1'30\""),hxEx('Cadeira Extensora','3×12 a 15',"1'")]),
+        M()]},
+      {nome:'Quarta',sub:'Puxar',blocos:[
+        A([hxEx('Dead Bug','2×10 alt.','30s'),hxEx('Bird Dog','2×10 alt.','30s')]),
+        F('Puxar','4×8 a 10 | descanso 90s',[hxEx('Puxada Alta','4×8 a 10',"1'30\""),hxEx('Remada Unilateral','3×8 a 10 cada',"1'30\""),hxEx('Puxada Neutra','3×10 a 12',"1'"),hxEx('Rosca Direta','3×10 a 12',"1'")]),
+        C([hxEx('Prancha com Rotação','3×10 cada','45s'),hxEx('Hollow Pullover','3×12','45s')])]},
+      {nome:'Quinta',sub:'Pernas · quadril',blocos:[
+        A([hxEx('Hip CARs','2×6 cada','30s'),hxEx('Glute Bridge','2×15','30s')]),
+        F('Pernas · quadril','4×6 a 8 | descanso 2min',[hxEx('RDL Barra','4×6 a 8',"2'"),hxEx('Hip Thrust','4×8 a 10',"1'30\""),hxEx('Mesa Flexora','3×10 a 12',"1'")]),
+        M()]},
+      {nome:'Sexta',sub:'Superior misto',blocos:[
+        A([hxEx('Face Pull','2×15','30s'),hxEx('Prancha','2×30s','30s')]),
+        F('Superior misto','3×8 a 12 | descanso 90s',[hxEx('Desenvolvimento Máquina','3×8 a 10',"1'30\""),hxEx('Puxada Neutra','3×8 a 10',"1'30\""),hxEx('Remada Curvada DB','3×10 a 12',"1'"),hxEx('Elevação Lateral','3×12 a 15','45s')]),
+        C([hxEx('Hollow Pullover','3×12','45s'),hxEx('Prancha com Rotação','3×10 cada','45s')])]}
+    ]}]};
+}
+// Ênfase = camada sobre o modelo (não vira outro modelo): acrescenta acessórios em dias fixos da semana-base.
+// ESCADA por padrão (docs/escada-padroes.md): níveis N1..N4, só nomes que existem no banco. Parâmetro do MOVH, revisável.
+const ESCADA={"joelho":[["Goblet Squat Heels Elevated","Leg Press","Agachamento Hack","Sumo Squat KB"],["Back Squat","Front Squat","Step Up","Split Squat Smith","Recuo Alternado no Smith","Bulgaro Guiado(Smith)"],["Reverse Lunge","Afundo","Split Lunges","Bulgarian Split Squat","Cossack Squat"],["Box Pistol","Back Squat 1½"]],"quadril":[["Pull-through no Cabo","Hiperextensão Lombar","Mesa Flexora"],["RDL","Stiff","Good Morning"],["RDL Barra","Romanian Deadlift Hip 2/3","Deadlift","Deadlift Sumo"],["RDL DB Single Leg","Nordic Curl"]],"gluteo":[["Glute Bridge","Elevação Pélvica Máquina","Coice Polia Alta","Extensão Glu Polia"],["Hip Thrust"],["Hip Thrust Unilateral","Gluteo 4 apoios (caneleira)"],[]],"emp_h":[["Supino Maquina","Supino Inclinado Máquina"],["DB Press","Supino Inclinado","Chest Press DB Single Arm"],["Bench Press","Supino Pegada Fechada","Deficit Push Up"],["Ring Dip Strict"]],"emp_v":[["Desenvolvimento Máquina"],["Shoulder Press DB","Arnold Press"],["Landmine Press","Z Press","Push Press"],["KB Bottom Up Press"]],"puxar_v":[["Puxada Neutra","Puxada Alta"],[],["Chin-Up","Pull-Up Strict"],["L-Sit Pull-Up","Pull Up CTB"]],"puxar_h":[["Remada Máquina","Remada Baixa no Cabo"],["Remada Unilateral","DB Row","Remada Curvada DB"],["Remada Cavalinho T-Bar","Barbell Row","Pendlay Row"],["Renegade Row","See Saw Row"]],"core":[["Dead Bug","Bird Dog","Prancha","Hollow Hold"],["Prancha com Rotação","Pallof Press","Hollow Rock","Leg Raise"],["Ab Rolinho","V-Ups","L-Sit Hold","Hollow Pullover"],["Strict TTB","Toes to Bar"]],"carregar":[["Farmer Carry"],["Suitcase Carry"],["OH Walk"],[]]};
+function escadaInfo(nome){
+  const k=String(nome||'').trim().toLowerCase();if(!k)return null;
+  for(const p in ESCADA){for(let n=0;n<4;n++){if(ESCADA[p][n].some(function(x){return x.toLowerCase()===k;}))return{padrao:p,nivel:n+1};}}
+  return null;
+}
+// próximo degrau: primeira variante do nível seguinte que ainda não está na lista `jaTem`
+function escadaSugestao(nome,jaTem){
+  const i=escadaInfo(nome);if(!i||i.nivel>=4)return null;
+  const tem=(jaTem||[]).map(function(x){return String(x||'').toLowerCase();});
+  for(let n=i.nivel;n<4;n++){const c=ESCADA[i.padrao][n].find(function(x){return tem.indexOf(x.toLowerCase())<0;});if(c)return{padrao:i.padrao,de:nome,nivelDe:i.nivel,para:c,nivelPara:n+1};}
+  return null;
+}
+// Objetivo = camada sobre o modelo: muda a semana (add/fn) e diz quais padrões sobem primeiro na escada (sobe).
+function hxRestMenos(r){const t=String(r||'');if(t==="2'")return "1'30\"";if(t==="1'30\"")return "1'";return t;}
+function hxSeriesMenos(sr){const m=String(sr||'').match(/^(\d+)(\s*[x×]\s*.*)$/);if(!m||+m[1]<3)return sr;return (+m[1]-1)+m[2];}
+const HX_ENFASE={
+  gluteo:{nome:'Glúteo',sobe:['gluteo','quadril'],add:{1:[['pri',['Hip Thrust Unilateral','2×12 cada',"1'"]]],3:[['pri',['Hip Thrust Unilateral','3×10 a 12 cada',"1'"]]]}},
+  superior:{nome:'Superior',sobe:['emp_h','emp_v','puxar_v','puxar_h'],add:{0:[['pri',['Elevação Lateral','3×12 a 15','45s']]],2:[['pri',['Face Pull','3×15','45s']]],4:[['pri2',['Rosca Direta','2×12','45s']],['pri2',['Tríceps Pulley','2×12','45s']]]}},
+  definicao:{nome:'Definição',sobe:[],add:{},fn:function(c){c.semanas[0].dias.forEach(function(d){(d.blocos||[]).forEach(function(b){if(b.id==='pri')b.exercicios.forEach(function(e){e.rest=hxRestMenos(e.rest);});});});}},
+  emagrecimento:{nome:'Emagrecimento',sobe:['joelho','quadril','puxar_v','puxar_h'],add:{},fn:function(c){[0,2,4].forEach(function(di){const d=c.semanas[0].dias[di];if(!d)return;d.blocos.push({id:'pri3',nome:'Metabólico curto',cor:'#D45828',obs:'3 rodadas, sem pausa entre os exercícios, 1 min entre as rodadas.',meta:'3 rodadas | 10 min',exercicios:[hxEx('KB Swing','3×15','30s','Ênfase emagrecimento'),hxEx('Remo Ergômetro','3×250 m','30s','Ênfase emagrecimento'),hxEx('Mountain Climber','3×30s','30s','Ênfase emagrecimento')],conjGroups:{}});});}},
+  manutencao:{nome:'Manutenção funcional',sobe:[],add:{4:[['pri',['Suitcase Carry','3×20 m cada','45s']]]},fn:function(c){c.semanas[0].dias.forEach(function(d){(d.blocos||[]).forEach(function(b){if(b.id==='pri')b.exercicios.forEach(function(e){e.series=hxSeriesMenos(e.series);});});});}}
+};
+function hxEnfaseAtual(){const el=document.getElementById('sp-enfase');return el?el.value:'';}
+function hxAplicarEnfase(split,tipo){
+  const c=JSON.parse(JSON.stringify(split));const E=HX_ENFASE[tipo];
+  if(c.id!=='hibrido'||!E||!c.semanas||!c.semanas[0])return c;
+  Object.keys(E.add).forEach(function(di){const d=c.semanas[0].dias[+di];if(!d)return;
+    E.add[di].forEach(function(it){const b=(d.blocos||[]).find(function(x){return x.id===it[0];});
+      if(b)b.exercicios.push(hxEx(it[1][0],it[1][1],it[1][2],'Ênfase '+E.nome.toLowerCase()));});});
+  if(E.fn)E.fn(c);
+  c.nome=c.nome+' · '+E.nome.toLowerCase();return c;
+}
+function hxEnfaseMudou(){
+  if(!_selSplit)return;
+  document.getElementById('sp-preview-body').innerHTML=renderSplitPreviewKanban(hxAplicarEnfase(_selSplit,hxEnfaseAtual()));
+}
+// Semeia o modelo novo uma única vez para quem já tem splits no banco (não ressuscita se for apagado depois).
+function hxSemear(){
+  try{
+    if(localStorage.getItem('movh_hx_seed'))return;
+    if(SPLITS.some(function(x){return x.id==='hibrido';})){localStorage.setItem('movh_hx_seed','1');return;}
+    const d=DEFAULT_SPLITS.find(function(x){return x.id==='hibrido';});if(!d)return;
+    const c=JSON.parse(JSON.stringify(d));SPLITS.push(c);
+    sbSalvarSplit(c).then(function(ok){if(ok){localStorage.setItem('movh_hx_seed','1');}renderDBSplits();renderSplitPicker();});
+  }catch(e){}
+}
 
 
 function loadSplitsDB(){
@@ -8628,6 +8718,7 @@ async function sbCarregarSplits(){
       desc: s.descricao||'', divisao: s.divisao||'', pw:'',
       semanas: (s.conteudo||{}).semanas||[]
     }));
+    hxSemear();
     renderDBSplits();
   } catch(e) {
     console.warn('Supabase splits indisponível, usando cache local:', e);
@@ -8759,7 +8850,8 @@ function selectSplit(id){
   document.querySelectorAll('.sp-card').forEach(c=>c.classList.remove('sel'));
   const card=document.getElementById('spc-'+id);if(card)card.classList.add('sel');
   document.getElementById('sp-preview').style.display='block';
-  document.getElementById('sp-preview-title').textContent=_selSplit.icone+' '+_selSplit.nome;
+  document.getElementById('sp-preview-title').textContent=(String(_selSplit.nome||'').indexOf(_selSplit.icone)===0?'':_selSplit.icone+' ')+_selSplit.nome;
+  const _en=document.getElementById('sp-enfase');if(_en){_en.style.display=id==='hibrido'?'':'none';_en.value='';}
   document.getElementById('sp-preview-body').innerHTML=renderSplitPreviewKanban(_selSplit);
 }
 // Preview do split (modelo pronto) no mesmo visual do kanban — só leitura,
@@ -8792,13 +8884,13 @@ function renderSplitPreviewKanban(split){
         <div class="kb-col-body">${body}</div>
       </div>`;
     }).join('');
-    h+=`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">${escAttr(sem.nome)}</div><div class="kb-board">${cols}</div></div>`;
+    h+=`<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:6px">${escAttr(sem.nome)}</div><div class="kb-board" style="--kbn:${sem.dias.length}">${cols}</div></div>`;
   });
   return h;
 }
 function loadSplit(){
   if(!_selSplit)return;
-  const s=JSON.parse(JSON.stringify(_selSplit));
+  const s=hxAplicarEnfase(_selSplit,hxEnfaseAtual());
   document.getElementById('cfg-nome').value=s.nome.replace(/^[^\w]+/,'').trim()||s.nome;
   document.getElementById('cfg-icone').value=s.icone||'💪';
   document.getElementById('cfg-desc').value=s.desc||'';
@@ -12539,6 +12631,22 @@ async function mbSugerirProximaFase(protoId, alunoId){
     PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
     // anamnese / dor
     const resp = an.data && an.data[0] ? an.data[0].respostas : null;
+    // ESCADA: objetivo do aluno (campo objetivo da anamnese) -> padrões que sobem primeiro; só sugere, o professor decide
+    try {
+      const _ob = String(resp && (resp.objetivo || resp.objetivos || resp.meta) || '').toLowerCase();
+      const _k = /gl[uú]te/.test(_ob) ? 'gluteo' : /emagre|perder peso|gordura/.test(_ob) ? 'emagrecimento' : /defin/.test(_ob) ? 'definicao' : /bra[cç]o|peito|costas|ombro|superior/.test(_ob) ? 'superior' : /manuten|funcional|sa[uú]de/.test(_ob) ? 'manutencao' : '';
+      if (_k) {
+        const _E = HX_ENFASE[_k], _todos = [];
+        sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => _todos.push(e.nome))));
+        alertas.push({ t:'ok', x:'Objetivo lido da anamnese: ' + _E.nome.toLowerCase() + (_E.sobe.length ? ' — sobem primeiro na escada: ' + _E.sobe.join(', ') : ' — mantém o degrau; progride por carga e densidade') });
+        let _n = 0;
+        sem.dias.forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
+          const i = escadaInfo(e.nome); if (!i || _E.sobe.indexOf(i.padrao) < 0 || _n >= 2) return;
+          const g = escadaSugestao(e.nome, _todos); if (!g) return; _n++;
+          alertas.push({ t:'ok', x:'Escada (' + g.padrao + '): ' + g.de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ') se bateu o topo da faixa em 2 sessões, RIR 2+, sem dor. Sugestão: troque à mão.' });
+        }); }));
+      }
+    } catch (_e) {}
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
     if (hits.length) alertas.push({t:'av', x:'Anamnese cita: '+hits.join(', ')+' — confira exercícios e volume dessas regiões'});
     // RPE e registros
@@ -19193,6 +19301,7 @@ function copiarSQLRLS(){
     'ALTER TABLE professores ADD COLUMN IF NOT EXISTS config jsonb DEFAULT \'{}\'::jsonb;',
     '-- "Seu caminho" no app do aluno',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;',
+    'ALTER TABLE exercicios ADD COLUMN IF NOT EXISTS nivel smallint;',
     '-- PROTEÇÃO: o aluno não altera acesso, cobrança nem vínculo (professor, service role e SQL Editor passam)',
     'CREATE OR REPLACE FUNCTION public.alunos_protege_colunas() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$',
     'DECLARE v_prof uuid; v_eh_prof boolean;',
@@ -19379,6 +19488,7 @@ function copiarSQLRLS(){
     'ALTER TABLE avaliacoes_fisicas ADD COLUMN IF NOT EXISTS mapa jsonb;',
     '-- Caminho por aluno (chave mestra, padrão desligada): o app só mostra o caminho/Mapa quando está ligada',
     'ALTER TABLE alunos ADD COLUMN IF NOT EXISTS caminho_ativo boolean NOT NULL DEFAULT false;',
+    'ALTER TABLE exercicios ADD COLUMN IF NOT EXISTS nivel smallint;',
     'NOTIFY pgrst, \'reload schema\';'
   ].join('\n');
   const box = document.getElementById('rlsSqlBox');
