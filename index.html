@@ -1277,7 +1277,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 <div class="page" id="page-db-splits">
   <div class="pg-head" style="align-items:center">
     <div><div class="pg-title">Splits</div><div class="pg-sub">Edite, adicione ou remova splits. Salvo automaticamente.</div></div>
-    <div style="display:flex;gap:6px"><button class="btn" onclick="nav('splits')">📂 Carregar no editor</button><button class="btn bp" onclick="openAddSplit()">+ Split</button></div>
+    <div style="display:flex;gap:6px"><button class="btn" onclick="nav('splits')">📂 Carregar no editor</button><button class="btn" id="hx-add-btn" style="display:none" onclick="hxAdicionar()" title="Adiciona o modelo Híbrido por padrões à sua biblioteca">➕ Modelo Híbrido</button><button class="btn bp" onclick="openAddSplit()">+ Split</button></div>
   </div>
   <div id="db-splits-content"></div>
 </div>
@@ -4128,7 +4128,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.1 · 17/11';
+var MOVH_VER = 'v65.2 · 17/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -8691,6 +8691,17 @@ function hxSemear(){
 }
 
 
+// Adiciona o modelo Híbrido à biblioteca quando a semeadura automática não rodou (idempotente, grava no banco).
+async function hxAdicionar(){
+  if(SPLITS.some(function(x){return x.id==='hibrido';})){renderDBSplits();return;}
+  const d=DEFAULT_SPLITS.find(function(x){return x.id==='hibrido';});
+  if(!d){notify('Modelo Híbrido não encontrado nesta versão.');return;}
+  const c=JSON.parse(JSON.stringify(d));SPLITS.push(c);
+  const ok=await sbSalvarSplit(c);
+  if(ok){try{localStorage.setItem('movh_hx_seed','1');}catch(e){}notify('✓ Híbrido por padrões adicionado à biblioteca.');}
+  renderDBSplits();if(typeof renderSplitPicker==='function')renderSplitPicker();
+}
+
 function loadSplitsDB(){
   try{
     const raw=localStorage.getItem('mova_splits');
@@ -8915,6 +8926,7 @@ function loadSplit(){
 
 function renderDBSplits(){
   const el=document.getElementById('db-splits-content');if(!el)return;
+  const hxb=document.getElementById('hx-add-btn');if(hxb)hxb.style.display=SPLITS.some(function(x){return x.id==='hibrido';})?'none':'';
   let h='<div class="db-splits-grid">';
   SPLITS.forEach((s,i)=>{
     h+=`<div class="db-sp-card">
