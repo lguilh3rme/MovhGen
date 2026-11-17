@@ -32,6 +32,7 @@ chk colar_v2 51 0 node $T/colar_v2.js $R/index.html
 chk pf_cond 34 0 node $T/pf_cond.js $R/index.html
 chk prog12 4 0 python3 $T/prog12.py $R/index.html
 chk ciclo2 9 0 python3 $T/ciclo2.py $R/index.html
+chk hibrido 7 0 python3 $T/hibrido.py $R/index.html
 chk jornada_gerador 10 0 python3 $T/jornada_gerador.py $R/index.html
 chk estados_proto 10 0 python3 $T/estados_proto.py $R/index.html
 chk publicar_data 5 0 python3 $T/publicar_data.py $R/index.html
