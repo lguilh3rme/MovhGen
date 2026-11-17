@@ -12,7 +12,7 @@ const code=s.slice(a,b)+'let REP=JSON.parse(JSON.stringify(DEFAULT_REP));\n'
  +'function coletivasNovoBloco(){return {id:"b",tipo:"normal",nome:"",conjugado:false,series:"",exercicios:[{nome:"",series:"",reps:""}],formato:"",materiais:"",detalhes:""};}\n'
  +s.slice(mv0,mv1)+'function mvEhPausa(n){return /^(rest|descanso|pausa)$/.test(mvKey(n));}\n'
  +col.replace(/function coletivasPreviewColar[\s\S]*?\n}\n/,'');
-const ctx={};new Function('ctx',code+';Object.assign(ctx,{coletivasParsearTexto,colDia,colDiaT,mvAcharEx,mvSugerir,mvAliasSalvar,colSecao,colPadraoDia,colAvisoFoco,addREP:function(a){REP.__t=a;_mvIdx=null;},getStats:()=>_colStats});')(ctx);
+const ctx={};new Function('ctx',code+';Object.assign(ctx,{coletivasParsearTexto,colDia,colDiaT,mvAcharEx,mvSugerir,mvAliasSalvar,colSecao,colPadraoDia,colAvisoFoco,colSemanaResumo,addREP:function(a){REP.__t=a;_mvIdx=null;},getStats:()=>_colStats});')(ctx);
 let ok=0,bad=0;const t=(n,c)=>{if(c){ok++;console.log('OK  ',n);}else{bad++;console.log('FAIL',n);}};
 // dias (com e sem hífen, emoji, data)
 t('SEG - Inf. Post🦵',ctx.colDia('SEG - Inf. Post🦵')===0);
@@ -123,4 +123,14 @@ t('título "Inf. Ant" em dia de pernas = sem aviso',ctx.colAvisoFoco('Inf. Ant',
 const pull=ctx.colPadraoDia(dia(['Puxada Alta','Remada Curvada DB','Rosca Direta','Face Pull']));
 t('título "Empurrar" em dia de puxar = aviso',/puxar/.test(ctx.colAvisoFoco('Empurrar',pull)));
 t('poucos exercícios reconhecidos = sem aviso',ctx.colAvisoFoco('Inf. Post',ctx.colPadraoDia(dia(['Supino Inclinado','Zzz'])))==='');
+// painel da semana
+const D={a:dia(['Supino Inclinado','DB Press','Arnold Press']),b:dia(['Back Squat','Deadlift','Leg Press']),c:dia(['Puxada Alta','Remada Curvada DB','Rosca Direta']),d:dia(['Prancha'])};
+const sm=ctx.colSemanaResumo(['a','b','c','d'],{a:D.a[0]?[D.a[0]]:[],b:[D.b[0]],c:[D.c[0]],d:[D.d[0]]});
+t('semana soma os dias',sm.t.push===3+0&&sm.t.pull>=3&&sm.t.inf>=3&&sm.t.core===1);
+t('semana equilibrada = sem aviso',sm.av.length===0);
+const dsb={a:[D.a[0]],b:[{tipo:'normal',exercicios:['Supino Inclinado','DB Press','Arnold Press','Tríceps Pulley'].map(n=>({nome:n}))}],c:[D.c[0]]};
+t('empurrar >> puxar = aviso',ctx.colSemanaResumo(['a','b','c'],dsb).av.some(x=>/empurrar/.test(x)));
+const so={a:[D.a[0]],b:[D.c[0]],c:[D.a[0]]};
+t('semana sem pernas = aviso de inferior',ctx.colSemanaResumo(['a','b','c'],so).av.some(x=>/inferior/.test(x)));
+t('semana vazia não quebra',ctx.colSemanaResumo(['x','y'],{}).t.n===0);
 console.log('OK='+ok+' FAIL='+bad);process.exit(bad?1:0);
