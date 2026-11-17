@@ -3608,15 +3608,18 @@ function mvSugerir(nome){
   mvAcharEx('x');
   const um=function(txt){
     const q=mvKey(txt).split(' ').filter(Boolean);if(!q.length)return null;
-    let best=null,bs=0,second=0;
+    let best=null,bs=0,second=0,cont={};
     _mvIdx.forEach(function(v,k){
       const c=k.split(' ').filter(Boolean),used={};let hit=0;
       q.forEach(function(t){for(let i=0;i<c.length;i++){if(!used[i]&&mvTokMatch(t,c[i])){used[i]=1;hit++;break;}}});
       // nome abreviado ("Terra" → "Levantamento Terra") conta; empate entre nomes diferentes = ambíguo, não sugere
       const sc=hit===q.length?(q.length===c.length?1:0.7+0.3*q.length/c.length):2*hit/(q.length+c.length);
+      if(hit===q.length&&q.length<c.length)cont[v.n]=1;
       if(sc>bs){if(best&&best.n!==v.n)second=bs;bs=sc;best=v;}else if(sc>second&&best&&v.n!==best.n)second=sc;
     });
-    return bs>=0.7&&bs-second>=0.03?best:null;
+    if(bs<0.7||bs-second<0.03)return null;
+    if(bs<1&&Object.keys(cont).length>1)return null;   // nome curto que cabe em vários nomes do banco = palpite fraco, não sugere
+    return best;
   };
   let r=um(nome);if(r)return r;
   const ps=String(nome).split(/\s+ou\s+/i);
@@ -3745,6 +3748,7 @@ function coletivasParsearDia(linhas){
     const s=colSecao(linha);
     if(s){
       cur=novo(s.sec);conj={};
+      if(s.sec.livre)cur.formato=cur.nome;   // bloco de condicionamento não mostra o nome: o título vai no campo Formato
       if(s.seq)cur.detalhes='Sequência de '+s.sec.nome;
       if(s.ser)cur._ser=s.ser;
       if(s.resto){

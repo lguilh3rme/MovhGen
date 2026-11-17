@@ -82,16 +82,21 @@ t('Core ou Cardio guarda circuito e "ou" na descrição',(b=>b&&/Circuito: 15/.t
 t('TER: Metabólico é UM bloco (sem Ativação falsa)',nomes(1).filter(n=>n==='Ativação').length===1&&nomes(1).includes('Metabólico'));
 t('TER Metabólico: protocolo todo na descrição',(b=>/Aquecimento/.test(b.detalhes)&&/6 minutos bike/.test(b.detalhes)&&/Por fim/.test(b.detalhes)&&/for time/.test(b.detalhes))(r[1].find(b=>b.nome==='Metabólico')));
 t('TER Metabólico sem exercício falso "x6"',r[1].find(b=>b.nome==='Metabólico').exercicios.every(e=>!e.nome||!/minutos/.test(e.nome)));
+t('Metabólico e Core ou Cardio mostram o título (campo Formato)',r[1].find(b=>b.nome==='Metabólico').formato==='Metabólico'&&/Core ou Cardio/.test(r[0].find(b=>/Core ou Cardio/.test(b.nome)).formato));
 t('foco do dia guardado',r[0][0].foco==='Inf. Post🦵'&&r[3][0].foco==='Superiores💪');
 t('SEX: Core vira bloco',nomes(4).includes('Core'));
 // banco + apelidos
 const st=ctx.getStats();if(process.env.DBG)console.log(JSON.stringify(st));
 t('exercícios do banco reconhecidos',st.ok>=2);
 t('banco padrão: "Voador ou crucifixo" sugere parecido',!!st.sug['Voador ou crucifixo']);
-ctx.addREP([{n:'Tríceps Francês'},{n:'Levantamento Terra'},{n:'Levantamento Terra Sumô'},{n:'Remada curvada'},{n:'Remada baixa'},{n:'Mesa Flexora'},{n:'Elevação Pélvica'},{n:'Panturrilha Sentado Especial'}]);
+ctx.addREP([{n:'Tríceps Francês'},{n:'Levantamento Terra'},{n:'Remada curvada'},{n:'Remada baixa'},{n:'Agachamento Livre'},{n:'Mesa Flexora'},{n:'Elevação Pélvica'},{n:'Panturrilha Sentado Especial'}]);
 t('sugere por typo ("triceps fances")',(x=>x&&x.n==='Tríceps Francês')(ctx.mvSugerir('triceps fances')));
-t('sugere nome abreviado ("Terra")',(x=>x&&x.n==='Levantamento Terra')(ctx.mvSugerir('Terra')));
+t('sugere nome abreviado único ("Terra")',(x=>x&&x.n==='Levantamento Terra')(ctx.mvSugerir('Terra')));
 t('ambíguo não sugere ("Remada")',ctx.mvSugerir('Remada')===null);
+t('nome curto que cabe em 2+ nomes não sugere ("Agachamento")',ctx.mvSugerir('Agachamento')===null);
+ctx.addREP([{n:'Levantamento Terra'},{n:'Levantamento Terra Sumô'},{n:'Tríceps Francês'},{n:'Remada curvada'},{n:'Remada baixa'},{n:'Agachamento Livre'},{n:'Elevação Pélvica'},{n:'Panturrilha Sentado Especial'}]);
+t('"Terra" com Terra e Terra Sumô no banco = ambíguo',ctx.mvSugerir('Terra')===null);
+ctx.addREP([{n:'Levantamento Terra'},{n:'Tríceps Francês'},{n:'Remada curvada'},{n:'Remada baixa'},{n:'Agachamento Livre'},{n:'Elevação Pélvica'},{n:'Panturrilha Sentado Especial'}]);
 t('typo "Panturilha especial"',(x=>x&&x.n==='Panturrilha Sentado Especial')(ctx.mvSugerir('Panturilha especial')));
 t('nada parecido → null',ctx.mvSugerir('Zzzz Qqqq')===null);
 ctx.mvAliasSalvar('triceps do dono','Tríceps Francês');
