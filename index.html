@@ -3611,34 +3611,49 @@ function colNorm(s){return String(s||'').toLowerCase().normalize('NFD').replace(
 const COL_SEC=[
   {re:/^(ativacao|aquecimento|mobilidade|preparacao)(?![a-z])/, tipo:'normal', nome:'Ativação', cor:'#1A9E72'},
   {re:/^(forca|hipertrofia|acessorios?)(?![a-z])/, tipo:'normal', nome:'Força', forca:true, cor:'#3580D8'},
+  {re:/^fortalecimento(?![a-z])/, tipo:'normal', nome:'Fortalecimento', forca:true, cor:'#B81414'},
+  {re:/^tensional(?![a-z])/, tipo:'normal', nome:'Tensional', forca:true, cor:'#7A4A1E'},
+  {re:/^lpo(?![a-z])/, tipo:'normal', nome:'LPO', forca:true, cor:'#6A3A9A'},
+  {re:/^core(?![a-z])/, tipo:'normal', nome:'Core', cor:'#6FB51E'},
   {re:/^(localizada)(?![a-z])/, tipo:'normal', nome:'Localizada', cor:'#8A5CD0'},
-  {re:/^(c\.?\s*funcional|funcional|metabolico|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional', cor:'#D9A21B'},
+  {re:/^(metabolico)(?![a-z])/, tipo:'condicionamento', nome:'Metabólico', cor:'#F26A0A', livre:true},
+  {re:/^(c\.?\s*funcional|funcional|finisher)(?![a-z])/, tipo:'normal', nome:'C. Funcional', cor:'#D9A21B'},
   {re:/^(endurance|condicionamento|cardio)(?![a-z])/, tipo:'condicionamento', nome:'', cor:'#D45828'}
 ];
 let _colStats=null;
-function colDia(linha){
+function colDiaT(linha){
   const m=colNorm(linha).match(COL_RE_DIA);if(!m)return null;
   const resto=(m[2]||'').trim();
-  if(resto&&!/^([(\d]|[-–:])/.test(resto))return null;
   const k=m[1].slice(0,3);
-  return COLETIVAS_DOW_ABREV[k]!=null?COLETIVAS_DOW_ABREV[k]:null;
+  if(COLETIVAS_DOW_ABREV[k]==null)return null;
+  const classico=!resto||/^([(\d]|[-–:])/.test(resto);
+  // v2: "QUI Superiores💪" (sem hífen) vale como dia se não parece exercício/instrução e é curto
+  if(!classico&&(linha.length>48||/\d\s*[x×]\s*\d/i.test(linha)||colSecao(linha)||colEhInstrucao(linha)))return null;
+  let t=linha.trim().replace(/^[^\s\-–:(]+/,'').replace(/^[\s\-–:]+/,'').trim();
+  if(/^\d{1,2}\s*[\/.]\s*\d{1,2}(\s*[\/.]\s*\d{2,4})?$/.test(t))t='';
+  return {d:k,titulo:t.replace(/^\((.*)\)$/,'$1').trim()};
 }
+function colDia(linha){const r=colDiaT(linha);return r?COLETIVAS_DOW_ABREV[r.d]:null;}
 function colSecao(linha){
+  linha=String(linha).replace(/^\s*sequ[eê]ncia\s*(de|:)?\s*/i,'');
   const n=colNorm(linha);
   for(const s of COL_SEC){
     const m=n.match(s.re);if(!m)continue;
     let resto=linha.slice(m[0].length).trim(),ser='';
     resto=resto.replace(/(\d+)\s*s[eé]ries?/i,function(_,x){ser=x;return ' ';}).trim();
-    const partes=resto.split(/\s+e\s+|,|\//).map(function(p){return p.trim();}).filter(Boolean);
+    resto=resto.replace(/[^\p{L}\p{N}\s.,;:'′’"”()\/+\-–×*&]/gu,'').trim();   // emoji (🔥💪) não conta como texto
+    const partes=resto.replace(/^(ou|e)\s+/i,'').split(/\s+(?:e|ou)\s+|,|\//).map(function(p){return p.trim();}).filter(Boolean);
+    const alt=/^ou\s/i.test(resto)&&partes.length&&partes.every(function(p){const pn=colNorm(p);return COL_SEC.some(function(x){return x.re.test(pn);});});
     if(partes.length&&partes.every(function(p){const pn=colNorm(p);return COL_SEC.some(function(x){return x.re.test(pn);});}))resto='';
     if(resto&&!COL_RE_FMT.test(colNorm(resto))&&!/^\(.*\)$/.test(resto))return null;
+    if(alt)return {sec:{tipo:'condicionamento',nome:linha.replace(/[^\p{L}\p{N}\s.]/gu,'').trim(),cor:s.cor,livre:true},ser:'',resto:''};
     return {sec:s,ser:ser,resto:resto.replace(/^\((.*)\)$/,'$1')};
   }
   return null;
 }
 function colEhInstrucao(linha){
   const n=colNorm(linha);
-  return COL_RE_FMT.test(n)||/^(obs|nota|dica|observ)/.test(n)||/^\(.*\)$/.test(linha.trim());
+  return COL_RE_FMT.test(n)||/^(obs|nota|dica|observ)/.test(n)||/^\(.*\)$/.test(linha.trim())||/^ou$/.test(n)||/^\d+(\s*(-|–|a)\s*\d+)?\s*(min|minutos?)(?![a-z])/.test(n);
 }
 function colSplitSR(txt){
   const m = String(txt || '').trim().match(/^(.+?)\s*[:\-–—]?\s*(\d{1,2})\s*[x×X]\s*(\d+(?:\s*(?:[-–—]|a)\s*\d+)?)(\s*(?:\/\s*lado|por lado|cada lado|\/\s*perna))?\s*(?:[.,;:]\s*)?(.*)$/i);
@@ -3677,6 +3692,7 @@ function coletivasParsearDia(linhas){
   linhas.forEach(function(raw){
     let linha=raw.replace(/^[\s•·▪●○*\-–—]+/,'').replace(/^\d{1,2}[.)]\s+(?=\S)/,'').trim();
     if(!linha)return;
+    if(cur&&cur._sec&&cur._sec.livre&&/^\s*[-–—]/.test(raw)){cur.detalhes=cur.detalhes?cur.detalhes+'\n'+linha:linha;return;}
     const s=colSecao(linha);
     if(s){
       cur=novo(s.sec);conj={};
@@ -3696,7 +3712,7 @@ function coletivasParsearDia(linhas){
       _colStats.instr++;
       const t=linha.replace(/^\((.*)\)$/,'$1');
       if(!cur){pend.push(t);return;}
-      if(cur.tipo==='condicionamento'&&!cur.formato)cur.formato=t;
+      if(cur.tipo==='condicionamento'&&!cur.formato&&!(cur._sec&&cur._sec.livre))cur.formato=t;
       else cur.detalhes=cur.detalhes?cur.detalhes+'\n'+t:t;
       return;
     }
@@ -3727,7 +3743,7 @@ function coletivasParsearDia(linhas){
 }
 function coletivasParsearTexto(texto){
   _mvIdx=null;_colStats={ok:0,novos:[],instr:0};
-  const dias={};let diaAtual=null,off=0,colunas=null;
+  const dias={},focos={};let diaAtual=null,off=0,colunas=null;
   const abre=function(d){diaAtual=off+d;dias[diaAtual]=[];};
   texto.split('\n').forEach(function(raw){
     const linha=raw.replace(/\r/g,'').trim();
@@ -3736,17 +3752,17 @@ function coletivasParsearTexto(texto){
     if(mSem){off=(Number(mSem[1])-1)*7;diaAtual=null;colunas=null;return;}
     if(linha.indexOf('\t')>=0){
       const segs=raw.replace(/\r/g,'').split('\t').map(function(x){return x.trim();});
-      const ds=segs.filter(Boolean).map(colDia);
-      if(ds.length>1&&ds.every(function(d){return d!=null;})){colunas=ds;ds.forEach(function(d){dias[off+d]=[];});diaAtual=null;return;}
+      const dt=segs.filter(Boolean).map(colDiaT),ds=dt.map(function(x){return x?COLETIVAS_DOW_ABREV[x.d]:null;});
+      if(ds.length>1&&ds.every(function(d){return d!=null;})){colunas=ds;ds.forEach(function(d,i){dias[off+d]=[];if(dt[i].titulo)focos[off+d]=dt[i].titulo;});diaAtual=null;return;}
       if(colunas){segs.forEach(function(s,i){if(s&&colunas[i]!=null&&dias[off+colunas[i]])dias[off+colunas[i]].push(s);});return;}
     }
-    const d=colDia(linha);
-    if(d!=null){abre(d);colunas=null;return;}
+    const dT=colDiaT(linha),d=dT?COLETIVAS_DOW_ABREV[dT.d]:null;
+    if(d!=null){abre(d);if(dT.titulo)focos[diaAtual]=dT.titulo;colunas=null;return;}
     if(diaAtual==null||colunas)return;
     dias[diaAtual].push(linha);
   });
   const resultado={};
-  Object.keys(dias).forEach(function(k){const b=coletivasParsearDia(dias[k]);if(b.length)resultado[k]=b;});
+  Object.keys(dias).forEach(function(k){const b=coletivasParsearDia(dias[k]);if(b.length){if(focos[k])b.forEach(function(x){x.foco=focos[k];});resultado[k]=b;}});
   return resultado;
 }
 function coletivasPreviewColar(){
