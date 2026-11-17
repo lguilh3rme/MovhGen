@@ -34,7 +34,7 @@ Candidato a **protocolo reutilizável** (bloco nomeado inserido por chip).
 - Títulos de dia no Docs do dono ainda desencontrados do conteúdo (Ter "Superiores" mas é joelho; Qua "Inf. Ant" mas é puxar); o aviso do Gerador pega isso.
 
 ## Decisões pendentes (dono)
-- [ ] Por onde começar: (a) modelo-base + ênfases (só Gerador, sem deploy) ou (b) apresentação do Caminho/tela confusa (dono indica a tela ou manda print).
-- [ ] Nome do modelo (sugestão: "Híbrido por padrões").
-- [ ] Vocabulário final dos dias (sugestão: Empurrar · Pernas joelho · Puxar · Pernas quadril · Superior misto).
-- [ ] Contar híbrido (Carries/CrossFit/Mono) e separar joelho×quadril no painel da semana (melhoria pequena, só Gerador).
+- [x] (17/11) Começou por (a), na branch wip/hibrido (v65.0). Por onde começar: (a) modelo-base + ênfases (só Gerador, sem deploy) ou (b) apresentação do Caminho/tela confusa (dono indica a tela ou manda print).
+- [x] Adotado por padrão, ajustável: nome do modelo (sugestão: "Híbrido por padrões").
+- [x] Adotado por padrão: vocabulário dos dias (sugestão: Empurrar · Pernas joelho · Puxar · Pernas quadril · Superior misto).
+- [x] Feito na v65.0: contar híbrido (Carries/CrossFit/Mono) e separar joelho×quadril no painel da semana (melhoria pequena, só Gerador).
