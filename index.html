@@ -3656,7 +3656,7 @@ function colNovosHtml(st){
   const itens=st.novos.slice(0,12).map(function(n){
     const g=st.sug&&st.sug[n];
     if(g){_colSugList.push([n,g]);const i=_colSugList.length-1;return '<div style="margin:2px 0">≈ '+escAttr(n)+' → <b>'+escAttr(g)+'</b> <button type="button" class="btn bs" style="font-size:10px;padding:1px 7px" onclick="colAceitarAlias('+i+')">✓ usar (e lembrar)</button></div>';}
-    return '<div style="margin:2px 0">＋ '+escAttr(n)+' <span style="color:var(--t3)">(sem vídeo)</span></div>';
+    return '<div style="margin:2px 0">＋ '+escAttr(n)+' <span style="color:var(--t3)">(sem vídeo)</span> <button type="button" class="btn bs" style="font-size:10px;padding:1px 7px" data-n="'+escAttr(n)+'" onclick="mvCadastrar(this.dataset.n)">🎬 add vídeo</button></div>';
   }).join('');
   const todos=_colSugList.length>1?' <button type="button" class="btn bp" style="font-size:10px;padding:1px 7px" onclick="colAceitarAlias(-1)">✓ usar todas as sugestões</button>':'';
   return '<br>➕ <b>'+st.novos.length+' fora do banco</b>'+todos+itens+(st.novos.length>12?'<div>…</div>':'');
@@ -4145,7 +4145,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.6 · 18/11';
+var MOVH_VER = 'v65.7 · 18/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
