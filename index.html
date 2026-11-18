@@ -1551,6 +1551,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="coletivas-colar-semana" value="atual" style="margin:0"/> Semana atual (<span id="coletivas-colar-lbl-atual"></span>)</label>
         <label style="display:flex;align-items:center;gap:4px;cursor:pointer"><input type="radio" name="coletivas-colar-semana" value="proxima" checked style="margin:0"/> Próxima semana (<span id="coletivas-colar-lbl-proxima"></span>)</label>
       </div>
+      <div style="display:flex;gap:6px;margin-bottom:8px"><input id="col-docs-url" class="inp" style="flex:1;font-size:12px" placeholder="Link do Google Docs (aba da semana)" onchange="try{localStorage.setItem('movh_docs_url',this.value)}catch(e){}"><button class="btn bs" id="col-docs-btn" onclick="mbImportarDocs('col-docs-url','col-docs-btn','coletivas-colar-texto',coletivasPreviewColar)">📄 Importar do Docs</button></div>
       <textarea id="coletivas-colar-texto" rows="14" placeholder="Cole aqui o texto da semana..." style="width:100%;font-size:11px;font-family:monospace;padding:8px" oninput="coletivasPreviewColar()"></textarea>
       <div id="coletivas-colar-preview" style="font-size:11px;color:var(--t2);margin-top:8px"></div>
       <div style="display:flex;gap:8px;margin-top:12px">
@@ -3920,6 +3921,7 @@ function coletivasAbrirColar(){
   document.getElementById('coletivas-colar-lbl-atual').textContent = fmt(datasAtual[0])+' – '+fmt(datasAtual[6]);
   document.getElementById('coletivas-colar-lbl-proxima').textContent = fmt(datasProxima[0])+' – '+fmt(datasProxima[6]);
   document.getElementById('coletivas-colar-texto').value = '';
+  try { const u = document.getElementById('col-docs-url'); if (u && !u.value) u.value = localStorage.getItem('movh_docs_url') || ''; } catch(e) {}
   document.getElementById('coletivas-colar-preview').textContent = '';
   document.getElementById('coletivas-colar-overlay').style.display = 'flex';
 }
@@ -4145,7 +4147,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.7 · 18/11';
+var MOVH_VER = 'v65.8 · 18/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -6323,16 +6325,16 @@ function mbAbrirColarTreino(sid){
   document.getElementById('mb-colar-treino-overlay').style.display = 'flex';
 }
 // Importa o texto do Google Docs (função docs-import no Supabase; o doc precisa estar com "qualquer pessoa com o link pode ver")
-async function mbImportarDocs(){
-  const u = document.getElementById('mb-docs-url'), btn = document.getElementById('mb-docs-btn');
+async function mbImportarDocs(uid, bid, tid, prev){
+  const u = document.getElementById(uid || 'mb-docs-url'), btn = document.getElementById(bid || 'mb-docs-btn');
   const url = (u && u.value || '').trim(); if (!url) { notify('Cole o link do Google Docs.'); return; }
   try { localStorage.setItem('movh_docs_url', url); } catch(e) {}
   btn.disabled = true; btn.textContent = '⏳ Lendo...';
   try {
     const r = await mbClient.functions.invoke('docs-import', { body: { url: url } });
     if (r.error) throw r.error; if (r.data && r.data.error) throw new Error(r.data.error);
-    document.getElementById('mb-colar-treino-texto').value = (r.data && r.data.texto) || '';
-    mbPreviewColarTreino(); notify('✅ Texto importado. Confira a prévia e aplique.');
+    document.getElementById(tid || 'mb-colar-treino-texto').value = (r.data && r.data.texto) || '';
+    (prev || mbPreviewColarTreino)(); notify('✅ Texto importado. Confira a prévia e aplique.');
   } catch (e) { notify('❌ ' + (e.message || e)); }
   btn.disabled = false; btn.textContent = '📄 Importar do Docs';
 }
