@@ -1104,6 +1104,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div style="font-size:11px;color:var(--t3);margin-bottom:10px;line-height:1.5">
       Cada <b>"Treino A"</b>, "Dia 1" ou dia da semana vira um dia. Aceita nome numa linha e <code>3x 8 a 10</code> na seguinte, ou tudo em uma linha (<code>Supino 3x10</code>), seções (Ativação, Força, Condicionamento), A1/A2 como conjugado; EMOM/For time viram observação do bloco. Os nomes são casados com o banco e já puxam o vídeo.
     </div>
+    <div style="display:flex;gap:6px;margin-bottom:8px"><input id="mb-docs-url" class="inp" style="flex:1;font-size:12px" placeholder="Link do Google Docs (a aba da semana)" onchange="try{localStorage.setItem('movh_docs_url',this.value)}catch(e){}"><button class="btn bs" id="mb-docs-btn" onclick="mbImportarDocs()">📄 Importar do Docs</button></div>
     <textarea id="mb-colar-treino-texto" oninput="mbPreviewColarTreino()" rows="14" placeholder="Treino A&#10;Levantamento Terra Sumô&#10;3x 8 a 10 / 1'30&quot; descanso&#10;Elevação de Quadril na Máquina&#10;3x 10 a 12- 1' rest&#10;&#10;Treino B&#10;..." style="width:100%;font-size:11px;font-family:monospace;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)" oninput="mbPreviewColarTreino()"></textarea>
     <div id="mb-colar-treino-preview" style="font-size:11px;color:var(--t2);margin-top:8px;line-height:1.6"></div>
     <div class="mfoot">
@@ -4144,7 +4145,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.5 · 18/11';
+var MOVH_VER = 'v65.6 · 18/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -6318,7 +6319,22 @@ function mbAbrirColarTreino(sid){
   if (el) el.value = '';
   const prev = document.getElementById('mb-colar-treino-preview');
   if (prev) prev.textContent = '';
+  try { const u = document.getElementById('mb-docs-url'); if (u && !u.value) u.value = localStorage.getItem('movh_docs_url') || ''; } catch(e) {}
   document.getElementById('mb-colar-treino-overlay').style.display = 'flex';
+}
+// Importa o texto do Google Docs (função docs-import no Supabase; o doc precisa estar com "qualquer pessoa com o link pode ver")
+async function mbImportarDocs(){
+  const u = document.getElementById('mb-docs-url'), btn = document.getElementById('mb-docs-btn');
+  const url = (u && u.value || '').trim(); if (!url) { notify('Cole o link do Google Docs.'); return; }
+  try { localStorage.setItem('movh_docs_url', url); } catch(e) {}
+  btn.disabled = true; btn.textContent = '⏳ Lendo...';
+  try {
+    const r = await mbClient.functions.invoke('docs-import', { body: { url: url } });
+    if (r.error) throw r.error; if (r.data && r.data.error) throw new Error(r.data.error);
+    document.getElementById('mb-colar-treino-texto').value = (r.data && r.data.texto) || '';
+    mbPreviewColarTreino(); notify('✅ Texto importado. Confira a prévia e aplique.');
+  } catch (e) { notify('❌ ' + (e.message || e)); }
+  btn.disabled = false; btn.textContent = '📄 Importar do Docs';
 }
 function mbFecharColarTreino(){
   document.getElementById('mb-colar-treino-overlay').style.display = 'none';
