@@ -45,7 +45,7 @@ with sync_playwright() as p:
     ok(e['emBlocos']=='111' and e['emN']==e['base']+9,'emagrecimento: Metabólico curto em Seg/Qua/Sex: '+str((e['emBlocos'],e['emN'],e['base'])))
     ok(e['baseSr']=='4×6 a 8' and e['maSr']=='3×6 a 8' and e['maN']==e['base']+1,'manutenção: -1 série nos principais e +Suitcase Carry: '+str((e['baseSr'],e['maSr'],e['maN'])))
     ok(e['orig']==e['base'],'objetivos não alteram o modelo original')
-    ok(e['pad']==9 and e['i1']['padrao']=='gluteo' and e['i1']['nivel']==2,'escada: Hip Thrust é glúteo N2: '+str(e['i1']))
+    ok(e['pad']==13 and e['i1']['padrao']=='gluteo' and e['i1']['nivel']==2,'escada: Hip Thrust é glúteo N2: '+str(e['i1']))
     ok(e['s1'] and e['s1']['para']=='Hip Thrust Unilateral' and e['s1']['nivelPara']==3 and e['s2'] is None and e['sx']['para']=='Gluteo 4 apoios (caneleira)','escada: sobe 1 degrau, pula a variante que o aluno já tem e para no topo: '+str((e['s1']['para'],e['s2'],e['sx']['para'])))
     h=pg.evaluate("""async()=>{window.notify=()=>{};
       SPLITS=SPLITS.filter(x=>x.id!=='hibrido'); renderDBSplits();
