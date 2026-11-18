@@ -1,0 +1,69 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Proposta: método na landing</title>
+<style>
+:root{--bg:#0B1220;--card:#111A2E;--card2:#16213a;--bd:#1F2B45;--P:#D62839;--P2:#FF4D5A;--cream:#F3EAD8;--mute:#9AA3BD;--soft:#C9C2B0;--ok:#3DDC97;--font:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+*{box-sizing:border-box;margin:0}body{background:#05080f;font-family:var(--font);color:var(--cream);padding:20px;display:flex;flex-direction:column;gap:24px;align-items:flex-start}
+.tela{width:390px;background:var(--bg);padding:26px 20px 28px;border-radius:0}
+.k{font-size:11px;letter-spacing:.14em;color:var(--P2);font-weight:700;margin-bottom:10px}
+h1{font-size:27px;line-height:1.15;font-weight:800;margin-bottom:10px}h2{font-size:21px;line-height:1.2;font-weight:800;margin-bottom:8px}
+.sub{color:var(--soft);font-size:14.5px;line-height:1.5;margin-bottom:18px}
+.step{display:flex;gap:12px;margin-bottom:12px}.num{flex:0 0 30px;height:30px;border-radius:50%;background:var(--P);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.cd{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px 15px;flex:1}.cd.dest{border-color:var(--P);background:linear-gradient(180deg,#1a1626,#111A2E)}
+.cd b{display:block;font-size:16px;margin-bottom:3px}.cd p{font-size:13.5px;color:var(--soft);line-height:1.45}.tag{display:inline-block;font-size:11px;background:#22304f;color:var(--cream);padding:3px 8px;border-radius:99px;margin:0 6px 6px 0;font-weight:600}
+.pr{font-size:15px;font-weight:800;margin-top:8px;color:var(--cream)}.pr span{color:var(--mute);font-weight:500;font-size:12.5px}.ok{color:var(--ok);font-size:12.5px;font-weight:600;margin-top:6px}
+.btn{display:block;text-align:center;background:var(--P);color:#fff;font-weight:800;padding:15px;border-radius:14px;margin-top:16px;font-size:15px}.btn2{display:block;text-align:center;border:1px solid var(--bd);color:var(--soft);padding:12px;border-radius:14px;margin-top:10px;font-size:13.5px}
+.seg{display:flex;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:4px;margin:14px 0}.seg div{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:13.5px;font-weight:700;color:var(--mute)}.seg .on{background:var(--P);color:#fff}
+.li{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid var(--bd)}.li:last-child{border:0}.li i{font-style:normal;flex:0 0 26px;height:26px;border-radius:8px;background:#22304f;display:flex;align-items:center;justify-content:center;font-size:14px}.li b{font-size:14.5px;display:block}.li span{font-size:12.5px;color:var(--mute);line-height:1.4}
+.mapa{background:var(--cream);color:#1a1a1a;border-radius:18px;padding:16px;margin:16px 0}.mapa .t{font-size:11px;letter-spacing:.12em;font-weight:800;color:#8a1c26}.mapa h3{font-size:16px;margin:4px 0 10px}.mapa .row{display:flex;justify-content:space-between;font-size:12.5px;padding:7px 0;border-top:1px dashed #cdbf9f}.mapa .row b{font-weight:800}
+.price{background:var(--card2);border:1px solid var(--P);border-radius:18px;padding:16px;text-align:center}.price .v{font-size:32px;font-weight:800}.price .v small{font-size:14px;color:var(--mute);font-weight:500}.price p{font-size:13px;color:var(--soft);margin-top:6px;line-height:1.45}
+.lad{display:flex;flex-direction:column;gap:8px;margin:12px 0 14px}.deg{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:10px 12px}.deg em{font-style:normal;font-size:11px;font-weight:800;color:#fff;background:var(--P);border-radius:8px;padding:5px 7px;min-width:34px;text-align:center}.deg:nth-child(1) em{background:#3b4a6e}.deg:nth-child(2) em{background:#7a3a52}.deg:nth-child(3) em{background:#b4303f}.deg b{font-size:14px}.deg span{font-size:12px;color:var(--mute);margin-left:auto}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 16px}.chips div{background:var(--card);border:1px solid var(--bd);padding:7px 11px;border-radius:99px;font-size:12.5px;font-weight:600}.chips .a{border-color:var(--P);color:var(--P2)}
+.reg{background:var(--card);border-left:3px solid var(--ok);border-radius:10px;padding:11px 13px;font-size:13px;color:var(--soft);line-height:1.45;margin-bottom:18px}
+.tl{display:flex;height:34px;border-radius:10px;overflow:hidden;margin:10px 0 6px}.tl div{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:800}.tl .b{flex:4;background:#3b4a6e}.tl .c{flex:4;background:#7a3a52}.tl .d{flex:4;background:#b4303f}
+.tm{display:flex;font-size:11px;color:var(--mute)}.tm div{flex:4;text-align:center}.tm .test{color:var(--ok);font-weight:700}
+.duo{display:flex;gap:18px}.fone{width:330px;background:var(--bg);border-radius:0;padding:34px 22px;min-height:560px}.fone .logo{font-weight:900;font-size:30px;letter-spacing:.04em;text-align:center;margin-bottom:6px}.fone .logo span{color:var(--P2)}.fone .tg{text-align:center;color:var(--mute);font-size:12.5px;margin-bottom:28px}
+.in{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;color:var(--cream);font-size:14.5px;margin:6px 0 14px}.lb{font-size:12.5px;color:var(--mute)}
+.cod{display:flex;gap:8px;margin:14px 0}.cod div{flex:1;height:50px;background:var(--card);border:1px solid var(--bd);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}.cod .f{border-color:var(--P)}
+.mini{font-size:12px;color:var(--mute);text-align:center;margin-top:12px;line-height:1.5}.mini u{color:var(--soft)}
+</style></head><body>
+
+<div class="tela" id="t1"><div class="k">O MÉTODO MOVH</div>
+<h1>Você sabe onde está, para onde vai e quanto falta.</h1>
+<p class="sub">Todo aluno começa com um mapa, treina com um plano que evolui por degraus e reavalia no fim de 12 semanas.</p>
+<div class="step"><div class="num">1</div><div class="cd dest"><b>Avaliação + Mapa</b><p>A entrada. Você sai com um Mapa de 1 página: seu ponto de partida e a meta das 12 semanas.</p><div class="pr">R$ 150 <span>presencial</span> · R$ 130 <span>online</span></div><div class="ok">✓ Vira crédito total se você fechar o programa em até 7 dias</div></div></div>
+<div class="step"><div class="num">2</div><div class="cd"><b>Programa de 12 semanas</b><p>Três etapas, com teste nas semanas 4, 8 e 12 para você ver a evolução.</p><div style="margin-top:8px"><span class="tag">Base</span><span class="tag">Construção</span><span class="tag">Consolidação</span></div><div class="pr"><span>Online a partir de</span> R$ 420 <span>(3 meses)</span></div></div></div>
+<div class="step"><div class="num">3</div><div class="cd"><b>Próximo ciclo</b><p>Continua de onde você parou, sem voltar ao começo. Novo Mapa, nova meta.</p></div></div>
+<a class="btn">Começar pela avaliação</a><a class="btn2">Falar com o professor no WhatsApp</a></div>
+
+<div class="tela" id="t2"><div class="k">AVALIAÇÃO + MAPA</div>
+<h2>O que você leva para casa</h2><p class="sub">Nada de promessa solta: você recebe um documento seu, com números.</p>
+<div class="li"><i>📸</i><div><b>Avaliação postural</b><span>4 fotos: frente, costas e as duas laterais. Mostra o que ajustar primeiro.</span></div></div>
+<div class="li"><i>📏</i><div><b>Medidas do corpo</b><span>Circunferências para comparar daqui a 12 semanas.</span></div></div>
+<div class="li"><i>🏃</i><div><b>Teste de condicionamento</b><span>3 km no seu ritmo. Define suas zonas de corrida e de esforço.</span></div></div>
+<div class="li"><i>💬</i><div><b>Conversa de objetivo e rotina</b><span>Dias, dores, histórico e o que você quer mudar.</span></div></div>
+<div class="mapa"><div class="t">SEU MAPA · 1 PÁGINA</div><h3>Do ponto de partida à semana 12</h3>
+<div class="row"><span>Chegada</span><b>fotos + medidas + 3 km</b></div><div class="row"><span>Semana 4 · fim da Base</span><b>teste</b></div><div class="row"><span>Semana 8 · fim da Construção</span><b>teste</b></div><div class="row"><span>Semana 12 · Reavaliação</span><b>antes e depois</b></div></div>
+<div class="seg"><div class="on">Presencial</div><div>Online</div></div>
+<div class="price"><div class="v">R$ 150</div><p><b>Vira 100% de crédito</b> se você fechar o programa de 12 semanas em até 7 dias. Se não fechar, o Mapa é seu e você pode treinar onde quiser.</p></div>
+<a class="btn">Agendar minha avaliação</a></div>
+
+<div class="tela" id="t3"><div class="k">COMO SEU TREINO EVOLUI</div>
+<h2>Cada movimento tem degraus. Você sobe quando está pronto.</h2><p class="sub">Exemplo: agachar.</p>
+<div class="lad"><div class="deg"><em>N1</em><b>Leg Press</b><span>Aprender</span></div><div class="deg"><em>N2</em><b>Back Squat</b><span>Construir</span></div><div class="deg"><em>N3</em><b>Bulgarian Split Squat</b><span>Desafiar</span></div><div class="deg"><em>N4</em><b>Box Pistol</b><span>Avançado</span></div></div>
+<div class="reg"><b style="color:var(--cream)">Quando sobe?</b> Quando você bate a meta em 2 treinos seguidos, sem dor e com boa técnica. Se a técnica cair, desce um degrau.</div>
+<div class="k">O QUE TEM NA ESCADA</div>
+<div class="chips"><div>Agachar</div><div>Quadril</div><div>Isquiotibiais</div><div>Glúteo</div><div>Empurrar</div><div>Puxar</div><div>Core</div><div>Carregar</div><div>Potência</div><div class="a">Corrida</div><div class="a">Condicionamento</div></div>
+<div class="k">ESCOLHA SEU FOCO</div>
+<div class="chips"><div class="a">Glúteo</div><div>Superiores</div><div>Definição</div><div>Emagrecimento</div><div>Manutenção funcional</div></div>
+<div class="k">AS 12 SEMANAS</div>
+<div class="tl"><div class="b">Base</div><div class="c">Construção</div><div class="d">Consolidação</div></div>
+<div class="tm"><div>sem 1–4</div><div>sem 5–8</div><div>sem 9–12</div></div>
+<div class="tm" style="margin-top:4px"><div class="test">teste 4</div><div class="test">teste 8</div><div class="test">reavaliação 12</div></div>
+<a class="btn">Ver como seria o meu</a></div>
+
+<div class="duo" id="t4"><div class="fone"><div class="logo">MO<span>V</span>H</div><div class="tg">Seu treino, no seu ritmo</div>
+<div class="lb">E-mail</div><div class="in">maria@email.com</div><a class="btn" style="margin-top:0">Receber código por e-mail</a>
+<div class="mini">Sem senha. Você recebe um código de 6 dígitos.<br><u>Entrar com senha</u></div></div>
+<div class="fone"><div class="logo">MO<span>V</span>H</div><div class="tg">Código enviado para maria@email.com</div>
+<div class="lb">Digite o código de 6 dígitos</div><div class="cod"><div>4</div><div>8</div><div>2</div><div class="f">&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div></div>
+<a class="btn" style="margin-top:6px">Entrar</a><div class="mini">Reenviar código em 0:45<br><u>Usar outro e-mail</u></div></div></div>
+</body></html>
