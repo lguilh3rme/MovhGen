@@ -4176,7 +4176,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.4 · 19/11';
+var MOVH_VER = 'v66.5 · 19/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -9852,6 +9852,7 @@ async function mbCarregarPainelAlunos() {
   document.getElementById('alunos-loading').style.display = 'none';
   document.getElementById('alunos-content').style.display = 'block';
   renderPainelAlunos();
+  if (_pixLink) setTimeout(mbPixLinkAbrir, 300);
 }
 // Log de atividade dos alunos: treino concluído, cargas registradas e dor relatada.
 // Usa só dados que o painel já carrega (sessões do mês, registros de 30 dias).
@@ -10288,6 +10289,16 @@ style="font-size:10px;padding:2px 4px;border:1px solid var(--bd);border-radius:4
 }
 
 
+// Link do aviso do Telegram (?pix=<id>): após o 1º carregamento do painel abre a confirmação desse Pix (mbConfirmarPix pede o OK).
+let _pixLink = null; try { _pixLink = new URLSearchParams(window.location.search).get('pix'); } catch (_) {}
+function mbPixLinkAbrir(){
+  if (!_pixLink) return;
+  const id = String(_pixLink); _pixLink = null;
+  try { const u = new URL(window.location.href); u.searchParams.delete('pix'); history.replaceState(null, '', u.pathname + u.search + u.hash); } catch (_) {}
+  const a = (mbPainelAlunos || []).find(x => x.pixPendente && String(x.pixPendente.id) === id);
+  if (!a) { notify('Esse Pix já foi tratado (ou não é seu).'); return; }
+  nav('alunos'); mbConfirmarPix(id);
+}
 function mbIsoLocal(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 async function mbConfirmarPix(pid){
   const a = (mbPainelAlunos || []).find(x => x.pixPendente && String(x.pixPendente.id) === String(pid)); if (!a) return;

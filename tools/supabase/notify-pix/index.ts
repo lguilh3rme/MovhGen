@@ -1,6 +1,6 @@
 // Edge Function: avisa no Telegram quando o aluno toca "Já paguei" (linha nova em pagamentos_pix, status 'pendente').
 // Disparada por Database Webhook (INSERT em pagamentos_pix). Ver tools/supabase/README-notify-pix.md.
-// Secrets: TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (use os MESMOS nomes do bot que já existe), NOTIFY_PIX_SECRET (opcional, recomendado).
+// Secrets: GERADOR_URL (https do Gerador, ex.: a página do GitHub Pages; sem ela não vai botão), TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID (use os MESMOS nomes do bot que já existe), NOTIFY_PIX_SECRET (opcional, recomendado).
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const brl = (v: number) => 'R$ ' + Number(v).toFixed(2).replace('.', ',')
@@ -22,12 +22,14 @@ Deno.serve(async (req) => {
     '📦 ' + (r.plano_nome || 'plano') + ' · ' + r.dias + ' dias',
     '💰 ' + brl(r.valor),
     al?.acesso_fim ? '🗓 Acesso atual até ' + String(al.acesso_fim).split('-').reverse().join('/') : '🗓 Sem acesso ativo ainda',
-    'Confira no banco e toque em ✓ Confirmar no Gerador (Alunos).',
+    'Toque no botão abaixo para abrir o Gerador e confirmar.',
   ]
+  const base = (Deno.env.get('GERADOR_URL') || '').replace(/\/+$/, '')
+  const reply_markup = base ? { inline_keyboard: [[{ text: '✓ Abrir e confirmar', url: base + '/?pix=' + r.id }]] } : undefined
   const res = await fetch('https://api.telegram.org/bot' + Deno.env.get('TELEGRAM_BOT_TOKEN') + '/sendMessage', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: Deno.env.get('TELEGRAM_CHAT_ID'), text: linhas.join('\n') }),
+    body: JSON.stringify({ chat_id: Deno.env.get('TELEGRAM_CHAT_ID'), text: linhas.join('\n'), reply_markup }),
   })
   return new Response(res.ok ? 'ok' : 'telegram ' + res.status, { status: res.ok ? 200 : 502 })
 })
