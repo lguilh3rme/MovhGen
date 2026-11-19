@@ -730,7 +730,7 @@ body.sel-mode .kb-card{cursor:pointer}body.sel-mode .kb-grupo-hd .sel-cb{margin-
 .cl-row2{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px}.cl-row2 input{font-size:13px;padding:6px 8px}
 textarea.cl-ta{width:100%;box-sizing:border-box;font-size:13px;line-height:1.5;padding:8px 10px;resize:vertical;overflow:hidden;border-radius:8px}
 .cl-add{display:flex;gap:8px;flex-wrap:wrap}
-@media(max-width:600px){.cl-row2{grid-template-columns:1fr}.cl-exs{width:50px!important;flex-basis:50px}.cl-day-t{font-size:13px}}
+@media(max-width:600px){#page-coletivas .cl-tab{flex:0 0 auto;min-width:54px;padding:4px 8px;font-size:11px;white-space:nowrap}#page-coletivas .cl-tabrow .cl-tabs{overflow-x:auto}.cl-row2{grid-template-columns:1fr}.cl-exs{width:50px!important;flex-basis:50px}.cl-day-t{font-size:13px}}
 /* v51 · seletor em cascata */
 .mv-ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px}
 .mv-sheet{background:var(--bg);border:1px solid var(--bd2);border-radius:14px;width:min(560px,100%);max-height:86vh;display:flex;flex-direction:column;box-shadow:0 12px 40px rgba(0,0,0,.35);overflow:hidden}
@@ -4174,7 +4174,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.2 · 19/11';
+var MOVH_VER = 'v66.3 · 19/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4579,6 +4579,21 @@ function kbAnaliseDados(sem){
   });
   return {vol, alertas, ctx, lista: semanas, nivel: nivelAluno, maiorSemDeload, sem};
 }
+// Dados do treino direto no Quadro (nome, ícone, descrição, divisão, idioma): espelha os campos do editor clássico
+function kbDadosHTML(){
+  const g = function(id){ const e = document.getElementById(id); return e ? e.value : ''; };
+  const lg = document.getElementById('cfg-lang');
+  const ops = lg ? Array.prototype.map.call(lg.options, function(o){ return '<option value="' + escAttr(o.value) + '"' + (o.value === lg.value ? ' selected' : '') + '>' + escAttr(o.text) + '</option>'; }).join('') : '';
+  const f = function(id, lbl, ph, w){ return '<label style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(--t3);flex:' + (w || '1 1 160px') + '">' + lbl + '<input type="text" value="' + escAttr(g(id)) + '" placeholder="' + ph + '" onchange="kbDadoSet(\'' + id + '\',this.value)" style="font-size:12px"></label>'; };
+  return '<details class="card" style="padding:8px 12px;margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700">⚙️ Dados do treino <span style="font-weight:400;color:var(--t3)">· ' + escAttr(g('cfg-icone') + ' ' + g('cfg-nome')) + '</span></summary>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' + f('cfg-nome', 'Nome', 'Nome do protocolo', '2 1 200px') + f('cfg-icone', 'Ícone', '💪', '0 0 70px') + f('cfg-div', 'Divisão / lógica', 'Ex.: Upper/Lower 4x') + f('cfg-desc', 'Descrição', 'Objetivo do protocolo', '2 1 220px') +
+    (lg ? '<label style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(--t3)">Idioma<select onchange="kbDadoSet(\'cfg-lang\',this.value)" style="font-size:12px">' + ops + '</select></label>' : '') + '</div></details>';
+}
+function kbDadoSet(id, v){
+  const e = document.getElementById(id); if (!e) return;
+  e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true }));
+  try { _pbDirty = true; pbRefreshDest(); } catch (x) {}
+}
 function kbAnaliseHTML(sem){ return pfAnaliseHTML(kbAnaliseDados(sem)); }
 function kbAnaliseRefresh(){
   const w = document.getElementById('kb-analise-wrap'); if (!w) return;
@@ -4832,6 +4847,7 @@ function renderKanbanSemanaUm(sid){
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbCopiarParaDocs('${sid}')" title="Copia a semana como tabela colorida para colar no Google Docs">📄 Copiar p/ Docs</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
     </div>
+    ${kbDadosHTML()}
     <div id="kb-analise-wrap">${kbAnaliseHTML(sem)}</div>
     <div class="kb-board" style="--kbn:${sem.dias.length}">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
       <span style="font-size:20px">+</span><span style="font-size:11px;font-weight:700">Novo dia</span>
