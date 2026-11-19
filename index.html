@@ -4147,7 +4147,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.8 · 18/11';
+var MOVH_VER = 'v65.9 · 18/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4803,7 +4803,7 @@ function renderKanbanSemanaUm(sid){
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
       <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
-      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
+      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbCopiarParaDocs('${sid}')" title="Copia a semana como tabela colorida para colar no Google Docs">📄 Copiar p/ Docs</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
     </div>
     <div id="kb-analise-wrap">${kbAnaliseHTML(sem)}</div>
     <div class="kb-board" style="--kbn:${sem.dias.length}">${cols}<div class="kb-col kb-col-novo" onclick="kbAddDia('${sid}')">
@@ -6277,6 +6277,28 @@ function mbBlocosDoDia(ls){
     else jun.push(l);
   });
   return coletivasParsearDia(jun).map(mbBlocoDeColetiva);
+}
+// Copia a semana como tabela formatada (HTML na área de transferência): colar no Google Docs mantém tabela, cores e fonte.
+// Os blocos viram "etiquetas" coloridas (menu suspenso de verdade não existe na API do Docs).
+function mbCopiarParaDocs(sid){
+  const sm = semanas.find(x => x.id === sid); if (!sm || !(sm.dias||[]).length) { notify('Semana sem dias.'); return; }
+  const E = function(t){ return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  const fmt = function(x){ return String(x||'').replace(/×/g,'x').replace(/(\d)\s*-\s*(\d)/g,'$1 a $2'); };
+  const F = 'font-family:Nunito,Arial,sans-serif;';
+  const th = sm.dias.map(function(d){ return '<td style="' + F + 'background:#1a1a1a;color:#ddd;font-style:italic;text-align:center;padding:4px;border:1px solid #333">' + E((d.diaSemana || d.nome || '').toUpperCase()) + '</td>'; }).join('');
+  const td = sm.dias.map(function(d){
+    const h = (d.blocos||[]).map(function(b){
+      const exs = (b.exercicios||[]).map(function(e){ return '<p style="margin:0;' + F + 'color:#fff;font-size:11pt">' + E(e.nome) + (e.series ? ' ' + E(fmt(e.series)) : '') + '</p>'; }).join('');
+      return '<p style="margin:6px 0 2px"><span style="' + F + 'background-color:' + E(b.cor || '#3580D8') + ';color:#fff;font-weight:bold;padding:2px 8px">' + E(b.nome || 'Bloco') + '</span></p>' + exs + (b.obs ? '<p style="margin:0;' + F + 'color:#bbb;font-size:10pt">' + E(b.obs) + '</p>' : '');
+    }).join('');
+    return '<td style="background:#0d0d0d;vertical-align:top;padding:6px;border:1px solid #333">' + h + '</td>';
+  }).join('');
+  const html = '<table style="border-collapse:collapse;width:100%"><tr>' + th + '</tr><tr>' + td + '</tr></table>';
+  const txt = sm.dias.map(function(d){ return (d.diaSemana || d.nome) + '\n' + (d.blocos||[]).map(function(b){ return b.nome + '\n' + (b.exercicios||[]).map(function(e){ return e.nome + ' ' + fmt(e.series); }).join('\n'); }).join('\n'); }).join('\n\n');
+  const ok = function(){ notify('✅ Semana copiada. No Google Docs, cole (Ctrl+V): tabela com cores e fonte.'); };
+  try {
+    navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([txt], {type:'text/plain'}) })]).then(ok, function(e){ notify('❌ ' + (e.message || e)); });
+  } catch (e) { notify('❌ O navegador não permitiu copiar: ' + (e.message || e)); }
 }
 function mbParsearTreinoTexto(texto){
   _mvIdx = null; _colStats = { ok:0, novos:[], instr:0, sug:{} };
