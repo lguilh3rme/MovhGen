@@ -541,7 +541,9 @@ body.dock-open #aluno-dock{display:flex}
   .kb-board{grid-auto-columns:86vw;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -1rem;padding:0 1rem 12px}
   .kb-col{scroll-snap-align:center;max-height:none}
   .kb-drag-h{display:none}
-  .pbar{top:-.2rem}
+  .pbar{top:-.2rem;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .pbar::-webkit-scrollbar{display:none}
+  .pbar>*{flex-shrink:0}
 }
 /* ── painel de alunos (v89) ── */
 @media(max-width:700px){
@@ -2571,7 +2573,7 @@ const DIAS7_PV=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'
 function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
-  const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join('');
+  const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="${mode==='kb'?'pbKbIr(this.dataset.did)':'nav(this.dataset.did)'}">${escAttr(d.nome||'Dia')}</button>`).join('');
   return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
 }
 function pbProximaFase(){
@@ -2659,6 +2661,12 @@ setInterval(function(){
 },3000);
 window.addEventListener('beforeunload',function(e){if(_pbDirty){e.preventDefault();e.returnValue='';}});
 window.addEventListener('load',function(){setTimeout(function(){_pbBase=pbSnap();pbRestaurar();},1200);});
+// No Quadro os chips de dia levam à coluna do dia (sem sair do Quadro)
+function pbKbIr(did){
+  const c = document.querySelector('.kb-col[data-did="' + did + '"]'); if (!c) return;
+  c.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  c.style.boxShadow = '0 0 0 2px var(--P2, #C8102E)'; setTimeout(function(){ c.style.boxShadow = ''; }, 1200);
+}
 function pbGoSem(sid){const s=semanas.find(x=>x.id===sid);if(!s)return;nav(s.dias[0]?s.dias[0].id:'kb-'+sid);}
 function refreshPBars(){document.querySelectorAll('.pbar').forEach(el=>{const h=pbarHTML(el.dataset.sid,el.dataset.did,el.dataset.mode);if(h)el.outerHTML=h;});}
 function renderCfgTreino(){
@@ -4166,7 +4174,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.1 · 18/11';
+var MOVH_VER = 'v66.2 · 19/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4625,7 +4633,7 @@ function kbColsHTML(sem){
     });
     body+=`<button class="kb-add kb-add-bloco" onclick="kbAddBloco('${d.id}')">+ novo bloco</button>`;
     const {totalEx,minutos}=kbEstimarDia(d);
-    return `<div class="kb-col">
+    return `<div class="kb-col" data-did="${d.id}">
       <div class="kb-col-head">
         <span style="font-size:13px;flex-shrink:0">📅</span>
         <input class="kb-col-nome" value="${escAttr(d.nome)}" oninput="setDF('${d.id}','nome',this.value)" onblur="renderSB()" placeholder="Nome do dia"/>

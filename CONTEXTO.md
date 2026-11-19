@@ -228,3 +228,5 @@ Trigger `trg_alunos_protege_colunas` (12/11) impede o aluno de alterar acesso, c
 - 18/11 22h40 — v66.0: botão "📄 Importar do Docs" direto na barra de Coletivas/Personal (Personal = modo da mesma tela; mesmo modal de colar). Landing Pix mesclada no main (4409f30): botão "Enviar comprovante".
 
 - 18/11 22h50 — v66.1: "📄 Copiar p/ Docs" na barra de Coletivas/Personal (coletivasCopiarDocs, semana visível como tabela colorida). Dono pediu "aplica as ideias": Pix a confirmar JÁ existe no Início (k6, mbConfirmarPix) — não refeito; pendentes: Escada na Biblioteca, importar Semana 2 junto, aviso de renovação 7 dias, Pix automático (Efí/webhook).
+
+- 19/11 00h — v66.2: no Quadro os chips de dia do cabeçalho rolam até a coluna (pbKbIr) em vez de ir ao editor clássico; barra do protocolo vira 1 linha com rolagem no celular. Pendente: auditar o que só o editor clássico tem (para usar só o Quadro) e ajustar barra de Coletivas no celular (abas de dia sobrepostas). Ideia: PWA do Gerador (manifest + ícone), ícone diferente do app do aluno.
