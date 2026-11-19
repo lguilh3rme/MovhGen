@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/gerador-180.png"><meta name="theme-color" content="#0B1220"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="MOVH Gerador">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1">
 <title>MOVH — Gerador</title>
@@ -934,6 +935,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 .nt-ck{margin:6px 0 0;font-size:12.5px}.nt-ck label{display:flex;gap:6px;align-items:center;padding:2px 0}.nt-ck .d{text-decoration:line-through;opacity:.55}
 .nt-b b{font-weight:700;margin-left:2px}
 </style>
+<script>if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});</script>
 </head>
 <body>
 <datalist id="ex-datalist"></datalist>
@@ -4174,7 +4176,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.3 · 19/11';
+var MOVH_VER = 'v66.4 · 19/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
