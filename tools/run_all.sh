@@ -37,6 +37,7 @@ chk hibrido 15 0 python3 $T/hibrido.py $R/index.html
 chk escada 12 0 python3 $T/escada.py $R/index.html
 chk jornada_gerador 10 0 python3 $T/jornada_gerador.py $R/index.html
 chk estados_proto 10 0 python3 $T/estados_proto.py $R/index.html
+chk pix_link 1 0 python3 $T/pix_link.py $R/index.html
 chk publicar_data 5 0 python3 $T/publicar_data.py $R/index.html
 chk app_header 2 0 python3 $T/app_header.py $X/app/app.html
 chk app_personal 3 0 python3 $T/app_personal.py $X/app/app.html

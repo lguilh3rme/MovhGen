@@ -5,6 +5,7 @@ Só Supabase: não mexe no Gerador nem no app do aluno (sem deploy do Netlify).
    (ou `supabase functions deploy notify-pix --no-verify-jwt`; o webhook não envia JWT de usuário).
 2. Secrets (Edge Functions → Secrets): `TELEGRAM_BOT_TOKEN` e `TELEGRAM_CHAT_ID` — use os mesmos valores do bot que já avisa os pagamentos
    (se lá os nomes forem outros, ajuste as duas linhas `Deno.env.get` no arquivo). Opcional: `NOTIFY_PIX_SECRET` (qualquer texto longo).
+2b. (19/11) Secret `GERADOR_URL` = endereço https do Gerador (GitHub Pages, sem barra no fim): o aviso ganha o botão "✓ Abrir e confirmar" (abre `?pix=<id>`, o Gerador pede o OK e libera o acesso). Sem a secret o aviso segue sem botão. Redeploy da função necessário.
 3. Gatilho: Dashboard → Database → Webhooks → Create: tabela `pagamentos_pix`, evento INSERT, tipo Supabase Edge Function → `notify-pix`
    (se criou `NOTIFY_PIX_SECRET`, adicione o header `x-webhook-secret` com o mesmo valor).
 4. Teste: no app, tocar "Já paguei" com um aluno de teste, ou no SQL Editor:
