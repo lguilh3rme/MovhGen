@@ -1530,6 +1530,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <div style="display:flex;gap:6px;align-self:flex-start">
       <button class="btn bs" id="coletivas-link-btn" onclick="coletivasCopiarLinkPublico()" title="Link público das aulas coletivas (sem login)">🔗 Copiar link</button>
       <button class="btn bs" onclick="coletivasAbrirColar()">📋 Colar plano da semana</button>
+      <button class="btn bs" onclick="coletivasAbrirColar();setTimeout(function(){var u=document.getElementById('col-docs-url');if(u&&u.value)mbImportarDocs('col-docs-url','col-docs-btn','coletivas-colar-texto',coletivasPreviewColar);else if(u)u.focus();},60)">📄 Importar do Docs</button>
       <button class="btn bp" id="coletivas-save-btn" onclick="mbSalvarAulasColetivas()">💾 Salvar aulas coletivas</button>
     </div>
   </div>
@@ -4147,7 +4148,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v65.9 · 18/11';
+var MOVH_VER = 'v66.0 · 18/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
