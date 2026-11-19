@@ -226,3 +226,5 @@ Trigger `trg_alunos_protege_colunas` (12/11) impede o aluno de alterar acesso, c
 - 18/11 22h30 — landing: Asaas saiu do checkout BR (dono: "trocar pro Pix"); branch wip/pix-landing do movhtemplate (SEM merge, aguarda aprovação do print): modal "Pagar por Pix" lê landing_config.config.pix.itens (banco/chave), copiar chave, "Já paguei" abre WhatsApp com plano+valor; sem cartão/parcelado na landing (parcelamento combinado no WhatsApp). Stripe (UK) mantido. create-checkout-asaas segue no Supabase, sem uso.
 
 - 18/11 22h40 — v66.0: botão "📄 Importar do Docs" direto na barra de Coletivas/Personal (Personal = modo da mesma tela; mesmo modal de colar). Landing Pix mesclada no main (4409f30): botão "Enviar comprovante".
+
+- 18/11 22h50 — v66.1: "📄 Copiar p/ Docs" na barra de Coletivas/Personal (coletivasCopiarDocs, semana visível como tabela colorida). Dono pediu "aplica as ideias": Pix a confirmar JÁ existe no Início (k6, mbConfirmarPix) — não refeito; pendentes: Escada na Biblioteca, importar Semana 2 junto, aviso de renovação 7 dias, Pix automático (Efí/webhook).

@@ -1531,6 +1531,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
       <button class="btn bs" id="coletivas-link-btn" onclick="coletivasCopiarLinkPublico()" title="Link público das aulas coletivas (sem login)">🔗 Copiar link</button>
       <button class="btn bs" onclick="coletivasAbrirColar()">📋 Colar plano da semana</button>
       <button class="btn bs" onclick="coletivasAbrirColar();setTimeout(function(){var u=document.getElementById('col-docs-url');if(u&&u.value)mbImportarDocs('col-docs-url','col-docs-btn','coletivas-colar-texto',coletivasPreviewColar);else if(u)u.focus();},60)">📄 Importar do Docs</button>
+      <button class="btn bs" onclick="coletivasCopiarDocs()" title="Copia a semana como tabela colorida para colar no Google Docs">📄 Copiar p/ Docs</button>
       <button class="btn bp" id="coletivas-save-btn" onclick="mbSalvarAulasColetivas()">💾 Salvar aulas coletivas</button>
     </div>
   </div>
@@ -3962,6 +3963,23 @@ function coletivasAplicarColar(){
   notify('✅ ' + diasEncontrados + ' dia(s) preenchido(s) · ' + st.ok + ' exercício(s) do banco' + (st.novos.length ? ' · ' + st.novos.length + ' fora do banco (marcados com ＋)' : '') + '. Confira e clique em "Salvar".');
 }
 
+// Copia a semana (Coletivas ou Personal) como tabela colorida para colar no Google Docs
+function coletivasCopiarDocs(){
+  const ds = coletivasSemanaDatas(coletivasSemanaAtual), nomes = ['SEG','TER','QUA','QUI','SEX','SÁB','DOM'];
+  const E = function(t){ return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+  const fmt = function(x){ return String(x||'').replace(/×/g,'x').replace(/(\d)\s*-\s*(\d)/g,'$1 a $2'); };
+  const F = 'font-family:Nunito,Arial,sans-serif;';
+  const cols = nomes.map(function(n, i){ return { n: n, b: (coletivasData[coletivasDateKey(ds[i])] || []) }; }).filter(function(c){ return c.b.length; });
+  if (!cols.length) { notify('Semana sem conteúdo.'); return; }
+  const th = cols.map(function(c){ return '<td style="' + F + 'background:#1a1a1a;color:#ddd;font-style:italic;text-align:center;padding:4px;border:1px solid #333">' + c.n + '</td>'; }).join('');
+  const td = cols.map(function(c){ return '<td style="background:#0d0d0d;vertical-align:top;padding:6px;border:1px solid #333">' + c.b.map(function(b){
+    return '<p style="margin:6px 0 2px"><span style="' + F + 'background-color:' + E(b.cor || '#3580D8') + ';color:#fff;font-weight:bold;padding:2px 8px">' + E(b.nome || 'Bloco') + '</span></p>' + (b.exercicios||[]).map(function(e){ return '<p style="margin:0;' + F + 'color:#fff;font-size:11pt">' + E(e.nome) + (e.series || e.reps ? ' ' + E(fmt(e.series || e.reps)) : '') + '</p>'; }).join('') + (b.obs ? '<p style="margin:0;' + F + 'color:#bbb;font-size:10pt">' + E(b.obs) + '</p>' : '');
+  }).join('') + '</td>'; }).join('');
+  const html = '<table style="border-collapse:collapse;width:100%"><tr>' + th + '</tr><tr>' + td + '</tr></table>';
+  const txt = cols.map(function(c){ return c.n + '\n' + c.b.map(function(b){ return (b.nome || '') + '\n' + (b.exercicios||[]).map(function(e){ return e.nome + ' ' + fmt(e.series || e.reps); }).join('\n'); }).join('\n'); }).join('\n\n');
+  try { navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], {type:'text/html'}), 'text/plain': new Blob([txt], {type:'text/plain'}) })]).then(function(){ notify('✅ Semana copiada. Cole no Google Docs (Ctrl+V).'); }, function(e){ notify('❌ ' + (e.message || e)); }); }
+  catch (e) { notify('❌ O navegador não permitiu copiar: ' + (e.message || e)); }
+}
 async function mbSalvarAulasColetivas(){
   if (!coletivasData) return;
   const btn = document.getElementById('coletivas-save-btn');
@@ -4148,7 +4166,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.0 · 18/11';
+var MOVH_VER = 'v66.1 · 18/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
