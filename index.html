@@ -458,6 +458,9 @@ select{cursor:pointer}
 .pb-chip.on,.pb-btn.on{background:var(--P);border-color:var(--P);color:#fff}
 .pb-sep{width:1px;height:18px;background:var(--bd);margin:0 2px}
 .pb-sp{flex:1}
+#page-branding[data-lt="login"] .lt-rodape,#page-branding[data-lt="login"] .lt-topo,#page-branding[data-lt="rodape"] .lt-login,#page-branding[data-lt="rodape"] .lt-topo,#page-branding[data-lt="topo"] .lt-login,#page-branding[data-lt="topo"] .lt-rodape{display:none}
+.mb-login-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}.mb-login-row .fld{flex:1 1 200px;margin:0}.mb-login-row .btn{flex:0 0 auto;padding:9px 16px}
+.kb-ttl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.kb-resumo{font-size:12px;color:var(--t3)}
 #aluno-dock{display:none;position:fixed;top:10px;right:10px;bottom:10px;width:392px;z-index:60;border:1px solid var(--bd);border-radius:22px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.45);background:var(--bg);flex-direction:column}
 body.dock-open #aluno-dock{display:flex}
 #aluno-dock .dk-h{display:flex;align-items:center;gap:8px;padding:7px 14px;font-size:11px;font-weight:700;border-bottom:1px solid var(--bd);background:var(--card)}
@@ -563,7 +566,11 @@ body.dock-open #aluno-dock{display:flex}
 .sb-ver{margin:10px 14px 4px;font-size:9.5px;color:var(--t3);opacity:.7}
 .pb-btn.sv{background:var(--P);color:#fff;border-color:var(--P)}
 .pb-badge{font-size:10px;font-weight:700;border-radius:99px;padding:3px 9px;white-space:nowrap;border:1px solid}.pb-badge.pb-ativo{color:#1fb583;border-color:#1A9E72;background:rgba(26,158,114,.12)}.pb-badge.pb-prox{color:#f0b429;border-color:#D4A017;background:rgba(212,160,23,.14)}.pb-badge.pb-rasc{color:#c9cfdd;border-color:#4a5570;background:rgba(120,130,160,.14)}.pb-badge.pb-hist{color:#7f8aa6;border-color:#2c3552}.pb-btn.pf-prox{color:#1fb583!important;border-color:#1A9E72!important}
-.pb-btn.dest{max-width:150px;overflow:hidden;text-overflow:ellipsis;background:var(--Pl);color:var(--Pd);border-color:var(--P)}
+.pb-btn.dest{max-width:170px;overflow:hidden;text-overflow:ellipsis;background:var(--card);color:var(--tx);border-color:var(--bd)}
+.pb-btn.dest.vazio{background:transparent;border-style:dashed;color:var(--t2)}
+.pb-more{position:relative}.pb-more>summary{list-style:none;min-width:34px;text-align:center}.pb-more>summary::-webkit-details-marker{display:none}
+.pb-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px;box-shadow:0 10px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:4px;min-width:170px}
+.pb-pop .pb-btn{border-radius:8px;text-align:left}
 .pb-btn.sv.dirty{box-shadow:0 0 0 2px rgba(224,80,40,.35)}
 .sel-cb{display:none;width:16px;height:16px;flex:0 0 auto;accent-color:var(--P);cursor:pointer;margin:0 4px 0 0}
 body.sel-mode .sel-cb{display:inline-block}
@@ -992,8 +999,8 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 
 <!-- CONFIG -->
 <div class="page" id="page-config">
-  <div class="pg-head"><div><div class="pg-title">Configuração</div><div class="pg-sub">Informações gerais, acesso e atalhos para editar o treino.</div></div></div>
-  <div class="card" id="cfg-treino"></div>
+  <div class="pg-head"><div><div class="pg-title">Configuração</div><div class="pg-sub">Conta na nuvem, periodização e calendário.</div></div></div>
+  <div class="card" id="cfg-treino" style="display:none"></div><!-- v67: oculto (a barra do Quadro já tem destino e Salvar); mantido porque renderCfgTreino ainda escreve aqui -->
 
   <!-- ══ MOVA BANCO: conta do professor + aluno ══ -->
   <div class="card" id="mb-card">
@@ -1006,13 +1013,11 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     <!-- logado fora -->
     <div id="mb-logged-out" style="display:none">
       <div id="mb-msg" style="display:none;font-size:11px;padding:8px 10px;border-radius:6px;margin-bottom:10px"></div>
-      <div class="fr r2">
+      <div class="mb-login-row">
         <div class="fld"><span class="lbl">Email</span><input id="mb-email" type="email" autocomplete="email"/></div>
         <div class="fld"><span class="lbl">Senha</span><input id="mb-password" type="password" autocomplete="current-password"/></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <button class="btn bp" style="flex:1" onclick="mbLogin()">Entrar</button>
-        <button class="btn bs" style="flex:1" onclick="mbSignupPrompt()">Criar conta</button>
+        <button class="btn bp" onclick="mbLogin()">Entrar</button>
+        <button class="btn bs" onclick="mbSignupPrompt()">Criar conta</button>
       </div>
     </div>
 
@@ -1052,7 +1057,8 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
   </div>
   <!-- ══ FIM MOVA BANCO ══ -->
 
-  <div class="card">
+  <div class="card" style="padding:10px 14px;border-style:dashed;font-size:12px;color:var(--t3)">👁️ Nome, ícone, divisão e descrição do protocolo agora ficam em <b style="color:var(--tx)">Treino › Quadro › Dados do treino</b>.</div>
+  <div class="card" id="cfg-proto-card" style="display:none"><!-- v67: oculto; os campos cfg-* alimentam o 'Dados do treino' do Quadro -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:6px">
       <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em">👁️ Protocolo — clique e edite direto aqui (é assim que o aluno vê)</div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
@@ -1087,7 +1093,6 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
   </div>
   <div class="card" id="pzt-card"></div>
   <div class="card" id="cal-proto-card"></div>
-  <div class="btn-row"><button class="btn bp" onclick="goFirstDay()">Próximo →</button></div>
 </div>
 
 <!-- Modal de cargas registradas pelo aluno -->
@@ -1454,10 +1459,15 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
     </div>
   </div>
 </div>
-<div class="page" id="page-branding">
-  <div class="pg-head"><div><div class="pg-title">🖼️ Logo da tela de login</div><div class="pg-sub">Troque a imagem que aparece no topo da tela de login do app do aluno. Fica salva só neste navegador e é embutida no HTML sempre que você exportar.</div></div></div>
+<div class="page" id="page-branding" data-lt="login">
+  <div class="pg-head"><div><div class="pg-title">🖼️ Logos do app</div><div class="pg-sub">Troque a imagem que aparece no topo da tela de login do app do aluno. Fica salva só neste navegador e é embutida no HTML sempre que você exportar.</div></div></div>
+  <div class="lt-tabs" style="display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid var(--bd)">
+    <button type="button" class="pltab active" data-lt="login" onclick="logoTab('login')">🔐 Login</button>
+    <button type="button" class="pltab" data-lt="rodape" onclick="logoTab('rodape')">🦶 Rodapé do app</button>
+    <button type="button" class="pltab" data-lt="topo" onclick="logoTab('topo')">🌐 Topo da landing</button>
+  </div>
   <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
-    <div class="card" style="max-width:420px;flex:1;min-width:300px">
+    <div class="card lt-login" style="max-width:420px;flex:1;min-width:300px">
       <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Logos prontas</div>
       <div id="logo-prontas" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"></div>
       <div id="logo-salvas-wrap" style="display:none">
@@ -1502,7 +1512,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
         <button class="btn bs" onclick="removerLogoCustom()">↩️ Voltar a uma logo pronta</button>
       </div>
     </div>
-    <div class="card" style="width:280px;flex-shrink:0">
+    <div class="card lt-login" style="width:280px;flex-shrink:0">
       <div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">👁️ Como fica na tela de login</div>
       <div style="background:linear-gradient(165deg,var(--bg) 0%,var(--Pl) 130%);border-radius:14px;padding:20px 14px">
         <div style="background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:20px 16px;box-shadow:0 8px 20px rgba(20,16,50,.09)">
@@ -1515,16 +1525,18 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
       </div>
       <div style="font-size:9px;color:var(--t3);margin-top:8px">Simulação — cores exatas do tema (claro/escuro) podem variar um pouco no app real.</div>
     </div>
-    <div class="card" style="max-width:420px;flex:1;min-width:300px">
+    <div class="card lt-rodape" style="max-width:520px;flex:1;min-width:300px">
       <div style="font-size:13px;font-weight:800;margin-bottom:4px">🦶 Logo do rodapé do app</div>
       <div style="font-size:10.5px;color:var(--t3);margin-bottom:10px">Aparece no fim do treino do aluno. Escolha no mesmo esquema do login. "Igual ao login" acompanha a logo do login. Para criar uma nova, envie e ajuste lá em cima, salve em "Minhas logos" e escolha aqui. Vale na próxima abertura do app, sem exportar de novo.</div>
       <div id="logo-rodape-opts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
-      <div style="font-weight:700;margin:6px 0">Logo do topo da landing</div>
-      <div id="logo-topo-opts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
       <div style="background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:14px;text-align:center">
         <img id="logo-rodape-prev" style="max-width:170px;width:60%;height:auto" alt="Logo do rodapé"/>
         <div id="logo-rodape-label" style="font-size:10.5px;color:var(--t3);margin-top:6px"></div>
       </div>
+    </div>
+    <div class="card lt-topo" style="max-width:520px;flex:1;min-width:300px">
+      <div style="font-size:13px;font-weight:800;margin-bottom:4px">🌐 Logo do topo da landing</div>
+      <div id="logo-topo-opts" style="display:flex;gap:8px;flex-wrap:wrap"></div>
     </div>
   </div>
 </div>
@@ -2554,7 +2566,7 @@ function nav(id){
   if(_tb){_tb.style.display=_ct?'flex':'none';_tb.querySelectorAll('.cfg-tab').forEach(b=>b.classList.toggle('on',b.dataset.t===_ct));}
   if(_ct){const nc=document.getElementById('nav-config');if(nc)nc.classList.add('active');}
   if(id==='export'||id==='branding'){['export','branding'].forEach(x=>{const p=document.getElementById('page-'+x);if(p)p.classList.add('active');});}
-  if(typeof NAV_STATIC!=='undefined'&&NAV_STATIC.indexOf(id)<0)treinoToggle(true);
+  if(typeof NAV_STATIC!=='undefined'&&NAV_STATIC.indexOf(id)<0)treinoToggle(!(typeof id==='string'&&id.indexOf('kb-')===0)); /* Quadro: a árvore da lateral fica recolhida (as semanas estão na barra do Quadro) */
   if(typeof tbTitulo==='function')tbTitulo(id);
   sbToggle(false);
   if(id==='db-ex')renderDBEx();
@@ -2575,8 +2587,9 @@ const DIAS7_PV=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'
 function pbarHTML(sid,did,mode){
   const s=semanas.find(x=>x.id===sid);if(!s)return '';
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
-  const dias=s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="${mode==='kb'?'pbKbIr(this.dataset.did)':'nav(this.dataset.did)'}">${escAttr(d.nome||'Dia')}</button>`).join('');
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button>${sems}${dias}<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button><span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn dest" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${escAttr(pbDestInfo().txt)} ▾</button>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${pbDestInfo().acao}${_pbDirty?' ●':''}</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button><button class="pb-btn${mode==='kb'?' on':''}" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button></div>`;
+  const dias=mode==='dia'?s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join(''):'';
+  const _di=pbDestInfo();
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}">${sems}${dias}${mode==='dia'?`<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button>`:''}<span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button>${mode==='kb'?'':`<button class="pb-btn" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button>`}<button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button><details class="pb-more"><summary class="pb-btn" title="Mais opções">⋯</summary><div class="pb-pop"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button></div></details>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn dest${_di.k==='novo'?' vazio':''}" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${_di.k==='novo'?'👤 Escolher destino':escAttr(_di.txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${_di.acao}${_pbDirty?' ●':''}</button></div>`;
 }
 function pbProximaFase(){
   if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
@@ -2670,6 +2683,7 @@ function pbKbIr(did){
   c.style.boxShadow = '0 0 0 2px var(--P2, #C8102E)'; setTimeout(function(){ c.style.boxShadow = ''; }, 1200);
 }
 function pbGoSem(sid){const s=semanas.find(x=>x.id===sid);if(!s)return;nav(s.dias[0]?s.dias[0].id:'kb-'+sid);}
+document.addEventListener('click',function(e){document.querySelectorAll('.pb-more[open]').forEach(function(d){if(!d.contains(e.target))d.removeAttribute('open');});});
 function refreshPBars(){document.querySelectorAll('.pbar').forEach(el=>{const h=pbarHTML(el.dataset.sid,el.dataset.did,el.dataset.mode);if(h)el.outerHTML=h;});}
 function renderCfgTreino(){
   const el=document.getElementById('cfg-treino');if(!el)return;
@@ -4176,7 +4190,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.6 · 20/11';
+var MOVH_VER = 'v67.0 · 20/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4209,6 +4223,11 @@ var NAV_STATIC = ['home','config','alunos','splits','db-ex','db-ex-pend','db-pre
 var CFG_MAP = { config:'geral', planos:'planos', export:'app', branding:'app', aparencia:'aparencia' };
 var NAV_TITULOS = { home:'Início', config:'Configuração › Geral', planos:'Configuração › Planos e cobrança', export:'Configuração › App do aluno', branding:'Configuração › App do aluno', aparencia:'Configuração › Aparência', alunos:'Alunos', coletivas:'Aulas Coletivas', 'db-ex':'Biblioteca › Exercícios', 'db-pre':'Biblioteca › Presets', 'db-splits':'Biblioteca › Splits', splits:'Splits' };
 function cfgTab(t){ nav({ geral:'config', planos:'planos', app:'export', aparencia:'aparencia' }[t] || 'config'); }
+function logoTab(t){
+  const pg = document.getElementById('page-branding'); if (!pg) return;
+  pg.setAttribute('data-lt', t);
+  pg.querySelectorAll('.lt-tabs .pltab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-lt') === t); });
+}
 function treinoToggle(abrir){
   const g = document.getElementById('treino-grp'), h = document.getElementById('nav-treino'); if (!g || !h) return;
   const on = (typeof abrir === 'boolean') ? abrir : !g.classList.contains('open');
@@ -4463,7 +4482,7 @@ visualAplicar();verAplicar();
 let _kbSidAtual = null;
 const _kbDb = {}; // alunoId -> {rpeMed, diasReg, hits, nivel} (carregado 1x do banco)
 const PF_PARAMS = ['Fase única 8 semanas','RIR 2 (última série 1)',"Compostos 2' · isoladores 1'",'Progressão dupla: topo da faixa → +carga','Volume por grupamento (faixas próprias)','Revisão a cada 4 semanas'];
-function pfAnAberto(){ try { return localStorage.getItem('movh_pf_analise') !== '0'; } catch(e){ return true; } }
+function pfAnAberto(){ try { return localStorage.getItem('movh_pf_analise') === '1'; } catch(e){ return false; } }
 function pfAnToggle(el){
   try { localStorage.setItem('movh_pf_analise', el.open ? '1' : '0'); } catch(e){}
   document.querySelectorAll('details.pf-an').forEach(d => { if (d !== el && d.open !== el.open) d.open = el.open; });
@@ -4587,7 +4606,7 @@ function kbDadosHTML(){
   const lg = document.getElementById('cfg-lang');
   const ops = lg ? Array.prototype.map.call(lg.options, function(o){ return '<option value="' + escAttr(o.value) + '"' + (o.value === lg.value ? ' selected' : '') + '>' + escAttr(o.text) + '</option>'; }).join('') : '';
   const f = function(id, lbl, ph, w){ return '<label style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(--t3);flex:' + (w || '1 1 160px') + '">' + lbl + '<input type="text" value="' + escAttr(g(id)) + '" placeholder="' + ph + '" onchange="kbDadoSet(\'' + id + '\',this.value)" style="font-size:12px"></label>'; };
-  return '<details class="card" style="padding:8px 12px;margin-bottom:10px"><summary style="cursor:pointer;font-size:12px;font-weight:700">⚙️ Dados do treino <span style="font-weight:400;color:var(--t3)">· ' + escAttr(g('cfg-icone') + ' ' + g('cfg-nome')) + '</span></summary>' +
+  return '<details class="card" style="padding:6px 12px;margin-bottom:6px"><summary style="cursor:pointer;font-size:12px;font-weight:700">⚙️ Dados do treino <span style="font-weight:400;color:var(--t3)">· ' + escAttr(g('cfg-icone') + ' ' + g('cfg-nome')) + '</span></summary>' +
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">' + f('cfg-nome', 'Nome', 'Nome do protocolo', '2 1 200px') + f('cfg-icone', 'Ícone', '💪', '0 0 70px') + f('cfg-div', 'Divisão / lógica', 'Ex.: Upper/Lower 4x') + f('cfg-desc', 'Descrição', 'Objetivo do protocolo', '2 1 220px') +
     (lg ? '<label style="display:flex;flex-direction:column;gap:2px;font-size:10.5px;color:var(--t3)">Idioma<select onchange="kbDadoSet(\'cfg-lang\',this.value)" style="font-size:12px">' + ops + '</select></label>' : '') + '</div></details>';
 }
@@ -4846,7 +4865,7 @@ function renderKanbanSemanaUm(sid){
   pg.innerHTML=`
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
-      <div><div class="pg-title">🗂️ ${escAttr(sem.nome)} — visão em colunas</div><div class="pg-sub">Todos os treinos desta semana lado a lado. Clique num exercício pra editar rápido — tudo aqui mesmo, sem trocar de tela.</div></div>
+      <div class="kb-ttl"><span class="pg-title">🗂️ ${escAttr(sem.nome)}</span><span class="kb-resumo">${escAttr(((kbAnaliseDados(sem).ctx||[]).find(r=>r[0]==='Treino')||[])[1]||'')}</span></div>
       <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbCopiarParaDocs('${sid}')" title="Copia a semana como tabela colorida para colar no Google Docs">📄 Copiar p/ Docs</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
     </div>
     ${kbDadosHTML()}
@@ -19826,7 +19845,7 @@ function plRender(){
   const el = document.getElementById('pl-tabela');
   if(!el) return;
   if(!plPlanos.length){ el.innerHTML = '<div style="color:var(--t3);font-size:12px">Nenhum plano.</div>'; return; }
-  el.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+  el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">
     <thead><tr style="border-bottom:1px solid var(--bd)">
       <th style="text-align:left;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">Nome</th>
       <th style="text-align:left;padding:5px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:var(--t3)">Tipo</th>
@@ -19839,8 +19858,8 @@ function plRender(){
     </tr></thead>
     <tbody>${plPlanos.map((p,i)=>`
       <tr style="border-bottom:1px solid var(--bd2)">
-        <td style="padding:6px 8px"><input class="ie" value="${escAttr(p.nome)}" style="width:110px" onchange="plPlanos[${i}].nome=this.value;plSavePlanos()"/></td>
-        <td style="padding:6px 8px"><select class="ie" style="width:104px" onchange="plPlanos[${i}].tipo=this.value;plSavePlanos();plRender()">${Object.keys(PL_TIPOS).map(k=>`<option value="${k}"${(p.tipo||'novo')===k?' selected':''}>${PL_TIPOS[k]}</option>`).join('')}</select></td>
+        <td style="padding:6px 8px"><input class="ie" value="${escAttr(p.nome)}" style="width:100%;min-width:190px" onchange="plPlanos[${i}].nome=this.value;plSavePlanos()"/></td>
+        <td style="padding:6px 8px"><select class="ie" style="width:100%;min-width:150px" onchange="plPlanos[${i}].tipo=this.value;plSavePlanos();plRender()">${Object.keys(PL_TIPOS).map(k=>`<option value="${k}"${(p.tipo||'novo')===k?' selected':''}>${PL_TIPOS[k]}</option>`).join('')}</select></td>
         <td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="${p.dias}" style="width:54px;text-align:right" onchange="plPlanos[${i}].dias=+this.value;plSavePlanos()"/></td>
         <td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="${p.precoBR}" style="width:64px;text-align:right" onchange="plPlanos[${i}].precoBR=+this.value;plSavePlanos()"/></td>
         <td style="padding:6px 8px;text-align:right"><input class="ie" type="number" value="${p.precoUK}" style="width:54px;text-align:right" onchange="plPlanos[${i}].precoUK=+this.value;plSavePlanos()"/></td>
@@ -19848,7 +19867,7 @@ function plRender(){
         <td style="padding:6px 8px;text-align:center"><span style="font-size:11px;color:${i===1?'var(--P)':'var(--t3)'}">${i===1&&plEhNovo(p)?'⭐ Sim':'—'}</span></td>
         <td style="padding:6px 8px;text-align:right"><button class="bic" onclick="plRemovePlano(${i})" title="Remover">×</button></td>
       </tr>`).join('')}
-    </tbody></table>
+    </tbody></table></div>
     <div style="font-size:10px;color:var(--t3);margin-top:6px">Para mudar qual é "Mais popular", reordene os planos deixando o desejado no meio. Só os planos "Novo" aparecem na landing; Renovação e Reativação são usados na cobrança e no app do aluno.</div>`;
 
   const sel = document.getElementById('pl-link-plano');
