@@ -4176,7 +4176,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v66.5 · 19/11';
+var MOVH_VER = 'v66.6 · 20/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -10957,7 +10957,7 @@ function mbCobrarRegistro(alunoId) {
 function mbFilaRender() {
   const tab = document.getElementById('alunos-tabela'); if (!tab) return;
   let box = document.getElementById('al-fila');
-  if (!box) { box = document.createElement('details'); box.id = 'al-fila'; box.open = true; box.className = 'card'; box.style.cssText = 'margin-bottom:8px;padding:8px 12px'; tab.parentNode.insertBefore(box, tab); }
+  if (!box) { box = document.createElement('details'); box.id = 'al-fila'; try { box.open = localStorage.getItem('movh-fila-aberta') === '1'; } catch (e) { box.open = false; } box.addEventListener('toggle', function () { try { localStorage.setItem('movh-fila-aberta', box.open ? '1' : '0'); } catch (e) {} }); box.className = 'card'; box.style.cssText = 'margin-bottom:8px;padding:8px 12px'; tab.parentNode.insertBefore(box, tab); }
   const hj = mbIsoLocal(new Date()), todos = mbFilaItens(), it = todos.filter(x => !x.loop);
   const venc = it.filter(x => x.d <= 0), prox = it.filter(x => x.d > 0 && x.d <= 21), resto = todos.length - venc.length - prox.length;
   const B = (cls, oc, tt, lb) => '<button class="btn ' + cls + '" style="font-size:10px;padding:3px 8px" onclick="' + oc + '" title="' + escAttr(tt) + '">' + lb + '</button>';
