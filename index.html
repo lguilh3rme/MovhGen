@@ -493,7 +493,7 @@ body.dock-open #aluno-dock{display:flex}
 .kbg-board.kb-board{grid-auto-columns:230px!important;overflow:visible!important}
 .kbg-board .kb-col{max-height:none!important}
 .an-chip{font-size:11px;font-weight:700;border-radius:99px;padding:2px 8px;border:1px solid;white-space:nowrap;line-height:1.4}
-.an-chip.ok{color:#1fb583;border-color:#1A9E72}.an-chip.b,.an-chip.a{color:#e0902a;border-color:#D4A017}.an-chip.z{color:#ff5a6a;border-color:#d63b4b}
+.an-chip.ok{color:#1fb583;border-color:#1A9E72}.an-chip.b,.an-chip.a{color:#e0902a;border-color:#D4A017}.an-chip.z{color:var(--t2);border-color:#d63b4b;border-style:dashed}
 .an-chips{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
 .pf-an-ctx{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:11px;margin-top:6px;color:var(--t3,#888)}.pf-an-ctx b{color:var(--tx,inherit);font-weight:600}
 .pf-an-al{margin-top:6px;font-size:11.5px;line-height:1.45}.pf-an-al div{padding:1px 0}
@@ -923,7 +923,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 .hm-bd{font-size:11px;padding:1px 8px;border-radius:99px;white-space:nowrap;background:color-mix(in srgb,var(--c,#888) 18%,transparent);border:1px solid color-mix(in srgb,var(--c,#888) 42%,transparent);color:var(--tx)}
 .hm-sem summary{cursor:pointer;color:var(--t3);font-size:11px;padding:8px 0 2px;border-top:1px dashed var(--bd2);margin-top:6px;list-style:none}.hm-sem summary::-webkit-details-marker{display:none}
 .hm-sem summary b{color:var(--t2);font-weight:600}.hm-sem .hm-it{opacity:.75}.hm-k.m{opacity:.7}
-.hm-c{margin:0!important}
+.hm-c{margin:0!important}.hm-slim{padding-top:10px!important;padding-bottom:10px!important}.hm-slim h3{margin:0!important}.hm-it .pb-pop{right:0;left:auto}
 .hm-c h3{font-size:13px;font-weight:700;margin:0 0 8px;display:flex;align-items:center;gap:6px}
 .hm-c h3 .sp{flex:1}
 .hm-it{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--bd2);padding:7px 2px;color:var(--tx);cursor:pointer;font:inherit;font-size:12px}
@@ -960,10 +960,11 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
   </div>
   <div class="ni active" onclick="nav('home')" id="nav-home"><span class="ic">🏠</span><span class="ni-name">Início</span></div>
   <div class="ni" onclick="nav('alunos')" id="nav-alunos"><span class="ic">👥</span><span class="ni-name">Alunos</span><span class="ni-badge" id="nav-alunos-badge" style="display:none"></span></div>
-  <div class="ni" onclick="coletivasModo='coletivas';nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
-  <div class="ni" onclick="personalAbrir()" id="nav-personal"><span class="ic">🏋️</span><span class="ni-name">Personal</span></div>
   <div class="ni" onclick="treinoToggle()" id="nav-treino"><span class="ic">📅</span><span class="ni-name">Treino</span><span class="car">▾</span></div>
   <div id="treino-grp"><div id="semanas-nav"></div></div>
+  <div class="sn">Serviços</div>
+  <div class="ni" onclick="coletivasModo='coletivas';nav('coletivas')" id="nav-coletivas"><span class="ic">🤸</span><span class="ni-name">Aulas Coletivas</span></div>
+  <div class="ni" onclick="personalAbrir()" id="nav-personal"><span class="ic">🏋️</span><span class="ni-name">Personal</span></div>
   <div class="ni" onclick="nav('config')" id="nav-config"><span class="ic">⚙️</span><span class="ni-name">Configuração</span></div>
   <div class="sep"></div>
   <div class="sn">Biblioteca</div>
@@ -2592,7 +2593,7 @@ function pbarHTML(sid,did,mode){
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=mode==='dia'?s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join(''):'';
   const _di=pbDestInfo();
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}">${sems}${dias}${mode==='dia'?`<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button>`:''}<span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button>${mode==='kb'?'':`<button class="pb-btn" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button>`}<button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button><details class="pb-more"><summary class="pb-btn" title="Mais opções">⋯</summary><div class="pb-pop"><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button></div></details>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn dest${_di.k==='novo'?' vazio':''}" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${_di.k==='novo'?'👤 Escolher destino':escAttr(_di.txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${_di.acao}${_pbDirty?' ●':''}</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}">${sems}${dias}${mode==='dia'?`<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button>`:''}<span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button>${mode==='kb'?'':`<button class="pb-btn" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button>`}<details class="pb-more"><summary class="pb-btn" title="Mais opções">⋯</summary><div class="pb-pop"><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button></div></details>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn dest${_di.k==='novo'?' vazio':''}" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${_di.k==='novo'?'👤 Escolher destino':escAttr(_di.txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${_di.acao}${_pbDirty?' ●':''}</button></div>`;
 }
 function pbProximaFase(){
   if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
@@ -4193,7 +4194,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v67.3 · 21/11';
+var MOVH_VER = 'v68.0 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4312,7 +4313,7 @@ function homeVencerHTML(at){
   const linhas=L.map(x=>{
     const n=(x.a.nome||'Aluno').split(' ');const nm=n[0]+(n[1]?' '+n[1]:'');
     const prim=x.tem?b('bp','🗂️ Editar próxima fase','' + x.a.id,'prox','Abre a próxima fase do treino no Quadro'):b('bp','✨ Próxima fase','' + x.a.id,'prox','Gera o rascunho da próxima fase (inativo) e abre no Quadro');
-    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':'')+'</span><span class="t" style="display:flex;gap:6px">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰</span></span></div>';
+    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':'')+'</span><span class="t" style="display:flex;gap:6px;align-items:center">'+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰 Cobrar</span><details class="pb-more" onclick="event.stopPropagation()"><summary class="btn bs" style="font-size:10.5px;padding:4px 9px" title="Mais">⋯</summary><div class="pb-pop">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+'</div></details></span></div>';
   }).join('');
   return linhas;
 }
@@ -4388,7 +4389,9 @@ function homeRender(){
   const cAc = '<section class="card hm-c"><h3>🔔 Alunos recentes <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + gr.length + '</small></h3>' + (gr.length ? '<div class="hm-fl">' + homeFeedHTML(gr) + '</div>' : '<div class="hm-vz">Sem atividade nos últimos dias.</div>') + '</section>';
   const fix = (notasCache || []).filter(n => n.fixada).slice(0, 5);
   const cNo = '<section class="card hm-c"><h3>📝 Notas fixadas <span class="sp"></span>' + notasBtn('geral', '', 'Geral') + '</h3>' + (!notasOk ? '<div class="hm-vz">⚠️ Falta rodar o SQL de Notas (Configuração › Geral › Copiar SQL das policies RLS).</div>' : (fix.length ? fix.map(n => '<button type="button" class="hm-it" data-i="' + escAttr(n.id) + '" onclick="notasAbrirNota(this.dataset.i)"><span style="width:4px;align-self:stretch;border-radius:3px;background:' + (n.cor || 'var(--bd)') + '"></span><span><b>' + escAttr(n.titulo || '') + '</b> ' + escAttr(String(n.texto || '').split('\n')[0].slice(0, 80)) + '</span></button>').join('') : '<div class="hm-vz">Fixe uma nota (📌) para ela aparecer aqui.</div>')) + '</section>';
-  G.innerHTML = '<div class="hm-col">' + cAc + cAg + '</div><div class="hm-col">' + cAt + cDem + cNo + '</div>';
+  const slim = (h, t) => '<section class="card hm-c hm-slim"><h3>' + h + ' <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + t + '</small></h3></section>';
+  const cAcF = gr.length ? cAc : slim('🔔 Alunos recentes', 'sem atividade'), cAgF = (cAg.split('Nada programado.').length === 3) ? slim('🗓️ Agenda', 'nada hoje nem amanhã') : cAg;
+  G.innerHTML = '<div class="hm-col">' + cAt + cAgF + cAcF + '</div><div class="hm-col">' + cDem + cNo + '</div>';
 }
 
 // ── Notas (por contexto: geral, aluno, dia, exercício) + atalho para o Google Keep ──
@@ -4865,7 +4868,7 @@ function renderKanbanSemanaUm(sid){
     ${pbarHTML(sid,'','kb')}
     <div class="pg-head">
       <div class="kb-ttl"><span class="pg-title">🗂️ ${escAttr(sem.nome)}</span><span class="kb-resumo">${escAttr(((kbAnaliseDados(sem).ctx||[]).find(r=>r[0]==='Treino')||[])[1]||'')}</span></div>
-      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbCopiarParaDocs('${sid}')" title="Copia a semana como tabela colorida para colar no Google Docs">📄 Copiar p/ Docs</button><button class="btn bs" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div>
+      <div style="display:flex;gap:6px;flex-shrink:0"><button class="btn bs kb-foco-btn" style="font-size:11px;padding:6px 12px" onclick="kbToggleFoco()" title="Esconde o menu lateral para caber mais colunas (só neste Quadro)">⛶ Foco</button><details class="pb-more"><summary class="btn bs" style="font-size:11px;padding:6px 12px" title="Mais ações da fase">⋯</summary><div class="pb-pop"><button class="pb-btn" style="justify-content:flex-start" onclick="mbAbrirColarTreino('${sid}')" title="Cola um treino em texto (Treino A / nome do exercício / 3x reps) e ele vira dias novos automaticamente">📋 Colar treino</button><button class="pb-btn" style="justify-content:flex-start" onclick="mbCopiarParaDocs('${sid}')" title="Copia a semana como tabela colorida para colar no Google Docs">📄 Copiar p/ Docs</button><button class="pb-btn" style="justify-content:flex-start" onclick="mbModeloChegada('${sid}')" title="Adiciona o dia 'Treino de chegada': mobilidade, 1 exercício por padrão de movimento e 8 min leves. Semana 1 = repetir; a carga sobe a partir da semana 2">🆕 Treino de chegada</button></div></details></div>
     </div>
     ${kbDadosHTML()}
     <div id="kb-analise-wrap">${kbAnaliseHTML(sem)}</div>
@@ -10153,6 +10156,7 @@ function renderPainelAlunos() {
     }
 
     const fimAv = mbFimAvisos(a);
+    if (fimAv.some(f => f.k === 'acesso')) acessoBadge = ''; // o aviso de fim do acesso já cobre o "Vence em Xd"
     const fimBadges = fimAv.map(f => `<span class="al-fim ${f.n === 3 ? 'r' : 'o'}" title="${f.k === 'acesso' ? 'Fim do acesso' : 'Fim previsto do treino'}">${f.k === 'acesso' ? '⏰' : '🏁'} ${escAttr(mbFimTxt(f))}</span>`).join('');
     const fimNivel = fimAv.some(f => f.n === 3) ? ' al-lv-r' : (fimAv.length ? ' al-lv-o' : '');
     // Linha do protocolo
@@ -10202,7 +10206,7 @@ function renderPainelAlunos() {
       ? 'Exercício(s): ' + alertaDor.ultimo.dor_exercicios.join(', ') + (alertaDor.ultimo.dor_obs ? ' — ' + alertaDor.ultimo.dor_obs : '')
       : (alertaDor ? (alertaDor.ultimo.dor_obs || 'sem detalhes') : '');
     const alertaDorBadge = alertaDor
-      ? `<span style="font-size:9px;background:#D64545;color:#fff;padding:2px 8px;border-radius:99px;font-weight:800" title="${escAttr(dorExsTxt)}">⚠️ Dor relatada${alertaDor.total>1?' ('+alertaDor.total+'x)':''} — RPE ${alertaDor.ultimo.rpe}</span>`
+      ? `<span style="font-size:9px;background:#D64545;color:#fff;padding:2px 8px;border-radius:99px;font-weight:800" title="${escAttr(dorExsTxt)}">⚠️ Dor relatada${alertaDor.total>1?' ('+alertaDor.total+'x)':''} ${alertaDor.ultimo.rpe!=null&&alertaDor.ultimo.rpe!==''?' — RPE '+alertaDor.ultimo.rpe:''}</span>`
       : '';
 
     // Badge de cargas/reps registradas nos últimos 30 dias — clicável, abre
@@ -10232,13 +10236,12 @@ function renderPainelAlunos() {
            style="font-size:11px;padding:4px 10px;color:var(--G);border-color:var(--G)">↩ Restaurar</button>
          <button class="btn" title="Excluir permanentemente" data-id="${a.id}" onclick="mbExcluirDefinitivo(this.dataset.id)"
            style="font-size:11px;padding:4px 10px;background:#FCEBEB;color:#c03030;border-color:#f0b0b0">✕ Excluir</button>`
-      : `${btnsProto}<button type="button" class="btn bs" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="font-size:10px;padding:3px 8px;white-space:nowrap;width:auto;flex:none">🧭 Caminho</button><button type="button" class="btn bs" onclick="mbMapaDoAluno('${a.id}')" title="Abre o Mapa da última avaliação confirmada deste aluno" style="font-size:10px;padding:3px 8px;white-space:nowrap;width:auto;flex:none">🗺️ Mapa</button><button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
+      : `${proto ? `<button type="button" class="bsm" title="Editar este treino no Quadro" data-id="${a.id}" onclick="mbEditarNoQuadro(this.dataset.id)" style="font-size:14px">🗂️</button>` : ''}<button type="button" class="bsm al-gear" title="Detalhes · acesso · pedidos · testes" onclick="this.closest('.aluno-row').classList.toggle('al-open')" style="font-size:14px;color:var(--t2)">⚙️</button>
          <label class="toggle-sw" title="${bloqueado?'Liberar acesso':'Bloquear acesso'}" style="margin-right:2px">
            <input type="checkbox" ${bloqueado?'':'checked'} data-id="${a.id}" onchange="mbToggleAlunoAtivo(this.dataset.id,this.checked)"/>
            <span class="toggle-sw-slider"></span>
          </label>
-         <button class="bsm" title="Mover para lixeira" data-id="${a.id}" onclick="mbMoverLixeira(this.dataset.id)"
-           style="color:var(--t3);font-size:14px" >🗑</button>`;
+         <details class="pb-more"><summary class="bsm" title="Mais ações" style="font-size:14px;color:var(--t2);cursor:pointer">⋯</summary><div class="pb-pop">${proto ? `<button type="button" class="pb-btn" data-id="${a.id}" onclick="mbPreviaAluno(this.dataset.id)" style="justify-content:flex-start">📱 Ver como o aluno vê</button>` : ''}<button type="button" class="pb-btn" data-caminho-mini="${a.id}" onclick="mbCaminhoToggle('${a.id}')" title="Ligar/desligar o Caminho (Mapa) no app deste aluno" style="justify-content:flex-start">🧭 Caminho</button><button type="button" class="pb-btn" onclick="mbMapaDoAluno('${a.id}')" title="Abre o Mapa da última avaliação confirmada deste aluno" style="justify-content:flex-start">🗺️ Mapa</button><button type="button" class="pb-btn" data-id="${a.id}" onclick="mbMoverLixeira(this.dataset.id)" style="justify-content:flex-start;color:#E5646E">🗑 Mover para a lixeira</button></div></details>`;
 
     // WhatsApp do aluno: coluna do aluno (se existir) ou resposta da anamnese
     const waTxt = String(a.whatsapp || (anamnese && anamnese.respostas && anamnese.respostas.whatsapp) || '').trim();
