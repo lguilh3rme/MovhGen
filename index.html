@@ -4193,7 +4193,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v67.2 · 21/11';
+var MOVH_VER = 'v67.3 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -13882,7 +13882,7 @@ function exportarComLogin(){
   const out = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<link rel="preconnect" href="https://www.youtube-nocookie.com"><link rel="preconnect" href="https://i.ytimg.com"><link rel="dns-prefetch" href="https://www.google.com">
+<link rel="preconnect" href="https://www.youtube-nocookie.com"><link rel="preconnect" href="https://www.youtube.com"><link rel="preconnect" href="https://i.ytimg.com"><link rel="dns-prefetch" href="https://www.google.com">
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>MOVH — Meu Treino</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -13890,8 +13890,8 @@ function exportarComLogin(){
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
-:root{--P:#7C74DC;--Pl:#EEEDFE;--Pd:#3A3290;--G:#1A9E72;--Gl:#E0F5EE;--Gd:#085040;--bg:#F2F1EE;--card:#FFF;--tx:#1A1A18;--t2:#666;--t3:#999;--bd:#DDDBD4;--r:10px;--rs:6px;--font-d:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;--font-b:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
-[data-theme=dark]{--bg:#111110;--card:#1C1C1A;--tx:#F0EDE8;--t2:#A0A09A;--t3:#555;--bd:#2A2A27;--Pl:#1E1C3A;--Pd:#B0AAF8;--Gl:#0F2A22}
+:root{--P:#7C74DC;--Pl:#EEEDFE;--Pd:#3A3290;--G:#1A9E72;--Gl:#E0F5EE;--Gd:#085040;--bg:#F2F1EE;--card:#FFF;--tx:#1A1A18;--t2:#666;--t3:#6B6A66;--bd:#DDDBD4;--r:10px;--rs:6px;--font-d:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;--font-b:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+[data-theme=dark]{--bg:#111110;--card:#1C1C1A;--tx:#F0EDE8;--t2:#A0A09A;--t3:#8E8E8A;--bd:#2A2A27;--Pl:#1E1C3A;--Pd:#B0AAF8;--Gl:#0F2A22}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-b);background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .wrap{max-width:800px;margin:0 auto;padding:3.25rem 1rem 3rem}
@@ -17083,11 +17083,14 @@ function aAbrirVideoModal(src, sh){
   var vw = document.getElementById('a-video-wrap'), vf = document.getElementById('a-video-iframe');
   if (vw) vw.style.width = sh ? 'min(92vw,calc(82vh * 9 / 16))' : 'min(92vw,840px)';
   if (vf) vf.style.aspectRatio = sh ? '9/16' : '16/9';
+  var yid=String(src).match(/embed\\/([^?&\\/]+)/), yl=document.getElementById('a-video-yt'); if(yl) yl.href = yid ? 'https://www.youtube.com/watch?v='+yid[1] : String(src);
   document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1&playsinline=1&modestbranding=1';
+  clearTimeout(window._avT); window._avT=setTimeout(function(){ var l=document.getElementById('a-video-load'); if(l && l.style.display!=='none') l.textContent='⏳ Está demorando… toque em “Abrir no YouTube” abaixo.'; },9000);
   m.style.display='flex';
   document.body.style.overflow='hidden';
 }
 function aFecharVideoModal(){
+  clearTimeout(window._avT);
   document.getElementById('a-video-iframe').src='';
   document.getElementById('a-video-modal').style.display='none';
   document.body.style.overflow='';
@@ -19246,7 +19249,8 @@ aBoot();
   <div id="a-video-wrap" onclick="event.stopPropagation()" style="width:min(92vw,840px);position:relative">
     <button onclick="aFecharVideoModal()" style="position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:28px;line-height:1;cursor:pointer">&#x2715;</button>
     <div id="a-video-load" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;pointer-events:none">⏳ Carregando vídeo…</div>
-    <iframe id="a-video-iframe" src="" onload="var l=document.getElementById('a-video-load');if(l&&this.getAttribute('src'))l.style.display='none'" style="position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block;background:#000" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+    <iframe id="a-video-iframe" referrerpolicy="strict-origin-when-cross-origin" src="" onload="var l=document.getElementById('a-video-load');if(l&&this.getAttribute('src'))l.style.display='none'" style="position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block;background:#000" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+    <div style="margin-top:10px;text-align:center"><a id="a-video-yt" href="#" target="_blank" rel="noopener" style="display:inline-block;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.92);color:#111;font-weight:700;font-size:13px;text-decoration:none">▶ Não carregou? Abrir no YouTube</a></div>
   </div>
 </div>
 <div id="a-teste-modal" onclick="aFecharTesteModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:16px">
