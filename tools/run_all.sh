@@ -40,6 +40,7 @@ chk estados_proto 10 0 python3 $T/estados_proto.py $R/index.html
 chk pix_link 1 0 python3 $T/pix_link.py $R/index.html
 chk fila_recolhida 3 0 python3 $T/fila_recolhida.py $R/index.html
 chk visual_v67 15 0 python3 $T/visual_v67.py $R/index.html
+chk comparar_fases 5 0 python3 $T/comparar_fases.py $R/index.html
 chk publicar_data 5 0 python3 $T/publicar_data.py $R/index.html
 chk app_header 2 0 python3 $T/app_header.py $X/app/app.html
 chk app_personal 3 0 python3 $T/app_personal.py $X/app/app.html
