@@ -14,7 +14,7 @@
   --A:#3580D8;--Al:#E5F0FB;--Ad:#0C4478;
   --O:#D45828;--Ol:#FAECE6;--Od:#701B10;
   --bg:#F2F1EE;--sb:#161614;--card:#FFF;
-  --tx:#1A1A18;--t2:#666;--t3:#999;
+  --tx:#1A1A18;--t2:#666;--t3:#6B6A66;
   --bd:#DDDBD4;--bd2:#ECEAE3;
   --ip:#FFF;--cl:#F0EEE8;
   --r:10px;--rs:6px;
@@ -24,7 +24,7 @@
 }
 [data-theme=dark]{
   --bg:#111110;--sb:#0B0B0A;--card:#1C1C1A;
-  --tx:#F0EDE8;--t2:#A0A09A;--t3:#555;
+  --tx:#F0EDE8;--t2:#A0A09A;--t3:#8E8E8A;
   --bd:#2A2A27;--bd2:#222220;--ip:#232320;--cl:#1A1A18;
   --Pl:#1E1C3A;--Pd:#B0AAF8;--Gl:#0D2620;--Gd:#4DCBA0;
   --Al:#0D1E30;--Ad:#70AEE8;--Ol:#2A1208;--Od:#F08060;
@@ -851,8 +851,8 @@ body.clean .aluno-row .al-fim{box-shadow:none!important;opacity:1}
 .al-g-i i{font-style:normal;font-size:10px;color:var(--t3);font-variant-numeric:tabular-nums;margin-left:1px}
 /* ══ v59: visual Rubro-Negro translúcido, barra superior, Início, Notas, abas da Configuração ══ */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-body.rn{--P:#E11D2E;--Pl:rgba(225,29,46,.14);--Pd:#FF6B77;--bg:#09090A;--sb:rgba(10,10,12,.55);--card:rgba(255,255,255,.045);--tx:#F4F4F5;--t2:#A8A8B0;--t3:#74747E;--bd:rgba(255,255,255,.09);--bd2:rgba(255,255,255,.06);--ip:rgba(255,255,255,.05);--cl:rgba(255,255,255,.06);--font-b:'Poppins','Inter',sans-serif;--font-d:'Poppins','Plus Jakarta Sans',sans-serif}
-html:not([data-theme=dark]) body.rn{--bg:#F6F2F2;--sb:rgba(255,255,255,.62);--card:rgba(255,255,255,.7);--tx:#1B1416;--t2:#5E5559;--t3:#978E92;--bd:rgba(40,10,16,.11);--bd2:rgba(40,10,16,.06);--ip:rgba(255,255,255,.85);--cl:rgba(40,10,16,.05);--Pd:#B3121F;--Pl:rgba(225,29,46,.10)}
+body.rn{--P:#E11D2E;--Pl:rgba(225,29,46,.14);--Pd:#FF6B77;--bg:#09090A;--sb:rgba(10,10,12,.55);--card:rgba(255,255,255,.045);--tx:#F4F4F5;--t2:#A8A8B0;--t3:#80808A;--bd:rgba(255,255,255,.09);--bd2:rgba(255,255,255,.06);--ip:rgba(255,255,255,.05);--cl:rgba(255,255,255,.06);--font-b:'Poppins','Inter',sans-serif;--font-d:'Poppins','Plus Jakarta Sans',sans-serif}
+html:not([data-theme=dark]) body.rn{--bg:#F6F2F2;--sb:rgba(255,255,255,.62);--card:rgba(255,255,255,.7);--tx:#1B1416;--t2:#5E5559;--t3:#6E666A;--bd:rgba(40,10,16,.11);--bd2:rgba(40,10,16,.06);--ip:rgba(255,255,255,.85);--cl:rgba(40,10,16,.05);--Pd:#B3121F;--Pl:rgba(225,29,46,.10)}
 body.rn{background:radial-gradient(1000px 520px at 6% -10%,rgba(225,29,46,.20),transparent 62%),radial-gradient(800px 600px at 105% 8%,rgba(255,255,255,.05),transparent 60%),radial-gradient(700px 500px at 60% 125%,rgba(225,29,46,.10),transparent 60%),var(--bg)!important;background-attachment:fixed!important}
 html:not([data-theme=dark]) body.rn{background:radial-gradient(900px 480px at 6% -10%,rgba(225,29,46,.12),transparent 62%),var(--bg)!important;background-attachment:fixed!important}
 body.rn .main,body.clean.rn .main{background:transparent!important}
@@ -1398,7 +1398,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
       </div>
       <div class="btn-row">
         <button class="btn bp" onclick="plExportarLanding()">⬇️ Exportar Landing Page</button>
-        <button class="btn" style="background:#0ea5e9;color:#fff" onclick="plSincronizarLanding()">☁️ Publicar na Landing</button>
+        <button class="btn" style="background:#0369A1;color:#fff" onclick="plSincronizarLanding()">☁️ Publicar na Landing</button>
       </div>
       <div style="font-size:10px;color:var(--t3);margin-top:8px" id="pl-sync-status"></div>
       <div style="font-size:10px;color:var(--t3);margin-top:4px">Seu rascunho (planos, protocolos e textos) é salvo automaticamente e fica disponível em qualquer computador que você logar. Este botão publica essas mudanças na página pública.</div>
@@ -4190,11 +4190,11 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v67.0 · 20/11';
+var MOVH_VER = 'v67.1 · 20/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
-function visualModo(){ let v = 'rn'; try { v = localStorage.getItem('movh-visual2') || 'rn'; } catch(e){} return v; }
+function visualModo(){ return 'rn'; } /* v67.1: Clean e Clássico aposentados (só Rubro-Negro) */
 function visualAplicar(){
   const v = visualModo();
   document.body.classList.toggle('rn', v === 'rn');
@@ -4208,11 +4208,7 @@ function aparenciaRender(){
   const v = visualModo(), dark = document.documentElement.getAttribute('data-theme') === 'dark';
   const op = (ativo, fn, rot, desc) => '<button type="button" class="btn ' + (ativo ? 'bp' : 'bs') + '" style="flex-direction:column;align-items:flex-start;gap:2px;padding:10px 14px;min-width:170px;text-align:left" onclick="' + fn + '"><b style="font-size:12px">' + rot + '</b><span style="font-size:10.5px;font-weight:500;opacity:.8">' + desc + '</span></button>';
   const lang = (document.getElementById('langTogBtn') || {}).textContent || '🇧🇷';
-  box.innerHTML = '<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px">🎨 Visual</div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
-    op(v === 'rn', "visualSet('rn')", 'Rubro-Negro translúcido', 'Vidro, vermelho e Poppins (padrão)') +
-    op(v === 'clean', "visualSet('clean')", 'Clean', 'Visual anterior, roxo e minimalista') +
-    op(v === 'classico', "visualSet('classico')", 'Clássico', 'Layout mais denso, sem vidro') + '</div></div>' +
-    '<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px">🌗 Tema</div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+  box.innerHTML = '<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px">🌗 Tema</div><div style="display:flex;gap:8px;flex-wrap:wrap">' +
     op(dark, "temaSet('dark')", '🌙 Escuro', 'Recomendado para o Rubro-Negro') + op(!dark, "temaSet('light')", '☀️ Claro', 'Fundo claro, vidro branco') + '</div></div>' +
     '<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:10px">🌐 Idioma dos exercícios</div><button type="button" class="btn bs" onclick="mbToggleLang();setTimeout(aparenciaRender,200)">' + lang + ' Alternar idioma</button></div>' +
     '<div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:6px">ℹ️ Versão</div><div style="font-size:12px;color:var(--t2)">' + MOVH_VER + ' · se esta versão não aparece no menu, atualize com Ctrl+F5</div></div>';
