@@ -4268,7 +4268,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.1 · 21/11';
+var MOVH_VER = 'v68.2 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4377,7 +4377,7 @@ function homeVencerLista(at){
     const f=mbFimAvisos(a).find(x=>x.k==='treino'&&x.n===3);if(!f)return;
     const p=a.protocoloAtivo,c=p&&(p._conteudo||p.conteudo)||{},ss=c.semanas||[];
     const ds=faseDatasDe(ss,p&&p.data_inicio),cur=ss.length?faseIdxHoje(ds):0;
-    L.push({a:a,f:f,cur:cur,tem:cur<ss.length-1,nome:(ss[cur]&&ss[cur].nome)||'',prox:(ss[cur+1]&&ss[cur+1].nome)||''});
+    L.push({a:a,f:f,cur:cur,rasc:(cur<ss.length-1)?null:mbRascunhoDe(a),tem:cur<ss.length-1,nome:(ss[cur]&&ss[cur].nome)||'',prox:(ss[cur+1]&&ss[cur+1].nome)||''});
   });
   return L.sort((x,y)=>x.f.d-y.f.d);
 }
@@ -4386,15 +4386,19 @@ function homeVencerHTML(at){
   const b=(cls,txt,aid,modo,tt)=>'<button type="button" class="btn '+cls+'" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(aid)+'" data-m="'+modo+'" onclick="event.stopPropagation();homeAbrirFase(this.dataset.id,this.dataset.m)" title="'+escAttr(tt)+'">'+txt+'</button>';
   const linhas=L.map(x=>{
     const n=(x.a.nome||'Aluno').split(' ');const nm=n[0]+(n[1]?' '+n[1]:'');
-    const prim=x.tem?b('bp','🗂️ Editar próxima fase','' + x.a.id,'prox','Abre a próxima fase do treino no Quadro'):b('bp','✨ Próxima fase','' + x.a.id,'prox','Gera o rascunho da próxima fase (inativo) e abre no Quadro');
-    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':'')+'</span><span class="t" style="display:flex;gap:6px;align-items:center">'+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰 Cobrar</span><details class="pb-more" onclick="event.stopPropagation()"><summary class="btn bs" style="font-size:10.5px;padding:4px 9px" title="Mais">⋯</summary><div class="pb-pop">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+'</div></details></span></div>';
+    const prim=x.tem?b('bp','🗂️ Editar próxima fase','' + x.a.id,'prox','Abre a próxima fase do treino no Quadro'):x.rasc?(b('bp','📝 Revisar rascunho','' + x.a.id,'rasc','Abre o rascunho pronto no Quadro já comparando com o treino ativo')):b('bp','✨ Próxima fase','' + x.a.id,'prox','Gera o rascunho da próxima fase (inativo) e abre no Quadro');
+    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.rasc?'<br><small style="color:#1fb583">rascunho pronto: '+escAttr(x.rasc.nome||'próxima fase')+'</small>':(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':''))+'</span><span class="t" style="display:flex;gap:6px;align-items:center">'+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰 Cobrar</span><details class="pb-more" onclick="event.stopPropagation()"><summary class="btn bs" style="font-size:10.5px;padding:4px 9px" title="Mais">⋯</summary><div class="pb-pop">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+'</div></details></span></div>';
   }).join('');
   return linhas;
 }
 async function homeAbrirFase(alunoId,modo){
   if(!(await mbCarregarProtoAluno(alunoId)))return;
   const idx=faseIdxHoje(kbFaseDatas());
-  if(modo==='prox'){
+  if(modo==='rasc'){
+    const a=(mbPainelAlunos||[]).find(z=>String(z.id)===String(alunoId)),r=a&&mbRascunhoDe(a);
+    if(r){await mbAbrirProtoNoQuadro(r.id,alunoId);try{cmpAbrir();}catch(e){}return;}
+  }
+  if(modo==='prox'||modo==='rasc'){
     if(semanas[idx+1]){nav('kb-'+semanas[idx+1].id);notify('Próxima fase aberta no Quadro. Edite e use 💾 Atualizar aluno / 💾 Salvar fase.');return;}
     mbSugerirProximaFase(String(mbProtoCarregadoId),alunoId);return;
   }
@@ -12771,6 +12775,39 @@ function pfCondAplicar(dias, nivel, semP){
 }
 // ==/PF_COND==
 
+// ── Próxima fase que PROGRIDE (v68.2): Base→Construção→Consolidação; principais +1 série e faixa mais pesada, acessórios sobem reps; troca de variante pela ESCADA (aplicada, editável) ──
+function pfRange(sr, dLo, dHi){ const m = String(sr||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)\s*(?:-|a)\s*(\d+)$/i); if (!m) return null; return { n: +m[1], a: +m[2] + dLo, b: +m[3] + dHi, a0: +m[2], b0: +m[3] }; }
+function pfFaseProx(vig){ const t = String((vig && (vig.fase || vig.nome)) || '').toLowerCase(); return /consolida/.test(t) ? 'construcao' : /constru|intens/.test(t) ? 'consolidacao' : 'construcao'; }
+function pfProgredir(sem, vig, ctx){
+  const out = [], prox = pfFaseProx(vig);
+  sem.fase = prox; sem.nome = prox === 'consolidacao' ? 'Consolidação' : 'Construção'; sem.duracaoSemanas = prox === 'consolidacao' ? 4 : 8;
+  if (prox === 'consolidacao') { out.push({ t:'ok', x:'Consolidação (4 sem): mantém exercícios e prescrição; o foco é subir carga e fazer os testes. Sem troca de variante (regra da escada).' }); return out; }
+  let nM = 0, nA = 0;
+  sem.dias.forEach(d => (d.blocos || []).forEach(b => { if (b.id !== 'pri') return; (b.exercicios || []).forEach(e => {
+    const main = PF_COMPOSTO.test(e.nome || '') && !/panturrilha/i.test(e.nome || '');
+    if (main) { const r = pfRange(e.series, -2, -2); if (r && r.a >= 6 && r.n < 5) { e.series = Math.min(4, r.n + 1) + '×' + r.a + '-' + r.b; e.rest = "2'"; nM++; } }
+    else { const r = pfRange(e.series, 2, 3); if (r && r.a0 < 12 && r.b0 < 15) { e.series = r.n + '×' + r.a + '-' + Math.min(15, r.b); nA++; } }
+  }); }));
+  out.push({ t:'ok', x:'Progressão: ' + nM + ' principal(is) com +1 série (até 4) e faixa mais pesada (−2 reps) · ' + nA + ' acessório(s) com +2/+3 reps (até 15). Fase ' + (ctx.ciclo2 ? 'Construção do Ciclo 2' : 'Construção') + ' · 8 sem.' });
+  if (ctx.dor) { out.push({ t:'av', x:'Dor ativa nos últimos ' + PF_COND.dorDias + ' dias: NENHUMA troca de variante aplicada (regra: desce/mantém com dor).' }); return out; }
+  if (ctx.ader != null && ctx.ader < PF_COND.aderMantem) { out.push({ t:'av', x:'Aderência ' + ctx.ader + '% (<' + PF_COND.aderMantem + '%): sem troca de variante nesta fase.' }); return out; }
+  const sobe = ctx.sobe || [], WL = ['joelho','quadril','isquio','gluteo','emp_h','emp_v','puxar_v','puxar_h'], usados = {}, todos = [];
+  sem.dias.forEach(d => (d.blocos || []).forEach(b => (b.exercicios || []).forEach(e => todos.push(e.nome))));
+  let n = 0;
+  sem.dias.forEach(d => {
+    if (n >= 3) return;
+    const cand = [];
+    (d.blocos || []).forEach(b => { if (b.id !== 'pri') return; (b.exercicios || []).forEach(e => { const i = escadaInfo(e.nome); if (!i || WL.indexOf(i.padrao) < 0 || usados[i.padrao]) return; if (ctx.joelho && i.padrao === 'joelho') return; if (!(i.nivel === 1 || (i.nivel === 2 && sobe.indexOf(i.padrao) >= 0))) return; cand.push({ e: e, i: i }); }); });
+    cand.sort((x, y) => (sobe.indexOf(y.i.padrao) >= 0) - (sobe.indexOf(x.i.padrao) >= 0) || x.i.nivel - y.i.nivel);
+    const c = cand[0]; if (!c) return;
+    const g = escadaSugestao(c.e.nome, todos); if (!g || g.nivelPara > (sobe.indexOf(c.i.padrao) >= 0 ? 3 : 2)) return;
+    const de = c.e.nome; c.e.nome = g.para; c.e.url = ''; c.e._troca = de; c.e.obs = (c.e.obs ? c.e.obs + ' · ' : '') + 'Troca de variante: ' + de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ')';
+    todos.push(g.para); usados[c.i.padrao] = 1; n++;
+    out.push({ t:'ok', x:'Escada (' + g.padrao + ') · ' + (d.nome || 'dia') + ': ' + de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ') — aplicado; reduza a carga e reaprenda o padrão' });
+  });
+  if (!n) out.push({ t:'ok', x:'Escada: nenhum principal elegível para subir de degrau agora (mantém as variantes).' });
+  return out;
+}
 async function mbSugerirProximaFase(protoId, alunoId){
   const a = mbPainelAlunos.find(x => x.id === alunoId);
   notify('Montando rascunho…');
@@ -12855,7 +12892,13 @@ async function mbSugerirProximaFase(protoId, alunoId){
     const _t3 = Array.isArray(ts.data) && ts.data[0] && ts.data[0].data ? ts.data[0].data : null;
     const teste3Sem = _t3 ? Math.max(0, Math.floor((_hoje - new Date(_t3+'T00:00:00')) / (7*_dia))) : null;
     const condDec = pfCondDecisao({ ader: aderPct, rpeMed: rpeCond, testeSem: teste3Sem, dor: dorAtiva });
-    const ciclo2 = total >= 12;   // vigente com 12+ semanas = programa completo: o próximo é o Ciclo 2 (sem voltar ao início)
+    const ciclo2 = total >= 12;   // vigente com 12+ semanas
+    try {
+      const _rp = an.data && an.data[0] ? an.data[0].respostas : null, _ob2 = String(_rp && (_rp.objetivo || _rp.objetivos || _rp.meta) || '').toLowerCase();
+      const _k2 = /gl[uú]te/.test(_ob2) ? 'gluteo' : /emagre|perder peso|gordura/.test(_ob2) ? 'emagrecimento' : /defin/.test(_ob2) ? 'definicao' : /bra[cç]o|peito|costas|ombro|superior/.test(_ob2) ? 'superior' : null;
+      pfProgredir(sem, vig, { dor: dorAtiva, ader: aderPct, ciclo2: ciclo2, sobe: _k2 ? HX_ENFASE[_k2].sobe : [], joelho: /joelho/i.test(JSON.stringify(_rp || '')) }).forEach(x => alertas.push(x));
+    } catch (_e2) { alertas.push({ t:'av', x:'Progressão automática falhou: ' + (_e2.message || _e2) }); }
+    // (/ciclo2) = programa completo: o próximo é o Ciclo 2 (sem voltar ao início)
     const condMud = pfCondAplicar(sem.dias, condDec.nivel, ciclo2 ? 9 : undefined);
     if (condMud.length) {
       const rot = { progride:'Corrida: progride', mantem:'Corrida: mantém', recua:'Corrida: recua −20%, sem intensidade' }[condDec.nivel];
@@ -12891,12 +12934,6 @@ async function mbSugerirProximaFase(protoId, alunoId){
         const _E = HX_ENFASE[_k], _todos = [];
         sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => _todos.push(e.nome))));
         alertas.push({ t:'ok', x:'Objetivo lido da anamnese: ' + _E.nome.toLowerCase() + (_E.sobe.length ? ' — sobem primeiro na escada: ' + _E.sobe.join(', ') : ' — mantém o degrau; progride por carga e densidade') });
-        let _n = 0;
-        sem.dias.forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
-          const i = escadaInfo(e.nome); if (!i || _E.sobe.indexOf(i.padrao) < 0 || _n >= 2) return;
-          const g = escadaSugestao(e.nome, _todos); if (!g) return; _n++;
-          alertas.push({ t:'ok', x:'Escada (' + g.padrao + '): ' + g.de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ') se bateu o topo da faixa em 2 sessões, RIR 2+, sem dor. Sugestão: troque à mão.' });
-        }); }));
       }
     } catch (_e) {}
     const hits = resp ? Array.from(new Set((JSON.stringify(resp).match(/joelho|lombar|ombro|coluna|escoliose|h[eé]rnia|tendin\w+|dor\b/gi)||[]).map(x => x.toLowerCase()))) : [];
@@ -12924,12 +12961,12 @@ function pfRender(){
   const col = P.sem.dias.map((d,di) => {
     const pri = pfBlocoPrincipal(d);
     const linhas = (d.blocos||[]).map((b,bi) => b.id === 'con' ? '' : (b.exercicios||[]).map((e,ei) => `
-      <div style="display:flex;gap:4px;align-items:center;padding:4px 5px;margin-bottom:4px;border-radius:6px;border:1px solid ${e._novo?'#1A9E72':'var(--bd,#ddd)'};background:${e._novo?'rgba(26,158,114,.22)':'transparent'}">
+      <div style="display:flex;gap:4px;align-items:center;padding:4px 5px;margin-bottom:4px;border-radius:6px;border:1px solid ${e._novo?'#1A9E72':e._troca?'#3580D8':'var(--bd,#ddd)'};background:${e._novo?'rgba(26,158,114,.22)':e._troca?'rgba(53,128,216,.2)':'transparent'}">
         <input value="${escAttr(e.nome||'')}" oninput="pfSet(${di},${bi},${ei},'nome',this.value)" style="flex:1;min-width:0;font-size:11px;font-weight:600;border:0;background:transparent;color:inherit">
         <input value="${escAttr(e.series||'')}" oninput="pfSet(${di},${bi},${ei},'series',this.value)" style="width:92px;font-size:11px;text-align:center;border:1px solid var(--bd,#ddd);border-radius:4px">
         <input value="${escAttr(e.rest||'')}" oninput="pfSet(${di},${bi},${ei},'rest',this.value)" style="width:46px;font-size:11px;text-align:center;border-radius:4px;border:1px solid ${e._restAlt?'#D4A017':'var(--bd,#ddd)'};${e._restAlt?'background:rgba(212,160,23,.25);color:#f0b429;font-weight:700':''}">
         <button onclick="pfDel(${di},${bi},${ei})" title="Remover" style="border:0;background:none;color:#c03030;cursor:pointer;font-size:13px">×</button>
-        ${e._novo ? '<span style="font-size:8px;font-weight:700;background:#1A9E72;color:#fff;border-radius:99px;padding:1px 5px">novo</span>' : ''}
+        ${e._novo ? '<span style="font-size:8px;font-weight:700;background:#1A9E72;color:#fff;border-radius:99px;padding:1px 5px">novo</span>' : ''}${e._troca ? '<span title="Troca de variante (era: '+escAttr(e._troca)+')" style="font-size:8px;font-weight:700;background:#3580D8;color:#fff;border-radius:99px;padding:1px 5px">troca</span>' : ''}
       </div>`).join('')).join('');
     return `<div style="min-width:270px;flex:1;background:var(--cl,#f5f5f5);border-radius:10px;padding:10px">
       <div style="font-size:12px;font-weight:700">${escAttr(d.nome||('Dia '+(di+1)))}${d.sub?' · '+escAttr(d.sub):''}</div>
