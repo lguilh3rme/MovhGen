@@ -14,7 +14,7 @@ with sync_playwright() as p:
     q=lambda js: pg.evaluate(js)
     ck('Quadro: sem chips de dia nem ＋', q("document.querySelectorAll('.page.active .pbar .pb-chip[data-did]').length")==0 and q("[...document.querySelectorAll('.page.active .pbar .pb-chip')].every(e=>e.textContent.trim()!=='＋')"))
     ck('Quadro: chips de semana A/B', q("document.querySelectorAll('.page.active .pbar .pb-chip[data-sid]').length")>=2)
-    ck('Editor clássico só no menu ⋯', q("document.querySelectorAll('.page.active .pbar > .pb-btn[onclick*=config]').length")==0 and q("document.querySelectorAll('.page.active .pbar .pb-more .pb-pop button').length")==3)
+    ck('Editor clássico só no menu ⋯', q("document.querySelectorAll('.page.active .pbar > .pb-btn[onclick*=config]').length")==0 and q("document.querySelectorAll('.page.active .pbar .pb-more .pb-pop button').length")==4)
     ck('destino neutro e texto novo', q("(()=>{const d=document.querySelector('.page.active .pbar .dest');return d&&d.classList.contains('vazio')&&d.textContent.includes('Escolher destino')})()"))
     ck('Salvar é o último da barra', q("(()=>{const k=document.querySelector('.page.active .pbar').lastElementChild;return k.classList.contains('sv')})()"))
     ck('sem botão Quadro no modo kb', q("[...document.querySelectorAll('.page.active .pbar .pb-btn')].every(e=>e.textContent.trim()!=='🗂️ Quadro')"))

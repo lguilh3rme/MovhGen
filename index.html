@@ -572,6 +572,13 @@ body.dock-open #aluno-dock{display:flex}
 .pb-btn.dest{max-width:170px;overflow:hidden;text-overflow:ellipsis;background:var(--card);color:var(--tx);border-color:var(--bd)}
 .pb-btn.dest.vazio{background:transparent;border-style:dashed;color:var(--t2)}
 .pb-more{position:relative}.pb-more>summary{list-style:none;min-width:34px;text-align:center}.pb-more>summary::-webkit-details-marker{display:none}
+.cmp-ov{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px;overflow:auto}.cmp-box{background:var(--bg);background-image:linear-gradient(var(--card),var(--card));border:1px solid var(--bd);border-radius:16px;width:min(860px,100%);padding:16px 18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.cmp-top{display:flex;justify-content:space-between;align-items:center;font-size:16px;margin-bottom:10px}.cmp-x{cursor:pointer;color:var(--t2);padding:4px 8px}
+.cmp-sel{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}.cmp-sel label{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--t2);flex:1;min-width:180px}.cmp-sel select{padding:7px 9px;border-radius:8px;border:1px solid var(--bd);background:var(--ip);color:var(--tx);font-size:12px}.cmp-sel>span{padding-bottom:8px;color:var(--t3)}.cmp-sel .cmp-ck{flex-direction:row;align-items:center;flex:none;min-width:0;padding-bottom:8px;gap:6px}
+.cmp-res{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}.cmp-n{font-size:12px;font-weight:700;border-radius:99px;padding:3px 10px;border:1px solid var(--bd);color:var(--t2)}.cmp-n.n{color:#1fb583;border-color:#1A9E72}.cmp-n.s{color:#ff6b78;border-color:#d63b4b}.cmp-n.a{color:#e0902a;border-color:#D4A017}
+.cmp-dia{border:1px solid var(--bd2);border-radius:12px;padding:8px 10px;margin-bottom:8px}.cmp-dia h4{margin:0 0 6px;font-size:13px;display:flex;justify-content:space-between;gap:8px}.cmp-dia h4 small{color:var(--t3);font-weight:500}
+.cmp-r{display:grid;grid-template-columns:20px 1fr 110px 18px 110px;gap:6px;align-items:center;font-size:12px;padding:4px 0;border-top:1px solid var(--bd2)}.cmp-r:first-of-type{border-top:0}.cmp-r .v{color:var(--t2)}.cmp-r .ar{color:var(--t3)}.cmp-r.novo .nm{color:#1fb583;font-weight:700}.cmp-r.sai .nm{color:#ff6b78;text-decoration:line-through}.cmp-r.alt .nm{color:#e0902a;font-weight:700}.cmp-r.alt .v:last-child{color:#e0902a}.cmp-r.ig{opacity:.55}
+.cmp-vz{color:var(--t3);font-size:12px;padding:14px 4px}@media(max-width:700px){.cmp-r{grid-template-columns:18px 1fr 80px 14px 80px}.cmp-box{padding:12px}}
 .pb-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:6px;box-shadow:0 10px 28px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:4px;min-width:170px}
 .pb-pop .pb-btn{border-radius:8px;text-align:left}
 .pb-btn.sv.dirty{box-shadow:0 0 0 2px rgba(224,80,40,.35)}
@@ -2593,7 +2600,74 @@ function pbarHTML(sid,did,mode){
   const sems=semanas.length>1?semanas.map(x=>`<button class="pb-chip${x.id===sid?' on':''}" data-sid="${x.id}" onclick="pbGoSem(this.dataset.sid)">${escAttr((x.nome||'').replace(/^Semana\s*/i,'')||'·')}</button>`).join('')+'<span class="pb-sep"></span>':'';
   const dias=mode==='dia'?s.dias.map(d=>`<button class="pb-chip${(mode==='dia'&&d.id===did)?' on':''}" data-did="${d.id}" onclick="nav(this.dataset.did)">${escAttr(d.nome||'Dia')}</button>`).join(''):'';
   const _di=pbDestInfo();
-  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}">${sems}${dias}${mode==='dia'?`<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button>`:''}<span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button>${mode==='kb'?'':`<button class="pb-btn" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button>`}<details class="pb-more"><summary class="pb-btn" title="Mais opções">⋯</summary><div class="pb-pop"><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button></div></details>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn dest${_di.k==='novo'?' vazio':''}" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${_di.k==='novo'?'👤 Escolher destino':escAttr(_di.txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${_di.acao}${_pbDirty?' ●':''}</button></div>`;
+  return `<div class="pbar" data-sid="${sid}" data-did="${did}" data-mode="${mode}">${sems}${dias}${mode==='dia'?`<button class="pb-chip" data-sid="${sid}" onclick="addDia(this.dataset.sid)" title="Adicionar dia">＋</button>`:''}<span class="pb-sp"></span><button class="pb-btn${document.body.classList.contains('sel-mode')?' on':''}" onclick="selModeToggle()" title="Selecionar exercícios ou blocos para alterar em massa">☑ Em massa</button><button class="pb-btn" data-sid="${sid}" onclick="pbCalAbrir(this.dataset.sid)" title="Início, fim previsto e fases do treino do aluno (editável)">📅 Calendário</button>${mode==='kb'?'':`<button class="pb-btn" data-sid="${sid}" onclick="nav('kb-'+this.dataset.sid)">🗂️ Quadro</button>`}<details class="pb-more"><summary class="pb-btn" title="Mais opções">⋯</summary><div class="pb-pop"><button class="pb-btn" onclick="cmpAbrir()" title="Compara duas fases: o que entrou, saiu ou mudou (inclui o treino ativo do aluno)">🔍 Comparar fases</button><button class="pb-btn${mode==='kbg'?' on':''}" onclick="nav('kb-geral')" title="Todas as fases empilhadas de cima pra baixo, para comparar e ajustar">🧮 Quadro geral</button><button class="pb-btn${document.body.classList.contains('dock-open')?' on':''}" onclick="toggleDock()">📱 Como aluno</button><button class="pb-btn" onclick="nav('config')" title="Editor clássico (Configuração)">⚙️ Editor clássico</button></div></details>${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId)?(_mbProtoAtivo?'<span class="pb-badge pb-ativo">🟢 No app'+(mbProtoDataInicio?' · '+mbPeriodoTxt(mbProtoDataInicio,{fimPrevisto:mbProtoFim,semanas:semanas}):'')+'</span>':mbBadgeProto(_mbProtoEstado, mbProtoDataInicio)+'<button class="pb-btn pf-prox" onclick="mbPublicarCarregado()" title="O aluno passa a ver este treino no app (o atual vai para o histórico)">🚀 Publicar para o aluno</button>'):''}${(typeof mbProtoCarregadoId!=='undefined'&&mbProtoCarregadoId&&_mbProtoAtivo&&typeof mbAlunoSelecionadoId!=='undefined'&&mbAlunoSelecionadoId)?'<button class="pb-btn pf-prox" onclick="pbProximaFase()" title="Gera um rascunho INATIVO da próxima fase a partir do treino ativo salvo">✨ Próxima fase</button>':''}<button class="pb-btn dest${_di.k==='novo'?' vazio':''}" onclick="pbSalvarComo()" title="Onde este treino será salvo — toque para trocar">${_di.k==='novo'?'👤 Escolher destino':escAttr(_di.txt)} ▾</button><button class="pb-btn sv${_pbDirty?' dirty':''}" onclick="pbSalvar()" title="Grava no destino indicado ao lado">${_di.acao}${_pbDirty?' ●':''}</button></div>`;
+}
+// ── Comparar fases (Quadro ⋯): diff de exercícios entre duas fases (do treino aberto e/ou do treino ATIVO do aluno) ──
+var _cmp = { fontes: [], a: 0, b: 1, todos: false };
+function cmpExs(d){ const o = []; (d.blocos || []).forEach(b => { (b.exercicios || []).forEach(e => { const n = String(e.nome || '').trim(); if (n) o.push({ n: n, k: n.toLowerCase(), s: String(e.series || ''), r: String(e.rest || '') }); }); }); return o; }
+function cmpSeries(s){ const m = String(s || '').match(/^(\d+)\s*[x×]/i); return m ? parseInt(m[1], 10) : 0; }
+function cmpDiff(A, B){
+  const da = (A.dias || []).map(d => ({ d: d, x: cmpExs(d) })), db = (B.dias || []).map(d => ({ d: d, x: cmpExs(d) })), usada = {}, par = [];
+  const nm = d => String(d.nome || '').trim().toLowerCase();
+  db.forEach((y, j) => {
+    let best = -1, bs = 0;
+    da.forEach((x, i) => { if (usada[i]) return; const sc = (nm(x.d) && nm(x.d) === nm(y.d) ? 100 : 0) + y.x.filter(e => x.x.some(f => f.k === e.k)).length; if (sc > bs) { bs = sc; best = i; } });
+    if (best >= 0 && bs >= 2) { usada[best] = 1; par.push({ a: da[best], b: y, j: j }); } else par.push({ a: null, b: y, j: j });
+  });
+  par.forEach(p => { if (!p.a && da[p.j] && !usada[p.j]) { usada[p.j] = 1; p.a = da[p.j]; } });
+  da.forEach((x, i) => { if (!usada[i]) par.push({ a: x, b: null, j: 99 + i }); });
+  let nov = 0, sai = 0, alt = 0, sa = 0, sb = 0;
+  const dias = par.map(p => {
+    const xa = p.a ? p.a.x : [], xb = p.b ? p.b.x : [], rows = [];
+    xb.forEach(e => { const f = xa.find(z => z.k === e.k); if (!f) { nov++; rows.push({ t: 'novo', n: e.n, a: '', b: e.s }); } else if (f.s !== e.s || f.r !== e.r) { alt++; rows.push({ t: 'alt', n: e.n, a: f.s + (f.r ? ' · ' + f.r : ''), b: e.s + (e.r ? ' · ' + e.r : '') }); } else rows.push({ t: 'ig', n: e.n, a: e.s, b: e.s }); });
+    xa.forEach(e => { if (!xb.some(z => z.k === e.k)) { sai++; rows.push({ t: 'sai', n: e.n, a: e.s, b: '' }); } });
+    const s1 = xa.reduce((t, e) => t + cmpSeries(e.s), 0), s2 = xb.reduce((t, e) => t + cmpSeries(e.s), 0); sa += s1; sb += s2;
+    return { na: p.a ? (p.a.d.nome || '') : '', nb: p.b ? (p.b.d.nome || '') : '', s1: s1, s2: s2, rows: rows };
+  });
+  return { dias: dias, nov: nov, sai: sai, alt: alt, sa: sa, sb: sb };
+}
+function cmpHTML(){
+  const fa = _cmp.fontes[_cmp.a], fb = _cmp.fontes[_cmp.b];
+  const opt = sel => _cmp.fontes.map((f, i) => '<option value="' + i + '"' + (i === sel ? ' selected' : '') + '>' + escAttr(f.rot) + '</option>').join('');
+  let h = '<div class="cmp-top"><b>🔍 Comparar fases</b><span class="cmp-x" onclick="cmpFechar()" title="Fechar (Esc)">✕</span></div>';
+  h += '<div class="cmp-sel"><label>Antes<select onchange="cmpSet(\'a\',this.value)">' + opt(_cmp.a) + '</select></label><span>→</span><label>Depois<select onchange="cmpSet(\'b\',this.value)">' + opt(_cmp.b) + '</select></label><label class="cmp-ck"><input type="checkbox" ' + (_cmp.todos ? 'checked' : '') + ' onchange="cmpTodos(this.checked)"> mostrar iguais</label></div>';
+  if (!fa || !fb) return h + '<div class="cmp-vz">Sem fases para comparar.</div>';
+  const R = cmpDiff(fa.sem, fb.sem), ic = { novo: '🟢', sai: '🔴', alt: '🟡', ig: '·' };
+  h += '<div class="cmp-res"><span class="cmp-n n">+' + R.nov + ' novos</span><span class="cmp-n s">−' + R.sai + ' saíram</span><span class="cmp-n a">~' + R.alt + ' alterados</span><span class="cmp-n">séries: ' + R.sa + ' → ' + R.sb + (R.sb !== R.sa ? ' (' + (R.sb > R.sa ? '+' : '') + (R.sb - R.sa) + ')' : '') + '</span></div>';
+  R.dias.forEach(d => {
+    const rows = d.rows.filter(r => _cmp.todos || r.t !== 'ig'); if (!rows.length && d.na && d.nb) return;
+    const tit = d.na && d.nb ? (d.na === d.nb ? d.na : d.na + ' → ' + d.nb) : (d.nb ? d.nb + ' (dia novo)' : d.na + ' (dia removido)');
+    h += '<section class="cmp-dia"><h4>' + escAttr(tit) + '<small>' + d.s1 + ' → ' + d.s2 + ' séries</small></h4>' + rows.map(r => '<div class="cmp-r ' + r.t + '"><span>' + ic[r.t] + '</span><span class="nm">' + escAttr(r.n) + '</span><span class="v">' + escAttr(r.a || '—') + '</span><span class="ar">→</span><span class="v">' + escAttr(r.b || '—') + '</span></div>').join('') + '</section>';
+  });
+  if (!R.nov && !R.sai && !R.alt) h += '<div class="cmp-vz">As duas fases são iguais.</div>';
+  return h;
+}
+function cmpRender(){ const m = document.getElementById('cmp-modal'); if (m) m.querySelector('.cmp-box').innerHTML = cmpHTML(); }
+function cmpSet(k, v){ _cmp[k] = parseInt(v, 10) || 0; cmpRender(); }
+function cmpTodos(v){ _cmp.todos = !!v; cmpRender(); }
+function cmpFechar(){ const m = document.getElementById('cmp-modal'); if (m) m.remove(); document.removeEventListener('keydown', cmpEsc); }
+function cmpEsc(e){ if (e.key === 'Escape') cmpFechar(); }
+async function cmpAbrir(){
+  const nomeAb = (typeof mbProtoCarregadoId !== 'undefined' && mbProtoCarregadoId) ? (_mbProtoAtivo ? 'Ativo' : 'Rascunho') : 'Aberto';
+  const fontes = (semanas || []).map(s => ({ rot: nomeAb + ' · ' + (s.nome || 'Fase'), sem: s, src: 'aberto' }));
+  let ativoIdx = -1;
+  try {
+    if (typeof mbAlunoSelecionadoId !== 'undefined' && mbAlunoSelecionadoId && !(_mbProtoAtivo && mbProtoCarregadoId)) {
+      const { data } = await mbClient.from('protocolos').select('id,nome,data_inicio,conteudo').eq('aluno_id', mbAlunoSelecionadoId).eq('ativo', true).maybeSingle();
+      const ss = data && data.conteudo && data.conteudo.semanas;
+      if (ss && ss.length && String(data.id) !== String(mbProtoCarregadoId)) {
+        let cur = 0; try { cur = Math.min(faseIdxHoje(faseDatasDe(ss, data.data_inicio)), ss.length - 1); } catch (e) {}
+        const ini = fontes.length; ss.forEach(s => fontes.push({ rot: 'Ativo · ' + (s.nome || 'Fase'), sem: s, src: 'ativo' })); ativoIdx = ini + cur;
+      }
+    }
+  } catch (e) {}
+  _cmp.fontes = fontes; _cmp.todos = false;
+  if (ativoIdx >= 0) { _cmp.a = ativoIdx; _cmp.b = Math.min(Math.max(0, fontes.findIndex(f => f.src === 'aberto')), fontes.length - 1); }
+  else { let i = 0; try { i = faseIdxHoje(kbFaseDatas()); } catch (e) {} i = Math.min(Math.max(i, 0), Math.max(fontes.length - 2, 0)); _cmp.a = i; _cmp.b = Math.min(i + 1, fontes.length - 1); }
+  cmpFechar();
+  const m = document.createElement('div'); m.id = 'cmp-modal'; m.className = 'cmp-ov'; m.innerHTML = '<div class="cmp-box"></div>';
+  m.addEventListener('click', e => { if (e.target === m) cmpFechar(); });
+  document.body.appendChild(m); document.addEventListener('keydown', cmpEsc); cmpRender();
 }
 function pbProximaFase(){
   if(typeof _pbDirty!=='undefined'&&_pbDirty&&!confirm('Há alterações não salvas no Quadro. A próxima fase é gerada a partir do treino SALVO no banco. Continuar?'))return;
@@ -4194,7 +4268,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.0 · 21/11';
+var MOVH_VER = 'v68.1 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
