@@ -1,4 +1,4 @@
-"""Gerador: Próxima fase progride (série/faixa, troca de variante pela escada) e Início reconhece rascunho. Uso: python3 tools/tests/proxima_progride.py <index.html>  (6 OK)"""
+"""Gerador: Próxima fase progride (série/faixa, troca de variante pela escada) e Início reconhece rascunho. Uso: python3 tools/tests/proxima_progride.py <index.html>  (9 OK)"""
 import sys, datetime as D
 from playwright.sync_api import sync_playwright
 STUB=open(__file__.replace('proxima_progride.py','gpage.py'),encoding='utf-8').read().split('STUB="""')[1].split('"""')[0]
@@ -24,4 +24,9 @@ with sync_playwright() as p:
     assert not any(e.get('_troca') for d in R2['dias'] for b in d['blocos'] for e in b['exercicios']) and R2['dias'][0]['blocos'][0]['exercicios'][0]['series']=='4×8-10'; print('OK com dor: progride a carga/reps mas não troca variante')
     h1=pg.evaluate(H,[ini,hoje,True]); h0=pg.evaluate(H,[ini,hoje,False])
     assert 'Revisar rascunho' in h1 and 'Próxima fase</button>' not in h1 and '✨ Próxima fase' in h0,(h1[:200],h0[:200]); print('OK Início: com rascunho mostra Revisar rascunho; sem, Próxima fase')
+    D=pg.evaluate(JS2,[SEM,{'dor':False,'ader':90,'sobe':[],'joelho':False,'deload':['RPE 9 e 9 nas 2 últimas sessões']}])
+    assert D['s']['fase']=='deload' and D['s']['duracaoSemanas']==1 and D['s']['dias'][0]['blocos'][0]['exercicios'][0]['series']=='2×10-12',D['s']['dias'][0]['blocos'][0]['exercicios'][0]; print('OK deload reativo: 1 sem, séries x0,6')
+    assert not any(e.get('_troca') for d in D['s']['dias'] for b in d['blocos'] for e in b['exercicios']); print('OK deload não troca variante')
+    C=pg.evaluate("()=>[pfDeloadReativo([{rpe:9},{rpe:9.5}],{}),pfDeloadReativo([{rpe:9},{rpe:7}],{}),pfDeloadReativo([],{a:[50,50,40],b:[30,30,20]}),pfCargasPorEx([{exercicio_nome:'Leg Press',carga:80,data_sessao:'2026-11-01'},{exercicio_nome:'Leg Press',carga:90,data_sessao:'2026-11-01'},{exercicio_nome:'Leg Press',carga:95,data_sessao:'2026-11-08'}])]")
+    assert len(C[0])==1 and len(C[1])==0 and len(C[2])==1 and C[3]['leg press']==[90,95]; print('OK gatilhos: RPE>=9 x2, queda de carga e agrupamento por dia')
     assert not errs,errs[:2]
