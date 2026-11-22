@@ -1,33 +1,50 @@
-# Triagem das pendências antigas (A6, 22/11/2026)
+# Triagem das pendências antigas (A6, concluída em 22/11/2026)
 
-Fonte: `docs/historico-secao0.md` (os `[ ]` originais). Critério: busca de termos no código (`index.html`, `src/app/app.js`, `tools/supabase`). **Termo no código não prova que o item está pronto**: a coluna "Sugestão" é uma hipótese para o dono confirmar. Depois de confirmado, mover para a seção 11 do CONTEXTO (aberto) ou apagar daqui (feito).
+Fonte: `docs/historico-secao0.md` (os ~118 `[ ]` originais, que se repetiam em várias entradas = ~35 itens distintos). Cada item foi verificado no código (`index.html`, `src/app/app.js`) e no banco (Supabase, só SELECT em metadados e nomes de exercícios; nenhum dado de aluno lido). "Aberto" = sem implementação encontrada; mesmo assim, se o dono tiver feito por fora, é só dar baixa aqui.
 
-## Provável FEITO (há implementação no código; confirmar e dar baixa)
-| Item antigo | Sinal no código |
+## FEITO (verificado; pode ignorar no histórico)
+| Item antigo | Evidência |
 |---|---|
-| Oferta de renovação no app (Rodada B) | 29 linhas em `app.js` |
-| Card "Seu caminho" + etapa no app (jornada) | 3 linhas em `app.js`, 7 no Gerador |
-| Fase Consolidação (Próxima fase / jornada) | 7 em `app.js`, 26 no Gerador |
-| `padrao_movimento` explícito no painel (ESCADA) | 18 em `app.js`, 39 no Gerador |
-| `--t3` do Gerador (contraste) | `index.html:27` já com `#8E8E8A` (conferir o `--t3` do app escuro) |
-| Degraus Avaliação + Mapa (`av_mapa` 150/130) | 2 no Gerador (conferir o checklist no Cobrar) |
-| Protocolo Metabólico reutilizável | 12 no Gerador |
+| SQL `avaliacoes_fisicas.mapa` e `alunos.caminho_ativo` | colunas existem no banco |
+| `padrao_movimento` e `nivel` em `exercicios` (ESCADA) | colunas existem; 125 de 195 exercícios com `padrao_movimento` |
+| Oferta de renovação no app | `aShowTelARenovar` em `src/app/app.js` |
+| Contraste `--t3` (Rodada B) | `#8E8E8A` no Gerador e no CSS do app escuro |
+| Card do Caminho com "Treino X de N" | `src/app/app.js` (~L2953) |
+| Barra de progresso das fases na gestão | `mbBarraFases` |
+| PDF do Mapa (botão) | `mbMapaPDF` (falta só testar no navegador real = dono) |
+| Fila de treinos recolhida | teste `fila_recolhida.py` no `run_all` |
+| Modelo Híbrido, Próxima fase que progride, Comparar fases, ativação agendada, volume por músculo | v65.x–v68.6 mesclados, com testes no `run_all` |
+| Progressões da semana (Natan, Enes, João, Izabella) | 13 rascunhos inativos criados em 21/11; falta o dono publicar no Quadro |
 
-## Provável ABERTO (sem sinal no código)
-| Item antigo | Sinal |
-|---|---|
-| Login só por e-mail com código de 6 dígitos (`signInWithOtp`) | 0 ocorrências (era só parecer) |
-| Campo de bioimpedância na avaliação/Mapa | 0 ocorrências |
-| Aviso diário de vencimentos no Telegram (pg_cron + função) | 0 `pg_cron`; existem arquivos em `tools/supabase` que citam Telegram (aviso por evento, não diário) |
-| Apagar CSS morto dos visuais Clean/Clássico | termo ainda presente |
-| Piso de 11 px em textos de 9–10,5 px; abas da Configuração rolando na horizontal | sem evidência |
+## ABERTO (verificado: nada implementado)
+**Banco / backend**
+1. **Política de INSERT do professor no bucket `avaliacoes`** (hoje o professor só tem SELECT; só o aluno insere). Necessária para trocar foto da avaliação por upload no Gerador. Precisa de autorização do dono (DDL).
+2. **Aviso diário de vencimentos no Telegram** (pg_cron + função). O único cron é `ativar-agendados`; `notify-pix` só avisa Pix por evento. Depende também da secret `GERADOR_URL` (ação do dono).
+3. **Exercícios que faltam no banco:** Flexão inclinada, Barra fixa com elástico, Agachamento na caixa (só existe "Lunge Thruster"). E **70 de 195 exercícios ainda sem `padrao_movimento`**.
+4. UK do bimestral e Pix-only em `create-checkout-asaas` (exige autorização de deploy).
+
+**Gerador**
+5. Login só por e-mail com código de 6 dígitos (`signInWithOtp`): era um parecer, 0 ocorrências.
+6. Campo de bioimpedância na avaliação/Mapa.
+7. Botão "Copiar como texto" (plataforma → Docs).
+8. Protocolo Metabólico reutilizável (chip), semana-modelo, progressão por padrão nas fases, dominância explícita.
+
+**Visual**
+9. Apagar CSS morto dos visuais Clean/Clássico (~37 referências ainda no arquivo).
+10. Piso de 11 px nos textos de 9–10,5 px (63 ocorrências no CSS do app; muda o app = 1 deploy).
+11. Abas da Configuração rolando na horizontal no celular (sem `overflow-x`).
+
+**Confirmar com o dono (decisão de design ou termo ambíguo no código)**
+12. Botão de vídeo redondo → quadrado/retângulo compacto; bloco Ativação como sequência compacta (opções A/B nos prints de 16/11).
+13. Glossário/descrição da fase em linguagem simples no app; abertura do 1º treino; "treino de chegada" ao criar protocolo; Mapa 2 a partir da reavaliação.
 
 ## Só o dono resolve (não é código)
-- Conferir no Netlify "Production: main@99dbc8f" (v68.5) e testar no celular real.
-- Criar a secret `GERADOR_URL` = `https://lguilh3rme.github.io/MovhGen` (aviso do Telegram sem botão enquanto não existir).
+- Conferir no Netlify "Production: main@99dbc8f" (v68.5) e testar no celular real; testar o PDF do Mapa.
+- Criar a secret `GERADOR_URL` = `https://lguilh3rme.github.io/MovhGen`.
 - Revogar tokens do GitHub colados em conversas.
-- Preços/degraus finais (R$150 presencial / R$130 online) em landing e Canva.
-- Branches `wip/*` e antigas no remoto (~110): apagáveis em lote por API quando o dono autorizar; o histórico fica nos PRs.
+- Landing/Canva com R$150/130 e os degraus; logo e rodapé da landing (repo `movhtemplate`, não verificado aqui).
+- Vínculo/cobrança de alunos com treino vencido há meses (Jocimar, Ludmila, Iasmim); Personal do Cris; coletivas da semana; reabrir/salvar Mapas publicados para alinhar datas.
+- Branches `wip/*` e antigas (~110) no remoto: apagáveis em lote por API com autorização.
 
 ## Bug achado na fase B (não é pendência antiga)
 `aAtualizarSaudacao` (`src/app/app.js`): `split(/s+/)` deveria ser `/\s+/`. Ver seção 11 do CONTEXTO.
