@@ -13,7 +13,7 @@ Status: **resumo conferido** = li o resumo/página da revista, não o texto comp
 | Fonte | O que diz (em resumo) | Sustenta no MOVH | Status |
 |---|---|---|---|
 | ACSM 2026, Currier et al., *Med Sci Sports Exerc* 58(4):851-872. doi:10.1249/MSS.000000000003897 | Atualiza o posicionamento de 2009 (137 revisões, +30 mil participantes); individualizar para manter a adesão pesa mais que variáveis exatas. | Referência-mãe; progressão e periodização | resumo conferido |
-| Pelland et al. 2026, *Sports Med* 56(2):481-505 | Volume semanal com retorno decrescente; contar séries diretas e indiretas (indireta = 0,5); frequência só tem efeito claro na força. | Possível refino da contagem de volume por músculo (NÃO implementado) | resumo conferido |
+| Pelland et al. 2026, *Sports Med* 56(2):481-505 | Volume semanal com retorno decrescente; contar séries diretas e indiretas (indireta = 0,5); frequência só tem efeito claro na força. | Implementado na v68.6: série direta = 1, sinergista = 0,5 na contagem de volume por músculo (`pfVolume`) | resumo conferido |
 | Schoenfeld, Ogborn, Krieger 2017, *J Sports Sci*. doi:10.1080/02640414.2016.1210197 | Relação graduada: mais volume semanal, mais hipertrofia. | Volume mínimo ~10 séries/sem/músculo; citada na Análise técnica | resumo conferido |
 | Robinson et al. 2024, *Sports Med*. doi:10.1007/s40279-024-02069-2 | Hipertrofia melhora perto da falha; força varia pouco numa faixa ampla de RIR. Análise exploratória. | RIR 2 (última série RIR 1) | resumo conferido |
 | Singer et al. 2024, *Front Sports Act Living* 6:1429789. doi:10.3389/fspor.2024.1429789 | Pequeno benefício com descanso >60 s; sem diferença apreciável acima de ~90 s. | Descanso 2' nos compostos; 1' nos isoladores fica na fronteira | resumo conferido |

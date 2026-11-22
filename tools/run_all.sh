@@ -43,6 +43,7 @@ chk visual_v67 15 0 python3 $T/visual_v67.py $R/index.html
 chk comparar_fases 5 0 python3 $T/comparar_fases.py $R/index.html
 chk proxima_progride 9 0 python3 $T/proxima_progride.py $R/index.html
 chk publicar_data 5 0 python3 $T/publicar_data.py $R/index.html
+chk volume_musculos 9 0 python3 $T/volume_musculos.py $R/index.html
 chk app_header 2 0 python3 $T/app_header.py $X/app/app.html
 chk app_personal 3 0 python3 $T/app_personal.py $X/app/app.html
 chk anamnese_v2 11 0 python3 $T/anamnese_v2.py $X/app/app.html
