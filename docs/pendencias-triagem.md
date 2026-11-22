@@ -18,9 +18,9 @@ Fonte: `docs/historico-secao0.md` (os ~118 `[ ]` originais, que se repetiam em v
 
 ## ABERTO (verificado: nada implementado)
 **Banco / backend**
-1. **Política de INSERT do professor no bucket `avaliacoes`** (hoje o professor só tem SELECT; só o aluno insere). Necessária para trocar foto da avaliação por upload no Gerador. Precisa de autorização do dono (DDL).
+1. **Política de INSERT/UPDATE do professor no bucket `avaliacoes`** (hoje só SELECT; só o aluno insere). Necessária para trocar foto da avaliação por upload no Gerador. **SQL pronto em `docs/sql-pendentes.sql` (NÃO aplicado)**; precisa de autorização do dono (DDL).
 2. **Aviso diário de vencimentos no Telegram** (pg_cron + função). O único cron é `ativar-agendados`; `notify-pix` só avisa Pix por evento. Depende também da secret `GERADOR_URL` (ação do dono).
-3. **Exercícios que faltam no banco:** Flexão inclinada, Barra fixa com elástico, Agachamento na caixa (só existe "Lunge Thruster"). E **70 de 195 exercícios ainda sem `padrao_movimento`**.
+3. **Exercícios que faltam no banco:** Flexão inclinada, Barra fixa com elástico, Agachamento na caixa. Conferido em 22/11: não há Flexão nem Barra fixa por nome em português (checar `nome_en`) e Agachamento só como Hack/Sumo. **O dono define nomes e categorias antes de inserir** (nota em `docs/sql-pendentes.sql`). Ainda 70 de 195 exercícios sem `padrao_movimento`.
 4. UK do bimestral e Pix-only em `create-checkout-asaas` (exige autorização de deploy).
 
 **Gerador**
@@ -39,8 +39,8 @@ Fonte: `docs/historico-secao0.md` (os ~118 `[ ]` originais, que se repetiam em v
 13. Glossário/descrição da fase em linguagem simples no app; abertura do 1º treino; "treino de chegada" ao criar protocolo; Mapa 2 a partir da reavaliação.
 
 ## Só o dono resolve (não é código)
-- Conferir no Netlify "Production: main@99dbc8f" (v68.5) e testar no celular real; testar o PDF do Mapa.
-- Criar a secret `GERADOR_URL` = `https://lguilh3rme.github.io/MovhGen`.
+- ~~Conferir no Netlify "Production: main@99dbc8f" (v68.5)~~ **feito pelo dono (22/11)**. Falta testar no celular real e o PDF do Mapa.
+- ~~Criar a secret `GERADOR_URL`~~ **feita pelo dono (22/11)**: o aviso do Telegram já pode sair com botão quando o item 2 for implementado.
 - Revogar tokens do GitHub colados em conversas.
 - Landing/Canva com R$150/130 e os degraus; logo e rodapé da landing (repo `movhtemplate`, não verificado aqui).
 - Vínculo/cobrança de alunos com treino vencido há meses (Jocimar, Ludmila, Iasmim); Personal do Cris; coletivas da semana; reabrir/salvar Mapas publicados para alinhar datas.
