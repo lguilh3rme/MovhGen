@@ -2139,8 +2139,10 @@ let REP=JSON.parse(JSON.stringify(DEFAULT_REP)),PRE=loadPre();
 async function dbCarregarExercicios(){
   if(!mbProfessor) return;
   try {
-    const { data, error } = await mbClient.from('exercicios')
-      .select('id, categoria, nome, nome_pt, nome_en, url, ordem, padrao_movimento, percentual_rm').eq('professor_id', mbProfessor.id).order('categoria').order('ordem');
+    const _q = cols => mbClient.from('exercicios').select(cols).eq('professor_id', mbProfessor.id).order('categoria').order('ordem');
+    let _r = await _q('id, categoria, nome, nome_pt, nome_en, url, ordem, padrao_movimento, percentual_rm, grupo_primario, musculos_sec, multiarticular, lateralidade');
+    if(_r.error) _r = await _q('id, categoria, nome, nome_pt, nome_en, url, ordem, padrao_movimento, percentual_rm'); // banco sem as colunas novas: a contagem cai na regex
+    const { data, error } = _r;
     if(error) throw error;
     if(!data || data.length===0){
       // primeira vez: migra do DEFAULT_REP
@@ -2151,8 +2153,9 @@ async function dbCarregarExercicios(){
     REP = {};
     data.forEach(ex => {
       if(!REP[ex.categoria]) REP[ex.categoria] = [];
-      REP[ex.categoria].push({n: ex.nome, nome_pt: ex.nome_pt||'', nome_en: ex.nome_en||'', u: ex.url||'', padrao_movimento: ex.padrao_movimento||null, percentual_rm: ex.percentual_rm!=null?ex.percentual_rm:null, _id: ex.id});
+      REP[ex.categoria].push({n: ex.nome, nome_pt: ex.nome_pt||'', nome_en: ex.nome_en||'', u: ex.url||'', padrao_movimento: ex.padrao_movimento||null, percentual_rm: ex.percentual_rm!=null?ex.percentual_rm:null, gp: ex.grupo_primario||null, ms: ex.musculos_sec||[], mx: !!ex.multiarticular, lat: ex.lateralidade||null, _id: ex.id});
     });
+    pfIndexarMusculos();
     refreshExDatalist();
     renderDBEx();
   } catch(e) {
@@ -2183,7 +2186,7 @@ async function dbSalvarExercicio(cat, nome, nomePt, nomeEn, url, idExistente, pa
   } else {
     const ordemMax = REP[cat] ? REP[cat].length : 0;
     const { data, error } = await mbClient.from('exercicios')
-      .insert({ professor_id: mbProfessor.id, categoria: cat, nome, nome_pt: nomePt||null, nome_en: nomeEn||null, url: url||'', ordem: ordemMax, padrao_movimento: padrao||null, percentual_rm: (pct!=null&&!isNaN(pct))?pct:null }).select().maybeSingle();
+      .insert({ professor_id: mbProfessor.id, categoria: cat, nome, nome_pt: nomePt||null, nome_en: nomeEn||null, url: url||'', ordem: ordemMax, grupo_primario: ((typeof pfMusculo==='function'&&pfMusculo(nome))||{}).g||null, padrao_movimento: padrao||null, percentual_rm: (pct!=null&&!isNaN(pct))?pct:null }).select().maybeSingle();
     if(error){ notify('Erro ao salvar: '+error.message); return null; }
     return data;
   }
@@ -4268,7 +4271,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.5 · 21/11';
+var MOVH_VER = 'v68.6 · 22/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4608,7 +4611,7 @@ function pfComparacaoHTML(o){
 
 function pfChipsCompactos(vol, abrev){
   vol = vol || {};
-  return PF_MUSCULOS.map(m => { const n = vol[m.k]||0, min = m.volMin || 10, max = m.volMax || 20;
+  return PF_MUSCULOS.filter(m => !m.opc || (vol[m.k]||0) > 0).map(m => { const n = vol[m.k]||0, min = m.volMin || 10, max = m.volMax || 20;
     const c = n === 0 ? 'z' : (n < min ? 'b' : (n > max ? 'a' : 'ok')), ic = n === 0 ? '✕' : (n < min ? '↓' : (n > max ? '↑' : '✓'));
     return '<span class="an-chip '+c+'" title="'+escAttr(m.k)+': '+n+' séries/sem (meta '+min+'–'+max+')">'+escAttr(abrev ? m.k.slice(0,3) : m.k)+' '+n+' '+ic+'</span>'; }).join('');
 }
@@ -4632,7 +4635,7 @@ function pfAnaliseHTML(o){
 // Alertas do Quadro (mesmas regras da Próxima fase, sobre o que está na tela)
 function kbAnaliseDados(sem){
   const vol = pfVolume(sem), alertas = [];
-  const zero = PF_MUSCULOS.filter(m => (vol[m.k]||0) === 0).map(m => m.k);
+  const zero = PF_MUSCULOS.filter(m => !m.opc && (vol[m.k]||0) === 0).map(m => m.k);
   if (zero.length) alertas.push({t:'av', v:1, x:'Volume ZERO (sem séries): '+zero.join(' · ')+' — verifique se é intencional'});
   (function(){
     const nm=x=>String((x&&x.nome)||'').replace(/\s+/g,' ').trim().toLowerCase();
@@ -4646,12 +4649,13 @@ function kbAnaliseDados(sem){
     });
     if(rep.length)alertas.push({t:'av',x:'Corrida/condicionamento IGUAL entre fases (sem progressão) em: '+rep.slice(0,4).join(', ')+(rep.length>4?'…':'')+' — defina o modelo (intervalado, contínuo, fartlek...) e ligue a progressão'});
   })();
-  const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 || (n > 0 && n < min); }).map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 ? m.k+' volume ZERO — verifique se é intencional' : m.k+' '+n+'/'+min; });
+  const baixo = PF_MUSCULOS.filter(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return (n === 0 && !m.opc) || (n > 0 && n < min); }).map(m => { const n = vol[m.k]||0; const min = m.volMin || 10; return n === 0 ? m.k+' volume ZERO — verifique se é intencional' : m.k+' '+n+'/'+min; });
   if (baixo.length) alertas.push({t:'av', v:1, x:'Volume abaixo do mínimo por grupamento: '+baixo.join(' · ')});
+  pfRazoes(sem).forEach(x => alertas.push({t:'av', x}));
   const fora = [];
   (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id !== 'pri') return; (b.exercicios||[]).forEach(e => {
     if (!e.nome) return;
-    const alvo = (PF_COMPOSTO.test(e.nome) && !/panturrilha/i.test(e.nome)) ? 120 : 60;
+    const alvo = pfEhComposto(e.nome) ? 120 : 60;
     if (parseRestSegundos(e.rest) !== alvo) fora.push(e.nome);
   }); }));
   if (fora.length) alertas.push({t:'av', x:"Descanso fora do padrão (compostos 2', isoladores 1') em "+fora.length+': '+fora.slice(0,3).join(', ')+(fora.length>3?'…':'')});
@@ -5175,7 +5179,7 @@ async function kbAplicarFaseRecomendada(proxFase, proxDur, sid){
           const m = String(e.series||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)\s*-\s*(\d+)$/);
           if (m && +m[2] > +m[3]) e.series = m[1]+'×'+m[3]+'-'+m[2];
           if (b.id === 'pri' || b.id === 'atv') {
-            const alvo = (PF_COMPOSTO.test(e.nome||'') && !/panturrilha/i.test(e.nome||'')) ? 120 : 60;
+            const alvo = pfEhComposto(e.nome||'') ? 120 : 60;
             const atual = parseRestSegundos(e.rest);
             if (b.id === 'pri' && atual !== alvo) { e._restAlt = true; e.rest = pfFmtRest(alvo); }
           }
@@ -5198,7 +5202,8 @@ async function kbAplicarFaseRecomendada(proxFase, proxDur, sid){
       alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
     });
     const vol1 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) { if (!m.opc) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); } else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
+    pfRazoes(sem).forEach(x => alertas.push({t:'av', x}));
     semanas.push(sem);
     _pbDirty = true;
     kbCalRefresh(sid);
@@ -12675,26 +12680,65 @@ async function mbToggleLoop(protoId, alunoId, ligar) {
 // Nada é gravado até o professor clicar em Salvar; o protocolo ativo não é tocado.
 const PF_MUSCULOS = [
   // Fonte: Schoenfeld et al. 2017 (meta-análise dose-resposta); revisão 12-20 séries/sem/grupo para hipertrofia (hard sets perto da falha).
-  // Mínimo 10 séries/sem/grupo; faixa-alvo 12-20. Bíceps/Tríceps: menor volume direto (prática, indireto via compostos).
-  {k:'Peito',re:/supino|crucifixo|voador|peitoral|flex[aã]o|crossover/i,up:1,volMin:10,volMax:20,sug:'Supino inclinado máquina'},
-  {k:'Costas',re:/remada|puxada|pulldown|pullover|barra fixa|face pull/i,up:1,volMin:10,volMax:20,sug:'Remada máquina'},
-  {k:'Ombros',re:/desenvolvimento|eleva[cç][aã]o lateral/i,up:1,volMin:10,volMax:20,sug:'Elevação lateral'},
-  {k:'Bíceps',re:/rosca|b[ií]ceps/i,up:1,volMin:6,volMax:12,sug:'Rosca martelo'}, // prática, indireto
-  {k:'Tríceps',re:/tr[ií]ceps|mergulho/i,up:1,volMin:6,volMax:12,sug:'Tríceps corda'}, // prática, indireto
-  {k:'Quadríceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|afundo|passada/i,volMin:12,volMax:24},
-  {k:'Posteriores',re:/stiff|rdl|flexora|terra|deadlift/i,volMin:10,volMax:20},
-  {k:'Glúteos',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust/i,volMin:10,volMax:20}
+  // Contagem EFETIVA (v68.6): série direta = 1, sinergista = 0,5 (Pelland 2026, docs/base-teorica.md). Por isso bíceps/tríceps voltaram à meta 10-20 (antes 6-12 compensava o indireto não contado).
+  // `g` = valor de exercicios.grupo_primario / musculos_sec no banco; `re` = reserva para exercício sem dados no banco; `opc` = sem alerta de volume zero (só avisa se houver série e ficar abaixo).
+  {k:'Peito',g:'peitoral',re:/supino|crucifixo|cruxifixo|voador|peitoral|flex[aã]o|crossover|bench press|chest press|db press/i,up:1,volMin:10,volMax:20,sug:'Supino inclinado máquina'},
+  {k:'Costas',g:'dorsais',re:/remada|puxada|pulldown|pullover|barra fixa|pull-?up|chin-?up|\brow\b/i,up:1,volMin:10,volMax:20,sug:'Remada máquina'},
+  {k:'Ombros',g:'ombros',re:/desenvolvimento|eleva[cç][aã]o lateral|eleva[cç][aã]o frontal|shoulder press|arnold|z press/i,up:1,volMin:10,volMax:20,sug:'Elevação lateral'},
+  {k:'Bíceps',g:'biceps',re:/rosca|b[ií]ceps/i,up:1,volMin:10,volMax:20,sug:'Rosca martelo'},
+  {k:'Tríceps',g:'triceps',re:/tr[ií]ceps|mergulho|skull crusher/i,up:1,volMin:10,volMax:20,sug:'Tríceps corda'},
+  {k:'Quadríceps',g:'quadriceps',re:/agachamento|squat|leg press|extensora|hack|b[uú]lgaro|bulgarian|afundo|passada|step up|lunge/i,volMin:12,volMax:24},
+  {k:'Posteriores',g:'isquiotibiais',re:/stiff|rdl|flexora|terra|deadlift|nordic/i,volMin:10,volMax:20},
+  {k:'Glúteos',g:'gluteo',re:/p[eé]lvica|abdutora|gl[uú]teo|coice|hip thrust|glute bridge/i,volMin:10,volMax:20},
+  {k:'Deltoide post.',g:'deltoide_post',re:/face pull|crucifixo inv|voador inv|reverse fly|eleva[cç][aã]o posterior|prone y/i,volMin:6,volMax:16,opc:1},
+  {k:'Panturrilha',g:'panturrilha',re:/panturrilha|g[eê]meos|calf/i,volMin:8,volMax:20,opc:1},
+  {k:'Core',g:'core',re:/prancha|plank|abdominal|crunch|hollow|dead bug|russian twist|v-?up|sit up|leg raise|rolinho|pallof|toes to bar|leg pike|escalador/i,volMin:6,volMax:16,opc:1}
 ];
 const PF_COMPOSTO = /agachamento|squat|leg press|hack|supino|remada|puxada|stiff|rdl|terra|deadlift|desenvolvimento|p[eé]lvica|b[uú]lgaro|afundo|barra fixa|paralela/i;
 let _pf = null;
 
 function pfMusculo(nome){ return PF_MUSCULOS.find(m => m.re.test(nome||'')) || null; }
+// Índice nome -> {gp, ms, mx} vindo do banco (REP). A regex acima só vale para exercício sem esses dados.
+let PF_IDX = {};
+function pfNorm(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim(); }
+function pfIndexarMusculos(){
+  PF_IDX = {};
+  Object.keys(REP||{}).forEach(cat => (REP[cat]||[]).forEach(ex => {
+    if (!ex || !ex.gp) return;
+    const k = pfNorm(ex.n), at = PF_IDX[k];
+    if (at && at.gp !== 'condicionamento' && ex.gp === 'condicionamento') return; // mesmo nome em duas categorias: vale o de força
+    PF_IDX[k] = {gp: ex.gp, ms: ex.ms || [], mx: !!ex.mx};
+  }));
+}
+function pfMusculosEx(nome){
+  const x = PF_IDX[pfNorm(nome)];
+  if (x) return { d: PF_MUSCULOS.find(m => m.g === x.gp) || null, s: (x.ms||[]).map(g => PF_MUSCULOS.find(m => m.g === g)).filter(Boolean) };
+  return { d: pfMusculo(nome), s: [] };
+}
+function pfEhComposto(nome){
+  const x = PF_IDX[pfNorm(nome)];
+  if (x && x.gp !== 'condicionamento') return !!x.mx;
+  return PF_COMPOSTO.test(nome||'') && !/panturrilha/i.test(nome||'');
+}
+// Razões de equilíbrio (séries DIRETAS); limites ajustáveis aqui
+const PF_RAZOES = { puxarEmpurrar: 1, posteriorQuad: 0.7 };
+function pfRazoes(sem){
+  const d = pfVolume(sem, true), g = k => d[k]||0, out = [];
+  const puxar = g('Costas') + g('Deltoide post.'), empurrar = g('Peito') + g('Ombros');
+  if (puxar && empurrar && puxar < empurrar * PF_RAZOES.puxarEmpurrar) out.push('Equilíbrio: puxar '+puxar+' × empurrar '+empurrar+' séries diretas (alvo puxar ≥ empurrar) — avaliar se é intencional');
+  const post = g('Posteriores') + g('Glúteos'), quad = g('Quadríceps');
+  if (post && quad && post < quad * PF_RAZOES.posteriorQuad) out.push('Equilíbrio: cadeia posterior '+post+' × quadríceps '+quad+' séries diretas — avaliar a relação joelho/quadril');
+  return out;
+}
 function pfBlocoPrincipal(d){ return (d.blocos||[]).find(b => b.id === 'pri') || (d.blocos||[]).find(b => b.id !== 'con' && b.id !== 'atv') || null; }
-function pfVolume(sem){
+function pfVolume(sem, soDiretas){
+  // efetivo: direta = 1 série, sinergista = 0,5 (soDiretas=true devolve só as diretas)
   const v = {};
   (sem.dias||[]).forEach(d => (d.blocos||[]).forEach(b => { if (b.id === 'con') return; (b.exercicios||[]).forEach(e => {
-    const m = pfMusculo(e.nome), p = parseSeriesSimples(e.series);
-    if (m && p) v[m.k] = (v[m.k]||0) + p.sets;
+    const mx = pfMusculosEx(e.nome), p = parseSeriesSimples(e.series);
+    if (!p) return;
+    if (mx.d) v[mx.d.k] = (v[mx.d.k]||0) + p.sets;
+    if (!soDiretas) mx.s.forEach(m => { v[m.k] = (v[m.k]||0) + p.sets * 0.5; });
   }); }));
   return v;
 }
@@ -12804,7 +12848,7 @@ function pfProgredir(sem, vig, ctx){
   if (prox === 'consolidacao') { out.push({ t:'ok', x:'Consolidação (4 sem): mantém exercícios e prescrição; o foco é subir carga e fazer os testes. Sem troca de variante (regra da escada).' }); return out; }
   let nM = 0, nA = 0;
   sem.dias.forEach(d => (d.blocos || []).forEach(b => { if (b.id !== 'pri') return; (b.exercicios || []).forEach(e => {
-    const main = PF_COMPOSTO.test(e.nome || '') && !/panturrilha/i.test(e.nome || '');
+    const main = pfEhComposto(e.nome || '');
     if (main) { const r = pfRange(e.series, -2, -2); if (r && r.a >= 6 && r.n < 5) { e.series = Math.min(4, r.n + 1) + '×' + r.a + '-' + r.b; e.rest = "2'"; nM++; } }
     else { const r = pfRange(e.series, 2, 3); if (r && r.a0 < 12 && r.b0 < 15) { e.series = r.n + '×' + r.a + '-' + Math.min(15, r.b); nA++; } }
   }); }));
@@ -12890,7 +12934,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
           const m = String(e.series||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)\s*-\s*(\d+)$/);
           if (m && +m[2] > +m[3]) e.series = m[1]+'×'+m[3]+'-'+m[2];
           if (b.id === 'pri' || b.id === 'atv') {
-            const alvo = (PF_COMPOSTO.test(e.nome||'') && !/panturrilha/i.test(e.nome||'')) ? 120 : 60;
+            const alvo = pfEhComposto(e.nome||'') ? 120 : 60;
             const atual = parseRestSegundos(e.rest);
             if (b.id === 'pri' && atual !== alvo) { e._restAlt = true; e.rest = pfFmtRest(alvo); }
           }
@@ -12944,7 +12988,8 @@ async function mbSugerirProximaFase(protoId, alunoId){
       alertas.push({t:'ok', x:'+3 séries de '+x.m.k.toLowerCase()+' ('+x.n+' → '+(x.n+3)+'): '+x.m.sug+' (novo, dia '+(alvo.d.nome||alvo.di+1)+')'});
     });
     const vol1 = pfVolume(sem);
-    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
+    PF_MUSCULOS.filter(m => !m.sug).forEach(m => { const n = vol1[m.k]||0; if (n === 0) { if (!m.opc) alertas.push({t:'av', x: m.k+': volume ZERO — verifique se é intencional'}); } else { const min = m.volMin || 10; if (n < min) alertas.push({t:'av', x: m.k+': '+n+'/'+min+' séries/sem — avaliar se é intencional'}); } });
+    pfRazoes(sem).forEach(x => alertas.push({t:'av', x}));
     // anamnese / dor
     const resp = an.data && an.data[0] ? an.data[0].respostas : null;
     // ESCADA: objetivo do aluno (campo objetivo da anamnese) -> padrões que sobem primeiro; só sugere, o professor decide
