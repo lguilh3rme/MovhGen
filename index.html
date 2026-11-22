@@ -4268,7 +4268,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.3 · 21/11';
+var MOVH_VER = 'v68.4 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4387,7 +4387,7 @@ function homeVencerHTML(at){
   const linhas=L.map(x=>{
     const n=(x.a.nome||'Aluno').split(' ');const nm=n[0]+(n[1]?' '+n[1]:'');
     const prim=x.tem?b('bp','🗂️ Editar próxima fase','' + x.a.id,'prox','Abre a próxima fase do treino no Quadro'):x.rasc?(b('bp','📝 Revisar rascunho','' + x.a.id,'rasc','Abre o rascunho pronto no Quadro já comparando com o treino ativo')):b('bp','✨ Próxima fase','' + x.a.id,'prox','Gera o rascunho da próxima fase (inativo) e abre no Quadro');
-    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.rasc?'<br><small style="color:#1fb583">rascunho pronto: '+escAttr(x.rasc.nome||'próxima fase')+'</small>':(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':''))+'</span><span class="t" style="display:flex;gap:6px;align-items:center">'+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰 Cobrar</span><details class="pb-more" onclick="event.stopPropagation()"><summary class="btn bs" style="font-size:10.5px;padding:4px 9px" title="Mais">⋯</summary><div class="pb-pop">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+'</div></details></span></div>';
+    return '<div class="hm-it n3" style="cursor:default"><span>🏁</span><span><b>'+escAttr(nm)+'</b> · '+(x.f.d<=0?'treino venceu':'acaba em '+x.f.d+'d')+(x.rasc?'<br><small style="color:#1fb583">'+(x.rasc.ativar_em?'⏰ agendado para '+escAttr(String(x.rasc.ativar_em).split('-').reverse().join('/')):'rascunho pronto')+': '+escAttr(x.rasc.nome||'próxima fase')+'</small>':(x.nome?'<br><small style="color:var(--t3)">fase atual: '+escAttr(x.nome)+'</small>':''))+'</span><span class="t" style="display:flex;gap:6px;align-items:center">'+prim+'<span class="btn bs" style="font-size:10.5px;padding:4px 10px" data-id="'+escAttr(x.a.id)+'" onclick="event.stopPropagation();mbCobrar(this.dataset.id)" title="Cobrar renovação">💰 Cobrar</span><details class="pb-more" onclick="event.stopPropagation()"><summary class="btn bs" style="font-size:10.5px;padding:4px 9px" title="Mais">⋯</summary><div class="pb-pop">'+b('bs','✏️ Fase atual','' + x.a.id,'atual','Abre a fase atual no Quadro')+'</div></details></span></div>';
   }).join('');
   return linhas;
 }
@@ -9777,7 +9777,7 @@ async function mbCarregarPainelAlunos() {
       .select('id, nome, aluno_id, data_inicio, criado_em, conteudo')
       .in('aluno_id', alunoIds)
       .eq('ativo', true));
-    P.k11 = Q(() => mbClient.from('protocolos').select('id, aluno_id, nome, data_inicio, criado_em').in('aluno_id', alunoIds).eq('ativo', false));
+    P.k11 = Q(() => mbClient.from('protocolos').select('id, aluno_id, nome, data_inicio, criado_em, ativar_em').in('aluno_id', alunoIds).eq('ativo', false));
     P.k12 = Q(() => mbClient.from('rpe_sessoes').select('aluno_id, rpe, criado_em').in('aluno_id', alunoIds).gte('criado_em', new Date(Date.now() - 28*86400000).toISOString()));
     P.k2 = Q(() => mbClient.from('anamneses')
       .select('id, aluno_id, tipo, respostas, solicitado_em, criado_em')
@@ -12778,8 +12778,28 @@ function pfCondAplicar(dias, nivel, semP){
 // ── Próxima fase que PROGRIDE (v68.2): Base→Construção→Consolidação; principais +1 série e faixa mais pesada, acessórios sobem reps; troca de variante pela ESCADA (aplicada, editável) ──
 function pfRange(sr, dLo, dHi){ const m = String(sr||'').trim().match(/^(\d+)\s*[x×X]\s*(\d+)\s*(?:-|a)\s*(\d+)$/i); if (!m) return null; return { n: +m[1], a: +m[2] + dLo, b: +m[3] + dHi, a0: +m[2], b0: +m[3] }; }
 function pfFaseProx(vig){ const t = String((vig && (vig.fase || vig.nome)) || '').toLowerCase(); return /consolida/.test(t) ? 'construcao' : /constru|intens/.test(t) ? 'consolidacao' : 'construcao'; }
+// séries de carga por exercício (1 valor por dia = maior carga), da mais antiga p/ a mais nova
+function pfCargasPorEx(rows){
+  const m = {};
+  (rows || []).forEach(r => { if (r.carga == null || !r.exercicio_nome) return; const k = String(r.exercicio_nome).trim().toLowerCase(), d = String(r.data_sessao || r.criado_em).slice(0,10); const o = (m[k] = m[k] || {}); o[d] = Math.max(o[d] || 0, +r.carga); });
+  const out = {}; Object.keys(m).forEach(k => { out[k] = Object.keys(m[k]).sort().map(d => m[k][d]); }); return out;
+}
+// deload REATIVO (evidência não sustenta deload fixo): RPE ≥9 nas 2 últimas sessões, ou queda de carga ≥10% em 2+ exercícios com ≥3 sessões
+function pfDeloadReativo(rpes, cargas){
+  const mot = [], r2 = (rpes || []).filter(r => r.rpe != null).slice(0, 2);
+  if (r2.length === 2 && r2.every(r => r.rpe >= 9)) mot.push('RPE ' + r2.map(r => r.rpe).join(' e ') + ' nas 2 últimas sessões');
+  let queda = 0; Object.keys(cargas || {}).forEach(k => { const a = cargas[k]; if (a.length >= 3 && a[a.length-1] < 0.9 * a[a.length-2]) queda++; });
+  if (queda >= 2) mot.push('queda de carga ≥10% em ' + queda + ' exercícios');
+  return mot;
+}
 function pfProgredir(sem, vig, ctx){
   const out = [], prox = pfFaseProx(vig);
+  if (ctx.deload && ctx.deload.length) {
+    sem.fase = 'deload'; sem.nome = 'Deload'; sem.duracaoSemanas = 1; let n = 0;
+    sem.dias.forEach(d => (d.blocos || []).forEach(b => { if (b.id !== 'pri') return; (b.exercicios || []).forEach(e => { const m = String(e.series || '').match(/^(\d+)(\s*[x×X].*)$/); if (m && +m[1] >= 3) { e.series = Math.max(2, Math.round(+m[1] * 0.6)) + m[2]; n++; } }); b.obs = (b.obs ? b.obs + '\n' : '') + 'DELOAD 1 semana: ~60% das séries, RIR 4, mesma carga ou −10%. Sem progressão.'; }));
+    out.push({ t:'av', x:'⚠ DELOAD reativo (1 sem): ' + ctx.deload.join(' · ') + '. Séries ×0,6 em ' + n + ' exercício(s), RIR 4, sem troca de variante. Depois dele a próxima fase volta a progredir.' });
+    return out;
+  }
   sem.fase = prox; sem.nome = prox === 'consolidacao' ? 'Consolidação' : 'Construção'; sem.duracaoSemanas = prox === 'consolidacao' ? 4 : 8;
   if (prox === 'consolidacao') { out.push({ t:'ok', x:'Consolidação (4 sem): mantém exercícios e prescrição; o foco é subir carga e fazer os testes. Sem troca de variante (regra da escada).' }); return out; }
   let nM = 0, nA = 0;
@@ -12797,11 +12817,12 @@ function pfProgredir(sem, vig, ctx){
   sem.dias.forEach(d => {
     if (n >= 3) return;
     const cand = [];
-    (d.blocos || []).forEach(b => { if (b.id !== 'pri') return; (b.exercicios || []).forEach(e => { const i = escadaInfo(e.nome); if (!i || WL.indexOf(i.padrao) < 0 || usados[i.padrao]) return; if (ctx.joelho && i.padrao === 'joelho') return; if (!(i.nivel === 1 || (i.nivel === 2 && sobe.indexOf(i.padrao) >= 0))) return; cand.push({ e: e, i: i }); }); });
+    (d.blocos || []).forEach(b => { if (b.id !== 'pri') return; (b.exercicios || []).forEach(e => { const i = escadaInfo(e.nome); if (!i || WL.indexOf(i.padrao) < 0 || usados[i.padrao]) return; if (ctx.joelho && i.padrao === 'joelho') return; { const ar = (ctx.cargas || {})[String(e.nome).trim().toLowerCase()]; if (ar && ar.length >= 3 && ar[ar.length-1] < ar[ar.length-2]) return; } if (!(i.nivel === 1 || (i.nivel === 2 && sobe.indexOf(i.padrao) >= 0))) return; cand.push({ e: e, i: i }); }); });
     cand.sort((x, y) => (sobe.indexOf(y.i.padrao) >= 0) - (sobe.indexOf(x.i.padrao) >= 0) || x.i.nivel - y.i.nivel);
     const c = cand[0]; if (!c) return;
     const g = escadaSugestao(c.e.nome, todos); if (!g || g.nivelPara > (sobe.indexOf(c.i.padrao) >= 0 ? 3 : 2)) return;
-    const de = c.e.nome; c.e.nome = g.para; c.e.url = ''; c.e._troca = de; c.e.obs = (c.e.obs ? c.e.obs + ' · ' : '') + 'Troca de variante: ' + de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ')';
+    const _ar = (ctx.cargas || {})[String(c.e.nome).trim().toLowerCase()];
+    const de = c.e.nome; c.e.nome = g.para; c.e.url = ''; c.e._troca = de; c.e.obs = (c.e.obs ? c.e.obs + ' · ' : '') + 'Troca de variante: ' + de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ')' + (_ar && _ar.length >= 3 ? '' : ' · sem 3 registros de carga: confirme que dominou o padrão');
     todos.push(g.para); usados[c.i.padrao] = 1; n++;
     out.push({ t:'ok', x:'Escada (' + g.padrao + ') · ' + (d.nome || 'dia') + ': ' + de + ' (N' + g.nivelDe + ') → ' + g.para + ' (N' + g.nivelPara + ') — aplicado; reduza a carga e reaprenda o padrão' });
   });
@@ -12817,7 +12838,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
       mbClient.from('protocolos').select('id, conteudo, data_inicio').eq('id', protoId).maybeSingle(),
       mbClient.from('anamneses').select('respostas').eq('aluno_id', alunoId).eq('tipo','anamnese').not('respostas','is',null).order('criado_em',{ascending:false}).limit(1),
       mbClient.from('rpe_sessoes').select('rpe, dor, criado_em').eq('aluno_id', alunoId).gte('criado_em', desde).order('criado_em',{ascending:false}).limit(80),
-      mbClient.from('registros_sessao').select('criado_em').eq('aluno_id', alunoId).gte('criado_em', desde),
+      mbClient.from('registros_sessao').select('criado_em, exercicio_nome, carga, data_sessao').eq('aluno_id', alunoId).gte('criado_em', desde),
       mbClient.from('testes_fisicos').select('data').eq('aluno_id', alunoId).eq('padrao_movimento','Condicionamento').order('data',{ascending:false}).limit(1)
     ]);
     if (pr.error || !pr.data) throw (pr.error || new Error('protocolo não encontrado'));
@@ -12896,7 +12917,7 @@ async function mbSugerirProximaFase(protoId, alunoId){
     try {
       const _rp = an.data && an.data[0] ? an.data[0].respostas : null, _ob2 = String(_rp && (_rp.objetivo || _rp.objetivos || _rp.meta) || '').toLowerCase();
       const _k2 = /gl[uú]te/.test(_ob2) ? 'gluteo' : /emagre|perder peso|gordura/.test(_ob2) ? 'emagrecimento' : /defin/.test(_ob2) ? 'definicao' : /bra[cç]o|peito|costas|ombro|superior/.test(_ob2) ? 'superior' : null;
-      pfProgredir(sem, vig, { dor: dorAtiva, ader: aderPct, ciclo2: ciclo2, sobe: _k2 ? HX_ENFASE[_k2].sobe : [], joelho: /joelho/i.test(JSON.stringify(_rp || '')) }).forEach(x => alertas.push(x));
+      pfProgredir(sem, vig, { cargas: pfCargasPorEx(rg.data), deload: pfDeloadReativo(rp.data, pfCargasPorEx(rg.data)), dor: dorAtiva, ader: aderPct, ciclo2: ciclo2, sobe: _k2 ? HX_ENFASE[_k2].sobe : [], joelho: /joelho/i.test(JSON.stringify(_rp || '')) }).forEach(x => alertas.push(x));
     } catch (_e2) { alertas.push({ t:'av', x:'Progressão automática falhou: ' + (_e2.message || _e2) }); }
     // (/ciclo2) = programa completo: o próximo é o Ciclo 2 (sem voltar ao início)
     const condMud = pfCondAplicar(sem.dias, condDec.nivel, ciclo2 ? 9 : undefined);
@@ -13049,7 +13070,15 @@ async function mbReativarProtocolo(protoId, alunoId) {
     const hj = mbIsoLocal(new Date());
     if (pr && pr.data_inicio && pr.data_inicio > hj) {
       // rascunho de "próxima fase" com início no futuro: publicar troca o treino do aluno AGORA (não existe ativação agendada)
-      if (!confirm('Este treino é a PRÓXIMA fase (início em ' + pr.data_inicio.split('-').reverse().join('/') + ').\n\nPublicar agora troca o treino que o aluno vê HOJE e o início passa a ser hoje. Para entrar só na data prevista, cancele e publique no dia.\n\nPublicar agora mesmo assim?')) return { ok: false };
+      const dBr = pr.data_inicio.split('-').reverse().join('/');
+      if (confirm('Este treino é a PRÓXIMA fase (início em ' + dBr + ').\n\nAGENDAR a ativação? O aluno continua com o treino atual e este entra sozinho em ' + dBr + ' (automático, na virada do dia).\n\nOK = agendar · Cancelar = ver a opção de publicar agora')) {
+        const ag = await mbClient.from('protocolos').update({ ativar_em: pr.data_inicio }).eq('id', protoId);
+        if (ag.error) { notify('Erro ao agendar: ' + ag.error.message); return { ok: false }; }
+        notify('⏰ Ativação agendada para ' + dBr + '. O treino atual do aluno segue até lá.');
+        mbGerenciarProtocolos(alunoId); mbCarregarPainelAlunos();
+        return { ok: false, agendado: true };
+      }
+      if (!confirm('Publicar AGORA troca o treino que o aluno vê hoje e o início passa a ser hoje. Confirmar?')) return { ok: false };
       novoIni = hj;
     } else if (pr && (!pr.data_inicio || pr.data_inicio < hj)) {
       const r = prompt('Este treino está com início em ' + (pr.data_inicio ? pr.data_inicio.split('-').reverse().join('/') : 'data em branco') + '. Qual a data de início agora? (AAAA-MM-DD)', hj);
