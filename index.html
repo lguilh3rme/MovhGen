@@ -4268,7 +4268,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.4 · 21/11';
+var MOVH_VER = 'v68.5 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -13118,7 +13118,7 @@ async function mbDeletarProtocolo(protoId, alunoId) {
 // Mantidos aqui à parte para não depender de duplicar as <option> do form.
 const MB_ANAM_LABELS = {
   sexo: {masculino:'Masculino', feminino:'Feminino', outro:'Outro'},
-  objetivo: {emagrecimento:'Emagrecimento', hipertrofia:'Hipertrofia', forca:'Força', condicionamento:'Condicionamento', reabilitacao:'Reabilitação', outro:'Outro'},
+  objetivo: {emagrecimento:'Emagrecimento', definicao:'Definição', gluteo:'Glúteos', hipertrofia:'Ganho de massa', superior:'Parte superior', manutencao:'Saúde e funcional', forca:'Força', condicionamento:'Condicionamento', reabilitacao:'Reabilitação', outro:'Outro'},
   tempo_treino: {iniciante:'Iniciante (<6 meses)', intermediario:'Intermediário (6m–2a)', avancado:'Avançado (>2 anos)'},
   interesse_corrida: {sim:'Sim, quero trabalhar corrida', nao:'Não, foco só em força/estética'},
   pratica_corrida: {sim:'Sim', nao:'Não'},
@@ -19227,39 +19227,118 @@ function aShowAnamnese() {
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('treinoScreen').style.display = 'none';
   document.getElementById('anamneseScreen').style.display = 'flex';
+  // nome já vem do cadastro: só pergunta se estiver vazio
+  var nm = document.querySelector('#anamneseScreen input[name="nome"]');
+  var nomeCad = (aAlunoRow && aAlunoRow.nome) ? String(aAlunoRow.nome) : '';
+  if (nm && !nm.value) nm.value = nomeCad;
+  var w = document.getElementById('av-nome-w');
+  if (w) w.style.display = nomeCad ? 'none' : 'block';
   aAnamStep(1);
 }
+var AV_TXT = [
+  ['Vamos começar por você', 'Só o essencial para montar seu treino.'],
+  ['Seu objetivo e sua rotina', 'Com isso já sugerimos o ponto de partida.'],
+  ['Saúde e cuidados', 'Para evitar exercícios que atrapalhem você.']
+];
+function aAnamVal(n) {
+  var el = document.querySelector('#anamneseScreen [name="' + n + '"]');
+  return el ? String(el.value || '') : '';
+}
+function aAnamCheck() {
+  var n = window._anamStep || 1, ok = true, i, d = 0, s;
+  if (n === 1) {
+    s = aAnamVal('whatsapp');
+    for (i = 0; i < s.length; i++) { var c = s.charAt(i); if (c >= '0' && c <= '9') d++; }
+    if (d < 10) ok = false;
+    var w = document.getElementById('av-nome-w');
+    if (w && w.style.display !== 'none' && !aAnamVal('nome').trim()) ok = false;
+  }
+  if (n === 2) {
+    if (!aAnamVal('objetivo') || !aAnamVal('tempo_treino') || !aAnamVal('dias_semana')) ok = false;
+  }
+  var nx = document.getElementById('anam-next');
+  if (nx) nx.disabled = !ok;
+}
 function aAnamStep(n) {
-  document.querySelectorAll('.anam-step').forEach(s => s.style.display = 'none');
-  const el = document.getElementById('anam-step-'+n);
+  if (n < 1 || n > 3) return;
+  document.querySelectorAll('.anam-step').forEach(function(s){ s.style.display = 'none'; });
+  var el = document.getElementById('anam-step-' + n);
   if (el) el.style.display = 'block';
   document.getElementById('anam-progress').textContent = 'Passo ' + n + ' de 3';
+  document.getElementById('av-t').textContent = AV_TXT[n-1][0];
+  document.getElementById('av-s').textContent = AV_TXT[n-1][1];
+  var bars = document.querySelectorAll('#anamneseScreen .av-bar i');
+  for (var i = 0; i < bars.length; i++) bars[i].className = (i < n) ? 'on' : '';
   document.getElementById('anam-prev').style.visibility = n > 1 ? 'visible' : 'hidden';
   document.getElementById('anam-next').style.display = n < 3 ? 'inline-flex' : 'none';
   document.getElementById('anam-submit').style.display = n === 3 ? 'inline-flex' : 'none';
   window._anamStep = n;
+  window.scrollTo(0, 0);
+  aAnamCheck();
 }
-// Mostra o campo "Nível atual de corrida" só se o aluno disse que já
-// pratica corrida — não faz sentido perguntar nível de quem não corre.
-function aToggleNivelCorrida(val){
-  const el = document.getElementById('fld-nivel-corrida');
+function aChip(b) {
+  var n = b.getAttribute('data-n'), v = b.getAttribute('data-v'), g = b.parentNode;
+  var multi = g.getAttribute('data-multi') === '1';
+  var chips = g.querySelectorAll('.av-chip'), i, vals = [];
+  if (multi) {
+    if (v === 'Nenhuma') {
+      for (i = 0; i < chips.length; i++) chips[i].classList.remove('sel');
+      b.classList.add('sel');
+    } else {
+      b.classList.toggle('sel');
+      for (i = 0; i < chips.length; i++) if (chips[i].getAttribute('data-v') === 'Nenhuma') chips[i].classList.remove('sel');
+    }
+    for (i = 0; i < chips.length; i++) if (chips[i].classList.contains('sel')) vals.push(chips[i].getAttribute('data-v'));
+    v = vals.join(', ');
+  } else {
+    for (i = 0; i < chips.length; i++) chips[i].classList.remove('sel');
+    b.classList.add('sel');
+  }
+  var hid = document.querySelector('#anamneseScreen input[name="' + n + '"]');
+  if (hid) hid.value = v;
+  if (n === 'pratica_corrida') aToggleNivelCorrida(v);
+  aAnamCheck();
+}
+function aMaskWa(el) {
+  var s = el.value, d = '', i;
+  for (i = 0; i < s.length; i++) { var c = s.charAt(i); if (c >= '0' && c <= '9') d += c; }
+  d = d.slice(0, 11);
+  var k = d.length > 10 ? 7 : 6, o = '';
+  if (d.length > 0) o = '(' + d.slice(0, 2);
+  if (d.length > 2) o += ') ' + d.slice(2, k);
+  if (d.length > k) o += '-' + d.slice(k);
+  el.value = o;
+  aAnamCheck();
+}
+// Mostra "Há quanto tempo corre" e km só se o aluno disse que corre.
+function aToggleNivelCorrida(val) {
+  var el = document.getElementById('fld-nivel-corrida');
   if (el) el.style.display = (val === 'sim') ? 'block' : 'none';
   if (val !== 'sim') {
-    const sel = document.querySelector('select[name="nivel_corrida"]');
-    if (sel) sel.value = '';
-    const km = document.querySelector('input[name="corrida_km"]');
+    var h = document.querySelector('#anamneseScreen input[name="nivel_corrida"]');
+    if (h) h.value = '';
+    document.querySelectorAll('#fld-nivel-corrida .av-chip').forEach(function(c){ c.classList.remove('sel'); });
+    var km = document.querySelector('input[name="corrida_km"]');
     if (km) km.value = '';
   }
 }
 async function aAnamSubmit() {
+  var bt = document.getElementById('anam-submit');
+  if (bt && bt.disabled) return;
+  if (bt) bt.disabled = true;
   const r = {};
   document.querySelectorAll('.anam-step input, .anam-step textarea, .anam-step select').forEach(el => {
     if (el.name) r[el.name] = el.type === 'checkbox' ? el.checked : el.value;
   });
+  // regiões de dor viram texto em condicoes_saude (o Gerador e os alertas leem esse campo)
+  var reg = (r.dor_regioes || '').split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x && x !== 'Nenhuma'; });
+  delete r.dor_regioes;
+  var det = (r.condicoes_saude || '').trim();
+  r.condicoes_saude = reg.length ? (reg.join(', ') + (det ? '. ' + det : '')) : det;
   const { error } = await aClient.from('anamneses').insert({
     aluno_id: aAlunoRow.id, tipo: 'anamnese', respostas: r
   });
-  if (error) { alert('Erro ao salvar: ' + error.message); return; }
+  if (error) { if (bt) bt.disabled = false; alert('Não foi possível salvar: ' + error.message); return; }
   document.getElementById('anamneseScreen').style.display = 'none';
   // Mostra boas-vindas brevemente
   document.getElementById('anam-bvscreen').style.display = 'flex';
@@ -19270,7 +19349,7 @@ async function aAnamSubmit() {
     try { viaTreino = sessionStorage.getItem('movh-via-treino') === '1'; sessionStorage.removeItem('movh-via-treino'); } catch(e){}
     if (viaTreino && window.location.origin === new URL(A_APP_URL).origin) { window.location.replace(A_APP_URL); return; }
     aBoot(null); // reinicia sem forçar session — vai buscar do cache
-  }, 3000);
+  }, 1800);
 }
 
 // ══ PAR-Q ══
@@ -19311,45 +19390,70 @@ async function aParqSubmit() {
 aBoot();
 <\/script>
 
-<!-- ══ TELA ANAMNESE ══ -->
-<div id="anamneseScreen" style="display:none;min-height:100vh;align-items:flex-start;justify-content:center;padding:1.5rem;background:linear-gradient(165deg,var(--bg) 0%,var(--Pl) 130%)">
-  <div style="background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:1.85rem;max-width:480px;width:100%;box-shadow:0 8px 28px rgba(20,16,50,.09);margin-top:2rem">
-    <div style="font-family:var(--font-d);font-size:18px;font-weight:800;margin-bottom:4px">Bem-vindo(a)! 👋</div>
-    <div style="font-size:12px;color:var(--t2);margin-bottom:1.25rem">Antes de começar, precisamos te conhecer. São só 3 passos rápidos.</div>
-    <div style="font-size:11px;font-weight:700;color:var(--Pd);margin-bottom:1rem" id="anam-progress">Passo 1 de 3</div>
-        <div class="anam-step" id="anam-step-1">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">📋 Você</div>
-      <div class="fld"><label>Nome</label><input type="text" name="nome" placeholder="Seu nome"></div>
-      <div class="fld"><label>WhatsApp</label><input type="tel" name="whatsapp" placeholder="(00) 00000-0000"></div>
-      <div class="fld"><label>Data de nascimento</label><input type="date" name="nascimento"></div>
-      <div class="fld"><label>Sexo biológico</label><select name="sexo" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="masculino">Masculino</option><option value="feminino">Feminino</option><option value="outro">Outro</option></select></div>
-      <div class="fld"><label>Altura (cm)</label><input type="number" name="altura" placeholder="170" min="100" max="250"></div>
-      <div class="fld"><label>Peso (kg)</label><input type="number" name="peso" placeholder="70" min="30" max="300" step="0.1"></div>
-    </div>
-    <div class="anam-step" id="anam-step-2" style="display:none">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">🎯 Objetivo e rotina</div>
-      <div class="fld"><label>Objetivo principal</label><select name="objetivo" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="emagrecimento">Emagrecimento</option><option value="hipertrofia">Hipertrofia</option><option value="forca">Força</option><option value="condicionamento">Condicionamento</option><option value="reabilitacao">Reabilitação</option><option value="outro">Outro</option></select></div>
-      <div class="fld"><label>Há quanto tempo treina?</label><select name="tempo_treino" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="iniciante">Iniciante (&lt;6 meses)</option><option value="intermediario">Intermediário (6m–2a)</option><option value="avancado">Avançado (&gt;2 anos)</option></select></div>
-      <div class="fld"><label>Quantos dias por semana quer treinar?</label><select name="dias_semana" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="2">2 dias</option><option value="3">3 dias</option><option value="4">4 dias</option><option value="5">5 dias</option><option value="6">6 dias</option></select></div>
-      <div class="fld"><label>Tempo por sessão</label><select name="duracao_sessao" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="30">Até 30 min</option><option value="45">45 min</option><option value="60">1 hora</option><option value="90">1h30+</option></select></div>
-      <div class="fld"><label>Você corre com frequência?</label><select name="pratica_corrida" onchange="aToggleNivelCorrida(this.value)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-      <div id="fld-nivel-corrida" style="display:none">
-      <div class="fld"><label>Há quanto tempo corre?</label><select name="nivel_corrida" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"><option value="">Selecione…</option><option value="iniciante">Iniciante (0–6 meses)</option><option value="intermediario">Intermediário (6 meses – 2 anos)</option><option value="avancado">Avançado (2+ anos)</option></select></div>
-      <div class="fld"><label>Média de km por corrida</label><input type="number" name="corrida_km" placeholder="5" min="0" max="100" step="0.5" inputmode="decimal"></div>
-      </div>
-    </div>
-    <div class="anam-step" id="anam-step-3" style="display:none">
-      <div style="font-size:14px;font-weight:700;margin-bottom:12px">❤️ Saúde</div>
-      <div class="fld"><label>Lesões, dores, condições de saúde ou medicamentos?</label><textarea name="condicoes_saude" rows="3" placeholder="Ex: joelho operado, hérnia… (deixe vazio se não tiver)" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"></textarea></div>
-      <div class="fld"><label>Algo mais que eu deva saber? (opcional)</label><textarea name="observacoes" rows="3" placeholder="Qualquer info relevante…" style="padding:9px 11px;border:1px solid var(--bd);border-radius:8px;font-size:13px;outline:none;background:var(--card);color:var(--tx);font-family:inherit"></textarea></div>
-    </div>
-<div style="display:flex;justify-content:space-between;align-items:center;margin-top:1.25rem;gap:8px">
-      <button id="anam-prev" onclick="aAnamStep(window._anamStep-1)" style="visibility:hidden;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--t2)">‹ Anterior</button>
-      <button id="anam-next" onclick="aAnamStep(window._anamStep+1)" style="display:inline-flex;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--P);color:#fff">Próximo ›</button>
-      <button id="anam-submit" onclick="aAnamSubmit()" style="display:none;padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--G);color:#fff">✓ Concluir</button>
-    </div>
-  </div>
+<!-- ══ TELA ANAMNESE (v68.5: botões de toque, validação, barra de progresso) ══ -->
+<div id="anamneseScreen" style="display:none;min-height:100vh;align-items:stretch;justify-content:center;background:var(--bg)">
+<style>
+#anamneseScreen .av-shell{max-width:480px;width:100%;margin:0 auto;display:flex;flex-direction:column;min-height:100vh}
+#anamneseScreen .av-top{padding:18px 20px 0}
+#anamneseScreen .av-bar{display:flex;gap:6px;margin-bottom:14px}
+#anamneseScreen .av-bar i{flex:1;height:4px;border-radius:4px;background:var(--bd);transition:background .2s}
+#anamneseScreen .av-bar i.on{background:var(--P)}
+#anamneseScreen .av-meta{font-size:12px;color:var(--t2);display:flex;justify-content:space-between}
+#anamneseScreen .av-t{font-family:var(--font-d);font-size:22px;font-weight:800;letter-spacing:-.02em;margin:10px 0 4px}
+#anamneseScreen .av-s{font-size:13px;color:var(--t2);margin-bottom:18px}
+#anamneseScreen .av-body{padding:0 20px 24px;flex:1}
+#anamneseScreen .av-q{margin-bottom:18px}
+#anamneseScreen .av-q>label{display:block;font-size:13px;font-weight:600;margin-bottom:8px;color:var(--tx);text-transform:none;letter-spacing:0}
+#anamneseScreen .av-q>label small{font-weight:400;color:var(--t3);margin-left:4px}
+#anamneseScreen .av-q input[type=text],#anamneseScreen .av-q input[type=tel],#anamneseScreen .av-q input[type=date],#anamneseScreen .av-q input[type=number],#anamneseScreen .av-q textarea{width:100%;padding:12px 13px;border:1px solid var(--bd);border-radius:10px;font-size:16px;background:var(--card);color:var(--tx);font-family:inherit;outline:none}
+#anamneseScreen .av-q input:focus,#anamneseScreen .av-q textarea:focus{border-color:var(--P);box-shadow:0 0 0 3px color-mix(in srgb,var(--P) 16%,transparent)}
+#anamneseScreen .av-row{display:flex;gap:10px}
+#anamneseScreen .av-row>div{flex:1}
+#anamneseScreen .av-chips{display:flex;flex-wrap:wrap;gap:8px}
+#anamneseScreen .av-chip{padding:10px 14px;border:1px solid var(--bd);border-radius:10px;background:var(--card);font-size:14px;color:var(--tx);min-height:44px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center}
+#anamneseScreen .av-chip.sel{border-color:var(--P);background:color-mix(in srgb,var(--P) 16%,var(--card));font-weight:600}
+#anamneseScreen .av-chip:focus-visible{outline:2px solid var(--P);outline-offset:2px}
+#anamneseScreen .av-chips.g2 .av-chip{flex:1 1 calc(50% - 4px)}
+#anamneseScreen .av-chips.n .av-chip{flex:1;justify-content:center;padding:10px 0}
+#anamneseScreen .av-hint{font-size:12px;color:var(--t3);margin-top:6px}
+#anamneseScreen .av-foot{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg)}
+#anamneseScreen .av-foot button{align-items:center;justify-content:center;min-height:48px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid var(--bd);background:var(--card);color:var(--t2);padding:0 18px;cursor:pointer;font-family:inherit}
+#anamneseScreen .av-foot .av-go{flex:1;border:none;color:#fff}
+#anamneseScreen #anam-next{background:var(--P)}
+#anamneseScreen #anam-submit{background:var(--G)}
+#anamneseScreen .av-foot button[disabled]{opacity:.4;cursor:default}
+</style>
+<div class="av-shell"><div class="av-top"><div class="av-bar"><i></i><i></i><i></i></div>
+<div class="av-meta"><span id="anam-progress">Passo 1 de 3</span><span>Leva cerca de 1 minuto</span></div>
+<div class="av-t" id="av-t">Vamos começar por você</div><div class="av-s" id="av-s">Só o essencial para montar seu treino.</div></div>
+<div class="av-body">
+<div class="anam-step" id="anam-step-1">
+<div class="av-q" id="av-nome-w" style="display:none"><label>Nome</label><input type="text" name="nome" placeholder="Seu nome" autocomplete="name" oninput="aAnamCheck()"></div>
+<div class="av-q"><label>WhatsApp</label><input type="tel" name="whatsapp" placeholder="(00) 00000-0000" inputmode="tel" autocomplete="tel" oninput="aMaskWa(this)"></div>
+<div class="av-q"><label>Data de nascimento <small>opcional</small></label><input type="date" name="nascimento"></div>
+<div class="av-q"><label>Sexo biológico <small>opcional</small></label><div class="av-chips n"><button type="button" class="av-chip" data-n="sexo" data-v="feminino" onclick="aChip(this)">Feminino</button><button type="button" class="av-chip" data-n="sexo" data-v="masculino" onclick="aChip(this)">Masculino</button><button type="button" class="av-chip" data-n="sexo" data-v="outro" onclick="aChip(this)">Outro</button></div><input type="hidden" name="sexo"><div class="av-hint">Usamos só para ajustar referências de saúde.</div></div>
+<div class="av-q av-row"><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px">Altura <small>cm</small></label><input type="number" name="altura" placeholder="170" min="100" max="250" inputmode="numeric"></div><div><label style="display:block;font-size:13px;font-weight:600;margin-bottom:8px">Peso <small>kg</small></label><input type="number" name="peso" placeholder="70" min="30" max="300" step="0.1" inputmode="decimal"></div></div>
 </div>
+<div class="anam-step" id="anam-step-2" style="display:none">
+<div class="av-q"><label>Objetivo principal</label><div class="av-chips g2"><button type="button" class="av-chip" data-n="objetivo" data-v="emagrecimento" onclick="aChip(this)">Emagrecimento</button><button type="button" class="av-chip" data-n="objetivo" data-v="definicao" onclick="aChip(this)">Definição</button><button type="button" class="av-chip" data-n="objetivo" data-v="gluteo" onclick="aChip(this)">Glúteos</button><button type="button" class="av-chip" data-n="objetivo" data-v="hipertrofia" onclick="aChip(this)">Ganho de massa</button><button type="button" class="av-chip" data-n="objetivo" data-v="superior" onclick="aChip(this)">Parte superior</button><button type="button" class="av-chip" data-n="objetivo" data-v="manutencao" onclick="aChip(this)">Saúde e funcional</button><button type="button" class="av-chip" data-n="objetivo" data-v="reabilitacao" onclick="aChip(this)">Reabilitação</button><button type="button" class="av-chip" data-n="objetivo" data-v="outro" onclick="aChip(this)">Outro</button></div><input type="hidden" name="objetivo"></div><div class="av-q"><label>Quer destacar algo? <small>opcional</small></label><input type="text" name="objetivo_detalhe" placeholder="Ex.: casamento em março, voltar a correr" maxlength="120"></div>
+<div class="av-q"><label>Experiência com treino</label><div class="av-chips n"><button type="button" class="av-chip" data-n="tempo_treino" data-v="iniciante" onclick="aChip(this)">Iniciante</button><button type="button" class="av-chip" data-n="tempo_treino" data-v="intermediario" onclick="aChip(this)">Intermediário</button><button type="button" class="av-chip" data-n="tempo_treino" data-v="avancado" onclick="aChip(this)">Avançado</button></div><input type="hidden" name="tempo_treino"><div class="av-hint">Iniciante: menos de 6 meses. Avançado: mais de 2 anos.</div></div>
+<div class="av-q"><label>Dias por semana</label><div class="av-chips n"><button type="button" class="av-chip" data-n="dias_semana" data-v="2" onclick="aChip(this)">2</button><button type="button" class="av-chip" data-n="dias_semana" data-v="3" onclick="aChip(this)">3</button><button type="button" class="av-chip" data-n="dias_semana" data-v="4" onclick="aChip(this)">4</button><button type="button" class="av-chip" data-n="dias_semana" data-v="5" onclick="aChip(this)">5</button><button type="button" class="av-chip" data-n="dias_semana" data-v="6" onclick="aChip(this)">6</button></div><input type="hidden" name="dias_semana"></div><div class="av-q"><label>Quais dias você costuma treinar? <small>opcional</small></label><div class="av-chips n" data-multi="1"><button type="button" class="av-chip" data-n="dias" data-v="Seg" onclick="aChip(this)">Seg</button><button type="button" class="av-chip" data-n="dias" data-v="Ter" onclick="aChip(this)">Ter</button><button type="button" class="av-chip" data-n="dias" data-v="Qua" onclick="aChip(this)">Qua</button><button type="button" class="av-chip" data-n="dias" data-v="Qui" onclick="aChip(this)">Qui</button><button type="button" class="av-chip" data-n="dias" data-v="Sex" onclick="aChip(this)">Sex</button><button type="button" class="av-chip" data-n="dias" data-v="Sáb" onclick="aChip(this)">Sáb</button><button type="button" class="av-chip" data-n="dias" data-v="Dom" onclick="aChip(this)">Dom</button></div><input type="hidden" name="dias"></div>
+<div class="av-q"><label>Tempo por sessão</label><div class="av-chips n"><button type="button" class="av-chip" data-n="duracao_sessao" data-v="30" onclick="aChip(this)">30 min</button><button type="button" class="av-chip" data-n="duracao_sessao" data-v="45" onclick="aChip(this)">45 min</button><button type="button" class="av-chip" data-n="duracao_sessao" data-v="60" onclick="aChip(this)">1 h</button><button type="button" class="av-chip" data-n="duracao_sessao" data-v="90" onclick="aChip(this)">1h30+</button></div><input type="hidden" name="duracao_sessao"></div>
+<div class="av-q"><label>Você corre com frequência?</label><div class="av-chips n"><button type="button" class="av-chip" data-n="pratica_corrida" data-v="sim" onclick="aChip(this)">Sim</button><button type="button" class="av-chip" data-n="pratica_corrida" data-v="nao" onclick="aChip(this)">Não</button></div><input type="hidden" name="pratica_corrida"></div>
+<div id="fld-nivel-corrida" style="display:none">
+<div class="av-q"><label>Há quanto tempo corre?</label><div class="av-chips n"><button type="button" class="av-chip" data-n="nivel_corrida" data-v="iniciante" onclick="aChip(this)">Até 6 meses</button><button type="button" class="av-chip" data-n="nivel_corrida" data-v="intermediario" onclick="aChip(this)">6 a 24 meses</button><button type="button" class="av-chip" data-n="nivel_corrida" data-v="avancado" onclick="aChip(this)">Mais de 2 anos</button></div><input type="hidden" name="nivel_corrida"></div>
+<div class="av-q"><label>Média de km por corrida</label><input type="number" name="corrida_km" placeholder="5" min="0" max="100" step="0.5" inputmode="decimal"></div>
+</div></div>
+<div class="anam-step" id="anam-step-3" style="display:none">
+<div class="av-q"><label>Tem dor ou lesão em algum lugar?</label><div class="av-chips " data-multi="1"><button type="button" class="av-chip" data-n="dor_regioes" data-v="Nenhuma" onclick="aChip(this)">Nenhuma</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Joelho" onclick="aChip(this)">Joelho</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Lombar" onclick="aChip(this)">Lombar</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Ombro" onclick="aChip(this)">Ombro</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Quadril" onclick="aChip(this)">Quadril</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Pescoço" onclick="aChip(this)">Pescoço</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Tornozelo" onclick="aChip(this)">Tornozelo</button><button type="button" class="av-chip" data-n="dor_regioes" data-v="Outra" onclick="aChip(this)">Outra</button></div><input type="hidden" name="dor_regioes"></div>
+<div class="av-q"><label>Detalhes, condições ou medicamentos <small>opcional</small></label><textarea name="condicoes_saude" rows="3" placeholder="Ex.: joelho direito operado em 2023" style="resize:none"></textarea></div>
+<div class="av-q"><label>Algo mais que eu deva saber? <small>opcional</small></label><textarea name="observacoes" rows="2" placeholder="Rotina, preferências…" style="resize:none"></textarea></div>
+</div></div>
+<div class="av-foot"><button id="anam-prev" type="button" onclick="aAnamStep(window._anamStep-1)" style="visibility:hidden">Voltar</button>
+<button id="anam-next" class="av-go" type="button" onclick="aAnamStep(window._anamStep+1)">Continuar</button>
+<button id="anam-submit" class="av-go" type="button" onclick="aAnamSubmit()" style="display:none">Concluir</button></div>
+</div></div>
+
 <!-- ══ TELA PAR-Q ══ -->
 <div id="parqScreen" style="display:none;min-height:100vh;align-items:flex-start;justify-content:center;padding:1.5rem;background:linear-gradient(165deg,var(--bg) 0%,var(--Pl) 130%)">
   <div style="background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:1.85rem;max-width:480px;width:100%;box-shadow:0 8px 28px rgba(20,16,50,.09);margin-top:2rem">
