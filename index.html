@@ -15034,7 +15034,7 @@ body.xo-open #movh-descanso-widget{display:none!important}
 <script>
 const MB_URL = '${'https://cfanjhuzrcgxrbfmhahi.supabase.co'}';
 const MB_KEY = '${'sb_publishable_UBIH2PU-7fkrH2gs40HW2w_Maj9dl2W'}';
-const A_NETLIFY_URL = ${JSON.stringify(plLand.netlifyUrl||'')};
+const A_NETLIFY_URL = ${JSON.stringify(plLand.netlifyUrl||'')};${''/*@@APP_JS_BEGIN@@*/}
 const aClient = window.supabase.createClient(MB_URL, MB_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, storageKey: 'movh-aluno-auth' }
 });
@@ -15090,12 +15090,12 @@ function aAtualizarProgressoSessao(){
   var ptEl = cont.querySelector('.pt');
   if (ptEl && ptEl.firstChild) nomeDia = String(ptEl.firstChild.textContent || '').trim();
   let msg = feitos+' '+(aLang==='en'?'of':'de')+' '+total+' '+(aLang==='en'?'exercises done':'exercícios feitos');
-  if(pct>=100) msg = aLang==='en' ? '🏆 All done — don\u2019t forget to log your loads!' : '🏆 Tudo feito — não esquece de registrar as cargas!';
+  if(pct>=100) msg = aLang==='en' ? '🏆 All done — don’t forget to log your loads!' : '🏆 Tudo feito — não esquece de registrar as cargas!';
   else if(pct>=50) msg += aLang==='en' ? ' — halfway there, keep going! 💪' : ' — na metade, bora! 💪';
   else if(feitos>0) msg += aLang==='en' ? ' — nice start!' : ' — começou bem!';
   if(texto){
     if (pct >= 100) texto.textContent = msg;
-    else texto.innerHTML = '<span><b>' + aEsc(nomeDia) + '</b>' + (nomeDia ? ' \u00b7 ' : '') + feitos + ' ' + (aLang==='en'?'of':'de') + ' ' + total + '</span><span>~' + Math.max(1, Math.round(restSeg/60)) + ' min ' + (aLang==='en'?'left':'restantes') + '</span>';
+    else texto.innerHTML = '<span><b>' + aEsc(nomeDia) + '</b>' + (nomeDia ? ' · ' : '') + feitos + ' ' + (aLang==='en'?'of':'de') + ' ' + total + '</span><span>~' + Math.max(1, Math.round(restSeg/60)) + ' min ' + (aLang==='en'?'left':'restantes') + '</span>';
   }
   aXoBarraProximo();
   wrap.classList.toggle('sp-completo', pct>=100);
@@ -15408,7 +15408,7 @@ setInterval(function(){ aInstallInit(); aFitSaudacao(document.getElementById('tS
 function aAtualizarSaudacao(){
   const h = new Date().getHours();
   const nomeCompleto = (aAlunoRow && aAlunoRow.nome) ? aAlunoRow.nome.trim() : '';
-  const primeiroNome = nomeCompleto ? nomeCompleto.split(/\s+/)[0] : '';
+  const primeiroNome = nomeCompleto ? nomeCompleto.split(/s+/)[0] : '';
   let msg;
   if (aLang === 'en') {
     msg = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
@@ -17043,10 +17043,10 @@ function aVerificarTreinoConcluido(forcar){
   overlay.innerHTML = \`<div class="sessao-concluida-card">
     <div class="sc-emoji">🏆</div>
     <div class="sc-titulo">\${aLang==='en'?'Workout complete!':'Treino concluído!'}</div>
-    <div class="sc-sub">\${aLang==='en'?'Great job today. Don\u2019t forget to log your loads before leaving.':'Ótimo trabalho hoje! Não se esqueça de registrar suas cargas antes de sair.'}</div>
+    <div class="sc-sub">\${aLang==='en'?'Great job today. Don’t forget to log your loads before leaving.':'Ótimo trabalho hoje! Não se esqueça de registrar suas cargas antes de sair.'}</div>
     <div class="sc-registro-status" id="sc-registro-status">\${aLang==='en'?'⏳ Sending progress to your coach…':'⏳ Enviando progresso pro seu professor…'}</div>
     <div class="rpe-box" id="rpe-box">
-      <div class="rpe-pergunta">\${aLang==='en'?'How hard did today\u2019s session feel?':'Como foi o esforço do treino hoje?'}</div>
+      <div class="rpe-pergunta">\${aLang==='en'?'How hard did today’s session feel?':'Como foi o esforço do treino hoje?'}</div>
       <div class="rpe-emojis" id="rpe-emojis">\${emojisHTML}</div>
       <div class="rpe-legenda"><span>\${aLang==='en'?'very light':'muito leve'}</span><span>\${aLang==='en'?'maximum':'máximo'}</span></div>
       <div id="rpe-dor-area" style="display:none">
@@ -17110,7 +17110,7 @@ async function aRegistrarSessaoConcluidaSeNecessario(){
     console.error('[MOVH] Falha ao registrar sessão em rpe_sessoes:', e);
     const elErr = document.getElementById('sc-registro-status');
     if (elErr) {
-      elErr.textContent = aLang==='en' ? '⚠️ Couldn\u2019t send progress — check your connection' : '⚠️ Não deu pra enviar o progresso — confira sua conexão';
+      elErr.textContent = aLang==='en' ? '⚠️ Couldn’t send progress — check your connection' : '⚠️ Não deu pra enviar o progresso — confira sua conexão';
       elErr.classList.add('sc-reg-erro');
     }
   }
@@ -17239,13 +17239,13 @@ async function aChecarSolicitacaoMudanca(overlay){
   div.style.paddingTop = '10px';
   div.style.borderTop = '1px solid rgba(0,0,0,.08)';
   if(jaExiste && pendente){
-    div.innerHTML = '<div class="sc-sub">' + (aLang==='en' ? 'Change request sent \u2014 waiting for your coach.' : 'Solicita\u00e7\u00e3o de mudan\u00e7a enviada \u2014 aguardando seu professor.') + '</div>';
+    div.innerHTML = '<div class="sc-sub">' + (aLang==='en' ? 'Change request sent — waiting for your coach.' : 'Solicitação de mudança enviada — aguardando seu professor.') + '</div>';
   } else {
     const txt = aLang==='en'
       ? ('You have been on this program for ' + dias + ' days. Want to request a new one from your coach?')
-      : ('Voc\u00ea est\u00e1 h\u00e1 ' + dias + ' dias neste treino. Quer solicitar um novo treino ao seu professor?');
+      : ('Você está há ' + dias + ' dias neste treino. Quer solicitar um novo treino ao seu professor?');
     div.innerHTML = '<div class="sc-sub">' + txt + '</div>' +
-      '<button class="sc-btn-sec" onclick="aSolicitarMudancaTreino()">' + (aLang==='en'?'Request training change':'Solicitar mudan\u00e7a de treino') + '</button>';
+      '<button class="sc-btn-sec" onclick="aSolicitarMudancaTreino()">' + (aLang==='en'?'Request training change':'Solicitar mudança de treino') + '</button>';
   }
   card.appendChild(div);
 }
@@ -17260,11 +17260,11 @@ async function aSolicitarMudancaTreino(){
   });
   const div = document.getElementById('movh-solicitacao-mudanca');
   if(error){
-    if(div) div.innerHTML = '<div class="sc-sub">' + (aLang==='en'?'Error sending request: ':'Erro ao enviar solicita\u00e7\u00e3o: ') + error.message + '</div>';
+    if(div) div.innerHTML = '<div class="sc-sub">' + (aLang==='en'?'Error sending request: ':'Erro ao enviar solicitação: ') + error.message + '</div>';
     return;
   }
   if(div){
-    div.innerHTML = '<div class="sc-sub">' + (aLang==='en'?'Request sent! Your coach has been notified.':'Solicita\u00e7\u00e3o enviada! Seu professor foi notificado.') + '</div>';
+    div.innerHTML = '<div class="sc-sub">' + (aLang==='en'?'Request sent! Your coach has been notified.':'Solicitação enviada! Seu professor foi notificado.') + '</div>';
   }
 }
 
@@ -17731,7 +17731,7 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
       }
     }
     const exsCon = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
-    return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.duracao?'<span class="bm">'+aEsc(b.duracao)+'</span>':'')+'<span class="bt-arr" style="transform:rotate(-90deg)">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl" id="'+bid+'" style="padding:12px;display:none"><div style="font-size:13.5px;font-weight:700;color:var(--tx);letter-spacing:-.01em">'+aProcessarZonasTexto(aEsc(b.titulo||''))+'</div><div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.5">'+aProcessarZonasTexto(aEsc(b.desc||'').replace(/\\n/g,'<br>'))+'</div>'+(zonaChip?'<div style="margin-top:8px">'+zonaChip+'</div>':'')+progHTML+(b.url?"<div style='margin-top:10px'><button data-url='"+aEsc(b.url)+"' onclick=\'aAbrirVideoModal(this.dataset.url)\' style='font-size:12px;color:var(--P);font-weight:600;background:none;border:none;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px'>▶️ " + (aLang==='en'?"Watch video":"Ver v\u00eddeo") + "</button></div>":"")+(exsCon?'<div style="margin-top:10px">'+exsCon+'</div>':'')+'</div></div>';
+    return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.duracao?'<span class="bm">'+aEsc(b.duracao)+'</span>':'')+'<span class="bt-arr" style="transform:rotate(-90deg)">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl" id="'+bid+'" style="padding:12px;display:none"><div style="font-size:13.5px;font-weight:700;color:var(--tx);letter-spacing:-.01em">'+aProcessarZonasTexto(aEsc(b.titulo||''))+'</div><div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.5">'+aProcessarZonasTexto(aEsc(b.desc||'').replace(/\\n/g,'<br>'))+'</div>'+(zonaChip?'<div style="margin-top:8px">'+zonaChip+'</div>':'')+progHTML+(b.url?"<div style='margin-top:10px'><button data-url='"+aEsc(b.url)+"' onclick='aAbrirVideoModal(this.dataset.url)' style='font-size:12px;color:var(--P);font-weight:600;background:none;border:none;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px'>▶️ " + (aLang==='en'?"Watch video":"Ver vídeo") + "</button></div>":"")+(exsCon?'<div style="margin-top:10px">'+exsCon+'</div>':'')+'</div></div>';
   }
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs">💡 '+aEsc(b.obs)+'</div>' : '';
@@ -18716,7 +18716,7 @@ function aMontarColetivas(dados){
     (b.exercicios || []).forEach(function(ex){
       if (!ex.nome) return;
       var sr = b.conjugado ? (ex.reps ? (aEsc(ex.reps) + ' reps') : '') : ((ex.series || ex.reps) ? (aEsc(ex.series || '') + (ex.series && ex.reps ? '×' : '') + aEsc(ex.reps || '')) : '');
-      var pl = (ex.url && String(ex.url).indexOf('http') === 0) ? '<button type="button" class="cl-play" data-u="' + aEsc(ex.url) + '" onclick="aColPlay(this)" aria-label="Video">\u25B6</button>' : '';
+      var pl = (ex.url && String(ex.url).indexOf('http') === 0) ? '<button type="button" class="cl-play" data-u="' + aEsc(ex.url) + '" onclick="aColPlay(this)" aria-label="Video">▶</button>' : '';
       corpo += '<div class="cl-ex-r"><span class="cl-ex-n">' + pl + '<span>' + aEsc(ex.nome) + '</span></span><span class="cl-ex-c">' + sr + '</span></div>';
     });
     if (b.detalhes) corpo += '<div class="cl-det">' + aEsc(b.detalhes) + '</div>';
@@ -18903,8 +18903,8 @@ function aProcessarZonasTexto(txtEscapado){
   if (!txtEscapado) return txtEscapado;
   const zonas = aZonasAtuais();
   // ATENÇÃO escaping: esta função inteira vive dentro do template literal
-  // gigante de exportarComLogin(). Uma barra invertida simples aqui (\s, \(,
-  // \)) é engolida no "cozimento" do template e some no index.html final —
+  // gigante de exportarComLogin(). Uma barra invertida simples aqui (s, (,
+  // )) é engolida no "cozimento" do template e some no index.html final —
   // por isso PRECISA de barra dupla (\\s, \\(, \\)) pra sobreviver e virar
   // barra simples de verdade no arquivo exportado. Sem isso os parênteses
   // deixam de ser literais e viram grupo de captura, quebrando a regex
@@ -19070,7 +19070,7 @@ function aMontarTestes(){
   if (!aTestesFisicos.length) {
     return '<div class="prog-head" style="margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px">' +
       '<div><div class="pt" style="font-size:17px;margin-bottom:4px">🏋️ Meus Testes</div><div style="font-size:12px;color:var(--t2)">Nenhum teste registrado ainda.</div></div>' +
-      '<button onclick=\"aAbrirNovoTeste()\" style=\"font-size:11px;font-weight:700;color:var(--P);background:none;border:1px solid var(--P);border-radius:8px;padding:6px 10px;white-space:nowrap;cursor:pointer\">+ Registrar teste</button>' +
+      '<button onclick="aAbrirNovoTeste()" style="font-size:11px;font-weight:700;color:var(--P);background:none;border:1px solid var(--P);border-radius:8px;padding:6px 10px;white-space:nowrap;cursor:pointer">+ Registrar teste</button>' +
     '</div>';
   }
   const porPadrao = {};
@@ -19083,7 +19083,7 @@ function aMontarTestes(){
 
   let h = '<div class="prog-head" style="margin-top:20px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px">' +
     '<div><div class="pt" style="font-size:17px;margin-bottom:4px">🏋️ Meus Testes</div><div style="font-size:12px;color:var(--t2)">Testes de força e condicionamento, por padrão de movimento.</div></div>' +
-    '<button onclick=\"aAbrirNovoTeste()\" style=\"font-size:11px;font-weight:700;color:var(--P);background:none;border:1px solid var(--P);border-radius:8px;padding:6px 10px;white-space:nowrap;cursor:pointer\">+ Registrar teste</button>' +
+    '<button onclick="aAbrirNovoTeste()" style="font-size:11px;font-weight:700;color:var(--P);background:none;border:1px solid var(--P);border-radius:8px;padding:6px 10px;white-space:nowrap;cursor:pointer">+ Registrar teste</button>' +
   '</div>';
 
   padroes.forEach((padrao, idx) => {
@@ -19113,10 +19113,10 @@ function aMontarTestes(){
     h += '<div class="prog-card">' +
       '<div class="prog-card-hd" onclick="aToggleProg(\\'' + detId + '\\',this)">' +
         '<span class="prog-ex-nome">' + aEsc(aPadraoLabelLocalizado(padrao)) + '</span>' +
-        '<span style=\"display:flex;align-items:center;gap:6px\"><span class=\"prog-var up\">' + valorTxt + '</span><span class=\"prog-arr\">▾</span></span>' +
+        '<span style="display:flex;align-items:center;gap:6px"><span class="prog-var up">' + valorTxt + '</span><span class="prog-arr">▾</span></span>' +
       '</div>' +
       '<div class="prog-detalhe" id="' + detId + '" style="display:none">' +
-        '<div style=\"font-size:11px;color:var(--t3);margin-bottom:4px\">' + aEsc(ultimo.exercicio_nome || '') + '</div>' +
+        '<div style="font-size:11px;color:var(--t3);margin-bottom:4px">' + aEsc(ultimo.exercicio_nome || '') + '</div>' +
         zonasHTML +
         graficoHTML +
         '<div class="prog-hist" style="margin-top:6px">' + linhasHist + '</div>' +
@@ -19433,7 +19433,7 @@ async function aParqSubmit() {
 }
 
 aBoot();
-<\/script>
+${''/*@@APP_JS_END@@*/}<\/script>
 
 <!-- ══ TELA ANAMNESE (v68.5: botões de toque, validação, barra de progresso) ══ -->
 <div id="anamneseScreen" style="display:none;min-height:100vh;align-items:stretch;justify-content:center;background:var(--bg)">
