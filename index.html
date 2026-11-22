@@ -19417,7 +19417,7 @@ aBoot();
 #anamneseScreen .av-chips.n .av-chip{flex:1;justify-content:center;padding:10px 0}
 #anamneseScreen .av-hint{font-size:12px;color:var(--t3);margin-top:6px}
 #anamneseScreen .av-foot{position:sticky;bottom:0;display:flex;gap:10px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg)}
-#anamneseScreen .av-foot button{min-height:48px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid var(--bd);background:var(--card);color:var(--t2);padding:0 18px;cursor:pointer;font-family:inherit}
+#anamneseScreen .av-foot button{align-items:center;justify-content:center;min-height:48px;border-radius:12px;font-size:15px;font-weight:700;border:1px solid var(--bd);background:var(--card);color:var(--t2);padding:0 18px;cursor:pointer;font-family:inherit}
 #anamneseScreen .av-foot .av-go{flex:1;border:none;color:#fff}
 #anamneseScreen #anam-next{background:var(--P)}
 #anamneseScreen #anam-submit{background:var(--G)}
@@ -19441,7 +19441,7 @@ aBoot();
 <div class="av-q"><label>Tempo por sessão</label><div class="av-chips n"><button type="button" class="av-chip" data-n="duracao_sessao" data-v="30" onclick="aChip(this)">30 min</button><button type="button" class="av-chip" data-n="duracao_sessao" data-v="45" onclick="aChip(this)">45 min</button><button type="button" class="av-chip" data-n="duracao_sessao" data-v="60" onclick="aChip(this)">1 h</button><button type="button" class="av-chip" data-n="duracao_sessao" data-v="90" onclick="aChip(this)">1h30+</button></div><input type="hidden" name="duracao_sessao"></div>
 <div class="av-q"><label>Você corre com frequência?</label><div class="av-chips n"><button type="button" class="av-chip" data-n="pratica_corrida" data-v="sim" onclick="aChip(this)">Sim</button><button type="button" class="av-chip" data-n="pratica_corrida" data-v="nao" onclick="aChip(this)">Não</button></div><input type="hidden" name="pratica_corrida"></div>
 <div id="fld-nivel-corrida" style="display:none">
-<div class="av-q"><label>Há quanto tempo corre?</label><div class="av-chips n"><button type="button" class="av-chip" data-n="nivel_corrida" data-v="iniciante" onclick="aChip(this)">Até 6 meses</button><button type="button" class="av-chip" data-n="nivel_corrida" data-v="intermediario" onclick="aChip(this)">6 meses a 2 anos</button><button type="button" class="av-chip" data-n="nivel_corrida" data-v="avancado" onclick="aChip(this)">Mais de 2 anos</button></div><input type="hidden" name="nivel_corrida"></div>
+<div class="av-q"><label>Há quanto tempo corre?</label><div class="av-chips n"><button type="button" class="av-chip" data-n="nivel_corrida" data-v="iniciante" onclick="aChip(this)">Até 6 meses</button><button type="button" class="av-chip" data-n="nivel_corrida" data-v="intermediario" onclick="aChip(this)">6 a 24 meses</button><button type="button" class="av-chip" data-n="nivel_corrida" data-v="avancado" onclick="aChip(this)">Mais de 2 anos</button></div><input type="hidden" name="nivel_corrida"></div>
 <div class="av-q"><label>Média de km por corrida</label><input type="number" name="corrida_km" placeholder="5" min="0" max="100" step="0.5" inputmode="decimal"></div>
 </div></div>
 <div class="anam-step" id="anam-step-3" style="display:none">

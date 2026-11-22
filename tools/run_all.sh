@@ -45,6 +45,7 @@ chk proxima_progride 9 0 python3 $T/proxima_progride.py $R/index.html
 chk publicar_data 5 0 python3 $T/publicar_data.py $R/index.html
 chk app_header 2 0 python3 $T/app_header.py $X/app/app.html
 chk app_personal 3 0 python3 $T/app_personal.py $X/app/app.html
+chk anamnese_v2 9 0 python3 $T/anamnese_v2.py $X/app/app.html
 chk t.py_link 1 1 python3 $T/t.py $X/app/app.html   # 1 FAIL esperado (caminho de erro de propósito)
 [ $FAIL = 0 ] && echo "== TUDO OK ==" || echo "== HÁ FALHAS =="
 exit $FAIL
