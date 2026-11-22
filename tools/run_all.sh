@@ -10,6 +10,8 @@ s=open(sys.argv[1],encoding='utf-8').read()
 open(sys.argv[2],'w').write(max(re.findall(r'<script[^>]*>(.*?)</script>',s,re.S),key=len))
 PY
 node --check "$X/big.js" && echo "PASS sintaxe" || { echo "FAIL sintaxe"; exit 1; }
+node tools/build.js --check >/dev/null && echo "PASS build (regiao do index.html == src/app/app.js)" || { echo "FAIL build: rode node tools/build.js (ou --extract se editou o index.html direto)"; exit 1; }
+node --check src/app/app.js && echo "PASS sintaxe app.js" || { echo "FAIL sintaxe app.js"; exit 1; }
 node tools/export_app.js index.html tools/config.json "$X/app/app.html" | tail -1
 # kbm.py abre /home/claude/movhgen/index.html
 [ "$R" = /home/claude/movhgen ] || ln -sfn "$R" /home/claude/movhgen
