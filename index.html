@@ -4268,7 +4268,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.2 · 21/11';
+var MOVH_VER = 'v68.3 · 21/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -12998,10 +12998,10 @@ async function pfSalvar(ativar){
   const P = _pf; if (!P) return;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(P.data||'')) { notify('Escolha a data de início.'); return; }
   const sem = JSON.parse(JSON.stringify(P.sem));
-  sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => { delete e._novo; delete e._restAlt; })));
+  sem.dias.forEach(d => (d.blocos||[]).forEach(b => (b.exercicios||[]).forEach(e => { delete e._novo; delete e._restAlt; delete e._troca; })));
   const b0 = P.base || {};
   const nomeBase = String(b0.nome || 'Protocolo').split('·')[0].trim();
-  const nome = nomeBase + (P.ciclo2 ? ' · Ciclo 2 · 12 sem' : ' · Base 8 sem');
+  const nome = nomeBase + (P.ciclo2 ? ' · Ciclo 2 · 12 sem' : ' · ' + (sem.nome || 'Base') + ' ' + (sem.duracaoSemanas || 8) + ' sem');
   const semsNovas = [sem], testesNovos = [];
   if (P.ciclo2) {
     // Ciclo 2: Construção (8 sem, o rascunho) + Consolidação de 4 sem (cópia, para ajustar) e testes de 3 km nas semanas 4, 8 e 12
@@ -13047,7 +13047,11 @@ async function mbReativarProtocolo(protoId, alunoId) {
     let novoIni = null, semFim = false, conteudoNovo = null;
     const { data: pr } = await mbClient.from('protocolos').select('data_inicio, conteudo').eq('id', protoId).maybeSingle();
     const hj = mbIsoLocal(new Date());
-    if (pr && (!pr.data_inicio || pr.data_inicio < hj)) {
+    if (pr && pr.data_inicio && pr.data_inicio > hj) {
+      // rascunho de "próxima fase" com início no futuro: publicar troca o treino do aluno AGORA (não existe ativação agendada)
+      if (!confirm('Este treino é a PRÓXIMA fase (início em ' + pr.data_inicio.split('-').reverse().join('/') + ').\n\nPublicar agora troca o treino que o aluno vê HOJE e o início passa a ser hoje. Para entrar só na data prevista, cancele e publique no dia.\n\nPublicar agora mesmo assim?')) return { ok: false };
+      novoIni = hj;
+    } else if (pr && (!pr.data_inicio || pr.data_inicio < hj)) {
       const r = prompt('Este treino está com início em ' + (pr.data_inicio ? pr.data_inicio.split('-').reverse().join('/') : 'data em branco') + '. Qual a data de início agora? (AAAA-MM-DD)', hj);
       if (r === null) return { ok: false };
       if (!/^\d{4}-\d{2}-\d{2}$/.test(r.trim())) { notify('Data inválida: use AAAA-MM-DD.'); return { ok: false }; }
