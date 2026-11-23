@@ -16,7 +16,8 @@ JS = """()=>{
   mk('a1','Marcos Silva',{pixPendente:{valor:180},acesso_fim:fut,protocoloAtivo:{data_inicio:ini1,_conteudo:{semanas:[{duracaoSemanas:20}]}}}),
   mk('a2','Paulo Lima',{acesso_fim:'2020-01-01',protocoloAtivo:{data_inicio:ini1,_conteudo:{semanas:[{duracaoSemanas:20}]}}}),
   mk('a3','Izabella Souza',{protocoloAtivo:{data_inicio:ini1,_conteudo:{semanas:[{duracaoSemanas:20}]}},protosInativos:[{id:'r1',data_inicio:rasc.toISOString().slice(0,10),ativar_em:'2026-11-30'}]}),
-  mk('a4','Enes Costa',{protocoloAtivo:{data_inicio:ini1,_conteudo:{semanas:[{duracaoSemanas:20}]}}})
+  mk('a4','Enes Costa',{protocoloAtivo:{data_inicio:ini1,_conteudo:{semanas:[{duracaoSemanas:20}]}}}),
+  mk('a5','Natan Lima',{alertaDor:{ultimo:{},total:1},protocoloAtivo:{data_inicio:ini1,_conteudo:{semanas:[{duracaoSemanas:20}]}}})
  ];
  homeVivo=true;homeRender();
  return document.getElementById('home-grid').innerText;
@@ -34,6 +35,7 @@ with sync_playwright() as p:
     ck('rascunho agendado listado em Treinos', 'Izabella' in t and 'ativa em 30/11' in t)
     ck('Pix a confirmar em Pagamentos', t.find('Pagamentos e vencimentos') < t.find('Marcos'))
     ck('acesso vencido em Pagamentos', t.find('Pagamentos e vencimentos') < t.find('Paulo'))
+    ck('dor tem botão Visto', 'Natan' in t and 'Visto' in t)
     ck('aviso de alunos sem data de acesso', 'sem data de acesso' in t)
     ck('Demandas/Vencimentos antigos removidos', 'Demandas' not in t and 'Vencimentos e atenção' not in t)
     n = sum(1 for _, c in R if c); f = len(R) - n; print('OK=%d FAIL=%d' % (n, f)); sys.exit(1 if f else 0)

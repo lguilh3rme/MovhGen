@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.1 · 23/11';
+var MOVH_VER = 'v69.2 · 23/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4471,6 +4471,7 @@ function homeFeedHTML(gr){
     return '<button type="button" class="hm-fr" data-id="' + escAttr(g.id || '') + '" onclick="homeIrAluno(this.dataset.id)" title="' + escAttr(tip) + '"><span class="tm">' + mbTempoC(g.t) + '</span><b>' + escAttr(g.a) + '</b><span class="bds">' + bd.join('') + '</span></button>';
   }).join('');
 }
+async function homeDorVista(id){ await mbMarcarDorVista(id); homeRender(); try { homeCacheSalvar(); } catch(e){} }
 async function homeIrAluno(id){ nav('alunos'); await mbCarregarPainelAlunos(); mbIrParaAluno(id); }
 async function homeIrColetiva(key){ coletivasModo = 'coletivas'; nav('coletivas'); await mbCarregarAulasColetivas(); coletivasIrParaData(key); }
 function homeIrPersonal(id){ personalAlunoId = id; try { localStorage.setItem('movh_personal_aluno', id); } catch(e){} personalAbrir(); }
@@ -4494,7 +4495,7 @@ function homeRender(){
   const treinHoje = at.filter(a => { try { return mbPresenca(a).nv === 'ok'; } catch(e){ return false; } }).length;
   const kp = (cls, n, l) => '<button type="button" class="hm-k ' + cls + '" onclick="nav(\'alunos\')"><b>' + n + '</b><span>' + l + '</span></button>';
   K.innerHTML = kp('g', at.length, 'alunos ativos') + kp('g', treinHoje, 'treinaram hoje') + kp('r', v7, 'vencendo em até 7 dias') + kp('o', v14, 'vencendo em 8–14 dias') + kp(dem.length ? 'o' : '', dem.length, 'demandas') + kp('m', semSinal.length, 'sem sinal há 5d+');
-  const it = (x) => '<button type="button" class="hm-it n' + x.n + '" data-id="' + escAttr(x.aid || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>' + x.i + '</span><span>' + escAttr(x.t) + '</span>' + ((x.i === '⏰' || x.i === '🏁' || x.i === '💠') ? '<span class="t"><span class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.aid || '') + '" onclick="event.stopPropagation();mbCobrar(this.dataset.id)">💰 Cobrar</span></span>' : '') + '</button>';
+  const it = (x) => '<button type="button" class="hm-it n' + x.n + '" data-id="' + escAttr(x.aid || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>' + x.i + '</span><span>' + escAttr(x.t) + '</span>' + ((x.i === '⏰' || x.i === '🏁' || x.i === '💠') ? '<span class="t"><span class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.aid || '') + '" onclick="event.stopPropagation();mbCobrar(this.dataset.id)">💰 Cobrar</span></span>' : (x.i === '⚠️' ? '<span class="t"><span class="btn bs" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.aid || '') + '" onclick="event.stopPropagation();homeDorVista(this.dataset.id)" title="Já conversei: tira o alerta de dor da lista">✔ Visto</span></span>' : '')) + '</button>';
   const idsV = {}; homeVencerLista(at).forEach(x => { idsV[x.a.id] = 1; });
   const rascs = at.filter(a => !idsV[a.id]).map(a => ({ a:a, r:mbRascunhoDe(a) })).filter(x => x.r);
   const rascIt = x => { const n = (x.a.nome || 'Aluno').split(' '); return '<div class="hm-it n1" style="cursor:default"><span>📝</span><span><b>' + escAttr(n[0] + (n[1] ? ' ' + n[1] : '')) + '</b> · ' + (x.r.ativar_em ? 'ativa em ' + escAttr(String(x.r.ativar_em).split('-').reverse().join('/')) : 'rascunho para revisar') + '</span><span class="t"><button type="button" class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.a.id) + '" data-m="rasc" onclick="event.stopPropagation();homeAbrirFase(this.dataset.id,this.dataset.m)">Revisar</button></span></div>'; };
