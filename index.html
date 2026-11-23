@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.2 · 23/11';
+var MOVH_VER = 'v69.3 · 23/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -20082,10 +20082,12 @@ const PL_DEFAULT = [
   { id:'pl2', nome:'Trimestral', dias:90,  precoBR:420, precoUK:99,  ativo:true, tipo:'novo' },
   { id:'pl4', nome:'Renovação',  dias:30,  precoBR:150, precoUK:0,   ativo:true, tipo:'renovacao' },
   { id:'pl5', nome:'Reativação (treino atual)', dias:30,  precoBR:90, precoUK:0,   ativo:true, tipo:'reativacao' },
+  { id:'pl7', nome:'Protocolo (treino pronto)', dias:30,  precoBR:90, precoUK:0,   ativo:true, tipo:'protocolo' },
 ];
-const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação' };
+const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'Reativação', protocolo:'Protocolo (treino pronto em loop)' };
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
 const PL_PRESENCIAL = [
+  { id:'mn_on',  grupo:'Degrau 3 · Manutenção',      nome:'Manutenção online (reavaliação a cada 8 semanas)', dias:30, precoBR:130 },
   { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
   { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa presencial (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:150 },
   { id:'av_mapa_on',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa online (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:130 },
@@ -20105,6 +20107,11 @@ const plEhNovo = p => !p.tipo || p.tipo === 'novo';
 function plMigrarLegado(l){
   if (Array.isArray(l) && l.length && !l.some(p => p && p.tipo)) {
     l = JSON.parse(JSON.stringify(PL_DEFAULT));
+    try { localStorage.setItem('movh_planos', JSON.stringify(l)); localStorage.setItem('movh_planos_pub_pend', '1'); } catch (e) {}
+  }
+  // v69.3: plano Protocolo (R$ 90, treino pronto em loop, sem Mapa) entra nas listas já salvas
+  if (Array.isArray(l) && l.length && !l.some(p => p && p.tipo === 'protocolo')) {
+    l = l.concat([{ id:'pl7', nome:'Protocolo (treino pronto)', dias:30, precoBR:90, precoUK:0, ativo:true, tipo:'protocolo' }]);
     try { localStorage.setItem('movh_planos', JSON.stringify(l)); localStorage.setItem('movh_planos_pub_pend', '1'); } catch (e) {}
   }
   return l;
