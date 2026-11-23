@@ -1,4 +1,4 @@
--- SQL PRONTO, NAO APLICADO (preparado em 22/11/2026). Aplicar so com autorizacao explicita do dono (DDL no Supabase cfanjhuzrcgxrbfmhahi).
+-- APLICADO em 22/11/2026 (autorizado pelo dono). Idempotente.
 -- Idempotente: pode rodar mais de uma vez. Depois de aplicar, dar baixa em docs/pendencias-triagem.md (item 1).
 
 -- 1) Professor poder ENVIAR/TROCAR fotos de avaliacao dos proprios alunos no bucket 'avaliacoes'
