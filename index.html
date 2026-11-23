@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.0 · 23/11';
+var MOVH_VER = 'v69.1 · 23/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4525,7 +4525,7 @@ function homeRender(){
   const cNo = '<section class="card hm-c"><h3>📝 Notas fixadas <span class="sp"></span>' + notasBtn('geral', '', 'Geral') + '</h3>' + (!notasOk ? '<div class="hm-vz">⚠️ Falta rodar o SQL de Notas (Configuração › Geral › Copiar SQL das policies RLS).</div>' : (fix.length ? fix.map(n => '<button type="button" class="hm-it" data-i="' + escAttr(n.id) + '" onclick="notasAbrirNota(this.dataset.i)"><span style="width:4px;align-self:stretch;border-radius:3px;background:' + (n.cor || 'var(--bd)') + '"></span><span><b>' + escAttr(n.titulo || '') + '</b> ' + escAttr(String(n.texto || '').split('\n')[0].slice(0, 80)) + '</span></button>').join('') : '<div class="hm-vz">Fixe uma nota (📌) para ela aparecer aqui.</div>')) + '</section>';
   const slim = (h, t) => '<section class="card hm-c hm-slim"><h3>' + h + ' <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + t + '</small></h3></section>';
   const cAcF = gr.length ? cAc : slim('🔔 Alunos recentes', 'sem atividade'), cAgF = (cAg.split('Nada programado.').length === 3) ? slim('🗓️ Agenda', 'nada hoje nem amanhã') : cAg;
-  G.innerHTML = '<div class="hm-col" style="grid-column:1/-1">' + cTar + '</div><div class="hm-col">' + cAgF + cAcF + '</div><div class="hm-col">' + cNo + '</div>';
+  G.innerHTML = '<div class="hm-col">' + cTar + cAgF + '</div><div class="hm-col">' + cAcF + cNo + '</div>';
 }
 
 // ── Notas (por contexto: geral, aluno, dia, exercício) + atalho para o Google Keep ──
