@@ -934,6 +934,7 @@ body.rn .tb::after{content:'';position:absolute;left:0;right:0;bottom:-1px;heigh
 .hm-c{margin:0!important}.hm-slim{padding-top:10px!important;padding-bottom:10px!important}.hm-slim h3{margin:0!important}.hm-it .pb-pop{right:0;left:auto}
 .hm-c h3{font-size:13px;font-weight:700;margin:0 0 8px;display:flex;align-items:center;gap:6px}
 .hm-c h3 .sp{flex:1}
+.hm-gh{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--t2);margin:12px 0 2px}.hm-gh:first-of-type{margin-top:0}.hm-gh .sp{flex:1}.hm-gh small{color:var(--t3);font-weight:500}.hm-it.n0{color:var(--t3)}
 .hm-it{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--bd2);padding:7px 2px;color:var(--tx);cursor:pointer;font:inherit;font-size:12px}
 .hm-it:first-of-type{border-top:0}.hm-it:hover{background:var(--cl)}
 .hm-it .t{margin-left:auto;font-size:11px;color:var(--t3);white-space:nowrap}
@@ -4314,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.9 · 22/11';
+var MOVH_VER = 'v69.0 · 23/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4494,10 +4495,19 @@ function homeRender(){
   const kp = (cls, n, l) => '<button type="button" class="hm-k ' + cls + '" onclick="nav(\'alunos\')"><b>' + n + '</b><span>' + l + '</span></button>';
   K.innerHTML = kp('g', at.length, 'alunos ativos') + kp('g', treinHoje, 'treinaram hoje') + kp('r', v7, 'vencendo em até 7 dias') + kp('o', v14, 'vencendo em 8–14 dias') + kp(dem.length ? 'o' : '', dem.length, 'demandas') + kp('m', semSinal.length, 'sem sinal há 5d+');
   const it = (x) => '<button type="button" class="hm-it n' + x.n + '" data-id="' + escAttr(x.aid || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>' + x.i + '</span><span>' + escAttr(x.t) + '</span>' + ((x.i === '⏰' || x.i === '🏁' || x.i === '💠') ? '<span class="t"><span class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.aid || '') + '" onclick="event.stopPropagation();mbCobrar(this.dataset.id)">💰 Cobrar</span></span>' : '') + '</button>';
-  const cDem = '<section class="card hm-c"><h3>📥 Demandas <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + dem.length + '</small></h3>' + (dem.length ? dem.slice(0, 8).map(it).join('') : '<div class="hm-vz">Nada pendente. 🎉</div>') + '</section>';
+  const idsV = {}; homeVencerLista(at).forEach(x => { idsV[x.a.id] = 1; });
+  const rascs = at.filter(a => !idsV[a.id]).map(a => ({ a:a, r:mbRascunhoDe(a) })).filter(x => x.r);
+  const rascIt = x => { const n = (x.a.nome || 'Aluno').split(' '); return '<div class="hm-it n1" style="cursor:default"><span>📝</span><span><b>' + escAttr(n[0] + (n[1] ? ' ' + n[1] : '')) + '</b> · ' + (x.r.ativar_em ? 'ativa em ' + escAttr(String(x.r.ativar_em).split('-').reverse().join('/')) : 'rascunho para revisar') + '</span><span class="t"><button type="button" class="btn bp" style="font-size:9.5px;padding:2px 8px" data-id="' + escAttr(x.a.id) + '" data-m="rasc" onclick="event.stopPropagation();homeAbrirFase(this.dataset.id,this.dataset.m)">Revisar</button></span></div>'; };
+  const demT = dem.filter(x => x.i !== '💠'), pix = dem.filter(x => x.i === '💠');
+  const restoT = resto.filter(x => x.i !== '⏰' && x.i !== '💠'), acesso = resto.filter(x => x.i === '⏰');
+  const semData = at.filter(a => !a.acesso_fim).length;
   const vL = homeVencerHTML(at), nV = homeVencerLista(at).length;
+  const nT = demT.length + nV + rascs.length + restoT.length, nD = pix.length + acesso.length + (semData ? 1 : 0);
+  const grp = (tit, n, corpo, vz) => '<div class="hm-gh">' + tit + ' <span class="sp"></span><small>' + n + '</small></div>' + (corpo || '<div class="hm-vz">' + vz + '</div>');
+  const corpoT = demT.slice(0, 6).map(it).join('') + vL + rascs.slice(0, 5).map(rascIt).join('') + (rascs.length > 5 ? '<details class="hm-sem"><summary>+ ' + (rascs.length - 5) + ' rascunho(s)</summary>' + rascs.slice(5).map(rascIt).join('') + '</details>' : '') + restoT.slice(0, 6).map(it).join('');
+  const corpoD = pix.map(it).join('') + acesso.slice(0, 6).map(it).join('') + (semData ? '<button type="button" class="hm-it n0" onclick="nav(\'alunos\')"><span>📅</span><span>' + semData + ' aluno' + (semData > 1 ? 's' : '') + ' sem data de acesso · o aviso diário só vale com ela</span></button>' : '');
   const semH = semSinal.length ? '<details class="hm-sem"><summary>😴 <b>' + semSinal.length + ' aluno' + (semSinal.length > 1 ? 's' : '') + ' sem sinal há 5d+</b> · ' + semSinal.slice(0, 4).map(x => escAttr(x.t.split(' · ')[0])).join(', ') + (semSinal.length > 4 ? '…' : '') + '</summary>' + semSinal.map(it).join('') + '</details>' : '';
-  const cAt = '<section class="card hm-c"><h3>⏳ Vencimentos e atenção <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nV + resto.length) + '</small></h3>' + vL + resto.slice(0, 8).map(it).join('') + ((!vL && !resto.length) ? '<div class="hm-vz">Sem vencimentos próximos.</div>' : '') + semH + '</section>';
+  const cTar = '<section class="card hm-c"><h3>✅ Tarefas de hoje <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nT + nD) + '</small></h3>' + grp('🏋️ Treinos', nT, corpoT, 'Nada pendente. 🎉') + grp('💰 Pagamentos e vencimentos', nD, corpoD, 'Tudo em dia. 🎉') + semH + '</section>';
   const dia = (off, rot) => {
     const d = new Date(); d.setDate(d.getDate() + off); const k = coletivasDateKey(d);
     const col = (homeAg.col && homeAg.col[k]) || [], per = (homeAg.per || []).filter(x => x.dados && (x.dados[k] || []).length);
@@ -4515,7 +4525,7 @@ function homeRender(){
   const cNo = '<section class="card hm-c"><h3>📝 Notas fixadas <span class="sp"></span>' + notasBtn('geral', '', 'Geral') + '</h3>' + (!notasOk ? '<div class="hm-vz">⚠️ Falta rodar o SQL de Notas (Configuração › Geral › Copiar SQL das policies RLS).</div>' : (fix.length ? fix.map(n => '<button type="button" class="hm-it" data-i="' + escAttr(n.id) + '" onclick="notasAbrirNota(this.dataset.i)"><span style="width:4px;align-self:stretch;border-radius:3px;background:' + (n.cor || 'var(--bd)') + '"></span><span><b>' + escAttr(n.titulo || '') + '</b> ' + escAttr(String(n.texto || '').split('\n')[0].slice(0, 80)) + '</span></button>').join('') : '<div class="hm-vz">Fixe uma nota (📌) para ela aparecer aqui.</div>')) + '</section>';
   const slim = (h, t) => '<section class="card hm-c hm-slim"><h3>' + h + ' <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + t + '</small></h3></section>';
   const cAcF = gr.length ? cAc : slim('🔔 Alunos recentes', 'sem atividade'), cAgF = (cAg.split('Nada programado.').length === 3) ? slim('🗓️ Agenda', 'nada hoje nem amanhã') : cAg;
-  G.innerHTML = '<div class="hm-col">' + cAt + cAgF + cAcF + '</div><div class="hm-col">' + cDem + cNo + '</div>';
+  G.innerHTML = '<div class="hm-col" style="grid-column:1/-1">' + cTar + '</div><div class="hm-col">' + cAgF + cAcF + '</div><div class="hm-col">' + cNo + '</div>';
 }
 
 // ── Notas (por contexto: geral, aluno, dia, exercício) + atalho para o Google Keep ──

@@ -50,6 +50,7 @@ chk volume_musculos 9 0 python3 $T/volume_musculos.py $R/index.html
 chk app_header 2 0 python3 $T/app_header.py $X/app/app.html
 chk app_personal 3 0 python3 $T/app_personal.py $X/app/app.html
 chk anamnese_v2 11 0 python3 $T/anamnese_v2.py $X/app/app.html
+chk inicio_tarefas 8 0 python3 $T/inicio_tarefas.py $R/index.html
 chk t.py_link 1 1 python3 $T/t.py $X/app/app.html   # 1 FAIL esperado (caminho de erro de propósito)
 [ $FAIL = 0 ] && echo "== TUDO OK ==" || echo "== HÁ FALHAS =="
 exit $FAIL
