@@ -2684,6 +2684,48 @@ function pbDestInfo(){
 }
 function pbRefreshDest(){refreshPBars();renderCfgTreino();}
 function pbSnap(){try{const g=id=>{const e=document.getElementById(id);return e?e.value:''};return JSON.stringify({s:semanas,n:g('cfg-nome'),i:g('cfg-icone'),d:g('cfg-desc'),v:g('cfg-div'),l:g('cfg-lang'),t:testesAgendados,o:calendarioOverrides,f:mbProtoFim,di:mbProtoDataInicio});}catch(e){return '';}}
+// ── Regra dos mesociclos (22/11, dono): alteração feita no mesociclo N reflete nos PRÓXIMOS, nunca nos anteriores ──
+// Compara `semanas` com o snapshot do último carregar/salvar (_pbBase). Para cada campo alterado em N, copia p/ os mesociclos
+// seguintes SÓ se, no snapshot, o campo era igual ao de N e o mesociclo seguinte ainda não foi editado nesta sessão
+// (assim série/descanso de progressão e edições próprias do seguinte ficam como estão). Exercício: nome+url andam juntos.
+function mesoBase(){try{const b=JSON.parse(_pbBase||'null');return b&&Array.isArray(b.s)?b.s:null;}catch(e){return null;}}
+function mesoBaseAtualizar(ids){try{const b=JSON.parse(_pbBase||'null');if(!b||!Array.isArray(b.s))return;ids.forEach(id=>{const c=semanas.find(x=>x.id===id);if(!c)return;const v=JSON.parse(JSON.stringify(c)),k=b.s.findIndex(x=>x.id===id);if(k>=0)b.s[k]=v;else b.s.push(v);});_pbBase=JSON.stringify(b);}catch(e){}}
+function mesoEspelhar(){
+  const base=mesoBase();if(!base||semanas.length<2)return{n:0,ids:[]};
+  const J=JSON.stringify,eq=(a,b)=>J(a)===J(b),cl=v=>v===undefined?undefined:JSON.parse(J(v));
+  const PULA={id:1,exercicios:1,conjGroups:1,cj:1};
+  const bs=id=>base.find(x=>x.id===id);
+  let n=0;const ids=[];
+  for(let i=0;i<semanas.length-1;i++){
+    const ci=semanas[i],si=bs(ci.id);if(!si)continue;
+    for(let m=i+1;m<semanas.length;m++){
+      const cm=semanas[m],sm=bs(cm.id);if(!sm)continue;
+      let c=0;
+      (ci.dias||[]).forEach((di,j)=>{
+        const sdi=(si.dias||[])[j],sdm=(sm.dias||[])[j],dm=(cm.dias||[])[j];
+        if(!sdi||!sdm||!dm)return;
+        (di.blocos||[]).forEach((bl,k)=>{
+          const sbl=(sdi.blocos||[])[k],sbm=(sdm.blocos||[])[k],bm=(dm.blocos||[])[k];
+          if(!sbl||!sbm||!bm||bl.id!==bm.id||sbl.id!==sbm.id||eq(bl,sbl))return;
+          Object.keys(bl).forEach(f=>{if(PULA[f])return;
+            if(!eq(bl[f],sbl[f])&&eq(sbm[f],sbl[f])&&eq(bm[f],sbm[f])){bm[f]=cl(bl[f]);c++;}});
+          const E=bl.exercicios||[],SE=sbl.exercicios||[],SM=sbm.exercicios||[],EM=bm.exercicios||[];
+          if(E.length===SE.length&&SM.length===SE.length&&EM.length===SM.length){
+            E.forEach((e,x)=>{
+              const se=SE[x],sx=SM[x],ex=EM[x];
+              if(!se||!sx||!ex)return;
+              if((e.nome!==se.nome||e.url!==se.url)&&sx.nome===se.nome&&ex.nome===sx.nome){ex.nome=e.nome;ex.url=e.url;c++;}
+              Object.keys(e).forEach(f=>{if(f==='nome'||f==='url'||f==='cj'||f==='id')return;
+                if(!eq(e[f],se[f])&&eq(sx[f],se[f])&&eq(ex[f],sx[f])){ex[f]=cl(e[f]);c++;}});
+            });
+          }else if(!eq(E,SE)&&eq(SM,SE)&&eq(EM,SM)){bm.exercicios=cl(E);c++;}
+        });
+      });
+      if(c){n+=c;if(ids.indexOf(cm.id)<0)ids.push(cm.id);}
+    }
+  }
+  return{n,ids};
+}
 function pbMarcarLimpo(){_pbBase=pbSnap();_pbDirty=false;_pbDraftHash='';try{localStorage.removeItem('movh-rascunho-v1');}catch(e){}pbRefreshDest();}
 async function pbSalvar(){
   const d=pbDestInfo();
@@ -4271,7 +4313,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.6 · 22/11';
+var MOVH_VER = 'v68.7 · 22/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4882,9 +4924,11 @@ async function kbgSalvarFase(sid){
   const btn=document.querySelector('#kbg-'+sid+' .kbg-save');if(btn)btn.disabled=true;
   try{
     const lang=document.getElementById('cfg-lang')?document.getElementById('cfg-lang').value:'pt';
+    const _esp=mesoEspelhar();const _afet=[sid].concat(_esp.ids.filter(x=>x!==sid));
+    const _fz=sd=>{const s0=semanas.find(x=>x.id===sd);const f=Object.assign({},JSON.parse(JSON.stringify(s0)),{nome:trNome(s0.nome,lang)});
+      f.dias=(f.dias||[]).map(d=>Object.assign({},d,{nome:trNome(d.nome,lang),blocos:(d.blocos||[]).map(b=>Object.assign({},b,{nome:trNome(b.nome,lang),tipo:b.tipo?trNome(b.tipo,lang):b.tipo,exercicios:(b.exercicios||[]).map(ex=>Object.assign({},ex,{nome:trNome(ex.nome,lang)})),metconExs:(b.metconExs||[]).map(e=>Object.assign({},e,{nome:trNome(e.nome,lang)}))}))}));return f;};
     const s0=semanas[idx];
-    const fase=Object.assign({},JSON.parse(JSON.stringify(s0)),{nome:trNome(s0.nome,lang)});
-    fase.dias=(fase.dias||[]).map(d=>Object.assign({},d,{nome:trNome(d.nome,lang),blocos:(d.blocos||[]).map(b=>Object.assign({},b,{nome:trNome(b.nome,lang),tipo:b.tipo?trNome(b.tipo,lang):b.tipo,exercicios:(b.exercicios||[]).map(ex=>Object.assign({},ex,{nome:trNome(ex.nome,lang)})),metconExs:(b.metconExs||[]).map(e=>Object.assign({},e,{nome:trNome(e.nome,lang)}))}))}));
+    const fase=_fz(sid);
     const r=await mbClient.from('protocolos').select('conteudo').eq('id',mbProtoCarregadoId).maybeSingle();
     if(r.error||!r.data)throw (r.error||new Error('protocolo não encontrado'));
     const c=JSON.parse(JSON.stringify(r.data.conteudo||{}));
@@ -4892,11 +4936,13 @@ async function kbgSalvarFase(sid){
     const pos=c.semanas.findIndex(x=>x.id===sid);
     if(pos>=0)c.semanas[pos]=fase;
     else{const ant=idx>0?c.semanas.findIndex(x=>x.id===semanas[idx-1].id):-1;c.semanas.splice(ant>=0?ant+1:(idx===0?0:c.semanas.length),0,fase);}
+    _esp.ids.forEach(sd=>{if(sd===sid)return;const q=c.semanas.findIndex(x=>x.id===sd);if(q>=0)c.semanas[q]=_fz(sd);});
     const upd={conteudo:c};
     if(idx===0&&typeof mbProtoDataInicio!=='undefined'&&mbProtoDataInicio)upd.data_inicio=mbProtoDataInicio;
     const w=await mbClient.from('protocolos').update(upd).eq('id',mbProtoCarregadoId);
     if(w.error)throw w.error;
-    notify('✅ Fase "'+(s0.nome||sid)+'" salva. As outras fases não foram alteradas no banco.');
+    mesoBaseAtualizar(_afet);if(_esp.n)renderAll();
+    notify(_esp.n?'✅ Fase "'+(s0.nome||sid)+'" salva e '+_esp.n+' alteração(ões) espelhada(s) nos mesociclos seguintes (salvos também).':'✅ Fase "'+(s0.nome||sid)+'" salva. As outras fases não foram alteradas no banco.');
   }catch(e){notify('Erro ao salvar a fase: '+(e.message||e));}
   finally{if(btn)btn.disabled=false;}
 }
@@ -13993,6 +14039,7 @@ async function mbAtualizarProtocolo() {
   btn.textContent = 'Atualizando…';
   mbHideMsg('mb-save-msg');
 
+  const _esp = mesoEspelhar(); if (_esp.n) { renderAll(); notify('↪ ' + _esp.n + ' alteração(ões) espelhada(s) nos mesociclos seguintes (os anteriores não mudam).'); }
   const nome = document.getElementById('cfg-nome').value || 'Protocolo';
   const lang = document.getElementById('cfg-lang') ? document.getElementById('cfg-lang').value : 'pt';
 

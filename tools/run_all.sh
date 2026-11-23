@@ -38,6 +38,7 @@ chk ciclo2 9 0 python3 $T/ciclo2.py $R/index.html
 chk hibrido 15 0 python3 $T/hibrido.py $R/index.html
 chk escada 12 0 python3 $T/escada.py $R/index.html
 chk jornada_gerador 10 0 python3 $T/jornada_gerador.py $R/index.html
+chk meso_espelho 12 0 python3 $T/meso_espelho.py $R/index.html
 chk estados_proto 10 0 python3 $T/estados_proto.py $R/index.html
 chk pix_link 1 0 python3 $T/pix_link.py $R/index.html
 chk fila_recolhida 3 0 python3 $T/fila_recolhida.py $R/index.html
