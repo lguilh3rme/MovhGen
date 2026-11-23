@@ -4314,7 +4314,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v68.8 · 22/11';
+var MOVH_VER = 'v68.9 · 22/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -10555,7 +10555,7 @@ function mbCobrarAtualizar(trocouPlano){
   _cob.code = code;
   const val = mbCobrarFmt(valor);
   let t;
-  if (pl.id === 'av_mapa') t = `Oi, ${nome}! Tudo bem? 💪 Para começar, o primeiro passo é a Avaliação + Mapa: avaliação, fotos, medidas e um mapa de 1 página com o seu caminho. O valor é ${val}, e se você fechar o programa em até 7 dias esse valor vira crédito.`;
+  if (pl.id === 'av_mapa' || pl.id === 'av_mapa_on') t = `Oi, ${nome}! Tudo bem? 💪 Para começar, o primeiro passo é a Avaliação + Mapa: avaliação, fotos, medidas e um mapa de 1 página com o seu caminho. O valor é ${val}, e se você fechar o programa em até 7 dias esse valor vira crédito.`;
   else if (pl.grupo) t = `Oi, ${nome}! Tudo bem? 💪 Para fechar o seu plano (${pl.nome}) o valor é ${val}.`;
   else if (_cob.sit === 'novo') t = `Oi, ${nome}! Tudo bem? 💪 Seu cadastro no MOVH está pronto e eu já posso montar o seu treino. Para liberar o acesso (${pl.nome} · ${pl.dias} dias) o valor é ${val}.`;
   else if (_cob.sit === 'renovacao') t = `Oi, ${nome}! Tudo bem? 💪 Seu acesso ao MOVH ${new Date(a.acesso_fim + 'T12:00:00') < new Date() ? 'venceu em' : 'vai até'} ${mbCobrarDataBR(a.acesso_fim)}. Para continuar com o treino sem interrupção, a renovação (${pl.nome} · ${pl.dias} dias) é ${val}.`;
@@ -20047,7 +20047,8 @@ const PL_TIPOS = { novo:'Novo (landing)', renovacao:'Renovação', reativacao:'R
 // Só para o "Cobrar" (não vai para a landing nem para o app): presencial e adaptação online. `dias` = acesso liberado ao confirmar o Pix.
 const PL_PRESENCIAL = [
   { id:'ol_ad',  grupo:'Online · adaptação',                     nome:'Online · Adaptação (4 semanas)',           dias:28, precoBR:120 },
-  { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:150 },
+  { id:'av_mapa',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa presencial (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:150 },
+  { id:'av_mapa_on',grupo:'Degrau 1 · Avaliação + Mapa', nome:'Avaliação + Mapa online (vira crédito se fechar o programa em 7 dias)', dias:7, precoBR:130 },
   { id:'pr_i_ad',grupo:'Presencial individual',      nome:'Presencial · Adaptação (4 sessões)',       dias:30, precoBR:220 },
   { id:'pr_i_av',grupo:'Presencial individual',      nome:'Presencial · Sessão avulsa',               dias:7,  precoBR:77 },
   { id:'pr_i_8', grupo:'Presencial individual',      nome:'Presencial · 8 sessões',                   dias:30, precoBR:576 },
