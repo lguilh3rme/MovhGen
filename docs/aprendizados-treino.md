@@ -23,3 +23,14 @@ Objetivo: aprender padrões, avaliar e chegar ao protocolo base de 8 sem. RIR 3 
 - 05/11 quinta: kettlebell swing russo funcionou muito bem com a turma.
 - 09/11: pedido de opção que suba a frequência cardíaca para variar nas terças (snatch/clean/swing americano/intervalado 40/20). Rascunho de terça 10/11 gerado e colado no Gerador; resultado da aula ainda por registrar.
 - Personais: Chris (individual) e Marcos + Paulo (dupla) a montar com a ficha do aluno.
+
+## Troca de estímulo (modelo do dono, treino da Izabella, 22/11/2026)
+Como o professor pensa a troca de exercícios ao mudar de mesociclo (usar na Próxima fase e no agent `movh-treino`):
+- Sobe UM degrau na ESCADA mantendo o padrão de movimento (ex.: Goblet Squat → Back Squat; Hack → Split Squat no Smith), e varia uni/bilateral e a faixa de reps (6-8 → 10-12) para a carga total não explodir.
+- Preenche lacuna de volume do objetivo (ex.: costas ganha Puxada Triângulo e Crucifixo Invertido; posterior ganha Sumo com Déficit) e tira o que perde função (Rosca Martelo, Panturrilha repetida).
+- Composto pesado (4×6-8) descansa 2', nunca 1'. Exceção consciente: objetivo emagrecimento/definição (Hellen, Jocimar) pode ficar mais curto.
+- Sem dois movimentos do mesmo padrão na mesma sessão (RDL + Stiff; dois tríceps) — corta um. Exceção: foco intencional (ombro lateral/postural na Izabella mantém as duas elevações).
+- Foco do objetivo manda: mulher com foco pernas/glúteo/ombro postural → pouco peito (sem supino reto; inclinado leve).
+- Dor prévia (joelho da Izabella): sobe o degrau mesmo assim, mas acompanha o relato nas primeiras semanas.
+- Alteração num mesociclo reflete nos próximos, nunca nos anteriores (`mesoEspelhar`, Gerador v68.7).
+- Aplicado em 22/11: Izabella (Back Squat e Sumo c/ Déficit 2'; Stiff do Post A e Tríceps Francês cortados; 2 mesociclos) e descanso 2' nos compostos dos rascunhos '· v2 (rascunho)' de 10 alunos (fora Hellen e Jocimar). Falta por aluno: subir degrau/cortar redundância, a revisar com o dono no Quadro.
