@@ -371,7 +371,7 @@ setInterval(function(){ aInstallInit(); aFitSaudacao(document.getElementById('tS
 function aAtualizarSaudacao(){
   const h = new Date().getHours();
   const nomeCompleto = (aAlunoRow && aAlunoRow.nome) ? aAlunoRow.nome.trim() : '';
-  const primeiroNome = nomeCompleto ? nomeCompleto.split(/s+/)[0] : '';
+  const primeiroNome = nomeCompleto ? nomeCompleto.split(/\s+/)[0] : '';
   let msg;
   if (aLang === 'en') {
     msg = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
@@ -630,7 +630,7 @@ function aPreviewErroTela(err){
   const m = document.createElement('div'); m.style.cssText = 'font-size:13px;opacity:.75;margin-bottom:16px';
   m.textContent = err ? (en ? 'Try again in a moment or ask your trainer for a new link.' : 'Tente novamente em instantes ou peça um novo link ao seu professor.') : (en ? 'It was removed or replaced. Ask your trainer for a new link.' : 'Ele foi removido ou substituído. Peça um novo link ao seu professor.');
   box.appendChild(h); box.appendChild(t); box.appendChild(m);
-  if (err) { const c = document.createElement('div'); c.style.cssText = 'font-size:10px;opacity:.45;margin-bottom:16px;word-break:break-word'; c.textContent = String(err.message || err.code || err); box.appendChild(c); }
+  if (err) { const c = document.createElement('div'); c.style.cssText = 'font-size:11px;opacity:.45;margin-bottom:16px;word-break:break-word'; c.textContent = String(err.message || err.code || err); box.appendChild(c); }
   const b = document.createElement('button'); b.style.cssText = 'padding:10px 18px;border-radius:99px;border:1px solid var(--bd,#DDDBD4);background:var(--card,#fff);color:inherit;font-weight:700;cursor:pointer';
   b.textContent = en ? 'Go to login' : 'Ir para o login';
   b.onclick = function(){ window.location.href = aBaseApp(); };
@@ -3114,7 +3114,7 @@ function aToggleMedidaDetalhe(btn){
   btn.classList.toggle('open', !aberto);
 }
 function aMontarTabelaRef(linhas, valorAtual, campoComp){
-  return '<table style="width:100%;border-collapse:collapse;font-size:10.5px;margin-top:6px">' +
+  return '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">' +
     linhas.map(l => {
       const ativo = l[2] && l[2](valorAtual);
       return '<tr style="'+(ativo?'font-weight:700;color:var(--Pd)':'color:var(--t2)')+'"><td style="padding:2px 6px 2px 0">'+aEsc(l[0])+'</td><td style="padding:2px 0">'+aEsc(l[1])+'</td></tr>';
@@ -3146,7 +3146,7 @@ function aMontarBadgesMedidas(m){
     ];
     badges.push('<button type="button" class="fase-badge" data-tgt="'+id+'" onclick="aToggleMedidaDetalhe(this)">📐 IMC '+m.imc+' <span class="fase-badge-arrow">▾</span></button>'+
       '<div id="'+id+'" class="a-med-detail" style="display:none">'+
-      '<div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+(aLang==='en'?'IMC is only a starting point — it does not tell muscle from fat.':'IMC é só um ponto de partida — não diferencia massa muscular de gordura.')+'</div>'+
+      '<div style="font-size:11px;color:var(--t2);margin-bottom:2px">'+(aLang==='en'?'IMC is only a starting point — it does not tell muscle from fat.':'IMC é só um ponto de partida — não diferencia massa muscular de gordura.')+'</div>'+
       aMontarTabelaRef(tabela, m.imc) + '</div>');
   }
   if (m.rcq != null) {
@@ -3163,7 +3163,7 @@ function aMontarBadgesMedidas(m){
     ];
     badges.push('<button type="button" class="fase-badge" data-tgt="'+id+'" onclick="aToggleMedidaDetalhe(this)">⚖️ RCQ '+m.rcq+' <span class="fase-badge-arrow">▾</span></button>'+
       '<div id="'+id+'" class="a-med-detail" style="display:none">'+
-      '<div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+(aLang==='en'?'Waist-to-hip ratio (WHO reference).':'Relação cintura/quadril (referência OMS).')+'</div>'+
+      '<div style="font-size:11px;color:var(--t2);margin-bottom:2px">'+(aLang==='en'?'Waist-to-hip ratio (WHO reference).':'Relação cintura/quadril (referência OMS).')+'</div>'+
       aMontarTabelaRef(tabela, m.rcq) + '</div>');
   }
   if (m.propTM != null) {
@@ -3182,7 +3182,7 @@ function aMontarBadgesMedidas(m){
     ];
     badges.push('<button type="button" class="fase-badge" data-tgt="'+id+'" onclick="aToggleMedidaDetalhe(this)">📏 '+(aLang==='en'?'Torso/legs':'Tronco/pernas')+' '+torsoPct+'%·'+legsPct+'% <span class="fase-badge-arrow">▾</span></button>'+
       '<div id="'+id+'" class="a-med-detail" style="display:none">'+
-      '<div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+(aLang==='en'?'Torso vs. lower-limb length — affects squat/deadlift biomechanics (a relatively long femur usually needs more forward torso lean).':'Comprimento do tronco vs. membros inferiores — muda a biomecânica de agachamento/terra (fêmur relativamente mais longo geralmente pede mais inclinação de tronco).')+'</div>'+
+      '<div style="font-size:11px;color:var(--t2);margin-bottom:2px">'+(aLang==='en'?'Torso vs. lower-limb length — affects squat/deadlift biomechanics (a relatively long femur usually needs more forward torso lean).':'Comprimento do tronco vs. membros inferiores — muda a biomecânica de agachamento/terra (fêmur relativamente mais longo geralmente pede mais inclinação de tronco).')+'</div>'+
       '<div style="font-size:11px;font-weight:700;color:var(--tx);margin-bottom:2px">'+(aLang==='en'?'Torso':'Tronco')+' '+torsoPct+'% · '+(aLang==='en'?'legs':'pernas')+' '+legsPct+'%<span style="font-weight:400;color:var(--t3)"> ('+(aLang==='en'?'ratio':'proporção')+' '+m.propTM+')</span></div>'+
       aMontarTabelaRef(tabela, m.propTM) + '</div>');
   }
@@ -3194,14 +3194,14 @@ function aAvalMontarCardsHTML(achados, composicao, medidas){
   const icone = { ok: '●', atencao: '▲', critico: '✕' };
   const cor = { ok: 'var(--G)', atencao: '#c07a1f', critico: '#c0392b' };
   const card = a => '<div style="display:flex;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:5px;background:var(--card);border-left:3px solid '+cor[a.sev]+'">'+
-    '<span>'+icone[a.sev]+'</span><span style="font-size:11.5px;line-height:1.5">'+aEsc(a.texto)+(a.detalhe?'<span style="display:block;color:var(--t3);font-size:9.5px;margin-top:2px">'+aEsc(a.detalhe)+'</span>':'')+'</span></div>';
+    '<span>'+icone[a.sev]+'</span><span style="font-size:11.5px;line-height:1.5">'+aEsc(a.texto)+(a.detalhe?'<span style="display:block;color:var(--t3);font-size:11px;margin-top:2px">'+aEsc(a.detalhe)+'</span>':'')+'</span></div>';
   // Se tem "medidas" estruturadas (avaliações feitas depois desta atualização),
   // mostra badges clicáveis em vez do parágrafo corrido. Avaliações antigas
   // sem essa estrutura caem no texto corrido de sempre.
   const compHtml = medidas ? aMontarBadgesMedidas(medidas)
-    : ((composicao||[]).length ? '<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">'+(aLang==='en'?'Body composition':'Composição corporal')+'</div>'+composicao.map(t=>'<div style="font-size:11.5px;padding:3px 0;color:var(--tx)">◆ '+aEsc(t)+'</div>').join('')+'</div>' : '');
-  const fortesHtml = fortes.length ? '<div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">'+(aLang==='en'?'Strengths':'Pontos fortes')+'</div>'+fortes.map(card).join('') : '';
-  const melhorarHtml = melhorar.length ? '<div style="font-size:10px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px">'+(aLang==='en'?'Points to improve':'Pontos de melhoria')+'</div>'+melhorar.map(card).join('') : '';
+    : ((composicao||[]).length ? '<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">'+(aLang==='en'?'Body composition':'Composição corporal')+'</div>'+composicao.map(t=>'<div style="font-size:11.5px;padding:3px 0;color:var(--tx)">◆ '+aEsc(t)+'</div>').join('')+'</div>' : '');
+  const fortesHtml = fortes.length ? '<div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;margin-bottom:4px">'+(aLang==='en'?'Strengths':'Pontos fortes')+'</div>'+fortes.map(card).join('') : '';
+  const melhorarHtml = melhorar.length ? '<div style="font-size:11px;font-weight:700;color:var(--t2);text-transform:uppercase;margin:10px 0 4px">'+(aLang==='en'?'Points to improve':'Pontos de melhoria')+'</div>'+melhorar.map(card).join('') : '';
   return compHtml + fortesHtml + melhorarHtml;
 }
 function aAvalDiagnosticoHTML(v){
@@ -3312,7 +3312,7 @@ function aAbrirEnvioAvaliacao(avaliacaoId){
   };
   const campoNum = function(id, label, placeholder){
     return '<div style="flex:1;min-width:100px">' +
-      '<label style="font-size:10.5px;color:var(--t2);display:block;margin-bottom:3px">' + label + '</label>' +
+      '<label style="font-size:11px;color:var(--t2);display:block;margin-bottom:3px">' + label + '</label>' +
       '<input type="number" step="0.1" id="' + id + '" placeholder="' + placeholder + '" style="font-size:12px;padding:7px;width:100%;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)"/>' +
     '</div>';
   };
@@ -3320,7 +3320,7 @@ function aAbrirEnvioAvaliacao(avaliacaoId){
     '<div class="pt" style="font-size:16px;margin-bottom:4px">📸 Enviar avaliação física</div>' +
     '<div style="font-size:12px;color:var(--t2);margin-bottom:12px">Tire as fotos com roupa justa/de treino, fundo neutro e boa iluminação. Sem maquiagem pesada ou acessórios que escondam a postura.</div>' +
     '<div style="background:var(--card2,var(--bg));border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:14px">' + aSvgReferenciaPostura() +
-      '<div style="font-size:10.5px;color:var(--t3);text-align:center;margin-top:2px">Braços levemente afastados do corpo, mãos abertas, pés na largura do quadril</div>' +
+      '<div style="font-size:11px;color:var(--t3);text-align:center;margin-top:2px">Braços levemente afastados do corpo, mãos abertas, pés na largura do quadril</div>' +
     '</div>' +
     campoFoto('av-foto-frontal', 'Foto Frontal', true) +
     campoFoto('av-foto-posterior', 'Foto Posterior (de costas)', true) +
@@ -3334,7 +3334,7 @@ function aAbrirEnvioAvaliacao(avaliacaoId){
       campoNum('av-cintura', 'Cintura (cm)', 'Ex: 82') + campoNum('av-quadril', 'Quadril (cm)', 'Ex: 98') +
     '</div>' +
     '<div style="margin-bottom:16px">' +
-      '<label style="font-size:10.5px;color:var(--t2);display:block;margin-bottom:3px">Sexo (referência OMS p/ RCQ)</label>' +
+      '<label style="font-size:11px;color:var(--t2);display:block;margin-bottom:3px">Sexo (referência OMS p/ RCQ)</label>' +
       '<select id="av-sexo" style="font-size:12px;padding:7px;width:100%;border:1px solid var(--bd);border-radius:8px;background:var(--ip);color:var(--tx)">' +
         '<option value="">— não informar —</option><option value="M">Masculino</option><option value="F">Feminino</option>' +
       '</select>' +
@@ -4023,10 +4023,10 @@ function aMontarGraficoPaceCondicionamento(regs){
       '<path d="' + pathD + '" fill="none" stroke="var(--P)" stroke-width="2"/>' +
       dots +
     '</svg>' +
-    '<div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--t3);margin-top:2px">' +
+    '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--t3);margin-top:2px">' +
       '<span>' + aFormatarDataLonga(pontos[0].data) + '</span><span>' + aFormatarDataLonga(pontos[pontos.length-1].data) + '</span>' +
     '</div>' +
-    (melhoraTxt ? '<div style="font-size:10.5px;color:var(--t2);margin-top:4px">' + melhoraTxt + '</div>' : '') +
+    (melhoraTxt ? '<div style="font-size:11px;color:var(--t2);margin-top:4px">' + melhoraTxt + '</div>' : '') +
   '</div>';
 }
 function aMontarTestes(){
@@ -4062,7 +4062,7 @@ function aMontarTestes(){
       const zonas = aCalcularZonasCondicionamento(ultimo.valor, ultimo.distancia_km);
       if (zonas) {
         zonasHTML = '<div style="font-size:11px;font-weight:700;color:var(--tx);margin-top:8px">🎯 Suas zonas de treino</div>' +
-          '<div style="font-size:10px;color:var(--t3);margin-bottom:4px">Alvo de pace (min:seg por km) pra cada tipo de treino:</div>' +
+          '<div style="font-size:11px;color:var(--t3);margin-bottom:4px">Alvo de pace (min:seg por km) pra cada tipo de treino:</div>' +
           '<div class="prog-hist">' + zonas.map(z =>
           '<div class="prog-hist-row"><span>' + aEsc(z.nome) + ' <span style="opacity:.7">— ' + aEsc(A_ZONA_DESC[z.nome]||'') + '</span></span><span style="font-weight:700;color:var(--tx)">' + aEsc(z.pace) + '/km</span></div>'
         ).join('') + '</div>';
