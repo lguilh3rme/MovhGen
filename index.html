@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.3 · 23/11';
+var MOVH_VER = 'v69.4 · 23/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4508,7 +4508,9 @@ function homeRender(){
   const corpoT = demT.slice(0, 6).map(it).join('') + vL + rascs.slice(0, 5).map(rascIt).join('') + (rascs.length > 5 ? '<details class="hm-sem"><summary>+ ' + (rascs.length - 5) + ' rascunho(s)</summary>' + rascs.slice(5).map(rascIt).join('') + '</details>' : '') + restoT.slice(0, 6).map(it).join('');
   const corpoD = pix.map(it).join('') + acesso.slice(0, 6).map(it).join('') + (semData ? '<button type="button" class="hm-it n0" onclick="nav(\'alunos\')"><span>📅</span><span>' + semData + ' aluno' + (semData > 1 ? 's' : '') + ' sem data de acesso · o aviso diário só vale com ela</span></button>' : '');
   const semH = semSinal.length ? '<details class="hm-sem"><summary>😴 <b>' + semSinal.length + ' aluno' + (semSinal.length > 1 ? 's' : '') + ' sem sinal há 5d+</b> · ' + semSinal.slice(0, 4).map(x => escAttr(x.t.split(' · ')[0])).join(', ') + (semSinal.length > 4 ? '…' : '') + '</summary>' + semSinal.map(it).join('') + '</details>' : '';
-  const cTar = '<section class="card hm-c"><h3>✅ Tarefas de hoje <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nT + nD) + '</small></h3>' + grp('🏋️ Treinos', nT, corpoT, 'Nada pendente. 🎉') + grp('💰 Pagamentos e vencimentos', nD, corpoD, 'Tudo em dia. 🎉') + semH + '</section>';
+  const semApp = at.filter(a => a.auth_id && !a.app_instalado_em && !/teste|lguilh3rme/i.test(a.nome || ''));
+  const semAppH = semApp.length ? '<details class="hm-sem"><summary>📲 <b>' + semApp.length + ' aluno' + (semApp.length > 1 ? 's' : '') + ' sem o app instalado</b> · ' + semApp.slice(0, 4).map(a => escAttr((a.nome || '').split(' ')[0])).join(', ') + (semApp.length > 4 ? '…' : '') + '</summary>' + semApp.map(a => '<button type="button" class="hm-it n0" data-id="' + escAttr(a.id || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>📲</span><span>' + escAttr(a.nome || 'Aluno') + ' · pedir para instalar o app</span></button>').join('') + '</details>' : '';
+  const cTar = '<section class="card hm-c"><h3>✅ Tarefas de hoje <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nT + nD) + '</small></h3>' + grp('🏋️ Treinos', nT, corpoT, 'Nada pendente. 🎉') + grp('💰 Pagamentos e vencimentos', nD, corpoD, 'Tudo em dia. 🎉') + semH + semAppH + '</section>';
   const dia = (off, rot) => {
     const d = new Date(); d.setDate(d.getDate() + off); const k = coletivasDateKey(d);
     const col = (homeAg.col && homeAg.col[k]) || [], per = (homeAg.per || []).filter(x => x.dados && (x.dados[k] || []).length);
@@ -10115,6 +10117,7 @@ function mbPresenca(a){
   if (visto) p.push('👁 treino ' + mbTempoRel(a.treino_visto_em));
   if (treinou) p.push('🏋️ ' + mbTempoRel(new Date(treinou).toISOString()));
   if (ace) p.push('👀 app ' + mbTempoRel(a.ultimo_acesso));
+  if (a.app_instalado_em) p.push('📲 instalado' + (a.app_plataforma ? ' (' + a.app_plataforma + ')' : '')); else if (a.auth_id) p.push('📵 sem o app instalado');
   return { dot: dot, nv: nv, txt: txt, det: p.join(' · ') };
 }
 // Barra de etapas do protocolo ativo (gestão de alunos): um segmento por fase, largura = semanas, preenchido até hoje. Adapta-se sozinha ao incluir/remover fases.
@@ -14164,6 +14167,13 @@ body{font-family:var(--font-b);background:var(--bg);color:var(--tx);font-size:14
 .abtn-p:hover:not(:disabled){opacity:.92}
 .abtn-p:active:not(:disabled){transform:scale(.98)}
 .abtn-p:disabled{opacity:.6}
+.inst-card{border:1px solid color-mix(in srgb, var(--P) 40%, var(--bd, #ddd));background:color-mix(in srgb, var(--P) 8%, var(--card));border-radius:12px;padding:12px 12px 10px;margin:0 0 12px}
+.inst-t{font-size:14px;font-weight:800;color:var(--tx);margin-bottom:4px}
+.inst-s{font-size:12px;line-height:1.45;color:var(--t2);margin-bottom:8px}
+.inst-ol{margin:0 0 10px;padding-left:20px;font-size:12px;line-height:1.5;color:var(--tx)}
+.inst-ol li{margin-bottom:3px}
+.inst-ol b{font-weight:700}
+.inst-skip{display:block;width:100%;background:none;border:0;margin-top:8px;padding:6px;font-size:12px;color:var(--t2);text-decoration:underline;cursor:pointer}
 .amsg{font-size:12px;padding:9px 11px;border-radius:8px;margin-bottom:12px;display:none}
 .amsg.show{display:block}
 .amsg.err{background:#FCEBEB;color:#701B10;border:1px solid #f0b0b0}
@@ -15004,6 +15014,13 @@ body.xo-open #movh-descanso-widget{display:none!important}
       <button type="submit" class="abtn abtn-p" id="aLoginBtn">Entrar</button>
     </form>
     <form id="aFormSignup" style="display:none" onsubmit="return aDoSignup(event)">
+      <div id="aInstCard" class="inst-card" style="display:none">
+        <div class="inst-t" id="aInstT"></div>
+        <div class="inst-s" id="aInstS"></div>
+        <ol class="inst-ol" id="aInstOl"></ol>
+        <button type="button" class="abtn abtn-p" id="aInstAcao" onclick="aInstSignupAcao()" style="display:none"></button>
+        <button type="button" class="inst-skip" id="aInstPular" onclick="aInstSignupPular()"></button>
+      </div>
       <div class="fld"><label>Nome</label><input type="text" id="aSignupNome" required autocomplete="name"></div>
       <div class="fld"><label>Email</label><input type="email" id="aSignupEmail" required autocomplete="email"></div>
       <div class="fld"><label>Senha (mín. 6 caracteres)</label><input type="password" id="aSignupPassword" required minlength="6" autocomplete="new-password"></div>
@@ -15844,6 +15861,67 @@ function aSwitchTab(which){
   document.getElementById('aTabSignup').classList.toggle('active', which==='signup');
   document.getElementById('aFormLogin').style.display = which==='login' ? 'block' : 'none';
   document.getElementById('aFormSignup').style.display = which==='signup' ? 'block' : 'none';
+  if (which === 'signup') { try { aInstSignupInit(); } catch(x) {} }
+}
+// ── Cartão "instale o app" na aba Criar conta (iOS = passo a passo; Android = botão nativo) ──
+function aInstSignupInit(){
+  var card = document.getElementById('aInstCard'); if (!card) return;
+  var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
+  var adiar = 0; try { adiar = parseInt(localStorage.getItem('movh-signup-inst-pular') || '0', 10); } catch(x) {}
+  var feito = false; try { feito = localStorage.getItem('movh-install') === 'done'; } catch(x) {}
+  if (aInstStandalone() || feito || (adiar && Date.now() < adiar) || !(so.ios || so.and)) { card.style.display = 'none'; return; }
+  var t = document.getElementById('aInstT'), s = document.getElementById('aInstS'), ol = document.getElementById('aInstOl');
+  var bt = document.getElementById('aInstAcao'), pu = document.getElementById('aInstPular');
+  var passos = [], acao = '', modo = '';
+  if (so.ios && so.inapp) {
+    modo = 'copiar';
+    t.textContent = '📲 ' + (en ? 'Open in Safari to install' : 'Abra no Safari para instalar');
+    s.textContent = en ? 'This browser cannot install apps. Copy the link, open it in Safari and install from there.' : 'Este navegador não instala apps. Copie o link, abra no Safari e instale por lá.';
+    acao = en ? 'Copy link' : 'Copiar link';
+  } else if (so.ios) {
+    modo = 'compartilhar';
+    t.textContent = '📲 ' + (en ? 'Install the app first' : 'Instale o app primeiro');
+    s.textContent = en ? 'Opens full screen and keeps you signed in. On iPhone, install first and create your account inside the app.' : 'Abre em tela cheia e mantém você conectado. No iPhone, instale antes e crie a conta dentro do app.';
+    passos = en
+      ? ['Tap <b>Share</b> (square with an arrow) in Safari', 'Scroll and tap <b>Add to Home Screen</b>', 'Open <b>MOVH</b> from the icon and tap <b>Create account</b>']
+      : ['Toque em <b>Compartilhar</b> (quadrado com seta) no Safari', 'Role e toque em <b>Adicionar à Tela de Início</b>', 'Abra o <b>MOVH</b> pelo ícone e toque em <b>Criar conta</b>'];
+    acao = en ? 'Open Share menu' : 'Abrir o Compartilhar';
+  } else if (aInstEvt) {
+    modo = 'nativo';
+    t.textContent = '📲 ' + (en ? 'Install the app for a better experience' : 'Instale o app para a melhor experiência');
+    s.textContent = en ? 'Opens full screen from your home screen and keeps you signed in.' : 'Abre em tela cheia pela tela inicial e mantém você conectado.';
+    acao = en ? 'Install now' : 'Instalar agora';
+  } else {
+    modo = 'menu';
+    t.textContent = '📲 ' + (en ? 'Install the app for a better experience' : 'Instale o app para a melhor experiência');
+    s.textContent = en ? 'Opens full screen from your home screen and keeps you signed in.' : 'Abre em tela cheia pela tela inicial e mantém você conectado.';
+    passos = en ? ['Tap the <b>⋮</b> menu in Chrome', 'Tap <b>Install app</b> (or <b>Add to Home screen</b>)'] : ['Toque no menu <b>⋮</b> do Chrome', 'Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>)'];
+  }
+  ol.innerHTML = passos.map(function(p){ return '<li>' + p + '</li>'; }).join('');
+  ol.style.display = passos.length ? 'block' : 'none';
+  bt.style.display = acao ? 'block' : 'none'; bt.textContent = acao; bt.setAttribute('data-modo', modo);
+  pu.textContent = en ? 'Not now, create account here' : 'Agora não, criar conta aqui';
+  card.style.display = 'block';
+}
+function aInstSignupAcao(){
+  var bt = document.getElementById('aInstAcao'), modo = bt ? bt.getAttribute('data-modo') : '';
+  var en = (typeof aLang !== 'undefined' && aLang === 'en');
+  if (modo === 'nativo' && aInstEvt) {
+    var ev = aInstEvt; aInstEvt = null;
+    try { ev.prompt(); ev.userChoice.then(function(c){ if (c && c.outcome === 'accepted') { aInstFeito(); aInstSignupInit(); } }).catch(function(){}); } catch(x) {}
+    return;
+  }
+  var url = location.href.split('#')[0];
+  if (modo === 'copiar') {
+    try { navigator.clipboard.writeText(url).then(function(){ aToastApp(en ? 'Link copied. Paste it in Safari.' : 'Link copiado. Cole no Safari.'); }); } catch(x) { aToastApp(url); }
+    return;
+  }
+  if (navigator.share) { try { navigator.share({ title: 'MOVH', url: url }).catch(function(){}); } catch(x) {} }
+  else aToastApp(en ? 'Tap Share, then Add to Home Screen.' : 'Toque em Compartilhar e depois em Adicionar à Tela de Início.');
+}
+function aInstSignupPular(){
+  try { localStorage.setItem('movh-signup-inst-pular', String(Date.now() + 3 * 86400000)); } catch(x) {}
+  var c = document.getElementById('aInstCard'); if (c) c.style.display = 'none';
 }
 
 async function aDoLogin(e){
@@ -15931,7 +16009,19 @@ async function aEnsureAlunoRow(user, nomeSugerido, diasTeste){
 
 // grava alunos.ultimo_acesso (no máx. 1x a cada 20 min) pro professor ver em "Atividade recente".
 // Silencioso: se a coluna ainda não existe no Supabase, o erro é ignorado.
+// grava alunos.app_instalado_em / app_plataforma quando o app é aberto instalado (modo standalone), 1x por aparelho.
+// Silencioso: sem as colunas no Supabase o erro é ignorado.
+function aRegistrarInstalacao(){
+  try {
+    if (window._movhPreview || !aAlunoRow || !aAlunoRow.id || !aInstStandalone()) return;
+    if (localStorage.getItem('movh-inst-reg') === '1') return;
+    var so = aInstSO(), plat = so.ios ? 'ios' : (so.and ? 'android' : 'desktop');
+    var q = aClient.from('alunos').update({ app_instalado_em: new Date().toISOString(), app_plataforma: plat }).eq('id', aAlunoRow.id);
+    q.then(function(r){ if (r && !r.error) { try { localStorage.setItem('movh-inst-reg', '1'); } catch(x) {} } }, function(){});
+  } catch(e){}
+}
 function aRegistrarAcesso(){
+  try { aRegistrarInstalacao(); } catch(e){}
   try {
     if (window._movhPreview || !aAlunoRow || !aAlunoRow.id) return;
     const k = 'movh-ult-acesso';
