@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.2 · 23/11';
+var MOVH_VER = 'v69.4 · 23/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -4508,7 +4508,9 @@ function homeRender(){
   const corpoT = demT.slice(0, 6).map(it).join('') + vL + rascs.slice(0, 5).map(rascIt).join('') + (rascs.length > 5 ? '<details class="hm-sem"><summary>+ ' + (rascs.length - 5) + ' rascunho(s)</summary>' + rascs.slice(5).map(rascIt).join('') + '</details>' : '') + restoT.slice(0, 6).map(it).join('');
   const corpoD = pix.map(it).join('') + acesso.slice(0, 6).map(it).join('') + (semData ? '<button type="button" class="hm-it n0" onclick="nav(\'alunos\')"><span>📅</span><span>' + semData + ' aluno' + (semData > 1 ? 's' : '') + ' sem data de acesso · o aviso diário só vale com ela</span></button>' : '');
   const semH = semSinal.length ? '<details class="hm-sem"><summary>😴 <b>' + semSinal.length + ' aluno' + (semSinal.length > 1 ? 's' : '') + ' sem sinal há 5d+</b> · ' + semSinal.slice(0, 4).map(x => escAttr(x.t.split(' · ')[0])).join(', ') + (semSinal.length > 4 ? '…' : '') + '</summary>' + semSinal.map(it).join('') + '</details>' : '';
-  const cTar = '<section class="card hm-c"><h3>✅ Tarefas de hoje <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nT + nD) + '</small></h3>' + grp('🏋️ Treinos', nT, corpoT, 'Nada pendente. 🎉') + grp('💰 Pagamentos e vencimentos', nD, corpoD, 'Tudo em dia. 🎉') + semH + '</section>';
+  const semApp = at.filter(a => a.auth_id && !a.app_instalado_em && !/teste|lguilh3rme/i.test(a.nome || ''));
+  const semAppH = semApp.length ? '<details class="hm-sem"><summary>📲 <b>' + semApp.length + ' aluno' + (semApp.length > 1 ? 's' : '') + ' sem o app instalado</b> · ' + semApp.slice(0, 4).map(a => escAttr((a.nome || '').split(' ')[0])).join(', ') + (semApp.length > 4 ? '…' : '') + '</summary>' + semApp.map(a => '<button type="button" class="hm-it n0" data-id="' + escAttr(a.id || '') + '" onclick="homeIrAluno(this.dataset.id)"><span>📲</span><span>' + escAttr(a.nome || 'Aluno') + ' · pedir para instalar o app</span></button>').join('') + '</details>' : '';
+  const cTar = '<section class="card hm-c"><h3>✅ Tarefas de hoje <span class="sp"></span><small style="color:var(--t3);font-weight:500">' + (nT + nD) + '</small></h3>' + grp('🏋️ Treinos', nT, corpoT, 'Nada pendente. 🎉') + grp('💰 Pagamentos e vencimentos', nD, corpoD, 'Tudo em dia. 🎉') + semH + semAppH + '</section>';
   const dia = (off, rot) => {
     const d = new Date(); d.setDate(d.getDate() + off); const k = coletivasDateKey(d);
     const col = (homeAg.col && homeAg.col[k]) || [], per = (homeAg.per || []).filter(x => x.dados && (x.dados[k] || []).length);
@@ -10115,6 +10117,7 @@ function mbPresenca(a){
   if (visto) p.push('👁 treino ' + mbTempoRel(a.treino_visto_em));
   if (treinou) p.push('🏋️ ' + mbTempoRel(new Date(treinou).toISOString()));
   if (ace) p.push('👀 app ' + mbTempoRel(a.ultimo_acesso));
+  if (a.app_instalado_em) p.push('📲 instalado' + (a.app_plataforma ? ' (' + a.app_plataforma + ')' : '')); else if (a.auth_id) p.push('📵 sem o app instalado');
   return { dot: dot, nv: nv, txt: txt, det: p.join(' · ') };
 }
 // Barra de etapas do protocolo ativo (gestão de alunos): um segmento por fase, largura = semanas, preenchido até hoje. Adapta-se sozinha ao incluir/remover fases.
