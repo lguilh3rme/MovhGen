@@ -1554,10 +1554,25 @@ function aXoBarraProximo(){
   const todos = [].slice.call(document.querySelectorAll('#tDashConteudo .ec'));
   const prox = todos.find(function(c){ return !c.classList.contains('done'); });
   if (!prox || !todos.length || document.getElementById('aXi')) { box.style.display = 'none'; box.innerHTML = ''; document.body.classList.remove('xo-bar'); return; }
+  todos.forEach(function(c){ c.classList.toggle('ec-prox', c === prox); });
+  const cont = document.getElementById('tDashConteudo');
+  const bAtual = prox.closest ? prox.closest('.bloco') : null;
+  if (cont && bAtual && !cont.querySelector('.bloco[data-foco]')) {
+    cont.querySelectorAll('.bloco').forEach(function(b){
+      b.setAttribute('data-foco', '1');
+      if (b === bAtual) return;
+      const corpo = b.querySelector('.exl'), seta = b.querySelector('.bt-arr');
+      if (corpo) corpo.style.display = 'none';
+      if (seta) seta.style.transform = 'rotate(-90deg)';
+    });
+  } else if (window._aXoUlt && window._aXoUlt !== prox.id) {
+    try { prox.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
+  }
+  window._aXoUlt = prox.id;
   const i = aXoInfo(prox.id);
   const ult = aUltimaCargaPorExercicio[i.nome];
   const sub = (ult && ult.carga != null) ? ((aLang==='en'?'last load ':'última carga ') + ult.carga + ' kg') : (i.total ? i.total + ' ' + (aLang==='en'?'sets':'séries') : '');
-  box.innerHTML = '<div class="xn-t"><b>' + aEsc(i.nome) + '</b><span>' + aEsc(sub) + '</span></div><button class="xo-btn" data-eid="' + prox.id + '" onclick="aXoAbrir(this.dataset.eid)">' + (aLang==='en'?'Start':'Iniciar') + '</button>';
+  box.innerHTML = '<div class="xn-t"><i class="xn-l">' + (aLang==='en'?'Next':'Próximo') + '</i><b>' + aEsc(i.nome) + '</b><span>' + aEsc(sub) + '</span></div><button class="xo-btn" data-eid="' + prox.id + '" onclick="aXoAbrir(this.dataset.eid)">' + (aLang==='en'?'Start':'Iniciar') + '</button>';
   box.style.display = 'flex';
   document.body.classList.add('xo-bar');
 }
@@ -1697,8 +1712,9 @@ function aDicaSeriesMontar(){
     return;
   }
   if (!d) { d = document.createElement('div'); d.id = 'aDicaSeries'; d.className = 'dica-series'; wrap.appendChild(d); }
-  d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap <b>Start</b> or the exercise name: sets, load and rest right here.' : 'Toque em <b>Iniciar</b> ou no nome do exercício: séries, carga e descanso aqui mesmo.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
+  d.innerHTML = '<span>👆 ' + (aLang==='en' ? 'Tap <b>Start</b> or the exercise name.' : 'Toque em <b>Iniciar</b> ou no nome do exercício.') + '</span><button type="button" onclick="aDicaSeriesFechar()">OK</button>';
 }
+function aBlocoDica(bid){ var e = document.getElementById('bobs-' + bid); if (e) e.classList.toggle('on'); }
 function aDicaSeriesFechar(){
   window._aDicaFechada = true;
   if (!window._movhPreview) { try { localStorage.setItem('movh-dica-series', '1'); } catch(e){} }
@@ -2770,8 +2786,9 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
     return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.duracao?'<span class="bm">'+aEsc(b.duracao)+'</span>':'')+'<span class="bt-arr" style="transform:rotate(-90deg)">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl" id="'+bid+'" style="padding:12px;display:none"><div style="font-size:13.5px;font-weight:700;color:var(--tx);letter-spacing:-.01em">'+aProcessarZonasTexto(aEsc(b.titulo||''))+'</div><div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.5">'+aProcessarZonasTexto(aEsc(b.desc||'').replace(/\n/g,'<br>'))+'</div>'+(zonaChip?'<div style="margin-top:8px">'+zonaChip+'</div>':'')+progHTML+(b.url?"<div style='margin-top:10px'><button data-url='"+aEsc(b.url)+"' onclick='aAbrirVideoModal(this.dataset.url)' style='font-size:12px;color:var(--P);font-weight:600;background:none;border:none;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px'>▶️ " + (aLang==='en'?"Watch video":"Ver vídeo") + "</button></div>":"")+(exsCon?'<div style="margin-top:10px">'+exsCon+'</div>':'')+'</div></div>';
   }
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
-  const obsBloco = b.obs ? '<div class="b-obs">💡 '+aEsc(b.obs)+'</div>' : '';
-  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
+  const obsBloco = b.obs ? '<div class="b-obs" id="bobs-'+bid+'">'+aEsc(b.obs)+'</div>' : '';
+  const dicaBtn = b.obs ? '<button type="button" class="b-tip" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoDica(this.dataset.bid)" aria-label="Dica">💡</button>' : '';
+  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+dicaBtn+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
 }
 
 // Monta a lista de exercícios de um bloco, agrupando os que estão marcados
