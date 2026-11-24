@@ -19,6 +19,7 @@ O 40"/20" NÃO é fixo: o formato é escolhido pelo estímulo pensado para a aul
 | AMRAP 5-12' | 3-4 movimentos, reps fixas | rounds + reps |
 | EMOM / Every 1'30 | trabalho fixo curto; bom para movimento técnico (clean, thruster) | qualidade; carga |
 | Chipper (lista única) | só turma experiente, cap 12-15' | tempo |
+| Biset (2 exercícios, descanso entre bisets, mín. 3 bisets) | bom formato com a turma; descanso de ~1'-1'30 entre bisets | séries completas; carga |
 | Dupla "você vai, eu vou" | quando falta material (barra/kettlebell) | rounds totais |
 Regras de desenho:
 - Calibrar reps ao tempo-alvo (heurística minha, SEM fonte na base): ~2-3 s por rep em movimento leve; se o aluno mais rápido fecha em <70% do tempo-alvo, subir reps.
@@ -38,6 +39,7 @@ Objetivo: aprender padrões, avaliar e chegar ao protocolo base de 8 sem. RIR 3 
 - **Fechamento**: devolutiva (semáforo antes/depois) e escolha do split base (full body A/B ou upper/lower) pelos achados.
 
 ## Diário (acrescentar no topo)
+- 23/11 noite: dono relata que as alunas gostaram de circuitos de 6 exercícios bem pensados e dinâmicos; 2 exercícios com descanso entre bisets (mínimo 3 bisets) também é ótimo formato (entra no repertório). Material: 3 cordas. Ideia: manter salto de corda nas terças e kb swing com outros exercícios intensos (meio burpee/sprawn, que a turma odeia, ou alternativas quando convier). Ainda não aplicado no banco.
 - 23/11: dono definiu metabólico = WOD estilo CrossFit com o material do salão, formato variável. Aplicado no banco (`aulas_coletivas`): ter 24/11 = 3R 40"/20" máx reps (Clean → Back Lunge → Thruster BB → Remada unilateral DB → Escalador), tensional sem Push Press (Press estrito); qui 26/11 = WOD for time 21-15-9 (Kb swing, Thruster DB, Canivete), tensional sem balístico (Goblet, RDL DB, Press estrito DB, Remada, Split, Prancha lateral); mesmas trocas nos tensionais de dezembro; S2 01/12 = 4R máx reps; reteste 29/12 e 31/12 = mesmos WODs de 24/11 e 26/11; notação 40"/20"; "Salto simples" corrigido. Resultado das aulas por registrar (reps por round de 24/11 e tempo de 26/11 são a referência do reteste). Dezembro: variar o metabólico com o repertório acima depois de ver a aula de 24/11.
 - 09/11: dupla de personal fechou as 4 aulas de adaptação; aula 1 em 10/11 (modelo acima). Resultado ainda por registrar.
 - 09/11: criada `docs/base-teorica.md` (fontes científicas curadas) e o repo `movh-leituras` (busca semanal no PubMed para curadoria mensal).
