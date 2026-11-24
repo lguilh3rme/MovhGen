@@ -43,6 +43,13 @@ Status: **resumo conferido** = li o resumo/página da revista, não o texto comp
 | HIFT em atletas, *PLOS ONE* 2024. doi:10.1371/journal.pone.0295531 | Efeitos positivos em força, potência e desempenho específico. | Método funcional de alta intensidade | resumo conferido |
 | Kettlebell: revisão NSCA 2014; scoping review *BMC Sports Sci Med Rehabil* 2019. doi:10.1186/s13102-019-0130-z; Falatic et al. 2015, *J Strength Cond Res* 29:1943-7. doi:10.1519/JSC.0000000000000845 | Melhora a potência; força e aptidão aeróbica têm evidência equívoca; snatch 15s/15s elevou VO2máx. | Swing/snatch nas coletivas; formato 40'/20' | resumo conferido |
 
+Formatos de WOD (for time, AMRAP, EMOM), acrescentado em 23/11:
+| Fonte | O que diz | Sustenta | Status |
+|---|---|---|---|
+| Martinho et al. 2024, *BMC Sports Sci Med Rehabil* 16:196. doi:10.1186/s13102-024-00986-3 (scoping review, 68 estudos) | Marcadores físicos e fisiológicos diferem entre os treinos; FC média mais alta em Cindy (182) e Fran (179 bpm); lactato maior em rounds for time; marcadores levam 48-72 h para voltar ao basal. | Escolher o formato pelo estímulo; ter/qui sem empilhar picos; "21-15-9" (tipo Fran) como for time | página da revista conferida (resumo e resultados), texto completo não lido |
+| Meier, Schlie, Schmidt 2023, *Front Physiol* 14:1146718. doi:10.3389/fphys.2023.1146718 (revisão sistemática, 12 estudos) | Sessões de 30-60 min elevam a carga cardiovascular de forma progressiva até >90% da FCmáx; poucos estudos de sessão completa; qualidade moderada a baixa; terminologia inconsistente. | Estrutura de aula (aquecimento → pico) | resumo conferido |
+Ainda sem fonte: calibrar reps ao tempo-alvo (é heurística do MOVH), escolha de reps 21-15-9 vs alternativas e WOD para público fitness/iniciante.
+
 Leitura honesta: o método funcional/CrossFit tem a evidência DIRETA mais fraca; ele se sustenta pelos pilares melhor estudados (força, HIIT, circuito resistido).
 
 ## 5. Lacunas (ainda sem fonte)
