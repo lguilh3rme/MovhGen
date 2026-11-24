@@ -736,6 +736,67 @@ function aSwitchTab(which){
   document.getElementById('aTabSignup').classList.toggle('active', which==='signup');
   document.getElementById('aFormLogin').style.display = which==='login' ? 'block' : 'none';
   document.getElementById('aFormSignup').style.display = which==='signup' ? 'block' : 'none';
+  if (which === 'signup') { try { aInstSignupInit(); } catch(x) {} }
+}
+// ── Cartão "instale o app" na aba Criar conta (iOS = passo a passo; Android = botão nativo) ──
+function aInstSignupInit(){
+  var card = document.getElementById('aInstCard'); if (!card) return;
+  var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
+  var adiar = 0; try { adiar = parseInt(localStorage.getItem('movh-signup-inst-pular') || '0', 10); } catch(x) {}
+  var feito = false; try { feito = localStorage.getItem('movh-install') === 'done'; } catch(x) {}
+  if (aInstStandalone() || feito || (adiar && Date.now() < adiar) || !(so.ios || so.and)) { card.style.display = 'none'; return; }
+  var t = document.getElementById('aInstT'), s = document.getElementById('aInstS'), ol = document.getElementById('aInstOl');
+  var bt = document.getElementById('aInstAcao'), pu = document.getElementById('aInstPular');
+  var passos = [], acao = '', modo = '';
+  if (so.ios && so.inapp) {
+    modo = 'copiar';
+    t.textContent = '📲 ' + (en ? 'Open in Safari to install' : 'Abra no Safari para instalar');
+    s.textContent = en ? 'This browser cannot install apps. Copy the link, open it in Safari and install from there.' : 'Este navegador não instala apps. Copie o link, abra no Safari e instale por lá.';
+    acao = en ? 'Copy link' : 'Copiar link';
+  } else if (so.ios) {
+    modo = 'compartilhar';
+    t.textContent = '📲 ' + (en ? 'Install the app first' : 'Instale o app primeiro');
+    s.textContent = en ? 'Opens full screen and keeps you signed in. On iPhone, install first and create your account inside the app.' : 'Abre em tela cheia e mantém você conectado. No iPhone, instale antes e crie a conta dentro do app.';
+    passos = en
+      ? ['Tap <b>Share</b> (square with an arrow) in Safari', 'Scroll and tap <b>Add to Home Screen</b>', 'Open <b>MOVH</b> from the icon and tap <b>Create account</b>']
+      : ['Toque em <b>Compartilhar</b> (quadrado com seta) no Safari', 'Role e toque em <b>Adicionar à Tela de Início</b>', 'Abra o <b>MOVH</b> pelo ícone e toque em <b>Criar conta</b>'];
+    acao = en ? 'Open Share menu' : 'Abrir o Compartilhar';
+  } else if (aInstEvt) {
+    modo = 'nativo';
+    t.textContent = '📲 ' + (en ? 'Install the app for a better experience' : 'Instale o app para a melhor experiência');
+    s.textContent = en ? 'Opens full screen from your home screen and keeps you signed in.' : 'Abre em tela cheia pela tela inicial e mantém você conectado.';
+    acao = en ? 'Install now' : 'Instalar agora';
+  } else {
+    modo = 'menu';
+    t.textContent = '📲 ' + (en ? 'Install the app for a better experience' : 'Instale o app para a melhor experiência');
+    s.textContent = en ? 'Opens full screen from your home screen and keeps you signed in.' : 'Abre em tela cheia pela tela inicial e mantém você conectado.';
+    passos = en ? ['Tap the <b>⋮</b> menu in Chrome', 'Tap <b>Install app</b> (or <b>Add to Home screen</b>)'] : ['Toque no menu <b>⋮</b> do Chrome', 'Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>)'];
+  }
+  ol.innerHTML = passos.map(function(p){ return '<li>' + p + '</li>'; }).join('');
+  ol.style.display = passos.length ? 'block' : 'none';
+  bt.style.display = acao ? 'block' : 'none'; bt.textContent = acao; bt.setAttribute('data-modo', modo);
+  pu.textContent = en ? 'Not now, create account here' : 'Agora não, criar conta aqui';
+  card.style.display = 'block';
+}
+function aInstSignupAcao(){
+  var bt = document.getElementById('aInstAcao'), modo = bt ? bt.getAttribute('data-modo') : '';
+  var en = (typeof aLang !== 'undefined' && aLang === 'en');
+  if (modo === 'nativo' && aInstEvt) {
+    var ev = aInstEvt; aInstEvt = null;
+    try { ev.prompt(); ev.userChoice.then(function(c){ if (c && c.outcome === 'accepted') { aInstFeito(); aInstSignupInit(); } }).catch(function(){}); } catch(x) {}
+    return;
+  }
+  var url = location.href.split('#')[0];
+  if (modo === 'copiar') {
+    try { navigator.clipboard.writeText(url).then(function(){ aToastApp(en ? 'Link copied. Paste it in Safari.' : 'Link copiado. Cole no Safari.'); }); } catch(x) { aToastApp(url); }
+    return;
+  }
+  if (navigator.share) { try { navigator.share({ title: 'MOVH', url: url }).catch(function(){}); } catch(x) {} }
+  else aToastApp(en ? 'Tap Share, then Add to Home Screen.' : 'Toque em Compartilhar e depois em Adicionar à Tela de Início.');
+}
+function aInstSignupPular(){
+  try { localStorage.setItem('movh-signup-inst-pular', String(Date.now() + 3 * 86400000)); } catch(x) {}
+  var c = document.getElementById('aInstCard'); if (c) c.style.display = 'none';
 }
 
 async function aDoLogin(e){
@@ -823,7 +884,19 @@ async function aEnsureAlunoRow(user, nomeSugerido, diasTeste){
 
 // grava alunos.ultimo_acesso (no máx. 1x a cada 20 min) pro professor ver em "Atividade recente".
 // Silencioso: se a coluna ainda não existe no Supabase, o erro é ignorado.
+// grava alunos.app_instalado_em / app_plataforma quando o app é aberto instalado (modo standalone), 1x por aparelho.
+// Silencioso: sem as colunas no Supabase o erro é ignorado.
+function aRegistrarInstalacao(){
+  try {
+    if (window._movhPreview || !aAlunoRow || !aAlunoRow.id || !aInstStandalone()) return;
+    if (localStorage.getItem('movh-inst-reg') === '1') return;
+    var so = aInstSO(), plat = so.ios ? 'ios' : (so.and ? 'android' : 'desktop');
+    var q = aClient.from('alunos').update({ app_instalado_em: new Date().toISOString(), app_plataforma: plat }).eq('id', aAlunoRow.id);
+    q.then(function(r){ if (r && !r.error) { try { localStorage.setItem('movh-inst-reg', '1'); } catch(x) {} } }, function(){});
+  } catch(e){}
+}
 function aRegistrarAcesso(){
+  try { aRegistrarInstalacao(); } catch(e){}
   try {
     if (window._movhPreview || !aAlunoRow || !aAlunoRow.id) return;
     const k = 'movh-ult-acesso';
