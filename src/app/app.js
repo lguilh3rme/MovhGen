@@ -625,7 +625,7 @@ function aPreviewSafetyNet(){
 const A_APP_URL = 'https://movh.netlify.app/';
 function aIrParaRegistro(){
   try { sessionStorage.setItem('movh-via-treino', '1'); } catch(e){}
-  window.location.href = aBaseApp() + '?bemvindo=1';
+  window.location.href = (A_MODO ? A_APP_URL : aBaseApp()) + '?bemvindo=1';
 }
 function aPreviewErroTela(err){
   const en = (navigator.language || '').toLowerCase().indexOf('en') === 0;

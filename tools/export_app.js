@@ -32,22 +32,29 @@ fs.writeFileSync(path.join(path.dirname(outPath), 'version.json'), JSON.stringif
 // Personal (/personal) e Coletivas (/coletivas): o MESMO app do aluno em modo próprio (ver A_MODO no app), instalável à parte:
 // cada um tem manifest, ícone e nome próprios (tools/pwa) e abre direto na visualização dele, sem login.
 const VARIANTES = [
-  { dir: 'personal', nome: 'MOVH Personal', curto: 'Personal' },
-  { dir: 'coletivas', nome: 'MOVH Coletivas', curto: 'Coletivas' }
+  { dir: 'personal', nome: 'MOVH Personal', curto: 'Personal', desc: 'Alunos e treinos do Personal, direto no celular.', bg: '#0B1220' },
+  { dir: 'coletivas', nome: 'MOVH Coletivas', curto: 'Coletivas', desc: 'Aulas coletivas da semana, direto no celular.', bg: '#07130F' }
 ];
 const troca = (h, de, para, n) => { if (h.split(de).length - 1 !== n) throw new Error('variante: "' + de + '" esperado ' + n + 'x'); return h.split(de).join(para); };
+// Tudo RELATIVO à pasta (manifest.webmanifest e sw.js moram dentro dela; ícones e version.json em ../), para funcionar em qualquer
+// endereço (Netlify na raiz ou GitHub Pages em /movh/). Sem "id" no manifest: o id vira o start_url (a pasta), único por app.
 for (const v of VARIANTES) {
   let h = final;
-  h = troca(h, 'href="manifest.webmanifest"', 'href="/manifest-' + v.dir + '.webmanifest"', 1);
-  h = troca(h, 'href="icons/apple-touch-icon.png"', 'href="/icons/' + v.dir + '-apple-touch.png"', 1);
-  h = troca(h, 'href="icons/favicon-32.png"', 'href="/icons/favicon-32.png"', 1);
+  h = troca(h, 'href="icons/apple-touch-icon.png"', 'href="../icons/' + v.dir + '-apple-touch.png"', 1);
+  h = troca(h, 'href="icons/favicon-32.png"', 'href="../icons/favicon-32.png"', 1);
   h = troca(h, '<title>MOVH — Meu Treino</title>', '<title>' + v.nome + '</title>', 1);
   h = troca(h, '<meta name="apple-mobile-web-app-title" content="MOVH">', '<meta name="apple-mobile-web-app-title" content="' + v.curto + '">', 1);
-  h = troca(h, "'sw.js'", "'/sw.js'", 1);
-  h = troca(h, "'version.json?", "'/version.json?", 1);
-  h = troca(h, "'icons/icon-192.png'", "'/icons/" + v.dir + "-192.png'", 2);
+  h = troca(h, "'version.json?", "'../version.json?", 1);
+  h = troca(h, "'icons/icon-192.png'", "'../icons/" + v.dir + "-192.png'", 2);
   const vdir = path.join(path.dirname(outPath), v.dir); fs.mkdirSync(vdir, { recursive: true });
   fs.writeFileSync(path.join(vdir, 'index.html'), h);
+  fs.copyFileSync(path.join(__dirname, 'pwa', 'sw.js'), path.join(vdir, 'sw.js'));
+  const ic = (n, sz, purpose) => ({ src: '../icons/' + v.dir + '-' + n + '.png', sizes: sz + 'x' + sz, type: 'image/png', purpose });
+  fs.writeFileSync(path.join(vdir, 'manifest.webmanifest'), JSON.stringify({
+    name: v.nome, short_name: v.curto, description: v.desc, lang: 'pt-BR', start_url: './', scope: './',
+    display: 'standalone', orientation: 'portrait', background_color: v.bg, theme_color: v.bg,
+    icons: [ic('192', 192, 'any'), ic('512', 512, 'any'), ic('maskable-512', 512, 'maskable')]
+  }, null, 2) + '\n');
 }
 // PWA (v62.2): manifest, service worker e ícones de tools/pwa vão para a raiz do app.
 const pwaSrc = path.join(__dirname, 'pwa');

@@ -24,6 +24,9 @@ window.supabase={createClient:function(){
 """ % (json.dumps(blocos()), hoje)
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self,*a): pass
+    def translate_path(self,path):
+        if path.startswith('/movh/'): path=path[5:]
+        return super().translate_path(path)
 srv=socketserver.TCPServer(('127.0.0.1',0),functools.partial(Q,directory=ROOT)); port=srv.server_address[1]
 threading.Thread(target=srv.serve_forever,daemon=True).start()
 ok=fail=0
@@ -48,7 +51,7 @@ with sync_playwright() as p:
     chk('personal: mostra exercícios e campo de carga',pg.evaluate("document.querySelectorAll('#tPersonalConteudo .pr-ex').length")>=2)
     pg.fill('.pr-carga >> nth=0','80'); pg.click('.pr-ck >> nth=0'); pg.wait_for_timeout(500)
     chk('personal: marcar feito grava e mostra ✓',pg.evaluate("document.querySelector('.pr-st').textContent")=='✓' and any(r.startswith('salvar_personal_registro:') and '"p_feito":true' in r and '"p_carga":"80"' in r for r in pg.evaluate('window.__RPC')))
-    chk('personal: título e manifest próprios',pg.title()=='MOVH Personal' and pg.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')")=='/manifest-personal.webmanifest')
+    chk('personal: título e manifest próprios',pg.title()=='MOVH Personal' and pg.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')")=='manifest.webmanifest')
     chk('personal: sem treino do aluno nem botão sair',ver(pg,'tDashboard')!='block' and ver(pg,'tSairBtn')=='none')
     chk('personal: título do topo',pg.evaluate("document.getElementById('tSaudacaoTitulo').textContent").strip()=='MOVH Personal')
     chk('personal: chaves de instalação separadas',pg.evaluate("aInstKey('movh-install')")=='movh-install-personal')
@@ -74,12 +77,25 @@ with sync_playwright() as p:
         c,pg,errs=novo(); pg.goto(f'http://127.0.0.1:{port}{caminho}'); pg.wait_for_timeout(1500)
         chk(f'coletivas {caminho}: tela visível e conteúdo',ver(pg,'tColetivas')=='block' and pg.evaluate("document.getElementById('tColetivasConteudo').textContent.length")>40)
         if caminho=='/coletivas/':
-            chk('coletivas: título e manifest próprios',pg.title()=='MOVH Coletivas' and pg.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')")=='/manifest-coletivas.webmanifest')
+            chk('coletivas: título e manifest próprios',pg.title()=='MOVH Coletivas' and pg.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')")=='manifest.webmanifest')
             chk('coletivas: chaves de instalação separadas',pg.evaluate("aInstKey('movh-install')")=='movh-install-coletivas')
             chk('coletivas: título do topo',pg.evaluate("document.getElementById('tSaudacaoTitulo').textContent").strip()=='MOVH Coletivas')
             if PRINTS: pg.screenshot(path=PRINTS+'/coletivas.png',full_page=False)
         chk(f'coletivas {caminho}: erro de JS',not errs,errs)
         c.close()
+    # ---- manifests independentes (id próprio, escopo só da pasta, ícones existem) e funcionamento sob /movh/ (GitHub Pages) ----
+    for pre in ('','/movh'):
+        for d,nome in (('personal','MOVH Personal'),('coletivas','MOVH Coletivas')):
+            c,pg,errs=novo(); pg.goto(f'http://127.0.0.1:{port}{pre}/{d}/'+('?t=TOKENabc12345' if d=='personal' else '')); pg.wait_for_timeout(1300)
+            r=pg.evaluate('''async()=>{const l=document.querySelector('link[rel=manifest]');const u=new URL(l.getAttribute('href'),location.href);const m=await (await fetch(u)).json();
+              const ic=await Promise.all(m.icons.map(async i=>(await fetch(new URL(i.src,u))).status));
+              const sw=(await fetch(new URL('sw.js',location.href))).status;const ver=(await fetch(new URL('../version.json',location.href))).status;
+              return {m:m,ic:ic,sw:sw,ver:ver,u:u.pathname,page:location.pathname}}''')
+            m=r['m']
+            chk(f'manifest {pre or "/"}{d}: nome, escopo só da pasta e sem id herdado',m['name']==nome and m['scope']=='./' and m['start_url']=='./' and 'id' not in m and r['u']==r['page']+'manifest.webmanifest',r)
+            chk(f'manifest {pre or "/"}{d}: ícones, sw.js e version.json acessíveis',r['ic']==[200,200,200] and r['sw']==200 and r['ver']==200,r)
+            chk(f'{pre or "/"}{d}: abre e sem erro de JS',pg.evaluate("document.getElementById('treinoScreen').style.display")=='block' and not errs,errs)
+            c.close()
     # ---- iPhone: botão instalar aparece no Personal ----
     ua='Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
     c,pg,errs=novo(ua); pg.goto(f'http://127.0.0.1:{port}/personal/?t=TOKENabc12345'); pg.wait_for_timeout(1500)
