@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.5 · 24/11';
+var MOVH_VER = 'v69.6 · 25/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -14429,7 +14429,9 @@ body #treinoScreen #tLinhaAlertas{position:sticky;top:0;z-index:30;display:flex;
 .pr-obs{grid-column:1/-1}
 .pr-obsb{border:1px solid var(--bd);background:var(--card);border-radius:9px;padding:4px 7px;cursor:pointer;font-size:13px;line-height:1;opacity:.75}
 .pr-obsb.on{border-color:var(--P);opacity:1}
-.pr-ck{width:22px;height:22px;accent-color:var(--G)}
+.pr-ck{-webkit-appearance:none;appearance:none;flex:none;width:28px;height:28px;margin:0;border-radius:9px;border:2px solid var(--bd);background:var(--bg);display:inline-grid;place-items:center;cursor:pointer;transition:background .15s,border-color .15s}
+.pr-ck:checked{background:var(--G);border-color:var(--G)}
+.pr-ck:checked::after{content:'';width:7px;height:13px;border:solid #06210f;border-width:0 3px 3px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .pr-st{flex:none;font-size:11px;color:var(--G);min-width:10px}
 .pr-last{grid-column:1/-1;font-size:10.5px;color:var(--t3);cursor:pointer}
 .pr-hint{grid-column:1/-1;font-size:10.5px;color:var(--t2);line-height:1.45}
@@ -16087,7 +16089,7 @@ async function aBootColetivas(){
   if (btn) { btn.textContent = en ? 'Create account' : 'Fazer o registro'; btn.style.display = 'inline-block'; }
   document.getElementById('treinoScreen').style.display = 'block';
   if (!window._movhRelogioIniciado) { window._movhRelogioIniciado = true; try { aIniciarRelogio(); } catch(e) {} }
-  { const _t = document.getElementById('tSaudacaoTitulo'); if (_t) _t.textContent = '🤸 ' + (en ? 'Group classes' : 'Aulas coletivas'); const _s = document.getElementById('tSairBtn'); if (_s) _s.style.display = 'none'; try { aFitSaudacao(_t); aInstallInit(); } catch(x) {} }
+  { const _t = document.getElementById('tSaudacaoTitulo'); if (_t) _t.textContent = 'MOVH Coletivas'; const _s = document.getElementById('tSairBtn'); if (_s) _s.style.display = 'none'; try { aFitSaudacao(_t); aInstallInit(); } catch(x) {} }
   const el = document.getElementById('tColetivasConteudo');
   if (err) {
     console.error('[MOVH] Erro ao carregar coletivas:', err);
@@ -16122,7 +16124,7 @@ async function aBootPersonal(){
   ['tDashboard','tSemanaCompleta','tProgresso','tColetivas','tAvaliacaoUpload'].forEach(function(id){ const e = document.getElementById(id); if (e) e.style.display = 'none'; });
   document.getElementById('tPersonal').style.display = 'block';
   document.querySelectorAll('#tPersonal .tBtnVoltar').forEach(function(b){ b.style.display = 'none'; });
-  const t = document.getElementById('tSaudacaoTitulo'); if (t) t.textContent = '🏋️ Personal';
+  const t = document.getElementById('tSaudacaoTitulo'); if (t) t.textContent = 'MOVH Personal';
   const sb = document.getElementById('tSairBtn'); if (sb) sb.style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'none';
   document.getElementById('treinoScreen').style.display = 'block';

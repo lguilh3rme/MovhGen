@@ -15,6 +15,7 @@ window.supabase={createClient:function(){
    const B=%s, H='%s';
    if(n==='get_personal_painel') return Promise.resolve({data:{alunos:[{id:'a1',nome:'Marcos',dados:{[H]:B}},{id:'a2',nome:'Vinicius',dados:{}}]},error:null});
    if(n==='get_personal_registros') return Promise.resolve({data:[],error:null});
+   if(n==='salvar_personal_registro') return Promise.resolve({data:true,error:null});
    if(n==='get_coletivas_publico') return Promise.resolve({data:{[H]:B},error:null});
    return Promise.resolve({data:null,error:null})},
   from:function(){return q},
@@ -45,9 +46,11 @@ with sync_playwright() as p:
     chk('personal: usou o token da URL',any('get_personal_painel:{"p_token":"TOKENabc12345"}'==r for r in pg.evaluate('window.__RPC')),pg.evaluate('window.__RPC'))
     chk('personal: guardou o token no aparelho',pg.evaluate("localStorage.getItem('movh_pp_token')")=='TOKENabc12345')
     chk('personal: mostra exercícios e campo de carga',pg.evaluate("document.querySelectorAll('#tPersonalConteudo .pr-ex').length")>=2)
+    pg.fill('.pr-carga >> nth=0','80'); pg.click('.pr-ck >> nth=0'); pg.wait_for_timeout(500)
+    chk('personal: marcar feito grava e mostra ✓',pg.evaluate("document.querySelector('.pr-st').textContent")=='✓' and any(r.startswith('salvar_personal_registro:') and '"p_feito":true' in r and '"p_carga":"80"' in r for r in pg.evaluate('window.__RPC')))
     chk('personal: título e manifest próprios',pg.title()=='MOVH Personal' and pg.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')")=='/manifest-personal.webmanifest')
     chk('personal: sem treino do aluno nem botão sair',ver(pg,'tDashboard')!='block' and ver(pg,'tSairBtn')=='none')
-    chk('personal: título do topo',pg.evaluate("document.getElementById('tSaudacaoTitulo').textContent").strip().endswith('Personal'))
+    chk('personal: título do topo',pg.evaluate("document.getElementById('tSaudacaoTitulo').textContent").strip()=='MOVH Personal')
     chk('personal: chaves de instalação separadas',pg.evaluate("aInstKey('movh-install')")=='movh-install-personal')
     chk('personal: não grava como aluno (preview)',pg.evaluate('window._movhPreview===true'))
     if PRINTS: pg.screenshot(path=PRINTS+'/personal.png',full_page=False)
@@ -73,7 +76,7 @@ with sync_playwright() as p:
         if caminho=='/coletivas/':
             chk('coletivas: título e manifest próprios',pg.title()=='MOVH Coletivas' and pg.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')")=='/manifest-coletivas.webmanifest')
             chk('coletivas: chaves de instalação separadas',pg.evaluate("aInstKey('movh-install')")=='movh-install-coletivas')
-            chk('coletivas: título do topo',pg.evaluate("document.getElementById('tSaudacaoTitulo').textContent").strip().endswith('Aulas coletivas'))
+            chk('coletivas: título do topo',pg.evaluate("document.getElementById('tSaudacaoTitulo').textContent").strip()=='MOVH Coletivas')
             if PRINTS: pg.screenshot(path=PRINTS+'/coletivas.png',full_page=False)
         chk(f'coletivas {caminho}: erro de JS',not errs,errs)
         c.close()

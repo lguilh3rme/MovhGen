@@ -959,7 +959,7 @@ async function aBootColetivas(){
   if (btn) { btn.textContent = en ? 'Create account' : 'Fazer o registro'; btn.style.display = 'inline-block'; }
   document.getElementById('treinoScreen').style.display = 'block';
   if (!window._movhRelogioIniciado) { window._movhRelogioIniciado = true; try { aIniciarRelogio(); } catch(e) {} }
-  { const _t = document.getElementById('tSaudacaoTitulo'); if (_t) _t.textContent = '🤸 ' + (en ? 'Group classes' : 'Aulas coletivas'); const _s = document.getElementById('tSairBtn'); if (_s) _s.style.display = 'none'; try { aFitSaudacao(_t); aInstallInit(); } catch(x) {} }
+  { const _t = document.getElementById('tSaudacaoTitulo'); if (_t) _t.textContent = 'MOVH Coletivas'; const _s = document.getElementById('tSairBtn'); if (_s) _s.style.display = 'none'; try { aFitSaudacao(_t); aInstallInit(); } catch(x) {} }
   const el = document.getElementById('tColetivasConteudo');
   if (err) {
     console.error('[MOVH] Erro ao carregar coletivas:', err);
@@ -994,7 +994,7 @@ async function aBootPersonal(){
   ['tDashboard','tSemanaCompleta','tProgresso','tColetivas','tAvaliacaoUpload'].forEach(function(id){ const e = document.getElementById(id); if (e) e.style.display = 'none'; });
   document.getElementById('tPersonal').style.display = 'block';
   document.querySelectorAll('#tPersonal .tBtnVoltar').forEach(function(b){ b.style.display = 'none'; });
-  const t = document.getElementById('tSaudacaoTitulo'); if (t) t.textContent = '🏋️ Personal';
+  const t = document.getElementById('tSaudacaoTitulo'); if (t) t.textContent = 'MOVH Personal';
   const sb = document.getElementById('tSairBtn'); if (sb) sb.style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'none';
   document.getElementById('treinoScreen').style.display = 'block';
