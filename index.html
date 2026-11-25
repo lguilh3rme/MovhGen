@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.4 · 23/11';
+var MOVH_VER = 'v69.5 · 24/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -14905,7 +14905,7 @@ body{font-family:var(--font-b)}
 .ec.ec-prox{box-shadow:0 0 0 2px var(--P)!important}
 .ec{scroll-margin-bottom:96px}
 .exl{counter-reset:exn}
-.ec .ec-n::before{counter-increment:exn;content:counter(exn);display:inline-block;min-width:17px;margin-right:6px;font-size:10px;font-weight:800;color:var(--P);text-align:center;border:1px solid var(--P);border-radius:99px;line-height:15px}
+.ec .ec-n::before{counter-increment:exn;content:counter(exn);display:inline-block;min-width:12px;margin-right:5px;font-size:11px;font-weight:700;color:var(--t3);text-align:center}
 .b-tip{border:none;background:transparent;font-size:14px;line-height:1;padding:2px 5px;cursor:pointer;opacity:.7}
 .b-obs.on{display:block}
 .dica-series span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -14956,6 +14956,9 @@ body.xo-open #movh-descanso-widget{display:none!important}
 .ec-ring:active::before{transform:scale(.88)}
 .ec.done .ec-ring::before{-webkit-mask:none;mask:none;background:var(--G);box-shadow:0 0 0 3px color-mix(in srgb,var(--G) 18%,transparent)}
 .ec.done .ec-ring::after{border-color:#06210f;opacity:1}
+.ec-chip .sx-c:first-child{opacity:.55}
+.ec-chip .sx-c:first-child b{font-size:12px!important;font-weight:600!important}
+.ec-chip .sx-x ~ .sx-c b{font-size:16px!important;font-weight:800!important}
 .bh .bloco-done-btn{border:0!important;background:conic-gradient(var(--G) var(--bp,0%),var(--bd) 0)!important;position:relative}
 .bh .bloco-done-btn::before{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--card)}
 .bh .bloco-done-btn::after{position:relative;z-index:1}
@@ -16974,7 +16977,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     const repsM = serieCurtoM[2].trim().match(/^([\\d\\-–\\/]+)\\s*(.*)$/);
     const lblS = aLang==='en' ? 'sets' : 'séries';
     seriesBadgeHTML = '<span class="sx-c"><i>' + lblS + '</i><b>' + (seriesTotal ? '<span class="sx-cnt" id="'+eid+'-series-count">' + (Math.min(aSeriesFeitas[eid]||0,seriesTotal)>=seriesTotal?'✓ ':'') + Math.min(aSeriesFeitas[eid]||0,seriesTotal) + '/</span>' : '') + aEsc(serieCurtoM[1]) + '</b></span><span class="sx-x">×</span>' +
-      (repsM ? (function(){ const sfx = repsM[2].trim(); const tk = sfx.split(' ')[0].toLowerCase(); const ehT = ['s','seg','min','m',"'",'"'].indexOf(tk) >= 0; const resto = ehT ? sfx.slice(tk.length).trim() : sfx; return '<span class="sx-c"><i>' + (ehT ? (aLang==='en'?'time':'tempo') : 'reps') + '</i><b>' + aEsc(repsM[1]) + (ehT ? aEsc(tk) : '') + '</b></span>' + (resto ? '<span class="sx-ex">' + aEsc(resto) + '</span>' : ''); })() : '<span class="sx-c"><i>reps</i><b>' + aEsc(serieCurtoM[2].trim()) + '</b></span>');
+      (repsM ? (function(){ const sfx = repsM[2].trim(); const tk = sfx.split(' ')[0].toLowerCase(); const ehT = ['s','seg','min','m',"'",'"'].indexOf(tk) >= 0; const resto = ehT ? sfx.slice(tk.length).trim() : sfx; return '<span class="sx-c"><i>' + (ehT ? (aLang==='en'?'time':'tempo') : 'reps') + '</i><b>' + aEsc(repsM[1].replace(/\\s*[-–]\\s*/g, ' ' + aT('ate') + ' ')) + (ehT ? aEsc(tk) : '') + '</b></span>' + (resto ? '<span class="sx-ex">' + aEsc(resto) + '</span>' : ''); })() : '<span class="sx-c"><i>reps</i><b>' + aEsc(serieCurtoM[2].trim()) + '</b></span>');
   }
   const seriesFeitasHoje = Math.min(aSeriesFeitas[eid] || 0, seriesTotal || 0);
   const seriesFillPct = seriesTotal ? Math.min(100, (seriesFeitasHoje/seriesTotal)*100) : 0;
