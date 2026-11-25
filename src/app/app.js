@@ -1618,6 +1618,14 @@ function aXoBarraProximo(){
   todos.forEach(function(c){ c.classList.toggle('ec-prox', c === prox); });
   const cont = document.getElementById('tDashConteudo');
   const bAtual = prox.closest ? prox.closest('.bloco') : null;
+  if (cont && bAtual) {
+    cont.querySelectorAll('.bloco').forEach(function(b){
+      const eh = b === bAtual; b.classList.toggle('agora', eh);
+      const tg = b.querySelector('.bag');
+      if (eh && !tg) { const t = b.querySelector('.bh .bt'); if (t) { const s = document.createElement('span'); s.className = 'bag'; s.textContent = aLang==='en' ? 'RECOMMENDED' : 'RECOMENDADO'; t.insertAdjacentElement('afterend', s); } }
+      else if (!eh && tg) tg.remove();
+    });
+  }
   if (cont && bAtual && !cont.querySelector('.bloco[data-foco]')) {
     cont.querySelectorAll('.bloco').forEach(function(b){
       b.setAttribute('data-foco', '1');
@@ -2849,7 +2857,7 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs" id="bobs-'+bid+'">'+aEsc(b.obs)+'</div>' : '';
   const dicaBtn = b.obs ? '<button type="button" class="b-tip" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoDica(this.dataset.bid)" aria-label="Dica">💡</button>' : '';
-  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+dicaBtn+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
+  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><span class="bn">'+((bIdx!=null?bIdx:0)+1)+'</span><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+dicaBtn+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bq">'+((b.exercicios||[]).length)+' '+(aLang==='en'?'exercises':'exercícios')+'</span><span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
 }
 
 // Monta a lista de exercícios de um bloco, agrupando os que estão marcados
