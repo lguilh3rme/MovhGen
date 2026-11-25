@@ -295,18 +295,29 @@ function aAtualizarRelogio(){
   const elAuthTop = document.getElementById('authRelogioTop');
   if (elAuthTop) { elAuthTop.textContent = txt; elAuthTop.style.color = cor; }
 }
+// Modo do app: '' (aluno) | 'personal' | 'coletivas'. Cada um é instalado como app próprio (manifest/ícone próprios, ver tools/export_app.js),
+// então a memória de "já instalei / agora não" é separada por modo.
+var A_MODO = (function(){
+  try {
+    var p = location.pathname.toLowerCase().replace(/\/+$/, ''), q = new URLSearchParams(location.search);
+    if (p.slice(-9) === '/personal' || q.has('personal')) return 'personal';
+    if (p.slice(-10) === '/coletivas' || q.get('coletivas') === '1') return 'coletivas';
+  } catch(x) {}
+  return '';
+})();
+function aInstKey(n){ return n + (A_MODO ? '-' + A_MODO : ''); }
 // ── Instalar como app (PWA): Android = botão nativo; iOS = passo a passo; some quando já está instalado ──
 var aInstEvt = null, aInstArmado = false;
 window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); aInstEvt = e; try { aInstallInit(); } catch(x) {} });
-window.addEventListener('appinstalled', function(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); });
+window.addEventListener('appinstalled', function(){ try { localStorage.setItem(aInstKey('movh-install'), 'done'); } catch(x) {} aInstFechar(); });
 if ('serviceWorker' in navigator) window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
 function aInstStandalone(){
   try { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch(x) { return false; }
 }
 var aInstAguardando = false;
 function aInstFechar(){ var b = document.getElementById('tInstBtn'); if (b) b.style.display = 'none'; var o = document.getElementById('aInstBox'); if (o) o.remove(); }
-function aInstAdiar(){ try { localStorage.setItem('movh-install-adiar', String(Date.now() + 7 * 86400000)); } catch(x) {} aInstFechar(); }
-function aInstFeito(){ try { localStorage.setItem('movh-install', 'done'); } catch(x) {} aInstFechar(); }
+function aInstAdiar(){ try { localStorage.setItem(aInstKey('movh-install-adiar'), String(Date.now() + 7 * 86400000)); } catch(x) {} aInstFechar(); }
+function aInstFeito(){ try { localStorage.setItem(aInstKey('movh-install'), 'done'); } catch(x) {} aInstFechar(); }
 function aInstSO(){
   var ua = navigator.userAgent || '';
   return {
@@ -340,15 +351,15 @@ function aInstallClick(){
   if (navigator.share) { try { navigator.share({ title: 'MOVH', url: location.href.split('#')[0] }).catch(function(){}); } catch(x) {} }
   aInstAguardando = true;
   var b = document.getElementById('tInstBtn'); if (b) b.textContent = en ? '✓ Installed' : '✓ Já instalei';
-  try { localStorage.setItem('movh-install-adiar', String(Date.now() + 3 * 86400000)); } catch(x) {}
+  try { localStorage.setItem(aInstKey('movh-install-adiar'), String(Date.now() + 3 * 86400000)); } catch(x) {}
 }
 function aInstallInit(){
   try {
     var b = document.getElementById('tInstBtn'); if (!b) return;
     var ts = document.getElementById('treinoScreen');
     var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
-    var adiar = parseInt(localStorage.getItem('movh-install-adiar') || '0', 10);
-    var esconde = aInstStandalone() || !ts || getComputedStyle(ts).display === 'none' || localStorage.getItem('movh-install') === 'done'
+    var adiar = parseInt(localStorage.getItem(aInstKey('movh-install-adiar')) || '0', 10);
+    var esconde = aInstStandalone() || !ts || getComputedStyle(ts).display === 'none' || localStorage.getItem(aInstKey('movh-install')) === 'done'
       || (adiar && Date.now() < adiar && !aInstAguardando) || !(so.ios || (so.and && aInstEvt));
     if (esconde) { b.style.display = 'none'; return; }
     b.style.display = 'inline-block';
@@ -369,6 +380,7 @@ function aFitSaudacao(el){
 window.addEventListener('resize', function(){ aFitSaudacao(document.getElementById('tSaudacaoTitulo')); });
 setInterval(function(){ aInstallInit(); aFitSaudacao(document.getElementById('tSaudacaoTitulo')); }, 3000);
 function aAtualizarSaudacao(){
+  if (A_MODO === 'personal' || A_MODO === 'coletivas') return;
   const h = new Date().getHours();
   const nomeCompleto = (aAlunoRow && aAlunoRow.nome) ? aAlunoRow.nome.trim() : '';
   const primeiroNome = nomeCompleto ? nomeCompleto.split(/\s+/)[0] : '';
@@ -743,7 +755,7 @@ function aInstSignupInit(){
   var card = document.getElementById('aInstCard'); if (!card) return;
   var so = aInstSO(), en = (typeof aLang !== 'undefined' && aLang === 'en');
   var adiar = 0; try { adiar = parseInt(localStorage.getItem('movh-signup-inst-pular') || '0', 10); } catch(x) {}
-  var feito = false; try { feito = localStorage.getItem('movh-install') === 'done'; } catch(x) {}
+  var feito = false; try { feito = localStorage.getItem(aInstKey('movh-install')) === 'done'; } catch(x) {}
   if (aInstStandalone() || feito || (adiar && Date.now() < adiar) || !(so.ios || so.and)) { card.style.display = 'none'; return; }
   var t = document.getElementById('aInstT'), s = document.getElementById('aInstS'), ol = document.getElementById('aInstOl');
   var bt = document.getElementById('aInstAcao'), pu = document.getElementById('aInstPular');
@@ -947,6 +959,7 @@ async function aBootColetivas(){
   if (btn) { btn.textContent = en ? 'Create account' : 'Fazer o registro'; btn.style.display = 'inline-block'; }
   document.getElementById('treinoScreen').style.display = 'block';
   if (!window._movhRelogioIniciado) { window._movhRelogioIniciado = true; try { aIniciarRelogio(); } catch(e) {} }
+  { const _t = document.getElementById('tSaudacaoTitulo'); if (_t) _t.textContent = 'MOVH Coletivas'; const _s = document.getElementById('tSairBtn'); if (_s) _s.style.display = 'none'; try { aFitSaudacao(_t); aInstallInit(); } catch(x) {} }
   const el = document.getElementById('tColetivasConteudo');
   if (err) {
     console.error('[MOVH] Erro ao carregar coletivas:', err);
@@ -957,11 +970,59 @@ async function aBootColetivas(){
   aColetivasSemana = aColetivasSegundaDaSemana(new Date());
   el.innerHTML = aMontarColetivas(aColetivasCache);
 }
+// Rota /personal (ou ?personal=TOKEN / ?t=TOKEN): o Personal abre direto nos alunos e treinos, sem login, com o mesmo visual do app.
+// O token fica no aparelho (localStorage). No iPhone o app instalado NÃO herda o armazenamento do Safari: se abrir sem token, pede para colar o link.
+function aPersonalTokenDoTexto(t){
+  t = String(t || '').trim();
+  var m = t.match(/[?&](?:personal|t)=([A-Za-z0-9_-]{8,})/);
+  if (m) return m[1];
+  return /^[A-Za-z0-9_-]{16,}$/.test(t) ? t : '';
+}
+function aPersonalColarLink(){
+  var i = document.getElementById('aPerLinkIn'), tk = aPersonalTokenDoTexto(i && i.value);
+  var msg = document.getElementById('aPerLinkMsg');
+  if (!tk) { if (msg) msg.textContent = 'Não achei o código nesse texto. Cole o link inteiro que você recebeu.'; return; }
+  try { localStorage.setItem('movh_pp_token', tk); } catch(x) {}
+  aPersonalToken = tk; aPerCarregar();
+}
+async function aBootPersonal(){
+  document.getElementById('authScreen').style.display = 'none';
+  window._movhPreview = true; window._movhPersonalPublico = true;
+  aAlunoRow = { id: null, nome: '', email: '', professor_id: null, mostra_aulas_coletivas: false };
+  document.body.classList.add('preview-mode');
+  const ph = document.querySelector('#treinoScreen .ph'); if (ph) ph.style.display = 'none';
+  ['tDashboard','tSemanaCompleta','tProgresso','tColetivas','tAvaliacaoUpload'].forEach(function(id){ const e = document.getElementById(id); if (e) e.style.display = 'none'; });
+  document.getElementById('tPersonal').style.display = 'block';
+  document.querySelectorAll('#tPersonal .tBtnVoltar').forEach(function(b){ b.style.display = 'none'; });
+  const t = document.getElementById('tSaudacaoTitulo'); if (t) t.textContent = 'MOVH Personal';
+  const sb = document.getElementById('tSairBtn'); if (sb) sb.style.display = 'none';
+  document.getElementById('loadingScreen').style.display = 'none';
+  document.getElementById('treinoScreen').style.display = 'block';
+  if (!window._movhRelogioIniciado) { window._movhRelogioIniciado = true; try { aIniciarRelogio(); } catch(e) {} }
+  try { aFitSaudacao(t); aInstallInit(); } catch(e) {}
+  let tk = '';
+  try {
+    const q = new URLSearchParams(location.search);
+    tk = q.get('personal') || q.get('t') || '';
+    if (tk && tk !== 'me') localStorage.setItem('movh_pp_token', tk); else tk = localStorage.getItem('movh_pp_token') || '';
+  } catch(e) {}
+  const el = document.getElementById('tPersonalConteudo');
+  if (!tk) {
+    el.innerHTML = '<div style="padding:18px 4px"><div style="font-size:16px;font-weight:800;margin-bottom:6px">Cole o link do Personal</div>' +
+      '<div style="font-size:12.5px;color:var(--t2);line-height:1.5;margin-bottom:10px">Este app ainda não tem o seu acesso. Cole aqui o link que você recebeu (ele guarda o acesso neste aparelho).</div>' +
+      '<input id="aPerLinkIn" class="pr-in" type="text" inputmode="url" placeholder="https://…/personal/?t=…" style="width:100%;margin-bottom:8px">' +
+      '<button class="vksbtn" style="width:100%" onclick="aPersonalColarLink()">Entrar</button><div id="aPerLinkMsg" style="font-size:12px;color:var(--t3);margin-top:8px"></div></div>';
+    return;
+  }
+  aPersonalToken = tk;
+  aPerCarregar();
+}
 async function aBoot(sessionParam){
   if (!sessionParam) {
     const tkTreino = new URLSearchParams(window.location.search).get('treino');
     if (tkTreino) { await aBootPreview(tkTreino); return; }
     if (aEhRotaColetivas()) { await aBootColetivas(); return; }
+    if (A_MODO === 'personal') { await aBootPersonal(); return; }
   }
   document.getElementById('authScreen').style.display = 'none';
   document.getElementById('loadingScreen').style.display = 'flex';

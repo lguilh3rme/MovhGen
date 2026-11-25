@@ -1,0 +1,2 @@
+# /personal e /coletivas agora são páginas próprias (personal/index.html e coletivas/index.html, geradas por tools/export_app.js).
+# Sem regras de rewrite: o Netlify serve a pasta direto, também em /coletivas sem a barra final.

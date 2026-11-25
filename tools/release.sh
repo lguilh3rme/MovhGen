@@ -13,10 +13,13 @@ BUILD=$(grep -o "A_BUILD = '[^']*'" "$X/app.html" | cut -d"'" -f2); VJ=$(grep -o
 VER=$(grep -o "MOVH_VER = '[^']*'" index.html | cut -d"'" -f2)
 PUB=$(git -C "$M" show HEAD:version.json 2>/dev/null | grep -o '"build":"[^"]*"' | cut -d'"' -f4)
 echo "Gerador $VER | publicado: ${PUB:-?} | novo: $BUILD"
-if cmp -s "$X/app.html" "$M/index.html"; then echo "IDÊNTICO: nada a publicar (não gasta crédito)"; exit 0; fi
+IGUAL=1; cmp -s "$X/app.html" "$M/index.html" || IGUAL=0
+for f in personal/index.html coletivas/index.html manifest-personal.webmanifest manifest-coletivas.webmanifest _redirects icons/personal-512.png icons/coletivas-512.png; do cmp -s "$X/$f" "$M/$f" || IGUAL=0; done
+if [ $IGUAL = 1 ]; then echo "IDÊNTICO: nada a publicar (não gasta crédito)"; exit 0; fi
 if [ $PUSH = 0 ]; then echo "ENSAIO: o app mudou (publicaria $BUILD). Rode com --push para publicar."; exit 0; fi
 cp "$X/app.html" "$M/index.html"; cp "$X/version.json" "$X/sw.js" "$X/manifest.webmanifest" "$M/"
-cp -r "$X/icons/." "$M/icons/"; cp -r "$X/personal/." "$M/personal/"
+cp -r "$X/icons/." "$M/icons/"; mkdir -p "$M/personal" "$M/coletivas"; cp -r "$X/personal/." "$M/personal/"; cp -r "$X/coletivas/." "$M/coletivas/"
+cp "$X"/manifest-personal.webmanifest "$X"/manifest-coletivas.webmanifest "$X/_redirects" "$M/"
 git -C "$M" add -A
 git -C "$M" commit -q -m "$VER: $MSG${MOVH_TRAILER:+
 
