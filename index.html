@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.9 · 25/11';
+var MOVH_VER = 'v69.10 · 25/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -14363,6 +14363,21 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .ec-done-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;opacity:.3;pointer-events:none;transition:opacity .15s}
 .ec-done-cb:checked ~ .ec-done-hint{opacity:0}
 .ec-done-wrap{display:none!important}
+.ec-ring{display:none!important}
+.bn{width:22px;height:22px;border-radius:50%;background:var(--bd);color:var(--tx);font:800 12px/22px var(--font-b,sans-serif);text-align:center;flex:none;margin-right:8px}
+.bq{font-size:11px;font-weight:600;color:var(--t2);margin-left:auto;margin-right:6px;white-space:nowrap}
+.bloco.agora{border:2px solid var(--G)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--G) 16%,transparent)!important}
+.bloco.agora .bn{background:var(--G);color:#06210f}
+.bag{font:800 9.5px/1 var(--font-b,sans-serif);letter-spacing:.08em;background:var(--G);color:#06210f;border-radius:99px;padding:4px 8px;margin-left:8px;white-space:nowrap}
+#tDashConteudo:has(.bloco.agora) .bloco:not(.agora){opacity:.82}
+.bloco .bh .dot,.bloco .bh .bp,.bloco .bh .bm{display:none!important}
+.bloco.agora .bq{display:none}
+.bloco:not(.agora) .bh{padding:6px 12px!important}
+.bloco.bloco-ativ .exl{gap:4px!important;padding:2px 8px 8px!important}
+.bloco.bloco-ativ .exl .ec{padding:3px 8px!important;border-radius:8px!important}
+.bloco.bloco-ativ .exl .ec .ec-n{font-size:11.5px!important;font-weight:600!important}
+.bloco.bloco-ativ .exl .ec .ec-n::before{font-size:9.5px!important;min-width:9px!important}
+.bloco.bloco-ativ .exl .ec .ec-name-row .vbtn{height:17px!important;padding:0 5px!important}
 .bloco-done-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);background:transparent;cursor:pointer;color:var(--t3);font-size:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;margin-left:auto}
 .bloco-done-btn:hover{border-color:var(--G);color:var(--G)}
 .bloco.bloco-concluido .bloco-done-btn{background:var(--G);color:#fff;border-color:var(--G)}
@@ -16751,6 +16766,14 @@ function aXoBarraProximo(){
   todos.forEach(function(c){ c.classList.toggle('ec-prox', c === prox); });
   const cont = document.getElementById('tDashConteudo');
   const bAtual = prox.closest ? prox.closest('.bloco') : null;
+  if (cont && bAtual) {
+    cont.querySelectorAll('.bloco').forEach(function(b){
+      const eh = b === bAtual; b.classList.toggle('agora', eh);
+      const tg = b.querySelector('.bag');
+      if (eh && !tg) { const t = b.querySelector('.bh .bt'); if (t) { const s = document.createElement('span'); s.className = 'bag'; s.textContent = aLang==='en' ? 'RECOMMENDED' : 'RECOMENDADO'; t.insertAdjacentElement('afterend', s); } }
+      else if (!eh && tg) tg.remove();
+    });
+  }
   if (cont && bAtual && !cont.querySelector('.bloco[data-foco]')) {
     cont.querySelectorAll('.bloco').forEach(function(b){
       b.setAttribute('data-foco', '1');
@@ -17982,7 +18005,7 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs" id="bobs-'+bid+'">'+aEsc(b.obs)+'</div>' : '';
   const dicaBtn = b.obs ? '<button type="button" class="b-tip" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoDica(this.dataset.bid)" aria-label="Dica">💡</button>' : '';
-  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+dicaBtn+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
+  return '<div class="bloco'+(aEhAtiv(b)?' bloco-ativ':'')+'" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><span class="bn">'+((bIdx!=null?bIdx:0)+1)+'</span><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+dicaBtn+(b.meta?'<span class="bm">'+aEsc(b.meta)+'</span>':'')+'<span class="bq">'+((b.exercicios||[]).length)+' '+(aLang==='en'?'exercises':'exercícios')+'</span><span class="bp" id="bp-'+bid+'"></span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div>'+obsBloco+'<div class="exl" id="'+bid+'">'+exs+'</div></div>';
 }
 
 // Monta a lista de exercícios de um bloco, agrupando os que estão marcados
