@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.6 · 25/11';
+var MOVH_VER = 'v69.7 · 25/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -14904,7 +14904,9 @@ body{font-family:var(--font-b)}
 .xo-next .xo-btn{animation:xoPulse 1.1s ease-in-out 3;box-shadow:0 0 0 3px var(--Pl)}
 @keyframes xoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 @media (prefers-reduced-motion:reduce){.xo-next .xo-btn{animation:none}}
-.ec.ec-prox{box-shadow:0 0 0 2px var(--P)!important}
+.ec.ec-prox{animation:ecProx 1.1s ease-in-out 3}
+@keyframes ecProx{0%,100%{box-shadow:0 0 0 0 transparent}45%{box-shadow:0 0 0 3px var(--P)}}
+@media (prefers-reduced-motion:reduce){.ec.ec-prox{animation:none}}
 .ec{scroll-margin-bottom:96px}
 .exl{counter-reset:exn}
 .ec .ec-n::before{counter-increment:exn;content:counter(exn);display:inline-block;min-width:12px;margin-right:5px;font-size:11px;font-weight:700;color:var(--t3);text-align:center}
