@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.7 · 25/11';
+var MOVH_VER = 'v69.8 · 25/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -15757,7 +15757,7 @@ function aPreviewSafetyNet(){
 const A_APP_URL = 'https://movh.netlify.app/';
 function aIrParaRegistro(){
   try { sessionStorage.setItem('movh-via-treino', '1'); } catch(e){}
-  window.location.href = aBaseApp() + '?bemvindo=1';
+  window.location.href = (A_MODO ? A_APP_URL : aBaseApp()) + '?bemvindo=1';
 }
 function aPreviewErroTela(err){
   const en = (navigator.language || '').toLowerCase().indexOf('en') === 0;
