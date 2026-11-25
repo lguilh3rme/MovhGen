@@ -29,13 +29,25 @@ const build = crypto.createHash('sha1').update(out).digest('hex').slice(0, 12);
 const final = out.replace('__MOVH_BUILD__', build);
 fs.writeFileSync(outPath, final);
 fs.writeFileSync(path.join(path.dirname(outPath), 'version.json'), JSON.stringify({ build }) + '\n');
-// Página do Personal (/personal): gerada de tools/personal_page.html com a URL e a chave pública do Supabase do Gerador.
-const ppSrc = path.join(__dirname, 'personal_page.html');
-if (fs.existsSync(ppSrc)) {
-  const mbUrl = (src.match(/const MB_URL = '([^']+)'/) || [])[1], mbKey = (src.match(/const MB_KEY = '([^']+)'/) || [])[1];
-  if (!mbUrl || !mbKey) throw new Error('MB_URL/MB_KEY não encontradas no Gerador');
-  const pdir = path.join(path.dirname(outPath), 'personal'); fs.mkdirSync(pdir, { recursive: true });
-  fs.writeFileSync(path.join(pdir, 'index.html'), fs.readFileSync(ppSrc, 'utf8').replace('__SB_URL__', mbUrl).replace('__SB_KEY__', mbKey));
+// Personal (/personal) e Coletivas (/coletivas): o MESMO app do aluno em modo próprio (ver A_MODO no app), instalável à parte:
+// cada um tem manifest, ícone e nome próprios (tools/pwa) e abre direto na visualização dele, sem login.
+const VARIANTES = [
+  { dir: 'personal', nome: 'MOVH Personal', curto: 'Personal' },
+  { dir: 'coletivas', nome: 'MOVH Coletivas', curto: 'Coletivas' }
+];
+const troca = (h, de, para, n) => { if (h.split(de).length - 1 !== n) throw new Error('variante: "' + de + '" esperado ' + n + 'x'); return h.split(de).join(para); };
+for (const v of VARIANTES) {
+  let h = final;
+  h = troca(h, 'href="manifest.webmanifest"', 'href="/manifest-' + v.dir + '.webmanifest"', 1);
+  h = troca(h, 'href="icons/apple-touch-icon.png"', 'href="/icons/' + v.dir + '-apple-touch.png"', 1);
+  h = troca(h, 'href="icons/favicon-32.png"', 'href="/icons/favicon-32.png"', 1);
+  h = troca(h, '<title>MOVH — Meu Treino</title>', '<title>' + v.nome + '</title>', 1);
+  h = troca(h, '<meta name="apple-mobile-web-app-title" content="MOVH">', '<meta name="apple-mobile-web-app-title" content="' + v.curto + '">', 1);
+  h = troca(h, "'sw.js'", "'/sw.js'", 1);
+  h = troca(h, "'version.json?", "'/version.json?", 1);
+  h = troca(h, "'icons/icon-192.png'", "'/icons/" + v.dir + "-192.png'", 2);
+  const vdir = path.join(path.dirname(outPath), v.dir); fs.mkdirSync(vdir, { recursive: true });
+  fs.writeFileSync(path.join(vdir, 'index.html'), h);
 }
 // PWA (v62.2): manifest, service worker e ícones de tools/pwa vão para a raiz do app.
 const pwaSrc = path.join(__dirname, 'pwa');
