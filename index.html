@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.10 · 25/11';
+var MOVH_VER = 'v69.11 · 25/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -14371,7 +14371,7 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .bag{font:800 9.5px/1 var(--font-b,sans-serif);letter-spacing:.08em;background:var(--G);color:#06210f;border-radius:99px;padding:4px 8px;margin-left:8px;white-space:nowrap}
 #tDashConteudo:has(.bloco.agora) .bloco:not(.agora){opacity:.82}
 .bloco .bh .dot,.bloco .bh .bp,.bloco .bh .bm{display:none!important}
-.bloco.agora .bq{display:none}
+.bq{display:none}
 .bloco:not(.agora) .bh{padding:6px 12px!important}
 .bloco.bloco-ativ .exl{gap:4px!important;padding:2px 8px 8px!important}
 .bloco.bloco-ativ .exl .ec{padding:3px 8px!important;border-radius:8px!important}
@@ -16774,15 +16774,8 @@ function aXoBarraProximo(){
       else if (!eh && tg) tg.remove();
     });
   }
-  if (cont && bAtual && !cont.querySelector('.bloco[data-foco]')) {
-    cont.querySelectorAll('.bloco').forEach(function(b){
-      b.setAttribute('data-foco', '1');
-      if (b === bAtual) return;
-      const corpo = b.querySelector('.exl'), seta = b.querySelector('.bt-arr');
-      if (corpo) corpo.style.display = 'none';
-      if (seta) seta.style.transform = 'rotate(-90deg)';
-    });
-  } else if (window._aXoUlt && window._aXoUlt !== prox.id) {
+  // blocos ficam ABERTOS desde o início (só recolhem ao concluir)
+  if (window._aXoUlt && window._aXoUlt !== prox.id) {
     try { prox.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
   }
   window._aXoUlt = prox.id;

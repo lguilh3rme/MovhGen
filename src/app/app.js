@@ -1626,15 +1626,8 @@ function aXoBarraProximo(){
       else if (!eh && tg) tg.remove();
     });
   }
-  if (cont && bAtual && !cont.querySelector('.bloco[data-foco]')) {
-    cont.querySelectorAll('.bloco').forEach(function(b){
-      b.setAttribute('data-foco', '1');
-      if (b === bAtual) return;
-      const corpo = b.querySelector('.exl'), seta = b.querySelector('.bt-arr');
-      if (corpo) corpo.style.display = 'none';
-      if (seta) seta.style.transform = 'rotate(-90deg)';
-    });
-  } else if (window._aXoUlt && window._aXoUlt !== prox.id) {
+  // blocos ficam ABERTOS desde o início (só recolhem ao concluir)
+  if (window._aXoUlt && window._aXoUlt !== prox.id) {
     try { prox.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch(e) {}
   }
   window._aXoUlt = prox.id;
