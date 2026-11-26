@@ -4315,7 +4315,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v69.11 · 25/11';
+var MOVH_VER = 'v69.12 · 25/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -14378,6 +14378,20 @@ body.preview-mode #tSairBtn,body.preview-mode #tBtnProgresso,body.preview-mode #
 .bloco.bloco-ativ .exl .ec .ec-n{font-size:11.5px!important;font-weight:600!important}
 .bloco.bloco-ativ .exl .ec .ec-n::before{font-size:9.5px!important;min-width:9px!important}
 .bloco.bloco-ativ .exl .ec .ec-name-row .vbtn{height:17px!important;padding:0 5px!important}
+.bloco-cond .cond-body{padding:4px 14px 14px!important;display:block}
+.cond-tit{font-size:15px;font-weight:700;letter-spacing:-.01em;color:var(--tx);line-height:1.3}
+.cond-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cond-chips .cond-chip{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
+.cond-chips .cc-dur{background:var(--Pl);color:var(--Pd)}
+.cond-chips .cc-tipo{background:transparent;border:1px solid var(--bd);color:var(--t2);font-weight:600}
+.cond-hoje{margin-top:10px;padding:9px 12px;border-radius:10px;border-left:4px solid var(--G);background:color-mix(in srgb,var(--G) 10%,transparent)}
+.cond-hoje .ch-l{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--G)}
+.cond-hoje .ch-t{font-size:14px;font-weight:700;color:var(--tx);margin-top:2px}
+.cond-hoje .ch-o{font-size:11.5px;color:var(--t2);margin-top:3px;line-height:1.4}
+.cond-desc{font-size:12.5px;color:var(--t2);margin-top:10px;line-height:1.55}
+.cond-vid{margin-top:10px;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:99px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-weight:700;font-size:12px;cursor:pointer}
+.cond-exs{margin-top:10px}
+.bloco-cond .bq{display:none}
 .bloco-done-btn{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bd);background:transparent;cursor:pointer;color:var(--t3);font-size:11px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;margin-left:auto}
 .bloco-done-btn:hover{border-color:var(--G);color:var(--G)}
 .bloco.bloco-concluido .bloco-done-btn{background:var(--G);color:#fff;border-color:var(--G)}
@@ -14920,8 +14934,8 @@ body{font-family:var(--font-b)}
 .xo-next .xo-btn{animation:xoPulse 1.1s ease-in-out 3;box-shadow:0 0 0 3px var(--Pl)}
 @keyframes xoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
 @media (prefers-reduced-motion:reduce){.xo-next .xo-btn{animation:none}}
-.ec.ec-prox{animation:ecProx 1.1s ease-in-out 3}
-@keyframes ecProx{0%,100%{box-shadow:0 0 0 0 transparent}45%{box-shadow:0 0 0 3px var(--P)}}
+.ec.ec-prox{animation:ecProx 1.2s ease-in-out 2}
+@keyframes ecProx{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--P) 38%,transparent)}}
 @media (prefers-reduced-motion:reduce){.ec.ec-prox{animation:none}}
 .ec{scroll-margin-bottom:96px}
 .exl{counter-reset:exn}
@@ -17538,8 +17552,11 @@ function aAbrirVideoModal(src, sh){
   if (vw) vw.style.width = sh ? 'min(92vw,calc(82vh * 9 / 16))' : 'min(92vw,840px)';
   if (vf) vf.style.aspectRatio = sh ? '9/16' : '16/9';
   var yid=String(src).match(/embed\\/([^?&\\/]+)/), yl=document.getElementById('a-video-yt'); if(yl) yl.href = yid ? 'https://www.youtube.com/watch?v='+yid[1] : String(src);
-  document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1&playsinline=1&modestbranding=1';
-  clearTimeout(window._avT); window._avT=setTimeout(function(){ var l=document.getElementById('a-video-load'); if(l && l.style.display!=='none') l.textContent='⏳ Está demorando… toque em “Abrir no YouTube” abaixo.'; },9000);
+  var ytw = document.getElementById('a-video-ytw'); if (ytw) ytw.style.display = 'none';
+  window._avCarregou = false;
+  document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1&playsinline=1&modestbranding=1&enablejsapi=1';
+  // o aviso "Abrir no YouTube" só aparece se o vídeo der erro ou não iniciar em 5 s
+  clearTimeout(window._avT); window._avT=setTimeout(function(){ if (window._avCarregou) return; var w=document.getElementById('a-video-ytw'); if(w) w.style.display='block'; var l=document.getElementById('a-video-load'); if(l && l.style.display!=='none') l.textContent='⏳ Está demorando…'; },5000);
   m.style.display='flex';
   document.body.style.overflow='hidden';
 }
@@ -17550,6 +17567,14 @@ function aFecharVideoModal(){
   document.body.style.overflow='';
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')aFecharVideoModal();});
+window.addEventListener('message',function(e){
+  if (!e.origin || e.origin.indexOf('youtube') < 0) return;
+  var d = e.data; try { if (typeof d === 'string') d = JSON.parse(d); } catch(x) { return; }
+  if (!d) return;
+  var w = document.getElementById('a-video-ytw');
+  if (d.event === 'onError' || (d.event === 'infoDelivery' && d.info && d.info.playerState === -1 && window._avCarregou === 'erro')) { if (w) w.style.display = 'block'; }
+  if (d.event === 'infoDelivery' && d.info && (d.info.playerState === 1 || d.info.playerState === 3)) { window._avCarregou = true; if (w) w.style.display = 'none'; }
+});
 
 function aCargaAbrir(box){
   if (!box || box.classList.contains('aberto')) return;
@@ -17984,16 +18009,25 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
     if (b.progressaoAuto && b.modelo && typeof cpPlano === 'function') {
       const g = cpSemanaGlobal(aProtocolo && aProtocolo.data_inicio, (aProtocolo && aProtocolo.conteudo && aProtocolo.conteudo.semanas) || []);
       const pl = cpPlano(b, g.w, g.N, cpZonaSeg);
-      if (pl && pl.tempo) progHTML = '<div class="cond-prog">📍 Hoje (semana ' + g.w + '/' + g.N + '): ' + aEsc(cpResumo(pl)) + '</div><div class="cond-prog" style="opacity:.75;font-size:11px">' + aEsc(cpObs(pl)) + '</div>';
+      if (pl && pl.tempo) progHTML = '<div class="ch-l">' + (aLang==='en'?'Today':'Hoje') + ' · ' + (aLang==='en'?'week ':'semana ') + g.w + '/' + g.N + '</div><div class="ch-t">' + aEsc(cpResumo(pl)) + '</div><div class="ch-o">' + aEsc(cpObs(pl)) + '</div>';
     }
     if (!progHTML && b.progressaoAuto && faseAtual) {
       const sug = aCondSugestao(faseAtual, b.duracao, b.zonaFC, semanaDentroFase, duracaoSemanas);
       if (sug) {
-        progHTML = '<div class="cond-prog">📍 Hoje: ' + aEsc(sug.duracaoTxt) + ' · ' + aEsc(sug.zonaTxt) + (sug.obsTxt ? ' — ' + aEsc(sug.obsTxt) : '') + '</div>';
+        progHTML = '<div class="ch-l">' + (aLang==='en'?'Today':'Hoje') + '</div><div class="ch-t">' + aEsc(sug.duracaoTxt) + ' · ' + aEsc(sug.zonaTxt) + '</div>' + (sug.obsTxt ? '<div class="ch-o">' + aEsc(sug.obsTxt) + '</div>' : '');
       }
     }
     const exsCon = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
-    return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.duracao?'<span class="bm">'+aEsc(b.duracao)+'</span>':'')+'<span class="bt-arr" style="transform:rotate(-90deg)">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl" id="'+bid+'" style="padding:12px;display:none"><div style="font-size:13.5px;font-weight:700;color:var(--tx);letter-spacing:-.01em">'+aProcessarZonasTexto(aEsc(b.titulo||''))+'</div><div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.5">'+aProcessarZonasTexto(aEsc(b.desc||'').replace(/\\n/g,'<br>'))+'</div>'+(zonaChip?'<div style="margin-top:8px">'+zonaChip+'</div>':'')+progHTML+(b.url?"<div style='margin-top:10px'><button data-url='"+aEsc(b.url)+"' onclick='aAbrirVideoModal(this.dataset.url)' style='font-size:12px;color:var(--P);font-weight:600;background:none;border:none;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px'>▶️ " + (aLang==='en'?"Watch video":"Ver vídeo") + "</button></div>":"")+(exsCon?'<div style="margin-top:10px">'+exsCon+'</div>':'')+'</div></div>';
+    const condChips = [b.duracao ? '<span class="cond-chip cc-dur">⏱ ' + aEsc(b.duracao) + '</span>' : '', zonaChip, b.tipo ? '<span class="cond-chip cc-tipo">' + aEsc(b.tipo) + '</span>' : ''].join('');
+    const condVideo = b.url ? "<button class='cond-vid' data-url='" + aEsc(b.url) + "' onclick='aAbrirVideoModal(this.dataset.url)'>▶ " + (aLang==='en'?'Watch video':'Ver vídeo') + "</button>" : '';
+    return '<div class="bloco bloco-cond" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><span class="bn">'+((bIdx!=null?bIdx:0)+1)+'</span><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl cond-body" id="'+bid+'">'
+      + (b.titulo ? '<div class="cond-tit">' + aProcessarZonasTexto(aEsc(b.titulo)) + '</div>' : '')
+      + (condChips ? '<div class="cond-chips">' + condChips + '</div>' : '')
+      + (progHTML ? '<div class="cond-hoje">' + progHTML + '</div>' : '')
+      + (b.desc ? '<div class="cond-desc">' + aProcessarZonasTexto(aEsc(b.desc).replace(/\\n/g,'<br>')) + '</div>' : '')
+      + condVideo
+      + (exsCon ? '<div class="cond-exs">' + exsCon + '</div>' : '')
+      + '</div></div>';
   }
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs" id="bobs-'+bid+'">'+aEsc(b.obs)+'</div>' : '';
@@ -19808,8 +19842,8 @@ ${''/*@@APP_JS_END@@*/}<\/script>
   <div id="a-video-wrap" onclick="event.stopPropagation()" style="width:min(92vw,840px);position:relative">
     <button onclick="aFecharVideoModal()" style="position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-size:28px;line-height:1;cursor:pointer">&#x2715;</button>
     <div id="a-video-load" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;pointer-events:none">⏳ Carregando vídeo…</div>
-    <iframe id="a-video-iframe" referrerpolicy="strict-origin-when-cross-origin" src="" onload="var l=document.getElementById('a-video-load');if(l&&this.getAttribute('src'))l.style.display='none'" style="position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block;background:#000" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
-    <div style="margin-top:10px;text-align:center"><a id="a-video-yt" href="#" target="_blank" rel="noopener" style="display:inline-block;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.92);color:#111;font-weight:700;font-size:13px;text-decoration:none">▶ Não carregou? Abrir no YouTube</a></div>
+    <iframe id="a-video-iframe" referrerpolicy="strict-origin-when-cross-origin" src="" onload="var l=document.getElementById('a-video-load');if(l&&this.getAttribute('src')){l.style.display='none';try{this.contentWindow.postMessage(JSON.stringify({event:'listening',id:1}),'*')}catch(x){}}" style="position:relative;width:100%;aspect-ratio:16/9;border:0;border-radius:10px;display:block;background:#000" allow="autoplay;encrypted-media;picture-in-picture" allowfullscreen></iframe>
+    <div id="a-video-ytw" style="margin-top:10px;text-align:center;display:none"><a id="a-video-yt" href="#" target="_blank" rel="noopener" style="display:inline-block;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.92);color:#111;font-weight:700;font-size:13px;text-decoration:none">▶ Não carregou? Abrir no YouTube</a></div>
   </div>
 </div>
 <div id="a-teste-modal" onclick="aFecharTesteModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:16px">

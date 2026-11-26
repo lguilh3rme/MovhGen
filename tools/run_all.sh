@@ -37,6 +37,7 @@ chk prog12 4 0 python3 $T/prog12.py $R/index.html
 chk ciclo2 9 0 python3 $T/ciclo2.py $R/index.html
 chk hibrido 15 0 python3 $T/hibrido.py $R/index.html
 chk modos_pwa 38 0 python3 $T/modos_pwa.py $X/app
+chk video_aviso 7 0 python3 $T/video_aviso.py $X/app/app.html
 chk escada 12 0 python3 $T/escada.py $R/index.html
 chk jornada_gerador 10 0 python3 $T/jornada_gerador.py $R/index.html
 chk meso_espelho 12 0 python3 $T/meso_espelho.py $R/index.html
