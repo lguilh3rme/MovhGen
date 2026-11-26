@@ -2390,8 +2390,11 @@ function aAbrirVideoModal(src, sh){
   if (vw) vw.style.width = sh ? 'min(92vw,calc(82vh * 9 / 16))' : 'min(92vw,840px)';
   if (vf) vf.style.aspectRatio = sh ? '9/16' : '16/9';
   var yid=String(src).match(/embed\/([^?&\/]+)/), yl=document.getElementById('a-video-yt'); if(yl) yl.href = yid ? 'https://www.youtube.com/watch?v='+yid[1] : String(src);
-  document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1&playsinline=1&modestbranding=1';
-  clearTimeout(window._avT); window._avT=setTimeout(function(){ var l=document.getElementById('a-video-load'); if(l && l.style.display!=='none') l.textContent='⏳ Está demorando… toque em “Abrir no YouTube” abaixo.'; },9000);
+  var ytw = document.getElementById('a-video-ytw'); if (ytw) ytw.style.display = 'none';
+  window._avCarregou = false;
+  document.getElementById('a-video-iframe').src=src+'?autoplay=1&rel=0&mute=1&playsinline=1&modestbranding=1&enablejsapi=1';
+  // o aviso "Abrir no YouTube" só aparece se o vídeo der erro ou não iniciar em 5 s
+  clearTimeout(window._avT); window._avT=setTimeout(function(){ if (window._avCarregou) return; var w=document.getElementById('a-video-ytw'); if(w) w.style.display='block'; var l=document.getElementById('a-video-load'); if(l && l.style.display!=='none') l.textContent='⏳ Está demorando…'; },5000);
   m.style.display='flex';
   document.body.style.overflow='hidden';
 }
@@ -2402,6 +2405,14 @@ function aFecharVideoModal(){
   document.body.style.overflow='';
 }
 document.addEventListener('keydown',function(e){if(e.key==='Escape')aFecharVideoModal();});
+window.addEventListener('message',function(e){
+  if (!e.origin || e.origin.indexOf('youtube') < 0) return;
+  var d = e.data; try { if (typeof d === 'string') d = JSON.parse(d); } catch(x) { return; }
+  if (!d) return;
+  var w = document.getElementById('a-video-ytw');
+  if (d.event === 'onError' || (d.event === 'infoDelivery' && d.info && d.info.playerState === -1 && window._avCarregou === 'erro')) { if (w) w.style.display = 'block'; }
+  if (d.event === 'infoDelivery' && d.info && (d.info.playerState === 1 || d.info.playerState === 3)) { window._avCarregou = true; if (w) w.style.display = 'none'; }
+});
 
 function aCargaAbrir(box){
   if (!box || box.classList.contains('aberto')) return;
@@ -2836,16 +2847,25 @@ function aBlocoOut(b, faseAtual, ctxPrefix, bIdx, semanaDentroFase, duracaoSeman
     if (b.progressaoAuto && b.modelo && typeof cpPlano === 'function') {
       const g = cpSemanaGlobal(aProtocolo && aProtocolo.data_inicio, (aProtocolo && aProtocolo.conteudo && aProtocolo.conteudo.semanas) || []);
       const pl = cpPlano(b, g.w, g.N, cpZonaSeg);
-      if (pl && pl.tempo) progHTML = '<div class="cond-prog">📍 Hoje (semana ' + g.w + '/' + g.N + '): ' + aEsc(cpResumo(pl)) + '</div><div class="cond-prog" style="opacity:.75;font-size:11px">' + aEsc(cpObs(pl)) + '</div>';
+      if (pl && pl.tempo) progHTML = '<div class="ch-l">' + (aLang==='en'?'Today':'Hoje') + ' · ' + (aLang==='en'?'week ':'semana ') + g.w + '/' + g.N + '</div><div class="ch-t">' + aEsc(cpResumo(pl)) + '</div><div class="ch-o">' + aEsc(cpObs(pl)) + '</div>';
     }
     if (!progHTML && b.progressaoAuto && faseAtual) {
       const sug = aCondSugestao(faseAtual, b.duracao, b.zonaFC, semanaDentroFase, duracaoSemanas);
       if (sug) {
-        progHTML = '<div class="cond-prog">📍 Hoje: ' + aEsc(sug.duracaoTxt) + ' · ' + aEsc(sug.zonaTxt) + (sug.obsTxt ? ' — ' + aEsc(sug.obsTxt) : '') + '</div>';
+        progHTML = '<div class="ch-l">' + (aLang==='en'?'Today':'Hoje') + '</div><div class="ch-t">' + aEsc(sug.duracaoTxt) + ' · ' + aEsc(sug.zonaTxt) + '</div>' + (sug.obsTxt ? '<div class="ch-o">' + aEsc(sug.obsTxt) + '</div>' : '');
       }
     }
     const exsCon = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
-    return '<div class="bloco" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span>'+(b.duracao?'<span class="bm">'+aEsc(b.duracao)+'</span>':'')+'<span class="bt-arr" style="transform:rotate(-90deg)">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl" id="'+bid+'" style="padding:12px;display:none"><div style="font-size:13.5px;font-weight:700;color:var(--tx);letter-spacing:-.01em">'+aProcessarZonasTexto(aEsc(b.titulo||''))+'</div><div style="font-size:11.5px;color:var(--t2);margin-top:4px;line-height:1.5">'+aProcessarZonasTexto(aEsc(b.desc||'').replace(/\n/g,'<br>'))+'</div>'+(zonaChip?'<div style="margin-top:8px">'+zonaChip+'</div>':'')+progHTML+(b.url?"<div style='margin-top:10px'><button data-url='"+aEsc(b.url)+"' onclick='aAbrirVideoModal(this.dataset.url)' style='font-size:12px;color:var(--P);font-weight:600;background:none;border:none;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:4px'>▶️ " + (aLang==='en'?"Watch video":"Ver vídeo") + "</button></div>":"")+(exsCon?'<div style="margin-top:10px">'+exsCon+'</div>':'')+'</div></div>';
+    const condChips = [b.duracao ? '<span class="cond-chip cc-dur">⏱ ' + aEsc(b.duracao) + '</span>' : '', zonaChip, b.tipo ? '<span class="cond-chip cc-tipo">' + aEsc(b.tipo) + '</span>' : ''].join('');
+    const condVideo = b.url ? "<button class='cond-vid' data-url='" + aEsc(b.url) + "' onclick='aAbrirVideoModal(this.dataset.url)'>▶ " + (aLang==='en'?'Watch video':'Ver vídeo') + "</button>" : '';
+    return '<div class="bloco bloco-cond" id="bloco-'+bid+'"><div class="bh" data-bid="'+bid+'" onclick="aToggleBloco(this.dataset.bid,this)"><span class="bn">'+((bIdx!=null?bIdx:0)+1)+'</span><div class="dot" style="border-left-color:'+(b.cor||'#999')+'"></div><span class="bt">'+aEsc(b.nome)+'</span><span class="bt-arr">▾</span><button class="bloco-done-btn" id="bdone-'+bid+'" data-bid="'+bid+'" onclick="event.stopPropagation();aBlocoToggleDone(this.dataset.bid)" title="Concluir bloco">✓</button></div><div class="exl cond-body" id="'+bid+'">'
+      + (b.titulo ? '<div class="cond-tit">' + aProcessarZonasTexto(aEsc(b.titulo)) + '</div>' : '')
+      + (condChips ? '<div class="cond-chips">' + condChips + '</div>' : '')
+      + (progHTML ? '<div class="cond-hoje">' + progHTML + '</div>' : '')
+      + (b.desc ? '<div class="cond-desc">' + aProcessarZonasTexto(aEsc(b.desc).replace(/\n/g,'<br>')) + '</div>' : '')
+      + condVideo
+      + (exsCon ? '<div class="cond-exs">' + exsCon + '</div>' : '')
+      + '</div></div>';
   }
   const exs = aRenderExercicios(b, faseAtual, bid, semanaDentroFase, duracaoSemanas);
   const obsBloco = b.obs ? '<div class="b-obs" id="bobs-'+bid+'">'+aEsc(b.obs)+'</div>' : '';
