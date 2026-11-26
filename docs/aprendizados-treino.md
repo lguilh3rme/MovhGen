@@ -9,6 +9,9 @@ Arquivo vivo: a cada aula/atendimento relevante, acrescentar uma linha no Diári
 - Colar no Gerador: cabeçalho do dia obrigatório ("Terça 10/11"), seções Ativação/Força/C. Funcional, formato na linha "Circuito 3R 40'/20'", marcar "Semana atual" e conferir a prévia.
 - Se faltar dado (duração, nº de kettlebells e pesos, nível da turma), perguntar uma vez e seguir com suposição explícita.
 
+## Relógio da coletiva de 55 min (decisão do dono, 25/11)
+Mobilidade 0-4' · aquecimento com os movimentos fragmentados do metabólico 4-11' · metabólico 11-28' (3 bisets for time ou WOD ~14-16' + trocas) · água/troca de carga 28-30' · tensional 30-49' (3R, ~5'/round + 1'15) · fechamento 49-55' (respiração, alongar, anotar tempos e cargas). Escrever o relógio no `detalhes` de cada bloco. Aula antes de pilates: sem core direto/lombar (core é do pilates), tensional RIR 3, fecha com respiração; core leve de ativação é ok. Nome do 2º bloco: 'Circuito de Força' (tensional = ganho de massa e resistência localizada; RIR 1-3, 8-15 reps, cadência 3-1-1).
+
 ## Metabólico estilo WOD: repertório de formatos (fitness, não competição; decisão do dono, 23/11)
 O 40"/20" NÃO é fixo: o formato é escolhido pelo estímulo pensado para a aula. Notação: 40"/20" = segundos (apóstrofo é minuto). Todo WOD tem placar (reps ou tempo), regressão e progressão; o placar permite o reteste da S6.
 | Formato | Como montar | Placar |
