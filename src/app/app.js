@@ -58,7 +58,7 @@ function aAtualizarProgressoSessao(){
   else if(feitos>0) msg += aLang==='en' ? ' — nice start!' : ' — começou bem!';
   if(texto){
     if (pct >= 100) texto.textContent = msg;
-    else texto.innerHTML = '<span><b>' + aEsc(nomeDia) + '</b>' + (nomeDia ? ' · ' : '') + feitos + ' ' + (aLang==='en'?'of':'de') + ' ' + total + '</span><span>~' + Math.max(1, Math.round(restSeg/60)) + ' min ' + (aLang==='en'?'left':'restantes') + '</span>';
+    else texto.innerHTML = '<span><b>' + aEsc(nomeDia) + '</b>' + (nomeDia ? ' · ' : '') + feitos + ' ' + (aLang==='en'?'of':'de') + ' ' + total + (function(){ var bl = document.querySelectorAll('#tDashConteudo .bloco'); return bl.length > 1 ? ' · ' + (aLang==='en'?'blocks ':'blocos ') + document.querySelectorAll('#tDashConteudo .bloco-concluido').length + '/' + bl.length : ''; })() + '</span><span>~' + Math.max(1, Math.round(restSeg/60)) + ' min ' + (aLang==='en'?'left':'restantes') + '</span>';
   }
   aXoBarraProximo();
   wrap.classList.toggle('sp-completo', pct>=100);
@@ -1416,7 +1416,20 @@ function aCargaSugerida(nomeExercicio, faseAtual){
   const meta = aExerciciosMeta[nomeExercicio];
   if (!meta) return null;
   const teste = aUltimoTesteKgPorPadrao(meta.padrao_movimento);
-  if (!teste) return null;
+  if (!teste) {
+    // sem teste: usa o que o PRÓPRIO aluno já levantou em outro exercício do mesmo padrão
+    // (1RM estimado por Epley a partir da última série registrada) × %RM deste exercício
+    let est = null, ref = '';
+    Object.keys(aUltimaCargaPorExercicio).forEach(function(nm){
+      const m2 = aExerciciosMeta[nm], r = aUltimaCargaPorExercicio[nm];
+      if (nm === nomeExercicio || !m2 || m2.padrao_movimento !== meta.padrao_movimento || !m2.percentual_rm || !r || !r.carga) return;
+      const e1 = r.carga * (1 + Math.min(r.reps || 10, 15) / 30);
+      const base2 = e1 * (meta.percentual_rm / 100);
+      if (est == null || (r.criado_em || '') > (ref.dt || '')) { est = base2; ref = { nome: nm, dt: r.criado_em || '' }; }
+    });
+    if (est == null) return null;
+    return { valor: Math.round(est * (fator || 1.0) * 2) / 2, baseline: aUltimaCargaPorExercicio[ref.nome].carga, origem: 'historico_padrao', padraoLabel: aPadraoInfo(meta.padrao_movimento)?.label, refExercicio: ref.nome };
+  }
   const base = teste.valor * (meta.percentual_rm / 100);
   const valor = Math.round(base * (fator || 1.0) * 2) / 2;
   return { valor, baseline: teste.valor, origem: 'padrao_movimento', padraoLabel: aPadraoInfo(meta.padrao_movimento)?.label, refExercicio: teste.exercicio_nome };
@@ -1888,8 +1901,11 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   const sugestao = isTempo ? null : aCargaSugerida(ex.nome, faseAtual);
   // só mostra a sugestão se for diferente do que o aluno já fez por último
   // (evita ruído repetindo a mesma informação dos dois jeitos)
-  const mostrarSugestao = sugestao && (!ultimo || ultimo.carga == null || Math.abs(ultimo.carga - sugestao.valor) > 0.01);
-  const sugestaoTitle = sugestao && sugestao.origem === 'padrao_movimento'
+  const semRegistro = !ultimo || ultimo.carga == null;
+  const mostrarSugestao = sugestao && !semRegistro && Math.abs(ultimo.carga - sugestao.valor) > 0.01;
+  const sugestaoTitle = sugestao && sugestao.origem === 'historico_padrao'
+    ? 'Estimativa a partir da sua carga em ' + sugestao.refExercicio + ' (' + sugestao.baseline + 'kg), mesmo padrão de movimento'
+    : sugestao && sugestao.origem === 'padrao_movimento'
     ? 'Estimativa inicial: ' + sugestao.baseline + 'kg no teste de ' + aPadraoLabelLocalizado(sugestao.padraoLabel||'') + ' × % configurado pelo professor'
     : (sugestao ? 'Baseado na sua carga inicial (' + sugestao.baseline + 'kg), ajustada pra fase atual' : '');
   const sugVolume = (progressaoAuto && faseAtual) ? aSugestaoVolumeFase(ex.series, ex.rest, faseAtual, semanaDentroFase, duracaoSemanas) : null;
@@ -1924,8 +1940,8 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="event.stopPropagation();aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
-    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':'')+'" title="'+aEsc(aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':'— kg')+'</span><span class="cb-l">'+(aLang==='en'?'load used':'carga utilizada')+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
-        '<input type="number" inputmode="decimal" step="0.5" placeholder="0" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
+    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':((sugestao&&semRegistro)?' carga-sugerida':''))+'" title="'+aEsc((sugestao&&semRegistro)?sugestaoTitle:aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':((sugestao&&semRegistro)?'≈ '+aEsc(sugestao.valor)+'kg':'— kg'))+'</span><span class="cb-l">'+((sugestao&&semRegistro)?(aLang==='en'?'suggested load':'carga sugerida'):(aLang==='en'?'load used':'carga utilizada'))+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
+        '<input type="number" inputmode="decimal" step="0.5" placeholder="'+((sugestao&&semRegistro)?aEsc(sugestao.valor):'0')+'" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
         '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="event.stopPropagation();aSalvarCarga(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
@@ -2128,6 +2144,14 @@ function aBlocoToggleDone(bid){
   if(body){
     body.style.display = done ? 'none' : 'block';
     if(arr) arr.style.transform = done ? 'rotate(-90deg)' : 'rotate(0deg)';
+  }
+  if (done) {
+    const nb = bloco.nextElementSibling;
+    if (nb && nb.classList.contains('bloco')) {
+      const nbody = document.getElementById(nb.id.replace('bloco-',''));
+      if (nbody) { nbody.style.display = 'block'; const nar = nb.querySelector('.bh .bt-arr'); if (nar) nar.style.transform = 'rotate(0deg)'; }
+      setTimeout(function(){ try { nb.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch(e) {} }, 350);
+    }
   }
   aSessaoSalvar();
   aVerificarTreinoConcluido();
