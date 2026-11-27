@@ -9,6 +9,10 @@ let aUltimaCargaPorExercicio = {};
 let aUltimoRPE = null; // RPE (1-10) da última sessão concluída — usado pra ajustar a próxima sugestão
 let aBaselineCargaPorExercicio = {};
 let aExerciciosMeta = {};
+// Carga padrão por sexo (último degrau da sugestão, só quando não há registro/teste/histórico).
+// Vem de exercicios.carga_padrao {m,f,u,n}; sexo vem da anamnese (respostas.sexo). Falha em silêncio.
+let aCargaPadrao = {};
+let aSexoAluno = null; // 'm' | 'f' | null
 let aExVideoMap = {}; // nome do exercício -> url do vídeo, fallback quando ex.url não vem preenchido
 let aAvaliacoesFisicas = [];
 let aTodosRegistros = [];
@@ -669,7 +673,7 @@ async function aBootPreview(token){
   const iso = h.getFullYear() + '-' + String(h.getMonth()+1).padStart(2,'0') + '-' + String(h.getDate()).padStart(2,'0');
   aAlunoRow = { id: null, nome: '', email: '', professor_id: res.professor_id || null, mostra_aulas_coletivas: false };
   aTodosRegistros = []; aTestesFisicos = []; aAvaliacoesFisicas = [];
-  aUltimaCargaPorExercicio = {}; aBaselineCargaPorExercicio = {}; aExerciciosMeta = {}; aExVideoMap = {};
+  aUltimaCargaPorExercicio = {}; aBaselineCargaPorExercicio = {}; aExerciciosMeta = {}; aExVideoMap = {}; aCargaPadrao = {}; aSexoAluno = null;
   (res.exercicios || []).forEach(function(e){ if (e && e.nome && e.url) aExVideoMap[e.nome] = e.url; });
   const proto = { id: null, aluno_id: null, professor_id: res.professor_id || null, nome: res.nome, conteudo: res.conteudo, data_inicio: iso, ativo: true };
   aProtocolo = proto;
@@ -1105,7 +1109,7 @@ async function aBoot(sessionParam){
   // Verificar Anamnese (obrigatória no 1º acesso)
   // v60.2: as 7 consultas rodam em paralelo (antes eram em sequência); as não críticas falham em silêncio
   const _sf = function(p){ return Promise.resolve(p).then(function(r){ return r || { data: null }; }, function(){ return { data: null }; }); };
-  const [_rAn, _rPr, _rRg, _rRp, _rTe, _rEx, _rAv] = await Promise.all([
+  const [_rAn, _rPr, _rRg, _rRp, _rTe, _rEx, _rAv, _rCp] = await Promise.all([
     aClient.from('anamneses')
     .select('id, tipo, respostas, solicitado_em')
     .eq('aluno_id', aAlunoRow.id)
@@ -1135,9 +1139,24 @@ async function aBoot(sessionParam){
     _sf(aClient.from('avaliacoes_fisicas')
     .select('id, status, data_avaliacao, diagnostico, achados, composicao, medidas, created_at')
     .eq('aluno_id', aAlunoRow.id)
-    .order('created_at', { ascending: false }))
+    .order('created_at', { ascending: false })),
+    _sf(aClient.from('exercicios')
+    .select('nome, nome_pt, carga_padrao')
+    .eq('professor_id', aAlunoRow.professor_id))
   ]);
   const { data: anamneses } = _rAn;
+  // carga padrão por sexo: sexo da anamnese mais recente que o tenha respondido (sem sexo = sem sugestão padrão)
+  try {
+    const _sx = (anamneses || []).map(function(x){ return x && x.respostas && x.respostas.sexo; }).find(function(s){ return s; });
+    const _sl = String(_sx || '').toLowerCase();
+    aSexoAluno = _sl.indexOf('fem') === 0 ? 'f' : (_sl.indexOf('masc') === 0 ? 'm' : null);
+    aCargaPadrao = {};
+    ((_rCp && _rCp.data) || []).forEach(function(e){
+      if (!e.carga_padrao) return;
+      aCargaPadrao[e.nome] = e.carga_padrao;
+      if (e.nome_pt) aCargaPadrao[e.nome_pt] = e.carga_padrao;
+    });
+  } catch(e) {}
   // IMPORTANTE: considera apenas a anamnese MAIS RECENTE (anamneses já vem ordenado
   // desc por criado_em). Usar .some() aqui é o bug que fazia uma anamnese antiga já
   // respondida "esconder" uma nova solicitação do professor (respostas: null) — o
@@ -1404,7 +1423,24 @@ function aUltimoTesteKgPorPadrao(padraoId){
   return doPadrao[doPadrao.length - 1]; // aTestesFisicos vem ordenado ascendente por data
 }
 
+// Ordem de sugestão (quem aparece primeiro vence; a carga REGISTRADA pelo aluno sempre vale mais):
+// 1) progressão sobre a carga inicial dele · 2) teste de RM × % do padrão · 3) histórico dele em outro exercício
+// do mesmo padrão · 4) carga padrão do banco por sexo (aCargaPadraoInfo) — só kg; peso do corpo/tempo tratados à parte.
+function aCargaPadraoInfo(nomeExercicio){
+  const cp = aCargaPadrao[nomeExercicio];
+  if (!cp || !aSexoAluno) return null;
+  const v = parseFloat(aSexoAluno === 'f' ? cp.f : cp.m);
+  if (isNaN(v)) return null;
+  return { valor: v, un: cp.u || 'kg', nota: cp.n || '' };
+}
 function aCargaSugerida(nomeExercicio, faseAtual){
+  const s = aCargaSugeridaBase(nomeExercicio, faseAtual);
+  if (s) return s;
+  const p = aCargaPadraoInfo(nomeExercicio);
+  if (!p || ['kg','mao','maq','cab'].indexOf(p.un) < 0) return null;
+  return { valor: p.valor, baseline: p.valor, origem: 'padrao_sexo', un: p.un, nota: p.nota };
+}
+function aCargaSugeridaBase(nomeExercicio, faseAtual){
   const fator = faseAtual ? COND_AJUSTE_FASE[faseAtual] : 1.0;
   const baseline = aBaselineCargaPorExercicio[nomeExercicio];
   if (baseline && baseline.carga != null && faseAtual && fator != null) {
@@ -1902,8 +1938,15 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
   // só mostra a sugestão se for diferente do que o aluno já fez por último
   // (evita ruído repetindo a mesma informação dos dois jeitos)
   const semRegistro = !ultimo || ultimo.carga == null;
-  const mostrarSugestao = sugestao && !semRegistro && Math.abs(ultimo.carga - sugestao.valor) > 0.01;
-  const sugestaoTitle = sugestao && sugestao.origem === 'historico_padrao'
+  const mostrarSugestao = sugestao && sugestao.origem !== 'padrao_sexo' && !semRegistro && Math.abs(ultimo.carga - sugestao.valor) > 0.01;
+  // exercícios de peso do corpo (u='pc') e de tempo (u='s') não ganham kg: o chip mostra "peso do corpo"
+  // / o tempo de referência apagado, até o aluno registrar
+  const _cpi = aCargaPadraoInfo(ex.nome);
+  const pesoCorpo = !isTempo && semRegistro && !sugestao && !!(_cpi && _cpi.un === 'pc');
+  const tempoRef = isTempo && _cpi && _cpi.un === 's' ? _cpi.valor : null;
+  const sugestaoTitle = sugestao && sugestao.origem === 'padrao_sexo'
+    ? 'Carga inicial de referência para iniciante' + (sugestao.un === 'mao' ? ' (por mão)' : sugestao.un === 'kg' ? ' (total)' : ' (máquina/polia)') + (sugestao.nota ? ' · ' + sugestao.nota : '') + ' — some quando você registrar a sua'
+    : sugestao && sugestao.origem === 'historico_padrao'
     ? 'Estimativa a partir da sua carga em ' + sugestao.refExercicio + ' (' + sugestao.baseline + 'kg), mesmo padrão de movimento'
     : sugestao && sugestao.origem === 'padrao_movimento'
     ? 'Estimativa inicial: ' + sugestao.baseline + 'kg no teste de ' + aPadraoLabelLocalizado(sugestao.padraoLabel||'') + ' × % configurado pelo professor'
@@ -1935,12 +1978,12 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
     ? '<div class="ec-base-ref">' + aT('base_professor') + ': ' + aEsc(aFormatarSeries(ex.series)) + (ex.rest && !emConj ? ' · ' + aEsc(ex.rest) : '') + '</div>'
     : '';
   const cargaBadge = isTempo
-    ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':'')+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">⏱️ '+((ultimo&&ultimo.reps!=null)?aEsc(ultimo.reps)+'s':'— s')+'</span><span class="cb-l">'+aEsc(aT('tempo'))+' ⏱️</span>' +
-        '<input type="number" step="1" placeholder="seg" class="tempobox-input" id="'+eid+'-tempo" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">s</span>' +
+    ? '<span class="ec-chip cargabox tempobox'+((ultimo&&ultimo.reps!=null)?' carga-registrada':((tempoRef!=null)?' carga-sugerida':''))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">⏱️ '+((ultimo&&ultimo.reps!=null)?aEsc(ultimo.reps)+'s':((tempoRef!=null)?'≈ '+aEsc(tempoRef)+'s':'— s'))+'</span><span class="cb-l">'+aEsc(aT('tempo'))+' ⏱️</span>' +
+        '<input type="number" step="1" placeholder="'+(tempoRef!=null?aEsc(tempoRef):'seg')+'" class="tempobox-input" id="'+eid+'-tempo" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">s</span>' +
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="event.stopPropagation();aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
-    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':((sugestao&&semRegistro)?' carga-sugerida':''))+'" title="'+aEsc((sugestao&&semRegistro)?sugestaoTitle:aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':((sugestao&&semRegistro)?'≈ '+aEsc(sugestao.valor)+'kg':'— kg'))+'</span><span class="cb-l">'+((sugestao&&semRegistro)?(aLang==='en'?'suggested load':'carga sugerida'):(aLang==='en'?'load used':'carga utilizada'))+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
+    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':((sugestao&&semRegistro)?' carga-sugerida':''))+'" title="'+aEsc((sugestao&&semRegistro)?sugestaoTitle:aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':((sugestao&&semRegistro)?'≈ '+aEsc(sugestao.valor)+'kg':(pesoCorpo?(aLang==='en'?'bodyweight':'peso do corpo'):'— kg')))+'</span><span class="cb-l">'+((sugestao&&semRegistro)?(aLang==='en'?'suggested load':'carga sugerida'):(aLang==='en'?'load used':'carga utilizada'))+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
         '<input type="number" inputmode="decimal" step="0.5" placeholder="'+((sugestao&&semRegistro)?aEsc(sugestao.valor):'0')+'" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
         '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
