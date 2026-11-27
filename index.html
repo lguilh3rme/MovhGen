@@ -4317,7 +4317,7 @@ function personalPubRender(){
 }
 
 // ══ v59: Início (dashboard), barra superior, Notas, abas da Configuração, Aparência ══
-var MOVH_VER = 'v70.0 · 27/11';
+var MOVH_VER = 'v70.1 · 27/11';
 function verAplicar(){ const e = document.querySelector('.sb-ver'); if (e) e.textContent = MOVH_VER; }
 
 // ── Visual (Rubro-Negro translúcido | Clean | Clássico) e tema ──
@@ -17161,7 +17161,7 @@ function aExCard(ex, faseAtual, eid, progressaoAuto, semanaDentroFase, duracaoSe
         '<button class="salvar-mini" data-eid="'+eid+'" data-nome="'+aEsc(ex.nome||'')+'" onclick="event.stopPropagation();aSalvarTempo(this.dataset.eid,this.dataset.nome)" title="'+aEsc(aT('salvar'))+'">✓</button>' +
         '<span class="cargasalvo" id="'+eid+'-ok">✓</span>' +
       '</span>'
-    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':((sugestao&&semRegistro)?' carga-sugerida':''))+'" title="'+aEsc((sugestao&&semRegistro)?sugestaoTitle:aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':((sugestao&&semRegistro)?'≈ '+aEsc(sugestao.valor)+'kg':(pesoCorpo?(aLang==='en'?'bodyweight':'peso do corpo'):'— kg')))+'</span><span class="cb-l">'+((sugestao&&semRegistro)?(aLang==='en'?'suggested load':'carga sugerida'):(aLang==='en'?'load used':'carga utilizada'))+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
+    : '<span class="ec-chip cargabox'+((ultimo&&ultimo.carga!=null)?' carga-registrada':(((sugestao&&semRegistro)||pesoCorpo)?' carga-sugerida':''))+'" title="'+aEsc((sugestao&&semRegistro)?sugestaoTitle:aT('carga'))+'" data-eid="'+eid+'" onclick="aCargaAbrir(this)"><span class="cb-sum" id="'+eid+'-sum">🏋️ '+((ultimo&&ultimo.carga!=null)?aEsc(ultimo.carga)+'kg':((sugestao&&semRegistro)?'≈ '+aEsc(sugestao.valor)+'kg':(pesoCorpo?(aLang==='en'?'bodyweight':'peso do corpo'):'— kg')))+'</span><span class="cb-l">'+((sugestao&&semRegistro)?(aLang==='en'?'suggested load':'carga sugerida'):(aLang==='en'?'load used':'carga utilizada'))+'</span><span class="cb-r"><span class="ic">🏋️</span>' +
         '<input type="number" inputmode="decimal" step="0.5" placeholder="'+((sugestao&&semRegistro)?aEsc(sugestao.valor):'0')+'" aria-label="kg" id="'+eid+'-carga" value="'+(ultimo&&ultimo.carga!=null?aEsc(ultimo.carga):'')+'"><span class="u">kg</span>' +
         '<span class="sep">×</span>' +
         '<input type="number" inputmode="numeric" placeholder="0" aria-label="reps" id="'+eid+'-reps" value="'+(ultimo&&ultimo.reps!=null?aEsc(ultimo.reps):'')+'"><span class="u">reps</span>' +
